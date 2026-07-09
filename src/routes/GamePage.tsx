@@ -1,26 +1,52 @@
 import { Box, Button, Stack } from '@chakra-ui/react'
-import { useNavigate } from 'react-router-dom'
+import { AbortMatchDialog } from '../components/AbortMatchDialog/AbortMatchDialog'
 import { ContentContainer } from '../components/ContentContainer'
 import { DartPicker } from '../components/DartPicker/DartPicker'
 import { GameBoardLayout } from '../components/GameBoardLayout'
 import { GameOver } from '../components/GameOver/GameOver'
+import { ResumeGameDialog } from '../components/ResumeGameDialog/ResumeGameDialog'
 import { Scoreboard } from '../components/Scoreboard/Scoreboard'
-import { useRegisterMatchAbort } from '../hooks/useRegisterMatchAbort'
-import { useGameFromRoute } from '../hooks/useGameFromRoute'
+import { useGamePage } from '../hooks/useGamePage'
 import { showsVisitHistory } from '../lib/game/gameModeDefinitions'
 
 export const GamePage = () => {
-  const navigate = useNavigate()
-  const { controller, recordDart, undoDart, restart } = useGameFromRoute()
+  const {
+    controller,
+    recordDart,
+    undoDart,
+    restart,
+    loadState,
+    startNewGame,
+    abortDialogOpen,
+    requestAbortMatch,
+    cancelAbortMatch,
+    confirmAbortMatch,
+    resumeSavedGame,
+  } = useGamePage()
 
-  useRegisterMatchAbort(controller)
-
-  const handleAbort = () => {
-    void navigate('/')
-  }
+  const inputDisabled = controller.isComplete || loadState.kind === 'conflict'
 
   return (
     <ContentContainer>
+      {loadState.kind === 'conflict' && (
+        <ResumeGameDialog
+          open
+          savedSession={loadState.savedSnapshot.session}
+          onResumeSaved={resumeSavedGame}
+          onStartNew={startNewGame}
+        />
+      )}
+
+      <AbortMatchDialog
+        open={abortDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            cancelAbortMatch()
+          }
+        }}
+        onConfirm={confirmAbortMatch}
+      />
+
       <Box py={{ base: 6, md: 8 }} pb={10}>
         <GameBoardLayout
           players={controller.session.players}
@@ -40,14 +66,10 @@ export const GamePage = () => {
 
             {controller.isComplete && <GameOver onPlayAgain={restart} />}
 
-            <DartPicker
-              onDart={recordDart}
-              onUndo={undoDart}
-              inputDisabled={controller.isComplete}
-            />
+            <DartPicker onDart={recordDart} onUndo={undoDart} inputDisabled={inputDisabled} />
 
-            {!controller.isComplete && (
-              <Button variant="cancel" alignSelf="flex-start" onClick={handleAbort}>
+            {!controller.isComplete && loadState.kind !== 'conflict' && (
+              <Button variant="cancel" alignSelf="flex-start" onClick={requestAbortMatch}>
                 Abort match
               </Button>
             )}

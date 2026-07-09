@@ -29,7 +29,8 @@ export const AbortMatchDialog = ({ open, onOpenChange, onConfirm }: AbortMatchDi
         </Dialog.Header>
         <Dialog.Body>
           <Text fontSize="sm" color="whiteAlpha.900" lineHeight="1.55">
-            Leave this match? Your progress for this leg will be lost.
+            Discard this match and delete your saved progress? You will not be able to resume it
+            later.
           </Text>
         </Dialog.Body>
         <Dialog.Footer>

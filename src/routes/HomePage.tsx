@@ -1,6 +1,7 @@
 import { Box, Button, Heading, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { Link as RouterLink } from 'react-router-dom'
 import { ContentContainer } from '../components/ContentContainer'
+import { ResumeGameBanner } from '../components/ResumeGameBanner/ResumeGameBanner'
 import { buildPracticeGamePath } from '../lib/game/gameRoute'
 import { GameModeId } from '../types/gameMode'
 import { buildX01PresetPath, X01PresetId } from '../lib/x01/x01Presets'
@@ -82,6 +83,8 @@ export const HomePage = () => (
             solo today, with more modes and opponents coming soon.
           </Text>
         </Stack>
+
+        <ResumeGameBanner />
 
         <SimpleGrid columns={{ base: 1, sm: 2, lg: 3 }} gap={4}>
           {GAME_MODES.map((mode) =>
