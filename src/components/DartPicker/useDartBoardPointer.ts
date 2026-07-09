@@ -26,7 +26,7 @@ export interface UseDartBoardPointerOptions {
   inputDisabled?: boolean
 }
 
-const centerZoneToMultiplier = (zone: CenterZone): DartMultiplier.Double | DartMultiplier.Triple =>
+const centerZoneToMultiplier = (zone: CenterZone): ArmedMultiplier =>
   zone === 'double' ? DartMultiplier.Double : DartMultiplier.Triple
 
 const resolveHoverTarget = (
