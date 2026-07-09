@@ -87,6 +87,16 @@ describe('processDartKeyboardKey', () => {
     expect(tripleState.armedMultiplier).toBe(DartMultiplier.Triple)
   })
 
+  it('toggles double and triple modifiers when pressed again', () => {
+    const { state: armedDouble } = processDartKeyboardKey(createDartKeyboardInputState(), 'd')
+    const { state: disarmedDouble } = processDartKeyboardKey(armedDouble, 'd')
+    expect(disarmedDouble.armedMultiplier).toBe(DartMultiplier.Single)
+
+    const { state: armedTriple } = processDartKeyboardKey(createDartKeyboardInputState(), 't')
+    const { state: disarmedTriple } = processDartKeyboardKey(armedTriple, 't')
+    expect(disarmedTriple.armedMultiplier).toBe(DartMultiplier.Single)
+  })
+
   it('records armed double and triple darts after space', () => {
     const { state: doubleState } = processDartKeyboardKey(createDartKeyboardInputState(), 'd')
     const { state: withOne } = processDartKeyboardKey(doubleState, '1')

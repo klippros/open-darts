@@ -94,10 +94,15 @@ export const processDartKeyboardKey = (
   const normalizedKey = key.length === 1 ? key.toLowerCase() : key
 
   if (normalizedKey === 'd') {
+    const armedMultiplier =
+      state.armedMultiplier === DartMultiplier.Double
+        ? DartMultiplier.Single
+        : DartMultiplier.Double
+
     return {
       state: {
         ...state,
-        armedMultiplier: DartMultiplier.Double,
+        armedMultiplier,
         numberBuffer: '',
       },
       outputs: [],
@@ -105,10 +110,15 @@ export const processDartKeyboardKey = (
   }
 
   if (normalizedKey === 't') {
+    const armedMultiplier =
+      state.armedMultiplier === DartMultiplier.Triple
+        ? DartMultiplier.Single
+        : DartMultiplier.Triple
+
     return {
       state: {
         ...state,
-        armedMultiplier: DartMultiplier.Triple,
+        armedMultiplier,
         numberBuffer: '',
       },
       outputs: [],
@@ -166,14 +176,22 @@ export interface DartKeyboardPreview {
   highlightOuterBull: boolean
 }
 
-export const getDartKeyboardPreview = (state: DartKeyboardInputState): DartKeyboardPreview => {
-  let activeMultiplier: DartMultiplier.Double | DartMultiplier.Triple | null = null
-
-  if (state.armedMultiplier === DartMultiplier.Double) {
-    activeMultiplier = DartMultiplier.Double
-  } else if (state.armedMultiplier === DartMultiplier.Triple) {
-    activeMultiplier = DartMultiplier.Triple
+export const getActiveBoardMultiplier = (
+  armedMultiplier: ArmedMultiplier,
+): DartMultiplier.Double | DartMultiplier.Triple | null => {
+  if (armedMultiplier === DartMultiplier.Double) {
+    return DartMultiplier.Double
   }
+
+  if (armedMultiplier === DartMultiplier.Triple) {
+    return DartMultiplier.Triple
+  }
+
+  return null
+}
+
+export const getDartKeyboardPreview = (state: DartKeyboardInputState): DartKeyboardPreview => {
+  const activeMultiplier = getActiveBoardMultiplier(state.armedMultiplier)
 
   if (state.numberBuffer === '25') {
     return {

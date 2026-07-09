@@ -1,6 +1,8 @@
 import { Box, Stack, Text } from '@chakra-ui/react'
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { useDartKeyboard } from '../../hooks/useDartKeyboard'
+import { createDartKeyboardInputState } from '../../lib/dartKeyboardInput'
+import type { ArmedMultiplier } from '../../lib/dartKeyboardInput'
 import { createDartThrow } from '../../lib/dartScoring'
 import { DartMultiplier, DartSegmentType } from '../../types/dart'
 import type { DartThrow } from '../../types/dart'
@@ -15,7 +17,23 @@ export interface DartPickerProps {
 }
 
 export const DartPicker = ({ onDart, onUndo, inputDisabled = false }: DartPickerProps) => {
-  const { preview: keyboardPreview } = useDartKeyboard({ onDart, onUndo, inputDisabled })
+  const [inputState, setInputState] = useState(createDartKeyboardInputState)
+
+  const setArmedMultiplier = useCallback((armedMultiplier: ArmedMultiplier) => {
+    setInputState((state) => ({
+      ...state,
+      armedMultiplier,
+      numberBuffer: '',
+    }))
+  }, [])
+
+  const { preview: keyboardPreview } = useDartKeyboard({
+    inputState,
+    setInputState,
+    onDart,
+    onUndo,
+    inputDisabled,
+  })
 
   const recordNumber = useCallback(
     (value: number, multiplier: DartMultiplier) => {
@@ -52,13 +70,15 @@ export const DartPicker = ({ onDart, onUndo, inputDisabled = false }: DartPicker
     recordBull,
     recordOuterBull,
     recordMiss,
+    armedMultiplier: inputState.armedMultiplier,
+    setArmedMultiplier,
     inputDisabled,
   })
 
   const hoveredNumber = pointerHoveredNumber ?? keyboardPreview.highlightedNumber
   const hoveredCorner =
     pointerHoveredCorner ?? (keyboardPreview.highlightOuterBull ? 'outerBull' : null)
-  const activeMultiplier = pointerActiveMultiplier ?? keyboardPreview.activeMultiplier
+  const activeMultiplier = pointerActiveMultiplier
 
   return (
     <Box

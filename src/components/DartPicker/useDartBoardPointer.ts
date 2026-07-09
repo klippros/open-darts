@@ -1,5 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 import type { PointerEvent } from 'react'
+import type { ArmedMultiplier } from '../../lib/dartKeyboardInput'
+import { getActiveBoardMultiplier } from '../../lib/dartKeyboardInput'
 import { DartMultiplier } from '../../types/dart'
 import {
   DARTBOARD_CENTER,
@@ -19,6 +21,8 @@ export interface UseDartBoardPointerOptions {
   recordBull: () => void
   recordOuterBull: () => void
   recordMiss: () => void
+  armedMultiplier: ArmedMultiplier
+  setArmedMultiplier: (multiplier: ArmedMultiplier) => void
   inputDisabled?: boolean
 }
 
@@ -67,7 +71,7 @@ const resolveHoverTarget = (
 }
 
 const toActiveMultiplier = (
-  multiplier: DartMultiplier | null,
+  multiplier: DartMultiplier | ArmedMultiplier | null,
 ): DartMultiplier.Double | DartMultiplier.Triple | null => {
   if (multiplier === DartMultiplier.Double || multiplier === DartMultiplier.Triple) {
     return multiplier
@@ -82,17 +86,18 @@ export const useDartBoardPointer = ({
   recordBull,
   recordOuterBull,
   recordMiss,
+  armedMultiplier,
+  setArmedMultiplier,
   inputDisabled = false,
 }: UseDartBoardPointerOptions) => {
   const svgRef = useRef<SVGSVGElement>(null)
-  const [armedMultiplier, setArmedMultiplier] = useState<DartMultiplier | null>(null)
   const [heldMultiplier, setHeldMultiplier] = useState<DartMultiplier | null>(null)
   const [hoveredNumber, setHoveredNumber] = useState<number | null>(null)
   const [hoveredCorner, setHoveredCorner] = useState<CornerZone | null>(null)
   const [activeCenterZone, setActiveCenterZone] = useState<CenterZone | null>(null)
   const pointerActiveRef = useRef(false)
   const draggedRef = useRef(false)
-  const armedBeforeCenterPressRef = useRef<DartMultiplier | null>(null)
+  const armedBeforeCenterPressRef = useRef<ArmedMultiplier>(DartMultiplier.Single)
 
   const getSvgPoint = useCallback((clientX: number, clientY: number) => {
     const svg = svgRef.current
@@ -184,9 +189,10 @@ export const useDartBoardPointer = ({
       }
 
       if (target.number !== null) {
-        const multiplier = armedMultiplier ?? DartMultiplier.Single
+        const multiplier =
+          armedMultiplier === DartMultiplier.Single ? DartMultiplier.Single : armedMultiplier
         recordNumber(target.number, multiplier)
-        setArmedMultiplier(null)
+        setArmedMultiplier(DartMultiplier.Single)
       }
     },
     [
@@ -198,6 +204,7 @@ export const useDartBoardPointer = ({
       recordMiss,
       recordNumber,
       recordOuterBull,
+      setArmedMultiplier,
     ],
   )
 
@@ -239,7 +246,7 @@ export const useDartBoardPointer = ({
           const multiplier = centerZoneToMultiplier(target.centerZone)
 
           if (armedBeforeCenterPressRef.current === multiplier) {
-            setArmedMultiplier(null)
+            setArmedMultiplier(DartMultiplier.Single)
           }
         }
       }
@@ -249,14 +256,14 @@ export const useDartBoardPointer = ({
 
         if (target.number !== null) {
           recordNumber(target.number, heldMultiplier)
-          setArmedMultiplier(null)
+          setArmedMultiplier(DartMultiplier.Single)
         }
       }
 
       clearPointerState()
-      armedBeforeCenterPressRef.current = null
+      armedBeforeCenterPressRef.current = DartMultiplier.Single
     },
-    [clearPointerState, inputDisabled, getSvgPoint, heldMultiplier, recordNumber],
+    [clearPointerState, getSvgPoint, heldMultiplier, inputDisabled, recordNumber, setArmedMultiplier],
   )
 
   const handlePointerLeave = useCallback(() => {
@@ -269,7 +276,7 @@ export const useDartBoardPointer = ({
 
   return {
     svgRef,
-    activeMultiplier: toActiveMultiplier(heldMultiplier ?? armedMultiplier),
+    activeMultiplier: toActiveMultiplier(heldMultiplier ?? getActiveBoardMultiplier(armedMultiplier)),
     hoveredNumber,
     hoveredCorner,
     activeCenterZone,

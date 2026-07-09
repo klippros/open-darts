@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import {
-  createDartKeyboardInputState,
   getDartKeyboardPreview,
   processDartKeyboardKey,
 } from '../lib/dartKeyboardInput'
-import type { DartKeyboardPreview } from '../lib/dartKeyboardInput'
+import type { DartKeyboardInputState } from '../lib/dartKeyboardInput'
 import type { DartThrow } from '../types/dart'
 
 const isEditableTarget = (target: EventTarget | null): boolean => {
@@ -22,24 +21,22 @@ const isEditableTarget = (target: EventTarget | null): boolean => {
 }
 
 export interface UseDartKeyboardOptions {
+  inputState: DartKeyboardInputState
+  setInputState: React.Dispatch<React.SetStateAction<DartKeyboardInputState>>
   onDart: (dart: DartThrow) => void
   onUndo: () => void
   inputDisabled?: boolean
 }
 
-const emptyPreview: DartKeyboardPreview = {
-  activeMultiplier: null,
-  highlightedNumber: null,
-  highlightOuterBull: false,
-}
-
 export const useDartKeyboard = ({
+  inputState,
+  setInputState,
   onDart,
   onUndo,
   inputDisabled = false,
 }: UseDartKeyboardOptions) => {
-  const [preview, setPreview] = useState<DartKeyboardPreview>(emptyPreview)
-  const inputStateRef = useRef(createDartKeyboardInputState())
+  const inputStateRef = useRef(inputState)
+  inputStateRef.current = inputState
 
   const applyOutputs = useCallback(
     (outputs: ReturnType<typeof processDartKeyboardKey>['outputs']) => {
@@ -69,8 +66,7 @@ export const useDartKeyboard = ({
       }
 
       const result = processDartKeyboardKey(inputStateRef.current, event.key)
-      inputStateRef.current = result.state
-      setPreview(getDartKeyboardPreview(result.state))
+      setInputState(result.state)
       applyOutputs(result.outputs)
 
       if (result.outputs.length > 0 || result.state.numberBuffer !== '' || event.key === ' ') {
@@ -81,7 +77,7 @@ export const useDartKeyboard = ({
         event.preventDefault()
       }
     },
-    [applyOutputs, inputDisabled],
+    [applyOutputs, inputDisabled, setInputState],
   )
 
   useEffect(() => {
@@ -92,5 +88,5 @@ export const useDartKeyboard = ({
     }
   }, [handleKeyDown])
 
-  return { preview }
+  return { preview: getDartKeyboardPreview(inputState) }
 }
