@@ -146,6 +146,45 @@ describe('visitPersistence', () => {
     expect(loadActiveSnapshot()).toBeNull()
   })
 
+  it('removes archived sessions when a completed game is undone', () => {
+    let controller = createGameController({
+      mode: GameModeId.X01,
+      config: { startScore: 501, doubleIn: false, doubleOut: true },
+      players: [{ id: 'player-1', name: 'You', kind: PlayerKind.Human }],
+    })
+
+    controller = controller.withSession(
+      {
+        ...controller.session,
+        status: GameStatus.Completed,
+        completedAt: '2026-01-01T00:00:00.000Z',
+        visits: [
+          {
+            visitIndex: 0,
+            playerId: 'player-1',
+            darts: [numberDart(25, DartMultiplier.Double), numberDart(25, DartMultiplier.Double)],
+            visitScore: 100,
+            scoreBefore: 100,
+            scoreAfter: 0,
+            bust: false,
+            checkout: true,
+          },
+        ],
+      },
+      controller.engineState,
+      controller.turnIndex,
+    )
+
+    finalizeCompletedSession(controller)
+    expect(loadStoredSessions()).toHaveLength(1)
+
+    controller = controller.undoDart()
+    persistControllerState(controller)
+
+    expect(loadStoredSessions()).toHaveLength(0)
+    expect(getResumableSnapshot()).not.toBeNull()
+  })
+
   it('returns only in-progress snapshots for resume', () => {
     saveControllerSnapshot(
       createGameController({

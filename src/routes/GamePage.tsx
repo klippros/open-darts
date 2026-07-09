@@ -1,13 +1,12 @@
 import { Box, Button, Stack } from '@chakra-ui/react'
-import { AbortMatchDialog } from '../components/AbortMatchDialog/AbortMatchDialog'
 import { ContentContainer } from '../components/ContentContainer'
 import { DartPicker } from '../components/DartPicker/DartPicker'
 import { GameBoardLayout } from '../components/GameBoardLayout'
-import { GameOver } from '../components/GameOver/GameOver'
-import { ResumeGameDialog } from '../components/ResumeGameDialog/ResumeGameDialog'
 import { Scoreboard } from '../components/Scoreboard/Scoreboard'
+import { useAccount } from '../hooks/accountContext'
 import { useGamePage } from '../hooks/useGamePage'
 import { showsVisitHistory } from '../lib/game/gameModeDefinitions'
+import { GamePageDialogs } from './GamePageDialogs'
 
 export const GamePage = () => {
   const {
@@ -23,28 +22,31 @@ export const GamePage = () => {
     confirmAbortMatch,
     resumeSavedGame,
   } = useGamePage()
+  const { account, createAccount } = useAccount()
 
   const inputDisabled = controller.isComplete || loadState.kind === 'conflict'
 
   return (
     <ContentContainer>
-      {loadState.kind === 'conflict' && (
-        <ResumeGameDialog
-          open
-          savedSession={loadState.savedSnapshot.session}
-          onResumeSaved={resumeSavedGame}
-          onStartNew={startNewGame}
-        />
-      )}
-
-      <AbortMatchDialog
-        open={abortDialogOpen}
-        onOpenChange={(open) => {
+      <GamePageDialogs
+        resumeConflictSession={
+          loadState.kind === 'conflict' ? loadState.savedSnapshot.session : null
+        }
+        onResumeSaved={resumeSavedGame}
+        onStartNew={startNewGame}
+        abortDialogOpen={abortDialogOpen}
+        onAbortDialogOpenChange={(open) => {
           if (!open) {
             cancelAbortMatch()
           }
         }}
-        onConfirm={confirmAbortMatch}
+        onConfirmAbortMatch={confirmAbortMatch}
+        showMatchSummary={controller.isComplete}
+        completedSession={controller.isComplete ? controller.session : null}
+        account={account}
+        onPlayAgain={restart}
+        onUndoLastDart={undoDart}
+        onCreateAccount={createAccount}
       />
 
       <Box py={{ base: 6, md: 8 }} pb={10}>
@@ -63,8 +65,6 @@ export const GamePage = () => {
               players={controller.session.players}
               config={controller.session.config}
             />
-
-            {controller.isComplete && <GameOver onPlayAgain={restart} />}
 
             <DartPicker onDart={recordDart} onUndo={undoDart} inputDisabled={inputDisabled} />
 

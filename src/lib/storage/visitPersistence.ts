@@ -5,6 +5,7 @@ import { matchHasProgress } from '../game/matchProgress'
 import {
   clearActiveSnapshot,
   loadActiveSnapshot,
+  removeStoredSession,
   saveActiveSnapshot,
   saveStoredSession,
 } from './gameStore'
@@ -30,6 +31,8 @@ export const persistControllerState = (controller: AppGameController): void => {
     finalizeCompletedSession(controller)
     return
   }
+
+  removeStoredSession(controller.session.id)
 
   if (matchHasProgress(controller)) {
     saveControllerSnapshot(controller)

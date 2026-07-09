@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom'
 import { App } from './App'
 import { AboutPage } from './routes/AboutPage'
 import { GamePage } from './routes/GamePage'
+import { HistoryPage } from './routes/HistoryPage'
 import { HomePage } from './routes/HomePage'
 import { X01SetupPage } from './routes/X01SetupPage'
 
@@ -13,6 +14,7 @@ export const router = createBrowserRouter(
         { index: true, element: <HomePage /> },
         { path: 'game', element: <GamePage /> },
         { path: 'game/setup', element: <X01SetupPage /> },
+        { path: 'history', element: <HistoryPage /> },
         { path: 'about', element: <AboutPage /> },
       ],
     },

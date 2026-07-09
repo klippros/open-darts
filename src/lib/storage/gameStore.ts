@@ -70,6 +70,15 @@ export const saveStoredSession = (
   storage.setItem(StorageKey.Sessions, JSON.stringify(nextSessions))
 }
 
+export const removeStoredSession = (
+  sessionId: string,
+  storage: StorageAdapter = browserLocalStorage,
+): void => {
+  const sessions = loadStoredSessions(storage).filter((entry) => entry.id !== sessionId)
+
+  storage.setItem(StorageKey.Sessions, JSON.stringify(sessions))
+}
+
 export const loadActiveSnapshot = (
   storage: StorageAdapter = browserLocalStorage,
 ): ActiveGameSnapshot | null => {

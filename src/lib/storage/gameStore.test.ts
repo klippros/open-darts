@@ -7,6 +7,7 @@ import {
   clearActiveSnapshot,
   loadActiveSnapshot,
   loadStoredSessions,
+  removeStoredSession,
   saveActiveSnapshot,
   saveStoredSession,
 } from './gameStore'
@@ -80,6 +81,16 @@ describe('gameStore', () => {
     saveStoredSession(updated, storage)
 
     expect(loadStoredSessions(storage)).toEqual([updated])
+  })
+
+  it('removes a stored session by id', () => {
+    const storage = createMemoryStorage()
+    const session = sampleSession({ status: GameStatus.Completed })
+
+    saveStoredSession(session, storage)
+    removeStoredSession(session.id, storage)
+
+    expect(loadStoredSessions(storage)).toEqual([])
   })
 
   it('saves and clears the active snapshot', () => {
