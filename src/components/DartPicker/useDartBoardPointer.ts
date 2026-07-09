@@ -48,6 +48,7 @@ export const useDartBoardPointer = ({
   const [heldMultiplier, setHeldMultiplier] = useState<DartMultiplier | null>(null)
   const [hoveredNumber, setHoveredNumber] = useState<number | null>(null)
   const [hoveredCorner, setHoveredCorner] = useState<CornerZone | null>(null)
+  const [hoveredCenterZone, setHoveredCenterZone] = useState<CenterZone | null>(null)
   const [activeCenterZone, setActiveCenterZone] = useState<CenterZone | null>(null)
   const centerDragRef = useRef<{ zone: CenterZone; armedBefore: ArmedMultiplier } | null>(null)
 
@@ -73,6 +74,7 @@ export const useDartBoardPointer = ({
   const clearHoverState = useCallback(() => {
     setHoveredNumber(null)
     setHoveredCorner(null)
+    setHoveredCenterZone(null)
   }, [])
 
   const clearCenterDragState = useCallback(() => {
@@ -81,6 +83,7 @@ export const useDartBoardPointer = ({
     setActiveCenterZone(null)
     setHoveredNumber(null)
     setHoveredCorner(null)
+    setHoveredCenterZone(null)
   }, [])
 
   const handleCornerClick = useCallback(
@@ -137,6 +140,10 @@ export const useDartBoardPointer = ({
     }
 
     setHoveredCorner(corner)
+
+    if (corner !== null) {
+      setHoveredCenterZone(null)
+    }
   }, [])
 
   const handleNumberHover = useCallback((number: number | null) => {
@@ -145,6 +152,23 @@ export const useDartBoardPointer = ({
     }
 
     setHoveredNumber(number)
+
+    if (number !== null) {
+      setHoveredCenterZone(null)
+    }
+  }, [])
+
+  const handleCenterHover = useCallback((zone: CenterZone | null) => {
+    if (!prefersHover()) {
+      return
+    }
+
+    setHoveredCenterZone(zone)
+
+    if (zone !== null) {
+      setHoveredNumber(null)
+      setHoveredCorner(null)
+    }
   }, [])
 
   const handleCenterPointerDown = useCallback(
@@ -213,6 +237,7 @@ export const useDartBoardPointer = ({
     if (centerDragRef.current === null) {
       setHoveredNumber(null)
       setHoveredCorner(null)
+      setHoveredCenterZone(null)
       setActiveCenterZone(null)
     }
   }, [])
@@ -224,12 +249,14 @@ export const useDartBoardPointer = ({
     ),
     hoveredNumber,
     hoveredCorner,
+    hoveredCenterZone,
     activeCenterZone,
     handleCornerClick,
     handleNumberClick,
     handleCenterPointerDown,
     handleCornerHover,
     handleNumberHover,
+    handleCenterHover,
     handlePointerMove,
     handlePointerUp,
     handlePointerLeave,

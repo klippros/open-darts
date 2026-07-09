@@ -30,8 +30,6 @@ export const DARTBOARD_COLORS = {
   cornerAction: '#2a2a2a',
   cornerActionHover: '#3d3d3d',
   segmentText: '#f5f5f5',
-  cornerText: '#f5f5f5',
-  ringStroke: '#111111',
   background: '#151515',
 } as const
 

@@ -1,5 +1,6 @@
 import type { PointerEvent } from 'react'
 import { DartMultiplier } from '../../types/dart'
+import { getCenterDividerLine, getCornerDividerLines, DARTBOARD_DIVIDER } from './dartboardBorders'
 import {
   CORNER_ZONES,
   DARTBOARD_CENTER,
@@ -25,6 +26,7 @@ import type { CenterZone, CornerZone } from './dartboardLayout'
 export interface DartBoardGraphicProps {
   hoveredNumber: number | null
   hoveredCorner: CornerZone | null
+  hoveredCenterZone: CenterZone | null
   activeCenterZone: CenterZone | null
   activeMultiplier: DartMultiplier.Double | DartMultiplier.Triple | null
   inputDisabled?: boolean
@@ -33,17 +35,33 @@ export interface DartBoardGraphicProps {
   onCenterPointerDown: (zone: CenterZone, event: PointerEvent<SVGPathElement>) => void
   onCornerHover: (corner: CornerZone | null) => void
   onNumberHover: (number: number | null) => void
+  onCenterHover: (zone: CenterZone | null) => void
 }
 
 const CORNER_LABELS: Record<CornerZone, { text: string; x: number; y: number }> = {
-  bull: { text: 'BULL', x: 52, y: 52 },
-  outerBull: { text: '25', x: 348, y: 52 },
-  undo: { text: 'UNDO', x: 52, y: 348 },
-  miss: { text: 'MISS', x: 348, y: 348 },
+  bull: { text: 'BULL', x: 52, y: 40 },
+  outerBull: { text: '25', x: 348, y: 40 },
+  undo: { text: 'UNDO', x: 52, y: 360 },
+  miss: { text: 'MISS', x: 348, y: 360 },
 }
 
 const describeCenterHalf = (sweep: 0 | 1): string =>
   `M ${DARTBOARD_CENTER} ${DARTBOARD_CENTER - DARTBOARD_CENTER_RADIUS} A ${DARTBOARD_CENTER_RADIUS} ${DARTBOARD_CENTER_RADIUS} 0 0 ${sweep} ${DARTBOARD_CENTER} ${DARTBOARD_CENTER + DARTBOARD_CENTER_RADIUS} Z`
+
+const getCenterHalfFill = (
+  zone: CenterZone,
+  hoveredCenterZone: CenterZone | null,
+  activeCenterZone: CenterZone | null,
+  activeMultiplier: DartMultiplier.Double | DartMultiplier.Triple | null,
+): string => {
+  const isHighlighted =
+    hoveredCenterZone === zone ||
+    activeCenterZone === zone ||
+    (zone === 'double' && activeMultiplier === DartMultiplier.Double) ||
+    (zone === 'triple' && activeMultiplier === DartMultiplier.Triple)
+
+  return isHighlighted ? DARTBOARD_COLORS.centerActive : DARTBOARD_COLORS.centerRed
+}
 
 const boardTextProps = {
   className: DARTBOARD_TEXT_CLASS,
@@ -79,9 +97,26 @@ const BoardLabel = ({ x, y, fontSize, children }: BoardLabelProps) => (
   </text>
 )
 
+const BoardDividerLine = ({
+  line,
+}: {
+  line: { x1: number; y1: number; x2: number; y2: number }
+}) => (
+  <line
+    x1={line.x1}
+    y1={line.y1}
+    x2={line.x2}
+    y2={line.y2}
+    stroke={DARTBOARD_DIVIDER.stroke}
+    strokeWidth={DARTBOARD_DIVIDER.strokeWidth}
+    pointerEvents="none"
+  />
+)
+
 export const DartBoardGraphic = ({
   hoveredNumber,
   hoveredCorner,
+  hoveredCenterZone,
   activeCenterZone,
   activeMultiplier,
   inputDisabled = false,
@@ -90,6 +125,7 @@ export const DartBoardGraphic = ({
   onCenterPointerDown,
   onCornerHover,
   onNumberHover,
+  onCenterHover,
 }: DartBoardGraphicProps) => (
   <>
     <defs>
@@ -154,8 +190,6 @@ export const DartBoardGraphic = ({
               end,
             )}
             fill={isHovered ? DARTBOARD_COLORS.segmentHover : fill}
-            stroke={DARTBOARD_COLORS.ringStroke}
-            strokeWidth={1}
             style={{ cursor: inputDisabled ? 'default' : 'pointer' }}
             onClick={() => {
               onNumberClick(number)
@@ -170,6 +204,10 @@ export const DartBoardGraphic = ({
         )
       })}
     </g>
+
+    {getCornerDividerLines().map((line) => (
+      <BoardDividerLine key={line.id} line={line} />
+    ))}
 
     {DARTBOARD_NUMBERS.map((number, index) => {
       const { mid } = getSegmentAngles(index)
@@ -190,31 +228,16 @@ export const DartBoardGraphic = ({
 
     <path
       d={describeCenterHalf(0)}
-      fill={
-        activeCenterZone === 'double' || activeMultiplier === DartMultiplier.Double
-          ? DARTBOARD_COLORS.centerActive
-          : DARTBOARD_COLORS.centerRed
-      }
+      fill={getCenterHalfFill('double', hoveredCenterZone, activeCenterZone, activeMultiplier)}
       style={{ pointerEvents: 'none' }}
     />
     <path
       d={describeCenterHalf(1)}
-      fill={
-        activeCenterZone === 'triple' || activeMultiplier === DartMultiplier.Triple
-          ? DARTBOARD_COLORS.centerActive
-          : DARTBOARD_COLORS.centerRed
-      }
+      fill={getCenterHalfFill('triple', hoveredCenterZone, activeCenterZone, activeMultiplier)}
       style={{ pointerEvents: 'none' }}
     />
-    <line
-      x1={DARTBOARD_CENTER}
-      y1={DARTBOARD_CENTER - DARTBOARD_CENTER_RADIUS}
-      x2={DARTBOARD_CENTER}
-      y2={DARTBOARD_CENTER + DARTBOARD_CENTER_RADIUS}
-      stroke={DARTBOARD_COLORS.ringStroke}
-      strokeWidth={2}
-      style={{ pointerEvents: 'none' }}
-    />
+
+    <BoardDividerLine line={getCenterDividerLine()} />
 
     <path
       d={describeCenterHalf(0)}
@@ -223,6 +246,12 @@ export const DartBoardGraphic = ({
       style={{ cursor: inputDisabled ? 'default' : 'pointer' }}
       onPointerDown={(event) => {
         onCenterPointerDown('double', event)
+      }}
+      onMouseEnter={() => {
+        onCenterHover('double')
+      }}
+      onMouseLeave={() => {
+        onCenterHover(null)
       }}
     />
     <path
@@ -233,12 +262,18 @@ export const DartBoardGraphic = ({
       onPointerDown={(event) => {
         onCenterPointerDown('triple', event)
       }}
+      onMouseEnter={() => {
+        onCenterHover('triple')
+      }}
+      onMouseLeave={() => {
+        onCenterHover(null)
+      }}
     />
 
-    <BoardLabel x={DARTBOARD_CENTER - 28} y={DARTBOARD_CENTER} fontSize={16}>
+    <BoardLabel x={DARTBOARD_CENTER - 40} y={DARTBOARD_CENTER} fontSize={16}>
       D
     </BoardLabel>
-    <BoardLabel x={DARTBOARD_CENTER + 28} y={DARTBOARD_CENTER} fontSize={16}>
+    <BoardLabel x={DARTBOARD_CENTER + 40} y={DARTBOARD_CENTER} fontSize={16}>
       T
     </BoardLabel>
 
