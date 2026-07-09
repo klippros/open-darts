@@ -61,6 +61,32 @@ const isDigit = (key: string): boolean => /^[0-9]$/u.test(key)
 const recordSegment = (state: DartKeyboardInputState, value: number): DartKeyboardStepResult =>
   recordAndReset(state, recordNumber(value, state.armedMultiplier))
 
+const confirmNumberBuffer = (state: DartKeyboardInputState): DartKeyboardStepResult => {
+  const { numberBuffer } = state
+
+  if (numberBuffer === '') {
+    return { state, outputs: [] }
+  }
+
+  if (numberBuffer === '25') {
+    return recordAndReset(state, recordOuterBull())
+  }
+
+  const value = Number(numberBuffer)
+
+  if (Number.isInteger(value) && value >= 1 && value <= 20) {
+    return recordSegment(state, value)
+  }
+
+  return {
+    state: {
+      ...state,
+      numberBuffer: '',
+    },
+    outputs: [],
+  }
+}
+
 export const processDartKeyboardKey = (
   state: DartKeyboardInputState,
   key: string,
@@ -114,71 +140,55 @@ export const processDartKeyboardKey = (
     }
   }
 
+  if (normalizedKey === ' ') {
+    return confirmNumberBuffer(state)
+  }
+
   if (!isDigit(normalizedKey)) {
     return { state, outputs: [] }
   }
 
-  if (state.numberBuffer === '1') {
-    const value = Number(`1${normalizedKey}`)
-
-    if (value >= 10 && value <= 19) {
-      return recordSegment(state, value)
-    }
-  }
-
-  if (state.numberBuffer === '2' && normalizedKey === '0') {
-    return recordSegment(state, 20)
-  }
-
-  if (state.numberBuffer === '2' && normalizedKey === '5') {
-    return recordAndReset(state, recordOuterBull())
-  }
-
-  if (state.numberBuffer === '2') {
-    const firstDart = recordSegment({ ...state, numberBuffer: '' }, 2)
-
-    return processDartKeyboardKey(firstDart.state, normalizedKey)
-  }
-
-  if (state.numberBuffer === '') {
-    if (normalizedKey >= '3' && normalizedKey <= '9') {
-      return recordSegment(state, Number(normalizedKey))
-    }
-
-    return {
-      state: {
-        ...state,
-        numberBuffer: normalizedKey,
-      },
-      outputs: [],
-    }
-  }
-
-  return { state, outputs: [] }
-}
-
-export const processDartKeyboardNumberTimeout = (
-  state: DartKeyboardInputState,
-): DartKeyboardStepResult => {
-  if (state.numberBuffer === '1' || state.numberBuffer === '2') {
-    return recordSegment(state, Number(state.numberBuffer))
-  }
-
-  return { state, outputs: [] }
-}
-
-export const processDartKeyboardModifierTimeout = (
-  state: DartKeyboardInputState,
-): DartKeyboardStepResult => {
-  if (state.armedMultiplier === DartMultiplier.Single) {
-    return { state, outputs: [] }
-  }
+  const numberBuffer =
+    state.numberBuffer.length >= 2 ? normalizedKey : `${state.numberBuffer}${normalizedKey}`
 
   return {
     state: {
       ...state,
-      armedMultiplier: DartMultiplier.Single,
+      numberBuffer,
     },
-    outputs: [{ type: 'clearModifier' }],
+    outputs: [],
+  }
+}
+
+export interface DartKeyboardPreview {
+  activeMultiplier: DartMultiplier.Double | DartMultiplier.Triple | null
+  highlightedNumber: number | null
+  highlightOuterBull: boolean
+}
+
+export const getDartKeyboardPreview = (state: DartKeyboardInputState): DartKeyboardPreview => {
+  let activeMultiplier: DartMultiplier.Double | DartMultiplier.Triple | null = null
+
+  if (state.armedMultiplier === DartMultiplier.Double) {
+    activeMultiplier = DartMultiplier.Double
+  } else if (state.armedMultiplier === DartMultiplier.Triple) {
+    activeMultiplier = DartMultiplier.Triple
+  }
+
+  if (state.numberBuffer === '25') {
+    return {
+      activeMultiplier,
+      highlightedNumber: null,
+      highlightOuterBull: true,
+    }
+  }
+
+  const value = Number(state.numberBuffer)
+
+  return {
+    activeMultiplier,
+    highlightedNumber:
+      Number.isInteger(value) && value >= 1 && value <= 20 ? value : null,
+    highlightOuterBull: false,
   }
 }

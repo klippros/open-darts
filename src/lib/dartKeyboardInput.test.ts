@@ -1,19 +1,20 @@
 import { describe, expect, it } from 'vitest'
-import {
-  createDartKeyboardInputState,
-  processDartKeyboardKey,
-  processDartKeyboardModifierTimeout,
-  processDartKeyboardNumberTimeout,
-} from './dartKeyboardInput'
+import { createDartKeyboardInputState, getDartKeyboardPreview, processDartKeyboardKey } from './dartKeyboardInput'
 import { DartMultiplier, DartSegmentType } from '../types/dart'
 
-describe('processDartKeyboardKey', () => {
-  it('records singles for digits 3 through 9', () => {
-    const state = createDartKeyboardInputState()
-    const result = processDartKeyboardKey(state, '7')
+const confirm = (state: ReturnType<typeof processDartKeyboardKey>['state']) =>
+  processDartKeyboardKey(state, ' ')
 
-    expect(result.outputs).toHaveLength(1)
-    expect(result.outputs[0]).toMatchObject({
+describe('processDartKeyboardKey', () => {
+  it('records singles after number entry is confirmed with space', () => {
+    const typed = processDartKeyboardKey(createDartKeyboardInputState(), '7')
+    expect(typed.state.numberBuffer).toBe('7')
+    expect(typed.outputs).toHaveLength(0)
+
+    const result = confirm(typed.state)
+    const [output] = result.outputs
+
+    expect(output).toMatchObject({
       type: 'dart',
       dart: {
         segment: { type: DartSegmentType.Number, value: 7 },
@@ -23,7 +24,7 @@ describe('processDartKeyboardKey', () => {
     })
   })
 
-  it('buffers 1 and 2 for two-digit entry', () => {
+  it('buffers digits until space is pressed', () => {
     const one = processDartKeyboardKey(createDartKeyboardInputState(), '1')
     expect(one.state.numberBuffer).toBe('1')
     expect(one.outputs).toHaveLength(0)
@@ -33,9 +34,10 @@ describe('processDartKeyboardKey', () => {
     expect(two.outputs).toHaveLength(0)
   })
 
-  it('records 10 through 19 from a 1 prefix', () => {
+  it('records 10 through 19 after space', () => {
     const { state } = processDartKeyboardKey(createDartKeyboardInputState(), '1')
-    const result = processDartKeyboardKey(state, '4')
+    const typed = processDartKeyboardKey(state, '4')
+    const result = confirm(typed.state)
     const [output] = result.outputs
 
     expect(output).toMatchObject({
@@ -47,9 +49,10 @@ describe('processDartKeyboardKey', () => {
     })
   })
 
-  it('records 20 from 2 then 0', () => {
+  it('records 20 after 2, 0, and space', () => {
     const { state } = processDartKeyboardKey(createDartKeyboardInputState(), '2')
-    const result = processDartKeyboardKey(state, '0')
+    const typed = processDartKeyboardKey(state, '0')
+    const result = confirm(typed.state)
     const [output] = result.outputs
 
     expect(output).toMatchObject({
@@ -61,9 +64,10 @@ describe('processDartKeyboardKey', () => {
     })
   })
 
-  it('records outer bull from 2 then 5', () => {
+  it('records outer bull from 2, 5, and space', () => {
     const { state } = processDartKeyboardKey(createDartKeyboardInputState(), '2')
-    const result = processDartKeyboardKey(state, '5')
+    const typed = processDartKeyboardKey(state, '5')
+    const result = confirm(typed.state)
     const [output] = result.outputs
 
     expect(output).toMatchObject({
@@ -71,20 +75,6 @@ describe('processDartKeyboardKey', () => {
       dart: {
         segment: { type: DartSegmentType.OuterBull },
         points: 25,
-      },
-    })
-  })
-
-  it('completes buffered singles on number timeout', () => {
-    const { state } = processDartKeyboardKey(createDartKeyboardInputState(), '2')
-    const result = processDartKeyboardNumberTimeout(state)
-    const [output] = result.outputs
-
-    expect(output).toMatchObject({
-      type: 'dart',
-      dart: {
-        segment: { type: DartSegmentType.Number, value: 2 },
-        points: 2,
       },
     })
   })
@@ -97,10 +87,11 @@ describe('processDartKeyboardKey', () => {
     expect(tripleState.armedMultiplier).toBe(DartMultiplier.Triple)
   })
 
-  it('records armed double and triple darts', () => {
+  it('records armed double and triple darts after space', () => {
     const { state: doubleState } = processDartKeyboardKey(createDartKeyboardInputState(), 'd')
     const { state: withOne } = processDartKeyboardKey(doubleState, '1')
-    const doubleDart = processDartKeyboardKey(withOne, '6')
+    const typed = processDartKeyboardKey(withOne, '6')
+    const doubleDart = confirm(typed.state)
     const [doubleOutput] = doubleDart.outputs
 
     expect(doubleOutput).toMatchObject({
@@ -114,7 +105,8 @@ describe('processDartKeyboardKey', () => {
 
     const { state: tripleState } = processDartKeyboardKey(createDartKeyboardInputState(), 't')
     const { state: withTwo } = processDartKeyboardKey(tripleState, '2')
-    const tripleDart = processDartKeyboardKey(withTwo, '0')
+    const typedTriple = processDartKeyboardKey(withTwo, '0')
+    const tripleDart = confirm(typedTriple.state)
     const [tripleOutput] = tripleDart.outputs
 
     expect(tripleOutput).toMatchObject({
@@ -154,11 +146,45 @@ describe('processDartKeyboardKey', () => {
     expect(undo.outputs).toEqual([{ type: 'undo' }])
   })
 
-  it('clears armed modifier after timeout', () => {
+  it('clears invalid buffered numbers on space', () => {
+    const { state } = processDartKeyboardKey(createDartKeyboardInputState(), '2')
+    const typed = processDartKeyboardKey(state, '1')
+    const result = confirm(typed.state)
+
+    expect(result.outputs).toHaveLength(0)
+    expect(result.state.numberBuffer).toBe('')
+  })
+
+  it('clears armed modifier on escape', () => {
     const { state: armed } = processDartKeyboardKey(createDartKeyboardInputState(), 'd')
-    const result = processDartKeyboardModifierTimeout(armed)
+    const result = processDartKeyboardKey(armed, 'Escape')
 
     expect(result.state.armedMultiplier).toBe(DartMultiplier.Single)
     expect(result.outputs).toEqual([{ type: 'clearModifier' }])
+  })
+
+  it('exposes board preview state for armed modifiers and buffered numbers', () => {
+    const { state: armed } = processDartKeyboardKey(createDartKeyboardInputState(), 'd')
+    expect(getDartKeyboardPreview(armed)).toMatchObject({
+      activeMultiplier: DartMultiplier.Double,
+      highlightedNumber: null,
+      highlightOuterBull: false,
+    })
+
+    const { state: withFour } = processDartKeyboardKey(armed, '4')
+    expect(getDartKeyboardPreview(withFour)).toMatchObject({
+      activeMultiplier: DartMultiplier.Double,
+      highlightedNumber: 4,
+      highlightOuterBull: false,
+    })
+
+    const { state: outerBull } = processDartKeyboardKey(
+      processDartKeyboardKey(createDartKeyboardInputState(), '2').state,
+      '5',
+    )
+    expect(getDartKeyboardPreview(outerBull)).toMatchObject({
+      highlightedNumber: null,
+      highlightOuterBull: true,
+    })
   })
 })

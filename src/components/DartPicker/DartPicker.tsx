@@ -1,4 +1,4 @@
-import { Box, Text } from '@chakra-ui/react'
+import { Box, Stack, Text } from '@chakra-ui/react'
 import { useCallback } from 'react'
 import { useDartKeyboard } from '../../hooks/useDartKeyboard'
 import { createDartThrow } from '../../lib/dartScoring'
@@ -15,7 +15,7 @@ export interface DartPickerProps {
 }
 
 export const DartPicker = ({ onDart, onUndo, inputDisabled = false }: DartPickerProps) => {
-  useDartKeyboard({ onDart, onUndo, inputDisabled })
+  const { preview: keyboardPreview } = useDartKeyboard({ onDart, onUndo, inputDisabled })
 
   const recordNumber = useCallback(
     (value: number, multiplier: DartMultiplier) => {
@@ -38,9 +38,9 @@ export const DartPicker = ({ onDart, onUndo, inputDisabled = false }: DartPicker
 
   const {
     svgRef,
-    activeMultiplier,
-    hoveredNumber,
-    hoveredCorner,
+    activeMultiplier: pointerActiveMultiplier,
+    hoveredNumber: pointerHoveredNumber,
+    hoveredCorner: pointerHoveredCorner,
     activeCenterZone,
     handlePointerDown,
     handlePointerMove,
@@ -54,6 +54,11 @@ export const DartPicker = ({ onDart, onUndo, inputDisabled = false }: DartPicker
     recordMiss,
     inputDisabled,
   })
+
+  const hoveredNumber = pointerHoveredNumber ?? keyboardPreview.highlightedNumber
+  const hoveredCorner =
+    pointerHoveredCorner ?? (keyboardPreview.highlightOuterBull ? 'outerBull' : null)
+  const activeMultiplier = pointerActiveMultiplier ?? keyboardPreview.activeMultiplier
 
   return (
     <Box
@@ -101,10 +106,15 @@ export const DartPicker = ({ onDart, onUndo, inputDisabled = false }: DartPicker
         </svg>
       </Box>
 
-      <Text mt={3} display={{ base: 'none', md: 'block' }} fontSize="xs" color="whiteAlpha.500">
-        Tap a segment for a single. Press Double or Triple in the center, then tap a segment, or
-        drag from the center onto a number. Corners: Bull, 25, Undo, Miss.
-      </Text>
+      <Stack mt={3} gap={1} fontSize="xs" color="whiteAlpha.500">
+        <Text>
+          Keyboard: D/T for double/triple, type the segment number, then Space to confirm. B bull,
+          Tab miss, Backspace undo, Esc clear modifier.
+        </Text>
+        <Text display={{ base: 'none', md: 'block' }}>
+          Tap the board to score. Center arms double/triple; corners are Bull, 25, Undo, and Miss.
+        </Text>
+      </Stack>
     </Box>
   )
 }

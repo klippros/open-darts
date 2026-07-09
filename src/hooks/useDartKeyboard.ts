@@ -1,15 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   createDartKeyboardInputState,
+  getDartKeyboardPreview,
   processDartKeyboardKey,
-  processDartKeyboardModifierTimeout,
-  processDartKeyboardNumberTimeout,
 } from '../lib/dartKeyboardInput'
+import type { DartKeyboardPreview } from '../lib/dartKeyboardInput'
 import type { DartThrow } from '../types/dart'
-import { DartMultiplier } from '../types/dart'
-
-const NUMBER_ENTRY_TIMEOUT_MS = 800
-const MODIFIER_TIMEOUT_MS = 2000
 
 const isEditableTarget = (target: EventTarget | null): boolean => {
   if (!(target instanceof HTMLElement)) {
@@ -31,29 +27,19 @@ export interface UseDartKeyboardOptions {
   inputDisabled?: boolean
 }
 
+const emptyPreview: DartKeyboardPreview = {
+  activeMultiplier: null,
+  highlightedNumber: null,
+  highlightOuterBull: false,
+}
+
 export const useDartKeyboard = ({
   onDart,
   onUndo,
   inputDisabled = false,
 }: UseDartKeyboardOptions) => {
-  const [inputState, setInputState] = useState(createDartKeyboardInputState)
-  const inputStateRef = useRef(inputState)
-  const numberTimeoutRef = useRef<number | null>(null)
-  const modifierTimeoutRef = useRef<number | null>(null)
-
-  const clearNumberTimeout = useCallback(() => {
-    if (numberTimeoutRef.current !== null) {
-      window.clearTimeout(numberTimeoutRef.current)
-      numberTimeoutRef.current = null
-    }
-  }, [])
-
-  const clearModifierTimeout = useCallback(() => {
-    if (modifierTimeoutRef.current !== null) {
-      window.clearTimeout(modifierTimeoutRef.current)
-      modifierTimeoutRef.current = null
-    }
-  }, [])
+  const [preview, setPreview] = useState<DartKeyboardPreview>(emptyPreview)
+  const inputStateRef = useRef(createDartKeyboardInputState())
 
   const applyOutputs = useCallback(
     (outputs: ReturnType<typeof processDartKeyboardKey>['outputs']) => {
@@ -70,29 +56,6 @@ export const useDartKeyboard = ({
     [onDart, onUndo],
   )
 
-  const scheduleNumberTimeout = useCallback(() => {
-    clearNumberTimeout()
-
-    numberTimeoutRef.current = window.setTimeout(() => {
-      const result = processDartKeyboardNumberTimeout(inputStateRef.current)
-      inputStateRef.current = result.state
-      setInputState(result.state)
-      applyOutputs(result.outputs)
-      numberTimeoutRef.current = null
-    }, NUMBER_ENTRY_TIMEOUT_MS)
-  }, [applyOutputs, clearNumberTimeout])
-
-  const scheduleModifierTimeout = useCallback(() => {
-    clearModifierTimeout()
-
-    modifierTimeoutRef.current = window.setTimeout(() => {
-      const result = processDartKeyboardModifierTimeout(inputStateRef.current)
-      inputStateRef.current = result.state
-      setInputState(result.state)
-      modifierTimeoutRef.current = null
-    }, MODIFIER_TIMEOUT_MS)
-  }, [clearModifierTimeout])
-
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       if (isEditableTarget(event.target)) {
@@ -107,22 +70,10 @@ export const useDartKeyboard = ({
 
       const result = processDartKeyboardKey(inputStateRef.current, event.key)
       inputStateRef.current = result.state
-      setInputState(result.state)
+      setPreview(getDartKeyboardPreview(result.state))
       applyOutputs(result.outputs)
 
-      if (result.state.numberBuffer === '') {
-        clearNumberTimeout()
-      } else {
-        scheduleNumberTimeout()
-      }
-
-      if (result.state.armedMultiplier === DartMultiplier.Single) {
-        clearModifierTimeout()
-      } else {
-        scheduleModifierTimeout()
-      }
-
-      if (result.outputs.length > 0 || result.state.numberBuffer !== '') {
+      if (result.outputs.length > 0 || result.state.numberBuffer !== '' || event.key === ' ') {
         event.preventDefault()
       }
 
@@ -130,14 +81,7 @@ export const useDartKeyboard = ({
         event.preventDefault()
       }
     },
-    [
-      applyOutputs,
-      clearModifierTimeout,
-      clearNumberTimeout,
-      inputDisabled,
-      scheduleModifierTimeout,
-      scheduleNumberTimeout,
-    ],
+    [applyOutputs, inputDisabled],
   )
 
   useEffect(() => {
@@ -145,8 +89,8 @@ export const useDartKeyboard = ({
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
-      clearNumberTimeout()
-      clearModifierTimeout()
     }
-  }, [clearModifierTimeout, clearNumberTimeout, handleKeyDown])
+  }, [handleKeyDown])
+
+  return { preview }
 }
