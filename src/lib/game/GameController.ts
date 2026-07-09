@@ -71,11 +71,29 @@ export class GameController<State, Config> {
   }
 
   undoDart(): GameController<State, Config> {
-    if (this.pendingDarts.length === 0 || this.isComplete) {
+    if (this.pendingDarts.length > 0) {
+      return this.clone({ pendingDarts: this.pendingDarts.slice(0, -1) })
+    }
+
+    const lastVisit = this.session.visits.at(-1)
+
+    if (lastVisit === undefined) {
       return this
     }
 
-    return this.clone({ pendingDarts: this.pendingDarts.slice(0, -1) })
+    const pendingDarts = lastVisit.darts.slice(0, -1)
+    const visits = this.session.visits.slice(0, -1)
+    const engineState = this.rebuildEngineStateFromVisits(visits)
+    const turnIndex = this.getTurnIndexForPlayer(lastVisit.playerId)
+
+    const session: GameSession = {
+      ...this.session,
+      visits,
+      status: GameStatus.InProgress,
+      completedAt: undefined,
+    }
+
+    return new GameController(session, this.engine, engineState, pendingDarts, turnIndex)
   }
 
   commitPendingVisit(pendingDarts = this.pendingDarts): GameController<State, Config> {
@@ -122,6 +140,34 @@ export class GameController<State, Config> {
     }
 
     return this.engine.applyDart(this.engineState, this.activePlayerId, this.pendingDarts)
+  }
+
+  private getTurnIndexForPlayer(playerId: string): number {
+    const turnIndex = this.session.players.findIndex((player) => player.id === playerId)
+
+    if (turnIndex === -1) {
+      throw new Error(`Unknown player: ${playerId}`)
+    }
+
+    return turnIndex
+  }
+
+  private rebuildEngineStateFromVisits(visits: Visit[]): State {
+    const { players, config } = this.session
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- session config matches engine config for the active mode
+    let state = this.engine.createInitialState(players, config as Config)
+
+    for (const visit of visits) {
+      const { state: nextState } = this.engine.commitVisit(
+        state,
+        visit.playerId,
+        visit.visitIndex,
+        visit.darts,
+      )
+      state = nextState
+    }
+
+    return state
   }
 
   private clone(overrides: {

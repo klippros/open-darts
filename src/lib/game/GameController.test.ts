@@ -69,6 +69,66 @@ describe('GameController', () => {
     expect(undone.scoreboard.players[0]?.primaryScore).toBe(441)
   })
 
+  it('undoes the last dart from a committed visit', () => {
+    const controller = createGameController({
+      mode: GameModeId.X01,
+      players: [soloPlayer],
+    })
+
+    const afterVisit = controller
+      .recordDart(numberDart(20, DartMultiplier.Single))
+      .recordDart(numberDart(20, DartMultiplier.Single))
+      .recordDart(numberDart(20, DartMultiplier.Single))
+    const undone = afterVisit.undoDart()
+
+    expect(undone.session.visits).toHaveLength(0)
+    expect(undone.pendingDarts).toHaveLength(2)
+    expect(undone.scoreboard.players[0]?.primaryScore).toBe(461)
+  })
+
+  it('undoes a checkout and resumes the match', () => {
+    const controller = createGameController({
+      mode: GameModeId.X01,
+      config: { startScore: 40, doubleIn: false, doubleOut: true },
+      players: [soloPlayer],
+    })
+
+    const finished = controller.recordDart(numberDart(20, DartMultiplier.Double))
+    const undone = finished.undoDart()
+
+    expect(undone.isComplete).toBe(false)
+    expect(undone.session.status).toBe(GameStatus.InProgress)
+    expect(undone.session.visits).toHaveLength(0)
+    expect(undone.pendingDarts).toHaveLength(0)
+    expect(undone.scoreboard.players[0]?.primaryScore).toBe(40)
+  })
+
+  it('undoes across player turns', () => {
+    const playerOne = createPlayer('One', PlayerKind.Human, 'p1')
+    const playerTwo = createPlayer('Two', PlayerKind.Human, 'p2')
+    const controller = createGameController({
+      mode: GameModeId.X01,
+      players: [playerOne, playerTwo],
+    })
+
+    const afterPlayerTwoVisit = controller
+      .recordDart(numberDart(20, DartMultiplier.Single))
+      .recordDart(numberDart(20, DartMultiplier.Single))
+      .recordDart(numberDart(20, DartMultiplier.Single))
+      .recordDart(numberDart(20, DartMultiplier.Single))
+      .recordDart(numberDart(20, DartMultiplier.Single))
+      .recordDart(numberDart(20, DartMultiplier.Single))
+
+    expect(afterPlayerTwoVisit.activePlayerId).toBe(playerOne.id)
+
+    const undone = afterPlayerTwoVisit.undoDart()
+
+    expect(undone.activePlayerId).toBe(playerTwo.id)
+    expect(undone.session.visits).toHaveLength(1)
+    expect(undone.pendingDarts).toHaveLength(2)
+    expect(undone.scoreboard.players[1]?.primaryScore).toBe(461)
+  })
+
   it('rotates turns between players', () => {
     const playerOne = createPlayer('One', PlayerKind.Human, 'p1')
     const playerTwo = createPlayer('Two', PlayerKind.Human, 'p2')

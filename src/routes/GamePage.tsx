@@ -2,7 +2,7 @@ import { Box, Button, Stack } from '@chakra-ui/react'
 import { useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ContentContainer } from '../components/ContentContainer'
-import { DartPickerBasic } from '../components/DartPicker/DartPickerBasic'
+import { DartPicker } from '../components/DartPicker/DartPicker'
 import { GameOver } from '../components/GameOver/GameOver'
 import { Scoreboard } from '../components/Scoreboard/Scoreboard'
 import { useRegisterMatchAbort } from '../hooks/useRegisterMatchAbort'
@@ -40,19 +40,18 @@ export const GamePage = () => {
             visits={controller.session.visits}
           />
 
-          {controller.isComplete ? (
-            <GameOver onPlayAgain={restart} />
-          ) : (
-            <>
-              <DartPickerBasic
-                onDart={recordDart}
-                onUndo={undoDart}
-                disabled={controller.isComplete}
-              />
-              <Button variant="cancel" alignSelf="flex-start" onClick={handleAbort}>
-                Abort match
-              </Button>
-            </>
+          {controller.isComplete && <GameOver onPlayAgain={restart} />}
+
+          <DartPicker
+            onDart={recordDart}
+            onUndo={undoDart}
+            inputDisabled={controller.isComplete}
+          />
+
+          {!controller.isComplete && (
+            <Button variant="cancel" alignSelf="flex-start" onClick={handleAbort}>
+              Abort match
+            </Button>
           )}
         </Stack>
       </Box>
