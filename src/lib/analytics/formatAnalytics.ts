@@ -6,3 +6,6 @@ export const formatPercent = (rate: number | null): string =>
 
 export const formatCount = (value: number | null, digits = 1): string =>
   value === null ? '—' : value.toFixed(digits)
+
+export const formatInteger = (value: number | null): string =>
+  value === null ? '—' : String(Math.round(value))

@@ -1,12 +1,10 @@
 import { GameStatus } from '../../types/gameMode'
-import type { GameModeId } from '../../types/gameMode'
 import type { GameSession } from '../../types/gameSession'
 import { getSessionCompletedAt } from '../history/sessionSummary'
 
 export type DateRangePreset = 'all' | '7d' | '30d'
 
 export interface AnalyticsFilter {
-  mode: GameModeId | 'all'
   dateRange: DateRangePreset
 }
 
@@ -27,10 +25,6 @@ export const filterSessions = (sessions: GameSession[], filter: AnalyticsFilter)
 
   return sessions.filter((session) => {
     if (session.status !== GameStatus.Completed) {
-      return false
-    }
-
-    if (filter.mode !== 'all' && session.mode !== filter.mode) {
       return false
     }
 

@@ -1,4 +1,3 @@
-import { GameModeId } from '../../types/gameMode'
 import type { GameSession } from '../../types/gameSession'
 import type { Visit } from '../../types/visit'
 
@@ -12,6 +11,9 @@ export const getPrimaryPlayerVisits = (session: GameSession): Visit[] => {
   return session.visits.filter((visit) => visit.playerId === playerId)
 }
 
+export const countDartsInSession = (session: GameSession): number =>
+  getPrimaryPlayerVisits(session).reduce((sum, visit) => sum + visit.darts.length, 0)
+
 export const getThreeDartAverage = (visits: Visit[]): number | null => {
   if (visits.length === 0) {
     return null
@@ -22,11 +24,20 @@ export const getThreeDartAverage = (visits: Visit[]): number | null => {
   return total / visits.length
 }
 
+export const getMaxGameThreeDartAverage = (sessions: GameSession[]): number | null => {
+  const gameAverages = sessions
+    .map((session) => getThreeDartAverage(getPrimaryPlayerVisits(session)))
+    .filter((average): average is number => average !== null)
+
+  if (gameAverages.length === 0) {
+    return null
+  }
+
+  return Math.max(...gameAverages)
+}
+
 export const countCheckoutVisits = (visits: Visit[]): number =>
   visits.filter((visit) => visit.checkout).length
-
-export const isCheckoutPracticeMode = (mode: GameModeId): boolean =>
-  mode === GameModeId.X01 || mode === GameModeId.OneTwentyOne || mode === GameModeId.TenUpOneDown
 
 export const sessionFinishedWithCheckout = (session: GameSession): boolean =>
   getPrimaryPlayerVisits(session).some((visit) => visit.checkout)
