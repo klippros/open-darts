@@ -60,7 +60,11 @@ export const DartPicker = ({ onDart, onUndo, inputDisabled = false }: DartPicker
     hoveredNumber: pointerHoveredNumber,
     hoveredCorner: pointerHoveredCorner,
     activeCenterZone,
-    handlePointerDown,
+    handleCornerClick,
+    handleNumberClick,
+    handleCenterPointerDown,
+    handleCornerHover,
+    handleNumberHover,
     handlePointerMove,
     handlePointerUp,
     handlePointerLeave,
@@ -108,7 +112,6 @@ export const DartPicker = ({ onDart, onUndo, inputDisabled = false }: DartPicker
           width="100%"
           display="block"
           cursor="pointer"
-          onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerLeave={handlePointerLeave}
@@ -121,6 +124,12 @@ export const DartPicker = ({ onDart, onUndo, inputDisabled = false }: DartPicker
             hoveredCorner={hoveredCorner}
             activeCenterZone={activeCenterZone}
             activeMultiplier={activeMultiplier}
+            inputDisabled={inputDisabled}
+            onCornerClick={handleCornerClick}
+            onNumberClick={handleNumberClick}
+            onCenterPointerDown={handleCenterPointerDown}
+            onCornerHover={handleCornerHover}
+            onNumberHover={handleNumberHover}
           />
         </svg>
       </Box>

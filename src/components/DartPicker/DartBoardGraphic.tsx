@@ -1,3 +1,4 @@
+import type { PointerEvent } from 'react'
 import { DartMultiplier } from '../../types/dart'
 import {
   CORNER_ZONES,
@@ -26,6 +27,12 @@ export interface DartBoardGraphicProps {
   hoveredCorner: CornerZone | null
   activeCenterZone: CenterZone | null
   activeMultiplier: DartMultiplier.Double | DartMultiplier.Triple | null
+  inputDisabled?: boolean
+  onCornerClick: (corner: CornerZone) => void
+  onNumberClick: (number: number) => void
+  onCenterPointerDown: (zone: CenterZone, event: PointerEvent<SVGPathElement>) => void
+  onCornerHover: (corner: CornerZone | null) => void
+  onNumberHover: (number: number | null) => void
 }
 
 const CORNER_LABELS: Record<CornerZone, { text: string; x: number; y: number }> = {
@@ -77,6 +84,12 @@ export const DartBoardGraphic = ({
   hoveredCorner,
   activeCenterZone,
   activeMultiplier,
+  inputDisabled = false,
+  onCornerClick,
+  onNumberClick,
+  onCenterPointerDown,
+  onCornerHover,
+  onNumberHover,
 }: DartBoardGraphicProps) => (
   <>
     <defs>
@@ -102,7 +115,21 @@ export const DartBoardGraphic = ({
       return (
         <g key={corner}>
           <path d={path} fill={getCornerFill(corner, hoveredCorner === corner)} />
-          <path id={`corner-hit-${corner}`} d={path} fill="transparent" aria-hidden="true" />
+          <path
+            d={path}
+            fill="transparent"
+            aria-hidden="true"
+            style={{ cursor: 'pointer' }}
+            onClick={() => {
+              onCornerClick(corner)
+            }}
+            onMouseEnter={() => {
+              onCornerHover(corner)
+            }}
+            onMouseLeave={() => {
+              onCornerHover(null)
+            }}
+          />
         </g>
       )
     })}
@@ -129,6 +156,16 @@ export const DartBoardGraphic = ({
             fill={isHovered ? DARTBOARD_COLORS.segmentHover : fill}
             stroke={DARTBOARD_COLORS.ringStroke}
             strokeWidth={1}
+            style={{ cursor: inputDisabled ? 'default' : 'pointer' }}
+            onClick={() => {
+              onNumberClick(number)
+            }}
+            onMouseEnter={() => {
+              onNumberHover(number)
+            }}
+            onMouseLeave={() => {
+              onNumberHover(null)
+            }}
           />
         )
       })}
@@ -158,6 +195,7 @@ export const DartBoardGraphic = ({
           ? DARTBOARD_COLORS.centerActive
           : DARTBOARD_COLORS.centerRed
       }
+      style={{ pointerEvents: 'none' }}
     />
     <path
       d={describeCenterHalf(1)}
@@ -166,6 +204,7 @@ export const DartBoardGraphic = ({
           ? DARTBOARD_COLORS.centerActive
           : DARTBOARD_COLORS.centerRed
       }
+      style={{ pointerEvents: 'none' }}
     />
     <line
       x1={DARTBOARD_CENTER}
@@ -174,6 +213,26 @@ export const DartBoardGraphic = ({
       y2={DARTBOARD_CENTER + DARTBOARD_CENTER_RADIUS}
       stroke={DARTBOARD_COLORS.ringStroke}
       strokeWidth={2}
+      style={{ pointerEvents: 'none' }}
+    />
+
+    <path
+      d={describeCenterHalf(0)}
+      fill="transparent"
+      aria-label="Double"
+      style={{ cursor: inputDisabled ? 'default' : 'pointer' }}
+      onPointerDown={(event) => {
+        onCenterPointerDown('double', event)
+      }}
+    />
+    <path
+      d={describeCenterHalf(1)}
+      fill="transparent"
+      aria-label="Triple"
+      style={{ cursor: inputDisabled ? 'default' : 'pointer' }}
+      onPointerDown={(event) => {
+        onCenterPointerDown('triple', event)
+      }}
     />
 
     <BoardLabel x={DARTBOARD_CENTER - 28} y={DARTBOARD_CENTER} fontSize={16}>

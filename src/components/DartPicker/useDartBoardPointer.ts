@@ -3,17 +3,9 @@ import type { PointerEvent } from 'react'
 import type { ArmedMultiplier } from '../../lib/dartKeyboardInput'
 import { getActiveBoardMultiplier } from '../../lib/dartKeyboardInput'
 import { DartMultiplier } from '../../types/dart'
-import {
-  DARTBOARD_CENTER,
-  DARTBOARD_CENTER_RADIUS,
-  DARTBOARD_INNER_RADIUS,
-  DARTBOARD_OUTER_RADIUS,
-  getCenterZoneAtPoint,
-  getCornerZoneFromPaths,
-  getNumberAtPoint,
-  toBoardLocalPoint,
-} from './dartboardLayout'
+import { resolveBoardHoverTarget } from './boardHover'
 import type { CenterZone, CornerZone } from './dartboardLayout'
+import { resolveCenterDragRelease } from './centerDragGesture'
 
 export interface UseDartBoardPointerOptions {
   onUndo: () => void
@@ -26,49 +18,8 @@ export interface UseDartBoardPointerOptions {
   inputDisabled?: boolean
 }
 
-const centerZoneToMultiplier = (zone: CenterZone): ArmedMultiplier =>
+const centerZoneToMultiplier = (zone: CenterZone): DartMultiplier =>
   zone === 'double' ? DartMultiplier.Double : DartMultiplier.Triple
-
-const resolveHoverTarget = (
-  svg: SVGSVGElement,
-  x: number,
-  y: number,
-): {
-  corner: CornerZone | null
-  centerZone: CenterZone | null
-  number: number | null
-} => {
-  const localPoint = toBoardLocalPoint(x, y)
-
-  const number = getNumberAtPoint(
-    DARTBOARD_CENTER,
-    DARTBOARD_CENTER,
-    DARTBOARD_INNER_RADIUS,
-    DARTBOARD_OUTER_RADIUS,
-    localPoint.x,
-    localPoint.y,
-  )
-
-  if (number !== null) {
-    return { corner: null, centerZone: null, number }
-  }
-
-  const centerZone = getCenterZoneAtPoint(
-    DARTBOARD_CENTER,
-    DARTBOARD_CENTER,
-    DARTBOARD_CENTER_RADIUS,
-    x,
-    y,
-  )
-
-  if (centerZone !== null) {
-    return { corner: null, centerZone, number: null }
-  }
-
-  const corner = getCornerZoneFromPaths(svg, x, y)
-
-  return { corner, centerZone: null, number: null }
-}
 
 const toActiveMultiplier = (
   multiplier: DartMultiplier | ArmedMultiplier | null,
@@ -95,9 +46,7 @@ export const useDartBoardPointer = ({
   const [hoveredNumber, setHoveredNumber] = useState<number | null>(null)
   const [hoveredCorner, setHoveredCorner] = useState<CornerZone | null>(null)
   const [activeCenterZone, setActiveCenterZone] = useState<CenterZone | null>(null)
-  const pointerActiveRef = useRef(false)
-  const draggedRef = useRef(false)
-  const armedBeforeCenterPressRef = useRef<ArmedMultiplier>(DartMultiplier.Single)
+  const centerDragRef = useRef<{ zone: CenterZone; armedBefore: ArmedMultiplier } | null>(null)
 
   const getSvgPoint = useCallback((clientX: number, clientY: number) => {
     const svg = svgRef.current
@@ -118,39 +67,17 @@ export const useDartBoardPointer = ({
     }
   }, [])
 
-  const updateHoverFromPoint = useCallback((x: number, y: number) => {
-    const svg = svgRef.current
-
-    if (svg === null) {
-      return
-    }
-
-    const target = resolveHoverTarget(svg, x, y)
-    setHoveredCorner(target.corner)
-    setActiveCenterZone(target.centerZone)
-    setHoveredNumber(target.number)
-  }, [])
-
-  const clearPointerState = useCallback(() => {
-    pointerActiveRef.current = false
-    draggedRef.current = false
+  const clearCenterDragState = useCallback(() => {
+    centerDragRef.current = null
     setHeldMultiplier(null)
+    setActiveCenterZone(null)
     setHoveredNumber(null)
     setHoveredCorner(null)
-    setActiveCenterZone(null)
   }, [])
 
-  const handlePointerDown = useCallback(
-    (event: PointerEvent<SVGSVGElement>) => {
-      const point = getSvgPoint(event.clientX, event.clientY)
-
-      if (point === null) {
-        return
-      }
-
-      const target = resolveHoverTarget(event.currentTarget, point.x, point.y)
-
-      if (target.corner === 'undo') {
+  const handleCornerClick = useCallback(
+    (corner: CornerZone) => {
+      if (corner === 'undo') {
         onUndo()
         return
       }
@@ -159,77 +86,75 @@ export const useDartBoardPointer = ({
         return
       }
 
-      if (target.corner === 'bull') {
-        recordBull()
-        return
-      }
-
-      if (target.corner === 'outerBull') {
-        recordOuterBull()
-        return
-      }
-
-      if (target.corner === 'miss') {
-        recordMiss()
-        return
-      }
-
-      if (target.centerZone !== null) {
-        event.currentTarget.setPointerCapture(event.pointerId)
-        pointerActiveRef.current = true
-        draggedRef.current = false
-        armedBeforeCenterPressRef.current = armedMultiplier
-        const multiplier = centerZoneToMultiplier(target.centerZone)
-        setHeldMultiplier(multiplier)
-        setArmedMultiplier(multiplier)
-        setActiveCenterZone(target.centerZone)
-        setHoveredNumber(null)
-        setHoveredCorner(null)
-        return
-      }
-
-      if (target.number !== null) {
-        const multiplier =
-          armedMultiplier === DartMultiplier.Single ? DartMultiplier.Single : armedMultiplier
-        recordNumber(target.number, multiplier)
-        setArmedMultiplier(DartMultiplier.Single)
+      switch (corner) {
+        case 'bull':
+          recordBull()
+          break
+        case 'outerBull':
+          recordOuterBull()
+          break
+        case 'miss':
+          recordMiss()
+          break
+        default: {
+          const exhaustive: never = corner
+          throw new Error(`Unknown corner zone: ${String(exhaustive)}`)
+        }
       }
     },
-    [
-      armedMultiplier,
-      inputDisabled,
-      getSvgPoint,
-      onUndo,
-      recordBull,
-      recordMiss,
-      recordNumber,
-      recordOuterBull,
-      setArmedMultiplier,
-    ],
+    [inputDisabled, onUndo, recordBull, recordMiss, recordOuterBull],
+  )
+
+  const handleNumberClick = useCallback(
+    (number: number) => {
+      if (inputDisabled) {
+        return
+      }
+
+      const multiplier =
+        armedMultiplier === DartMultiplier.Single ? DartMultiplier.Single : armedMultiplier
+      recordNumber(number, multiplier)
+      setArmedMultiplier(DartMultiplier.Single)
+    },
+    [armedMultiplier, inputDisabled, recordNumber, setArmedMultiplier],
+  )
+
+  const handleCenterPointerDown = useCallback(
+    (zone: CenterZone, event: PointerEvent<SVGPathElement>) => {
+      if (inputDisabled) {
+        return
+      }
+
+      svgRef.current?.setPointerCapture(event.pointerId)
+      centerDragRef.current = { zone, armedBefore: armedMultiplier }
+      setHeldMultiplier(centerZoneToMultiplier(zone))
+      setActiveCenterZone(zone)
+      setHoveredNumber(null)
+      setHoveredCorner(null)
+    },
+    [armedMultiplier, inputDisabled],
   )
 
   const handlePointerMove = useCallback(
     (event: PointerEvent<SVGSVGElement>) => {
       const point = getSvgPoint(event.clientX, event.clientY)
 
-      if (point === null) {
+      if (point === null || centerDragRef.current === null) {
         return
       }
 
-      if (pointerActiveRef.current) {
-        draggedRef.current = true
-        updateHoverFromPoint(point.x, point.y)
-        return
-      }
-
-      updateHoverFromPoint(point.x, point.y)
+      const target = resolveBoardHoverTarget(point.x, point.y)
+      setHoveredNumber(target.number)
+      setActiveCenterZone(target.centerZone ?? centerDragRef.current.zone)
     },
-    [getSvgPoint, updateHoverFromPoint],
+    [getSvgPoint],
   )
 
   const handlePointerUp = useCallback(
     (event: PointerEvent<SVGSVGElement>) => {
-      if (inputDisabled || !pointerActiveRef.current) {
+      const drag = centerDragRef.current
+
+      if (drag === null) {
         return
       }
 
@@ -238,43 +163,26 @@ export const useDartBoardPointer = ({
       }
 
       const point = getSvgPoint(event.clientX, event.clientY)
+      const release =
+        point === null
+          ? { number: null, centerZone: null }
+          : resolveBoardHoverTarget(point.x, point.y)
 
-      if (point !== null && !draggedRef.current) {
-        const target = resolveHoverTarget(event.currentTarget, point.x, point.y)
-
-        if (target.centerZone !== null) {
-          const multiplier = centerZoneToMultiplier(target.centerZone)
-
-          if (armedBeforeCenterPressRef.current === multiplier) {
-            setArmedMultiplier(DartMultiplier.Single)
-          }
+      for (const action of resolveCenterDragRelease(drag.zone, release, drag.armedBefore)) {
+        if (action.type === 'recordNumber') {
+          recordNumber(action.value, action.multiplier)
+        } else {
+          setArmedMultiplier(action.multiplier)
         }
       }
 
-      if (point !== null && draggedRef.current && heldMultiplier !== null) {
-        const target = resolveHoverTarget(event.currentTarget, point.x, point.y)
-
-        if (target.number !== null) {
-          recordNumber(target.number, heldMultiplier)
-          setArmedMultiplier(DartMultiplier.Single)
-        }
-      }
-
-      clearPointerState()
-      armedBeforeCenterPressRef.current = DartMultiplier.Single
+      clearCenterDragState()
     },
-    [
-      clearPointerState,
-      getSvgPoint,
-      heldMultiplier,
-      inputDisabled,
-      recordNumber,
-      setArmedMultiplier,
-    ],
+    [clearCenterDragState, getSvgPoint, recordNumber, setArmedMultiplier],
   )
 
   const handlePointerLeave = useCallback(() => {
-    if (!pointerActiveRef.current) {
+    if (centerDragRef.current === null) {
       setHoveredNumber(null)
       setHoveredCorner(null)
       setActiveCenterZone(null)
@@ -289,7 +197,11 @@ export const useDartBoardPointer = ({
     hoveredNumber,
     hoveredCorner,
     activeCenterZone,
-    handlePointerDown,
+    handleCornerClick,
+    handleNumberClick,
+    handleCenterPointerDown,
+    handleCornerHover: setHoveredCorner,
+    handleNumberHover: setHoveredNumber,
     handlePointerMove,
     handlePointerUp,
     handlePointerLeave,

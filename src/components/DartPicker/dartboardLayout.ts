@@ -227,26 +227,6 @@ export type CornerZone = 'bull' | 'outerBull' | 'undo' | 'miss'
 
 export const CORNER_ZONES: CornerZone[] = ['bull', 'outerBull', 'undo', 'miss']
 
-export const getCornerZoneFromPaths = (
-  svg: SVGSVGElement,
-  x: number,
-  y: number,
-): CornerZone | null => {
-  const point = svg.createSVGPoint()
-  point.x = x
-  point.y = y
-
-  for (const corner of CORNER_ZONES) {
-    const element = svg.querySelector(`#corner-hit-${corner}`)
-
-    if (element instanceof SVGGeometryElement && element.isPointInFill(point)) {
-      return corner
-    }
-  }
-
-  return null
-}
-
 export const getCornerFill = (corner: CornerZone, isHovered: boolean): string => {
   if (corner === 'bull') {
     return isHovered ? DARTBOARD_COLORS.cornerBullHover : DARTBOARD_COLORS.cornerBull
