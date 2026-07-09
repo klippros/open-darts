@@ -91,9 +91,39 @@ export class GameController<State, Config> {
       visits,
       status: GameStatus.InProgress,
       completedAt: undefined,
+      finishedEarly: undefined,
     }
 
     return new GameController(session, this.engine, engineState, pendingDarts, turnIndex)
+  }
+
+  finishMatch(): GameController<State, Config> {
+    if (this.isComplete) {
+      return this
+    }
+
+    const withCommittedVisit = this.pendingDarts.length > 0 ? this.commitPendingVisit() : this
+
+    if (withCommittedVisit.isComplete) {
+      return withCommittedVisit
+    }
+
+    const finishedEarly = !withCommittedVisit.engine.isGameComplete(withCommittedVisit.engineState)
+
+    const session: GameSession = {
+      ...withCommittedVisit.session,
+      status: GameStatus.Completed,
+      completedAt: new Date().toISOString(),
+      finishedEarly: finishedEarly ? true : undefined,
+    }
+
+    return new GameController(
+      session,
+      withCommittedVisit.engine,
+      withCommittedVisit.engineState,
+      [],
+      withCommittedVisit.turnIndex,
+    )
   }
 
   commitPendingVisit(pendingDarts = this.pendingDarts): GameController<State, Config> {

@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { getVisitDartSlots, isInCheckoutRange, suggestCheckoutPath } from './x01CheckoutSuggestions'
+import {
+  getVisitDartSlots,
+  isBogeyCheckoutScore,
+  isInCheckoutRange,
+  normalizeCheckoutTarget,
+  suggestCheckoutPath,
+} from './x01CheckoutSuggestions'
 import { DartMultiplier } from '../../types/dart'
 import { numberDart } from '../testHelpers'
 
@@ -44,5 +50,25 @@ describe('x01CheckoutSuggestions', () => {
       { label: 'T20', points: 60 },
       { label: 'Bull', points: 50 },
     ])
+  })
+
+  it('identifies bogey checkout scores', () => {
+    expect(isBogeyCheckoutScore(169, doubleOutConfig)).toBe(true)
+    expect(isBogeyCheckoutScore(168, doubleOutConfig)).toBe(true)
+    expect(isBogeyCheckoutScore(170, doubleOutConfig)).toBe(false)
+    expect(isBogeyCheckoutScore(171, doubleOutConfig)).toBe(false)
+  })
+
+  it('caps checkout targets at 170', () => {
+    expect(normalizeCheckoutTarget(181, doubleOutConfig, { prefer: 'up' })).toBe(170)
+    expect(normalizeCheckoutTarget(200, doubleOutConfig, { prefer: 'up' })).toBe(170)
+  })
+
+  it('skips bogey numbers when advancing targets', () => {
+    expect(normalizeCheckoutTarget(169, doubleOutConfig, { prefer: 'up' })).toBe(170)
+  })
+
+  it('skips bogey numbers when lowering targets', () => {
+    expect(normalizeCheckoutTarget(169, doubleOutConfig, { prefer: 'down' })).toBe(167)
   })
 })

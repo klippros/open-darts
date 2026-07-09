@@ -185,6 +185,29 @@ describe('visitPersistence', () => {
     expect(getResumableSnapshot()).not.toBeNull()
   })
 
+  it('skips archiving completed sessions when auto-save is disabled', () => {
+    let controller = createGameController({
+      mode: GameModeId.X01,
+      config: { startScore: 501, doubleIn: false, doubleOut: true },
+      players: [{ id: 'player-1', name: 'You', kind: PlayerKind.Human }],
+    })
+
+    controller = controller.withSession(
+      {
+        ...controller.session,
+        status: GameStatus.Completed,
+        completedAt: '2026-01-01T00:00:00.000Z',
+      },
+      controller.engineState,
+      controller.turnIndex,
+    )
+
+    persistControllerState(controller, { autoSaveCompletedSessions: false })
+
+    expect(loadStoredSessions()).toHaveLength(0)
+    expect(loadActiveSnapshot()).toBeNull()
+  })
+
   it('returns only in-progress snapshots for resume', () => {
     saveControllerSnapshot(
       createGameController({

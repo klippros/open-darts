@@ -1,4 +1,4 @@
-import { Box, Button, Stack } from '@chakra-ui/react'
+import { Box, Button, HStack, Stack } from '@chakra-ui/react'
 import { ContentContainer } from '../components/ContentContainer'
 import { DartPicker } from '../components/DartPicker/DartPicker'
 import { GameBoardLayout } from '../components/GameBoardLayout'
@@ -6,6 +6,7 @@ import { Scoreboard } from '../components/Scoreboard/Scoreboard'
 import { useAccount } from '../hooks/accountContext'
 import { useGamePage } from '../hooks/useGamePage'
 import { showsVisitHistory } from '../lib/game/gameModeDefinitions'
+import { matchHasProgress } from '../lib/game/matchProgress'
 import { GamePageDialogs } from './GamePageDialogs'
 
 export const GamePage = () => {
@@ -13,6 +14,7 @@ export const GamePage = () => {
     controller,
     recordDart,
     undoDart,
+    finishMatch,
     restart,
     loadState,
     startNewGame,
@@ -25,6 +27,7 @@ export const GamePage = () => {
   const { account, createAccount } = useAccount()
 
   const inputDisabled = controller.isComplete || loadState.kind === 'conflict'
+  const canFinish = matchHasProgress(controller)
 
   return (
     <ContentContainer>
@@ -69,9 +72,14 @@ export const GamePage = () => {
             <DartPicker onDart={recordDart} onUndo={undoDart} inputDisabled={inputDisabled} />
 
             {!controller.isComplete && loadState.kind !== 'conflict' && (
-              <Button variant="cancel" alignSelf="flex-start" onClick={requestAbortMatch}>
-                Abort match
-              </Button>
+              <HStack gap={3} alignSelf="flex-start">
+                <Button variant="emphasis" disabled={!canFinish} onClick={finishMatch}>
+                  Finish
+                </Button>
+                <Button variant="cancel" onClick={requestAbortMatch}>
+                  Abort match
+                </Button>
+              </HStack>
             )}
           </Stack>
         </GameBoardLayout>

@@ -26,9 +26,22 @@ export const finalizeCompletedSession = (controller: AppGameController): void =>
   clearActiveSnapshot()
 }
 
-export const persistControllerState = (controller: AppGameController): void => {
+export interface PersistControllerOptions {
+  autoSaveCompletedSessions?: boolean
+}
+
+export const persistControllerState = (
+  controller: AppGameController,
+  options: PersistControllerOptions = {},
+): void => {
+  const autoSaveCompletedSessions = options.autoSaveCompletedSessions ?? true
+
   if (controller.isComplete) {
-    finalizeCompletedSession(controller)
+    if (autoSaveCompletedSessions) {
+      finalizeCompletedSession(controller)
+    } else {
+      clearActiveSnapshot()
+    }
     return
   }
 

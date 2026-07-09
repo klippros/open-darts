@@ -1,6 +1,7 @@
 import type { DartThrow } from '../../types/dart'
 import type { OneTwentyOneConfig } from '../../types/oneTwentyOne'
 import type { X01Config } from '../../types/x01'
+import { normalizeCheckoutTarget } from '../x01/x01CheckoutSuggestions'
 import { resolveX01Visit } from '../x01/x01Rules'
 
 const toX01Config = (config: OneTwentyOneConfig): X01Config => ({
@@ -22,9 +23,13 @@ export const resolveOneTwentyOneVisit = (
 ): OneTwentyOneVisitOutcome => {
   const outcome = resolveX01Visit(targetScore, darts, toX01Config(config), true)
 
+  const x01Config = toX01Config(config)
+
   if (outcome.checkout) {
     return {
-      targetScoreAfter: targetScore + config.increment,
+      targetScoreAfter: normalizeCheckoutTarget(targetScore + config.increment, x01Config, {
+        prefer: 'up',
+      }),
       bust: false,
       checkout: true,
     }
@@ -32,7 +37,7 @@ export const resolveOneTwentyOneVisit = (
 
   if (outcome.bust) {
     return {
-      targetScoreAfter: config.startScore,
+      targetScoreAfter: normalizeCheckoutTarget(config.startScore, x01Config, { prefer: 'up' }),
       bust: true,
       checkout: false,
     }

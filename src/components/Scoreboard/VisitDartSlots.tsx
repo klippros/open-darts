@@ -1,7 +1,7 @@
-import { Box, Grid, Text } from '@chakra-ui/react'
+import { Box, Grid, Stack, Text } from '@chakra-ui/react'
 import { faArrowRightLong } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { getVisitDartSlots } from '../../lib/x01/x01CheckoutSuggestions'
+import { getVisitDartSlots, isBogeyCheckoutScore } from '../../lib/x01/x01CheckoutSuggestions'
 import type { DartThrow } from '../../types/dart'
 import type { X01Config } from '../../types/x01'
 
@@ -44,38 +44,48 @@ const getSlotStyles = (kind: 'thrown' | 'suggested' | 'empty') => {
 }
 
 export const VisitDartSlots = ({ scoreBeforeVisit, pendingDarts, config }: VisitDartSlotsProps) => {
+  const thrownPoints = pendingDarts.reduce((total, dart) => total + dart.points, 0)
+  const remaining = scoreBeforeVisit - thrownPoints
   const slots = getVisitDartSlots(scoreBeforeVisit, pendingDarts, config)
+  const showBogey = isBogeyCheckoutScore(remaining, config)
 
   return (
-    <Grid templateColumns="repeat(3, 1fr)" gap={3}>
-      {slots.map((slot, index) => {
-        const styles = getSlotStyles(slot.kind)
+    <Stack gap={2}>
+      <Grid templateColumns="repeat(3, 1fr)" gap={3}>
+        {slots.map((slot, index) => {
+          const styles = getSlotStyles(slot.kind)
 
-        return (
-          <Box
-            key={SLOT_KEYS[index]}
-            px={3}
-            py={4}
-            borderRadius="14px"
-            borderWidth="1px"
-            borderColor={styles.borderColor}
-            bg={styles.bg}
-            opacity={styles.opacity}
-            textAlign="center"
-          >
-            <ArrowMark />
-            <Text
-              mt={2}
-              color="white"
-              fontFamily="Archivo Black, sans-serif"
-              fontSize="2xl"
-              lineHeight="1"
+          return (
+            <Box
+              key={SLOT_KEYS[index]}
+              px={3}
+              py={4}
+              borderRadius="14px"
+              borderWidth="1px"
+              borderColor={styles.borderColor}
+              bg={styles.bg}
+              opacity={styles.opacity}
+              textAlign="center"
             >
-              {slot.label ?? '—'}
-            </Text>
-          </Box>
-        )
-      })}
-    </Grid>
+              <ArrowMark />
+              <Text
+                mt={2}
+                color="white"
+                fontFamily="Archivo Black, sans-serif"
+                fontSize="2xl"
+                lineHeight="1"
+              >
+                {slot.label ?? '—'}
+              </Text>
+            </Box>
+          )
+        })}
+      </Grid>
+      {showBogey && (
+        <Text fontSize="sm" color="orange.300" textAlign="center">
+          Bogey — no 3-dart finish
+        </Text>
+      )}
+    </Stack>
   )
 }

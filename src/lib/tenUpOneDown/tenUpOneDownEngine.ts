@@ -3,6 +3,7 @@ import { GameModeId } from '../../types/gameMode'
 import type { TenUpOneDownConfig, TenUpOneDownState } from '../../types/tenUpOneDown'
 import type { X01Config } from '../../types/x01'
 import { sumDartPoints } from '../dartScoring'
+import { normalizeCheckoutTarget } from '../x01/x01CheckoutSuggestions'
 import { previewX01Remaining } from '../x01/x01Rules'
 import { resolveTenUpOneDownVisit } from './tenUpOneDownRules'
 
@@ -26,12 +27,18 @@ export const tenUpOneDownEngine: GameEngine<TenUpOneDownState, TenUpOneDownConfi
   mode: GameModeId.TenUpOneDown,
   maxDartsPerVisit: 3,
 
-  createInitialState: (players, config) => ({
-    config,
-    players: Object.fromEntries(
-      players.map((player) => [player.id, { targetScore: config.startScore }]),
-    ),
-  }),
+  createInitialState: (players, config) => {
+    const x01Config = toX01Config(config)
+    const targetScore = normalizeCheckoutTarget(config.startScore, x01Config, {
+      minScore: config.minScore,
+      prefer: 'up',
+    })
+
+    return {
+      config,
+      players: Object.fromEntries(players.map((player) => [player.id, { targetScore }])),
+    }
+  },
 
   getScoreboard: (state, players, activePlayerId) => ({
     mode: GameModeId.TenUpOneDown,

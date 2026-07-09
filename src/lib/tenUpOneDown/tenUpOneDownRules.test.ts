@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { DartMultiplier } from '../../types/dart'
 import { resolveTenUpOneDownVisit } from './tenUpOneDownRules'
-import { numberDart } from '../testHelpers'
+import { numberDart, bullDart } from '../testHelpers'
 
 const config = {
   startScore: 60,
@@ -61,6 +61,38 @@ describe('tenUpOneDownRules', () => {
       targetScoreAfter: 2,
       bust: true,
       checkout: false,
+    })
+  })
+
+  it('skips bogey numbers when dropping the target', () => {
+    const outcome = resolveTenUpOneDownVisit(
+      170,
+      [
+        numberDart(20, DartMultiplier.Single),
+        numberDart(20, DartMultiplier.Single),
+        numberDart(10, DartMultiplier.Single),
+      ],
+      config,
+    )
+
+    expect(outcome).toEqual({
+      targetScoreAfter: 167,
+      bust: false,
+      checkout: false,
+    })
+  })
+
+  it('caps the next target at 170 after checkout', () => {
+    const outcome = resolveTenUpOneDownVisit(
+      161,
+      [numberDart(20, DartMultiplier.Triple), numberDart(17, DartMultiplier.Triple), bullDart()],
+      { ...config, startScore: 161 },
+    )
+
+    expect(outcome).toEqual({
+      targetScoreAfter: 170,
+      bust: false,
+      checkout: true,
     })
   })
 })

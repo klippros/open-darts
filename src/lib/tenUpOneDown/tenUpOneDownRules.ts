@@ -1,6 +1,7 @@
 import type { DartThrow } from '../../types/dart'
 import type { TenUpOneDownConfig } from '../../types/tenUpOneDown'
 import type { X01Config } from '../../types/x01'
+import { normalizeCheckoutTarget } from '../x01/x01CheckoutSuggestions'
 import { resolveX01Visit } from '../x01/x01Rules'
 
 const toX01Config = (config: TenUpOneDownConfig): X01Config => ({
@@ -22,9 +23,14 @@ export const resolveTenUpOneDownVisit = (
 ): TenUpOneDownVisitOutcome => {
   const outcome = resolveX01Visit(targetScore, darts, toX01Config(config), true)
 
+  const x01Config = toX01Config(config)
+
   if (outcome.checkout) {
     return {
-      targetScoreAfter: targetScore + config.incrementUp,
+      targetScoreAfter: normalizeCheckoutTarget(targetScore + config.incrementUp, x01Config, {
+        minScore: config.minScore,
+        prefer: 'up',
+      }),
       bust: false,
       checkout: true,
     }
@@ -32,7 +38,11 @@ export const resolveTenUpOneDownVisit = (
 
   if (outcome.bust || darts.length === 3) {
     return {
-      targetScoreAfter: Math.max(config.minScore, targetScore - config.decrementDown),
+      targetScoreAfter: normalizeCheckoutTarget(
+        Math.max(config.minScore, targetScore - config.decrementDown),
+        x01Config,
+        { minScore: config.minScore, prefer: 'down' },
+      ),
       bust: outcome.bust,
       checkout: false,
     }

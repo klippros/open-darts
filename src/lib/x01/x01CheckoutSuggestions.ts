@@ -2,7 +2,7 @@ import type { DartThrow } from '../../types/dart'
 import type { X01Config } from '../../types/x01'
 import { formatDart } from '../formatDart'
 
-const MAX_CHECKOUT_SCORE = 170
+export const MAX_CHECKOUT_SCORE = 170
 
 interface CheckoutDart {
   label: string
@@ -98,6 +98,72 @@ export const isInCheckoutRange = (remaining: number, config: X01Config): boolean
 
   return findCheckoutPath(remaining, 3, config, []) !== null
 }
+
+export interface NormalizeCheckoutTargetOptions {
+  minScore?: number
+  prefer?: 'up' | 'down'
+}
+
+const findNearestCheckoutTarget = (
+  from: number,
+  config: X01Config,
+  minScore: number,
+  direction: 'up' | 'down',
+): number | null => {
+  if (direction === 'up') {
+    for (let candidate = from + 1; candidate <= MAX_CHECKOUT_SCORE; candidate += 1) {
+      if (isInCheckoutRange(candidate, config)) {
+        return candidate
+      }
+    }
+
+    for (let candidate = from - 1; candidate >= minScore; candidate -= 1) {
+      if (isInCheckoutRange(candidate, config)) {
+        return candidate
+      }
+    }
+
+    return null
+  }
+
+  for (let candidate = from - 1; candidate >= minScore; candidate -= 1) {
+    if (isInCheckoutRange(candidate, config)) {
+      return candidate
+    }
+  }
+
+  for (let candidate = from + 1; candidate <= MAX_CHECKOUT_SCORE; candidate += 1) {
+    if (isInCheckoutRange(candidate, config)) {
+      return candidate
+    }
+  }
+
+  return null
+}
+
+export const normalizeCheckoutTarget = (
+  score: number,
+  config: X01Config,
+  options: NormalizeCheckoutTargetOptions = {},
+): number => {
+  const minScore = options.minScore ?? 2
+  const prefer = options.prefer ?? 'up'
+
+  if (score <= minScore) {
+    return minScore
+  }
+
+  const clamped = Math.min(MAX_CHECKOUT_SCORE, Math.max(minScore, score))
+
+  if (isInCheckoutRange(clamped, config)) {
+    return clamped
+  }
+
+  return findNearestCheckoutTarget(clamped, config, minScore, prefer) ?? clamped
+}
+
+export const isBogeyCheckoutScore = (remaining: number, config: X01Config): boolean =>
+  remaining >= 2 && remaining <= MAX_CHECKOUT_SCORE && !isInCheckoutRange(remaining, config)
 
 export const suggestCheckoutPath = (
   remaining: number,

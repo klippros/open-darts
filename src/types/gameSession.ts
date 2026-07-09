@@ -11,4 +11,5 @@ export interface GameSession {
   status: GameStatus
   startedAt: string
   completedAt?: string
+  finishedEarly?: boolean
 }

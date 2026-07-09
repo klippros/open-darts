@@ -159,4 +159,38 @@ describe('GameController', () => {
     expect(ignored).toBe(finished)
     expect(ignored.session.visits).toHaveLength(1)
   })
+
+  it('finishes an in-progress match early and opens the summary flow', () => {
+    const controller = createGameController({
+      mode: GameModeId.TenUpOneDown,
+      players: [soloPlayer],
+    })
+
+    const inProgress = controller
+      .recordDart(numberDart(20, DartMultiplier.Single))
+      .recordDart(numberDart(20, DartMultiplier.Single))
+      .recordDart(numberDart(20, DartMultiplier.Single))
+
+    const finished = inProgress.finishMatch()
+
+    expect(finished.isComplete).toBe(true)
+    expect(finished.session.status).toBe(GameStatus.Completed)
+    expect(finished.session.finishedEarly).toBe(true)
+    expect(finished.session.completedAt).toBeTypeOf('string')
+    expect(finished.session.visits).toHaveLength(1)
+  })
+
+  it('commits pending darts before finishing early', () => {
+    const controller = createGameController({
+      mode: GameModeId.OneTwentyOne,
+      players: [soloPlayer],
+    })
+
+    const withPending = controller.recordDart(numberDart(20, DartMultiplier.Single))
+    const finished = withPending.finishMatch()
+
+    expect(finished.session.visits).toHaveLength(1)
+    expect(finished.pendingDarts).toHaveLength(0)
+    expect(finished.isComplete).toBe(true)
+  })
 })

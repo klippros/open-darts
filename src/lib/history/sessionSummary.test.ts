@@ -62,7 +62,7 @@ describe('sessionSummary', () => {
 
   it('builds match summaries for completed games', () => {
     expect(getMatchSummary(sampleSession())).toEqual({
-      title: 'Game shot!',
+      title: 'Session complete',
       details: ['2 visits', '50.0 3-dart average'],
     })
   })
@@ -112,6 +112,39 @@ describe('sessionSummary', () => {
         }),
       ),
     ).toBe('0 visits · Hit every target through bull')
+  })
+
+  it('summarizes early finishes for open-ended practice modes', () => {
+    expect(
+      getMatchSummary(
+        sampleSession({
+          mode: GameModeId.TenUpOneDown,
+          config: {
+            startScore: 60,
+            incrementUp: 10,
+            decrementDown: 1,
+            minScore: 2,
+            doubleOut: true,
+          },
+          finishedEarly: true,
+          visits: [
+            {
+              visitIndex: 0,
+              playerId: 'player-1',
+              darts: [],
+              visitScore: 60,
+              scoreBefore: 60,
+              scoreAfter: 70,
+              bust: false,
+              checkout: false,
+            },
+          ],
+        }),
+      ),
+    ).toEqual({
+      title: '10 Up 1 Down session ended',
+      details: ['1 visit', 'Stopped on 70'],
+    })
   })
 
   it('sorts completed sessions newest first', () => {

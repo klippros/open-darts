@@ -9,10 +9,16 @@ export interface UseGameOptions {
   routeKey?: string
   shouldRestoreOnLoad?: boolean
   persistenceEnabled?: boolean
+  autoSaveCompletedSessions?: boolean
 }
 
 export const useGame = (launchParams: CreateSessionParams, options: UseGameOptions = {}) => {
-  const { routeKey = '', shouldRestoreOnLoad = false, persistenceEnabled = true } = options
+  const {
+    routeKey = '',
+    shouldRestoreOnLoad = false,
+    persistenceEnabled = true,
+    autoSaveCompletedSessions = false,
+  } = options
 
   const createFreshController = useCallback(
     () => createGameController(launchParams),
@@ -49,9 +55,9 @@ export const useGame = (launchParams: CreateSessionParams, options: UseGameOptio
         return
       }
 
-      persistControllerState(nextController)
+      persistControllerState(nextController, { autoSaveCompletedSessions })
     },
-    [persistenceEnabled],
+    [persistenceEnabled, autoSaveCompletedSessions],
   )
 
   const recordDart = useCallback(
@@ -73,6 +79,14 @@ export const useGame = (launchParams: CreateSessionParams, options: UseGameOptio
     })
   }, [persist])
 
+  const finishMatch = useCallback(() => {
+    setController((current) => {
+      const next = current.finishMatch()
+      persist(next)
+      return next
+    })
+  }, [persist])
+
   const restart = useCallback(() => {
     clearActiveSnapshot()
     setController(createFreshController())
@@ -87,6 +101,7 @@ export const useGame = (launchParams: CreateSessionParams, options: UseGameOptio
     controller,
     recordDart,
     undoDart,
+    finishMatch,
     restart,
     discardSavedGame,
   }

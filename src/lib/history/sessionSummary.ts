@@ -37,6 +37,8 @@ export const getMatchSummary = (session: GameSession): MatchSummary => {
   const playerId = session.players[0]?.id
   const averages = getVisitAverages(session.players, session.visits)
   const average = playerId === undefined ? null : averages[playerId]
+  const finishedEarly = session.finishedEarly === true
+  const lastVisit = playerVisits.at(-1)
 
   if (session.mode === GameModeId.X01) {
     const details = [`${visitCount} visit${visitCount === 1 ? '' : 's'}`]
@@ -49,16 +51,18 @@ export const getMatchSummary = (session: GameSession): MatchSummary => {
 
     if (checkoutVisit?.checkout === true) {
       details.push(`Checked out from ${checkoutVisit.scoreBefore}`)
+    } else if (finishedEarly && lastVisit !== undefined) {
+      details.push(`Left on ${lastVisit.scoreAfter}`)
     }
 
     return {
-      title: 'Game shot!',
+      title: checkoutVisit?.checkout === true ? 'Game shot!' : 'Session complete',
       details,
     }
   }
 
   if (session.mode === GameModeId.Bob27) {
-    const finalScore = playerVisits.at(-1)?.scoreAfter
+    const finalScore = lastVisit?.scoreAfter
     const details = [`${visitCount} visit${visitCount === 1 ? '' : 's'}`]
 
     if (finalScore !== undefined) {
@@ -66,18 +70,21 @@ export const getMatchSummary = (session: GameSession): MatchSummary => {
     }
 
     return {
-      title: "Bob's 27 complete",
+      title: finishedEarly ? "Bob's 27 session ended" : "Bob's 27 complete",
       details,
     }
   }
 
   if (session.mode === GameModeId.AroundTheClock) {
+    const details = [`${visitCount} visit${visitCount === 1 ? '' : 's'}`]
+
+    if (!finishedEarly) {
+      details.push('Hit every target through bull')
+    }
+
     return {
-      title: 'Around the Clock complete',
-      details: [
-        `${visitCount} visit${visitCount === 1 ? '' : 's'}`,
-        'Hit every target through bull',
-      ],
+      title: finishedEarly ? 'Around the Clock session ended' : 'Around the Clock complete',
+      details,
     }
   }
 
@@ -88,21 +95,25 @@ export const getMatchSummary = (session: GameSession): MatchSummary => {
       details.push(`${average.toFixed(1)} 3-dart average`)
     }
 
+    if (finishedEarly && lastVisit !== undefined) {
+      details.push(`Stopped on ${lastVisit.scoreAfter}`)
+    }
+
     return {
       title: '121 session complete',
       details,
     }
   }
 
-  const finalScore = playerVisits.at(-1)?.scoreAfter
+  const finalScore = lastVisit?.scoreAfter
   const details = [`${visitCount} visit${visitCount === 1 ? '' : 's'}`]
 
   if (finalScore !== undefined) {
-    details.push(`Finished on ${finalScore}`)
+    details.push(`Stopped on ${finalScore}`)
   }
 
   return {
-    title: '10 Up 1 Down complete',
+    title: finishedEarly ? '10 Up 1 Down session ended' : '10 Up 1 Down complete',
     details,
   }
 }

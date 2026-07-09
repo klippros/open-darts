@@ -12,7 +12,12 @@ import { useGame } from './useGame'
 export type GameLoadState =
   { kind: 'ready' } | { kind: 'conflict'; savedSnapshot: ActiveGameSnapshot }
 
-export const useGameFromRoute = () => {
+export interface UseGameFromRouteOptions {
+  autoSaveCompletedSessions?: boolean
+}
+
+export const useGameFromRoute = (options: UseGameFromRouteOptions = {}) => {
+  const { autoSaveCompletedSessions = false } = options
   const [searchParams] = useSearchParams()
   const launchParams = useMemo(() => parseGameLaunchParams(searchParams), [searchParams])
   const [startFresh, setStartFresh] = useState(false)
@@ -38,7 +43,7 @@ export const useGameFromRoute = () => {
     [searchParams, startFresh],
   )
 
-  const game = useGame(launchParams, { routeKey, shouldRestoreOnLoad })
+  const game = useGame(launchParams, { routeKey, shouldRestoreOnLoad, autoSaveCompletedSessions })
 
   const startNewGame = () => {
     setStartFresh(true)

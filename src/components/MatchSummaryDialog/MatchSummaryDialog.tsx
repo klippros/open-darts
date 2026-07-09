@@ -4,6 +4,7 @@ import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import type { Account, CreateAccountInput } from '../../types/account'
 import type { GameSession } from '../../types/gameSession'
 import { getMatchSummary, getSessionModeLabel } from '../../lib/history/sessionSummary'
+import { saveStoredSession } from '../../lib/storage/gameStore'
 import { darkDialogContentProps } from '../darkDialogContentProps'
 import { SaveAccountDialog } from '../SaveAccountDialog/SaveAccountDialog'
 
@@ -36,15 +37,11 @@ export const MatchSummaryDialog = ({
   }, [open, session.id])
 
   const handleSaveResults = () => {
-    if (account !== null) {
-      void navigate('/history')
-      return
-    }
-
     setAccountDialogOpen(true)
   }
 
   const handleAccountSaved = () => {
+    saveStoredSession(session)
     setAccountDialogOpen(false)
     void navigate('/history')
   }
@@ -91,19 +88,15 @@ export const MatchSummaryDialog = ({
                 <Button variant="ghost" size="sm" alignSelf="flex-start" onClick={onUndoLastDart}>
                   Undo last dart
                 </Button>
-
-                {account !== null && (
-                  <Text fontSize="sm" color="whiteAlpha.700" lineHeight="1.55">
-                    Signed in as {account.displayName}.
-                  </Text>
-                )}
               </Stack>
             </Dialog.Body>
             <Dialog.Footer>
               <Stack direction={{ base: 'column', sm: 'row' }} gap={3} w="full">
-                <Button variant="cta" flex="1" onClick={handleSaveResults}>
-                  Save results
-                </Button>
+                {account === null && (
+                  <Button variant="cta" flex="1" onClick={handleSaveResults}>
+                    Save results
+                  </Button>
+                )}
                 <Button variant="emphasis" flex="1" onClick={onPlayAgain}>
                   Play again
                 </Button>

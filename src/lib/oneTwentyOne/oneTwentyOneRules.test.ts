@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { DartMultiplier } from '../../types/dart'
 import { resolveOneTwentyOneVisit } from './oneTwentyOneRules'
-import { numberDart } from '../testHelpers'
+import { numberDart, bullDart } from '../testHelpers'
 
 const config = { startScore: 121, increment: 20, doubleOut: true }
 
@@ -39,6 +39,20 @@ describe('oneTwentyOneRules', () => {
       targetScoreAfter: 121,
       bust: true,
       checkout: false,
+    })
+  })
+
+  it('caps the next target at 170 after a high checkout', () => {
+    const outcome = resolveOneTwentyOneVisit(
+      161,
+      [numberDart(20, DartMultiplier.Triple), numberDart(17, DartMultiplier.Triple), bullDart()],
+      config,
+    )
+
+    expect(outcome).toEqual({
+      targetScoreAfter: 170,
+      bust: false,
+      checkout: true,
     })
   })
 })
