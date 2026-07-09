@@ -10,6 +10,8 @@
     "postinstall": "chakra typegen src/theme.ts",
     "build": "pnpm typegen && tsc -b && vite build",
     "lint": "oxlint --deny-warnings",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "preview": "vite preview"
@@ -35,6 +37,7 @@
     "oxlint-tsgolint": "^0.24.0",
     "prettier": "^3.9.4",
     "typescript": "~6.0.2",
-    "vite": "^8.1.1"
+    "vite": "^8.1.1",
+    "vitest": "^4.0.18"
   }
 }

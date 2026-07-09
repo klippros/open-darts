@@ -1,13 +1,11 @@
 import { Box, Flex, HStack, Link } from '@chakra-ui/react'
-import { Route, Routes } from 'react-router-dom'
+import { Link as RouterLink, Outlet } from 'react-router-dom'
 import openDartsLogo from './assets/open-darts-logo.svg'
 import klipprosLogo from './assets/klippros-logo.svg'
 import { AppNavbar } from './components/AppNavbar'
 import { ContentContainer } from './components/ContentContainer'
 import { Footer } from './components/Footer'
 import { toolbarControlSize } from './layout'
-import { AboutPage } from './routes/AboutPage'
-import { HomePage } from './routes/HomePage'
 
 export const App = () => (
   <Box
@@ -40,11 +38,21 @@ export const App = () => (
                   style={{ height: toolbarControlSize, width: 'auto', display: 'block' }}
                 />
               </Link>
-              <img
-                src={openDartsLogo}
-                alt="Open Darts"
-                style={{ height: toolbarControlSize, width: 'auto', display: 'block' }}
-              />
+              <Link
+                asChild
+                display="flex"
+                alignItems="center"
+                flexShrink={0}
+                h={toolbarControlSize}
+              >
+                <RouterLink to="/" aria-label="Open Darts home">
+                  <img
+                    src={openDartsLogo}
+                    alt="Open Darts"
+                    style={{ height: toolbarControlSize, width: 'auto', display: 'block' }}
+                  />
+                </RouterLink>
+              </Link>
             </HStack>
             <AppNavbar />
           </Flex>
@@ -61,10 +69,7 @@ export const App = () => (
       className="hide-scrollbar"
     >
       <Box w="full" minH="100%">
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/about" element={<AboutPage />} />
-        </Routes>
+        <Outlet />
       </Box>
     </Flex>
 

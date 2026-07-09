@@ -4,3 +4,5 @@
 - Put **one React component per file**. If a component needs helpers, create a directory named after the main component (e.g. `ExportAssetsModal/`), keep the main component in `<Name>/<Name>.tsx`, and add support components as sibling files in that directory.
 - Define React components as **arrow functions** (`export const MyComponent = () => ...`), not `function` declarations.
 - When a component body is only a `return`, use an **implicit return** (`() => (...)`) instead of a block with `return`.
+- Prefer **string enums** over string literal union types for fixed sets of values (game modes, statuses, multipliers, etc.). Reference enum members (`GameModeId.X01`) instead of raw strings so renames and refactors stay safe.
+- Add **Vitest tests** for game logic in `src/lib/**/*.test.ts`. Each game mode engine must cover scoring, busts, checkouts, turn rules, and edge cases before the stage is considered done.

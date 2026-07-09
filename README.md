@@ -11,6 +11,7 @@ Prerequisites: Node.js, pnpm 10+.
 ```bash
 pnpm install
 pnpm dev      # http://localhost:5173/tools/open-darts/
+pnpm test
 pnpm build
 pnpm preview
 ```

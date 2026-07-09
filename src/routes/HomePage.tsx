@@ -1,13 +1,20 @@
 import { Box, Button, Heading, SimpleGrid, Stack, Text } from '@chakra-ui/react'
+import { Link as RouterLink } from 'react-router-dom'
 import { ContentContainer } from '../components/ContentContainer'
 
 const GAME_MODES = [
-  { id: '501', label: '501', description: 'Classic double-out' },
-  { id: '401', label: '401', description: 'Shorter x01 leg' },
-  { id: '301', label: '301', description: 'Quick x01 leg' },
-  { id: 'bob', label: "Bob's 27", description: 'Doubles practice' },
-  { id: '121', label: '121', description: 'Checkout practice' },
-  { id: 'around-the-clock', label: 'Around the Clock', description: 'Hit 1 to 20 and bull' },
+  { id: '501', label: '501', description: 'Classic double-out', start: 501, available: true },
+  { id: '401', label: '401', description: 'Shorter x01 leg', start: 401, available: false },
+  { id: '301', label: '301', description: 'Quick x01 leg', start: 301, available: false },
+  { id: 'bob', label: "Bob's 27", description: 'Doubles practice', start: null, available: false },
+  { id: '121', label: '121', description: 'Checkout practice', start: null, available: false },
+  {
+    id: 'around-the-clock',
+    label: 'Around the Clock',
+    description: 'Hit 1 to 20 and bull',
+    start: null,
+    available: false,
+  },
 ] as const
 
 export const HomePage = () => (
@@ -30,34 +37,54 @@ export const HomePage = () => (
         </Stack>
 
         <SimpleGrid columns={{ base: 1, sm: 2, lg: 3 }} gap={4}>
-          {GAME_MODES.map((mode) => (
-            <Button
-              key={mode.id}
-              variant="cta"
-              h="auto"
-              py={5}
-              px={5}
-              flexDirection="column"
-              alignItems="flex-start"
-              gap={1}
-              textAlign="left"
-              disabled
-              opacity={0.7}
-              cursor="not-allowed"
-            >
-              <Text fontSize="lg" fontWeight="semibold" color="white">
-                {mode.label}
-              </Text>
-              <Text fontSize="sm" color="whiteAlpha.700" fontWeight="normal">
-                {mode.description}
-              </Text>
-            </Button>
-          ))}
+          {GAME_MODES.map((mode) =>
+            mode.available ? (
+              <Button
+                key={mode.id}
+                asChild
+                variant="cta"
+                h="auto"
+                py={5}
+                px={5}
+                flexDirection="column"
+                alignItems="flex-start"
+                gap={1}
+                textAlign="left"
+              >
+                <RouterLink to={`/game?start=${mode.start}`}>
+                  <Text fontSize="lg" fontWeight="semibold" color="white">
+                    {mode.label}
+                  </Text>
+                  <Text fontSize="sm" color="whiteAlpha.700" fontWeight="normal">
+                    {mode.description}
+                  </Text>
+                </RouterLink>
+              </Button>
+            ) : (
+              <Button
+                key={mode.id}
+                variant="cta"
+                h="auto"
+                py={5}
+                px={5}
+                flexDirection="column"
+                alignItems="flex-start"
+                gap={1}
+                textAlign="left"
+                disabled
+                opacity={0.7}
+                cursor="not-allowed"
+              >
+                <Text fontSize="lg" fontWeight="semibold" color="white">
+                  {mode.label}
+                </Text>
+                <Text fontSize="sm" color="whiteAlpha.700" fontWeight="normal">
+                  {mode.description}
+                </Text>
+              </Button>
+            ),
+          )}
         </SimpleGrid>
-
-        <Text color="whiteAlpha.600" fontSize="sm">
-          Game modes coming in the next stages.
-        </Text>
       </Stack>
     </Box>
   </ContentContainer>
