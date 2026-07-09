@@ -26,7 +26,7 @@ export interface UseDartBoardPointerOptions {
   inputDisabled?: boolean
 }
 
-const centerZoneToMultiplier = (zone: CenterZone): DartMultiplier =>
+const centerZoneToMultiplier = (zone: CenterZone): DartMultiplier.Double | DartMultiplier.Triple =>
   zone === 'double' ? DartMultiplier.Double : DartMultiplier.Triple
 
 const resolveHoverTarget = (
@@ -263,7 +263,14 @@ export const useDartBoardPointer = ({
       clearPointerState()
       armedBeforeCenterPressRef.current = DartMultiplier.Single
     },
-    [clearPointerState, getSvgPoint, heldMultiplier, inputDisabled, recordNumber, setArmedMultiplier],
+    [
+      clearPointerState,
+      getSvgPoint,
+      heldMultiplier,
+      inputDisabled,
+      recordNumber,
+      setArmedMultiplier,
+    ],
   )
 
   const handlePointerLeave = useCallback(() => {
@@ -276,7 +283,9 @@ export const useDartBoardPointer = ({
 
   return {
     svgRef,
-    activeMultiplier: toActiveMultiplier(heldMultiplier ?? getActiveBoardMultiplier(armedMultiplier)),
+    activeMultiplier: toActiveMultiplier(
+      heldMultiplier ?? getActiveBoardMultiplier(armedMultiplier),
+    ),
     hoveredNumber,
     hoveredCorner,
     activeCenterZone,

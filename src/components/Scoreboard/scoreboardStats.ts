@@ -1,7 +1,10 @@
 import type { Player } from '../../types/player'
 import type { Visit } from '../../types/visit'
 
-export const getVisitAverages = (players: Player[], visits: Visit[]): Record<string, number | null> =>
+export const getVisitAverages = (
+  players: Player[],
+  visits: Visit[],
+): Record<string, number | null> =>
   Object.fromEntries(
     players.map((player) => {
       const playerVisits = visits.filter((visit) => visit.playerId === player.id)

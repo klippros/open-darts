@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { createDartKeyboardInputState, getDartKeyboardPreview, processDartKeyboardKey } from './dartKeyboardInput'
+import {
+  createDartKeyboardInputState,
+  getDartKeyboardPreview,
+  processDartKeyboardKey,
+} from './dartKeyboardInput'
 import { DartMultiplier, DartSegmentType } from '../types/dart'
 
 const confirm = (state: ReturnType<typeof processDartKeyboardKey>['state']) =>

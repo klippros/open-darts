@@ -22,9 +22,7 @@ export const ScoreboardCenter = ({
   config,
 }: ScoreboardCenterProps) => {
   const scoreBeforeVisit =
-    activePlayer === undefined
-      ? 0
-      : activePlayer.primaryScore + sumDartPoints(pendingDarts)
+    activePlayer === undefined ? 0 : activePlayer.primaryScore + sumDartPoints(pendingDarts)
 
   return (
     <Stack gap={5}>

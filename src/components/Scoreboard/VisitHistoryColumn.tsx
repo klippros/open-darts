@@ -9,11 +9,7 @@ export interface VisitHistoryColumnProps {
   align?: 'left' | 'right'
 }
 
-export const VisitHistoryColumn = ({
-  player,
-  visits,
-  align = 'left',
-}: VisitHistoryColumnProps) => {
+export const VisitHistoryColumn = ({ player, visits, align = 'left' }: VisitHistoryColumnProps) => {
   const playerVisits = visits.filter((visit) => visit.playerId === player.id).toReversed()
 
   return (

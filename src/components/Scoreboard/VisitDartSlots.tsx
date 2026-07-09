@@ -43,11 +43,7 @@ const getSlotStyles = (kind: 'thrown' | 'suggested' | 'empty') => {
   }
 }
 
-export const VisitDartSlots = ({
-  scoreBeforeVisit,
-  pendingDarts,
-  config,
-}: VisitDartSlotsProps) => {
+export const VisitDartSlots = ({ scoreBeforeVisit, pendingDarts, config }: VisitDartSlotsProps) => {
   const slots = getVisitDartSlots(scoreBeforeVisit, pendingDarts, config)
 
   return (

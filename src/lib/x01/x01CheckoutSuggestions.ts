@@ -10,7 +10,10 @@ interface CheckoutDart {
 }
 
 const getDartOptions = (): CheckoutDart[] => {
-  const options: CheckoutDart[] = [{ label: 'Bull', points: 50 }, { label: '25', points: 25 }]
+  const options: CheckoutDart[] = [
+    { label: 'Bull', points: 50 },
+    { label: '25', points: 25 },
+  ]
 
   for (let value = 20; value >= 1; value -= 1) {
     options.push({ label: `T${value}`, points: value * 3 })
@@ -21,8 +24,7 @@ const getDartOptions = (): CheckoutDart[] => {
   return options.sort((left, right) => right.points - left.points)
 }
 
-const getFinishDartOptions = (): CheckoutDart[] =>
-  getDartOptions().filter(isDoubleOutFinishDart)
+const getFinishDartOptions = (): CheckoutDart[] => getDartOptions().filter(isDoubleOutFinishDart)
 
 const isValidCheckoutFinish = (remaining: number): boolean => remaining === 0
 

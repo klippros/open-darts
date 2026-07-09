@@ -1,29 +1,16 @@
 import { Box, Button, Stack } from '@chakra-ui/react'
-import { useMemo } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { ContentContainer } from '../components/ContentContainer'
 import { DartPicker } from '../components/DartPicker/DartPicker'
 import { GameBoardLayout } from '../components/GameBoardLayout'
 import { GameOver } from '../components/GameOver/GameOver'
 import { Scoreboard } from '../components/Scoreboard/Scoreboard'
 import { useRegisterMatchAbort } from '../hooks/useRegisterMatchAbort'
-import { useX01Game } from '../hooks/useX01Game'
-
-const parseStartScore = (value: string | null): number => {
-  const parsed = Number(value)
-
-  if (!Number.isInteger(parsed) || parsed < 2 || parsed > 999) {
-    return 501
-  }
-
-  return parsed
-}
+import { useX01GameFromRoute } from '../hooks/useX01GameFromRoute'
 
 export const GamePage = () => {
-  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
-  const startScore = useMemo(() => parseStartScore(searchParams.get('start')), [searchParams])
-  const { controller, recordDart, undoDart, restart } = useX01Game(startScore)
+  const { controller, recordDart, undoDart, restart } = useX01GameFromRoute()
 
   useRegisterMatchAbort(controller)
 

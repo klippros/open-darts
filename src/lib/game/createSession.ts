@@ -3,6 +3,7 @@ import type { GameConfig } from '../../types/gameMode'
 import type { Player } from '../../types/player'
 import type { GameSession } from '../../types/gameSession'
 import type { X01Config, X01State } from '../../types/x01'
+import { defaultX01Config } from '../x01/x01Presets'
 import { GameController } from './GameController'
 import { getDefaultConfig, getEngine } from './gameRegistry'
 import { createId } from './playerFactory'
@@ -46,16 +47,12 @@ export const createGameController = (
 
 export const createX01Controller = (
   players: Player[],
-  startScore = 501,
+  config: X01Config = defaultX01Config(),
   sessionId?: string,
 ): GameController<X01State, X01Config> =>
   createGameController({
     mode: GameModeId.X01,
-    config: {
-      startScore,
-      doubleIn: false,
-      doubleOut: true,
-    },
+    config,
     players,
     sessionId,
   })

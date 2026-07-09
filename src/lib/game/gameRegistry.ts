@@ -1,6 +1,6 @@
 import { GameModeId } from '../../types/gameMode'
 import type { GameConfig } from '../../types/gameMode'
-import type { X01Config } from '../../types/x01'
+import { x01PresetConfigs, X01PresetId } from '../x01/x01Presets'
 import { x01Engine } from '../x01/x01Engine'
 
 export interface GameModeDefinition {
@@ -13,11 +13,7 @@ export interface GameModeDefinition {
 export const gameModeDefinitions: Record<GameModeId, GameModeDefinition> = {
   [GameModeId.X01]: {
     mode: GameModeId.X01,
-    defaultConfig: {
-      startScore: 501,
-      doubleIn: false,
-      doubleOut: true,
-    } satisfies X01Config,
+    defaultConfig: x01PresetConfigs[X01PresetId.FiveOhOne],
     label: '501',
     description: 'Classic double-out',
   },

@@ -205,8 +205,7 @@ export const getDartKeyboardPreview = (state: DartKeyboardInputState): DartKeybo
 
   return {
     activeMultiplier,
-    highlightedNumber:
-      Number.isInteger(value) && value >= 1 && value <= 20 ? value : null,
+    highlightedNumber: Number.isInteger(value) && value >= 1 && value <= 20 ? value : null,
     highlightOuterBull: false,
   }
 }

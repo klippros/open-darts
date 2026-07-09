@@ -1,18 +1,44 @@
 import { Box, Button, Heading, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { Link as RouterLink } from 'react-router-dom'
 import { ContentContainer } from '../components/ContentContainer'
+import { buildX01PresetPath, X01PresetId } from '../lib/x01/x01Presets'
 
 const GAME_MODES = [
-  { id: '501', label: '501', description: 'Classic double-out', start: 501, available: true },
-  { id: '401', label: '401', description: 'Shorter x01 leg', start: 401, available: false },
-  { id: '301', label: '301', description: 'Quick x01 leg', start: 301, available: false },
-  { id: 'bob', label: "Bob's 27", description: 'Doubles practice', start: null, available: false },
-  { id: '121', label: '121', description: 'Checkout practice', start: null, available: false },
+  {
+    id: X01PresetId.FiveOhOne,
+    label: '501',
+    description: 'Classic double-out',
+    to: buildX01PresetPath(X01PresetId.FiveOhOne),
+    available: true,
+  },
+  {
+    id: X01PresetId.FourOhOne,
+    label: '401',
+    description: 'Shorter x01 leg',
+    to: buildX01PresetPath(X01PresetId.FourOhOne),
+    available: true,
+  },
+  {
+    id: X01PresetId.ThreeOhOne,
+    label: '301',
+    description: 'Quick x01 leg',
+    to: buildX01PresetPath(X01PresetId.ThreeOhOne),
+    available: true,
+  },
+  {
+    id: 'custom-x01',
+    label: 'Custom x01',
+    description: 'Choose start score and rules',
+    to: '/game/setup',
+    available: true,
+  },
+  { id: 'bob', label: "Bob's 27", description: 'Doubles practice', to: null, available: false },
+  { id: '121', label: '121', description: 'Checkout practice', to: null, available: false },
   {
     id: 'around-the-clock',
     label: 'Around the Clock',
     description: 'Hit 1 to 20 and bull',
-    start: null,
+    to: null,
     available: false,
   },
 ] as const
@@ -38,7 +64,7 @@ export const HomePage = () => (
 
         <SimpleGrid columns={{ base: 1, sm: 2, lg: 3 }} gap={4}>
           {GAME_MODES.map((mode) =>
-            mode.available ? (
+            mode.available && mode.to !== null ? (
               <Button
                 key={mode.id}
                 asChild
@@ -51,7 +77,7 @@ export const HomePage = () => (
                 gap={1}
                 textAlign="left"
               >
-                <RouterLink to={`/game?start=${mode.start}`}>
+                <RouterLink to={mode.to}>
                   <Text fontSize="lg" fontWeight="semibold" color="white">
                     {mode.label}
                   </Text>
