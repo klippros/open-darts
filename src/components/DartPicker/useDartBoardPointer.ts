@@ -21,6 +21,9 @@ export interface UseDartBoardPointerOptions {
 const centerZoneToMultiplier = (zone: CenterZone): DartMultiplier =>
   zone === 'double' ? DartMultiplier.Double : DartMultiplier.Triple
 
+const prefersHover = (): boolean =>
+  typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches
+
 const toActiveMultiplier = (
   multiplier: DartMultiplier | ArmedMultiplier | null,
 ): DartMultiplier.Double | DartMultiplier.Triple | null => {
@@ -67,6 +70,11 @@ export const useDartBoardPointer = ({
     }
   }, [])
 
+  const clearHoverState = useCallback(() => {
+    setHoveredNumber(null)
+    setHoveredCorner(null)
+  }, [])
+
   const clearCenterDragState = useCallback(() => {
     centerDragRef.current = null
     setHeldMultiplier(null)
@@ -79,6 +87,7 @@ export const useDartBoardPointer = ({
     (corner: CornerZone) => {
       if (corner === 'undo') {
         onUndo()
+        clearHoverState()
         return
       }
 
@@ -101,8 +110,10 @@ export const useDartBoardPointer = ({
           throw new Error(`Unknown corner zone: ${String(exhaustive)}`)
         }
       }
+
+      clearHoverState()
     },
-    [inputDisabled, onUndo, recordBull, recordMiss, recordOuterBull],
+    [clearHoverState, inputDisabled, onUndo, recordBull, recordMiss, recordOuterBull],
   )
 
   const handleNumberClick = useCallback(
@@ -115,9 +126,26 @@ export const useDartBoardPointer = ({
         armedMultiplier === DartMultiplier.Single ? DartMultiplier.Single : armedMultiplier
       recordNumber(number, multiplier)
       setArmedMultiplier(DartMultiplier.Single)
+      clearHoverState()
     },
-    [armedMultiplier, inputDisabled, recordNumber, setArmedMultiplier],
+    [armedMultiplier, clearHoverState, inputDisabled, recordNumber, setArmedMultiplier],
   )
+
+  const handleCornerHover = useCallback((corner: CornerZone | null) => {
+    if (!prefersHover()) {
+      return
+    }
+
+    setHoveredCorner(corner)
+  }, [])
+
+  const handleNumberHover = useCallback((number: number | null) => {
+    if (!prefersHover()) {
+      return
+    }
+
+    setHoveredNumber(number)
+  }, [])
 
   const handleCenterPointerDown = useCallback(
     (zone: CenterZone, event: PointerEvent<SVGPathElement>) => {
@@ -200,8 +228,8 @@ export const useDartBoardPointer = ({
     handleCornerClick,
     handleNumberClick,
     handleCenterPointerDown,
-    handleCornerHover: setHoveredCorner,
-    handleNumberHover: setHoveredNumber,
+    handleCornerHover,
+    handleNumberHover,
     handlePointerMove,
     handlePointerUp,
     handlePointerLeave,
