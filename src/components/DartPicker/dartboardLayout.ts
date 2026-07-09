@@ -56,6 +56,9 @@ const rotatePointAroundCenter = (
 export const toBoardLocalPoint = (x: number, y: number): { x: number; y: number } =>
   rotatePointAroundCenter(x, y, DARTBOARD_CENTER, DARTBOARD_CENTER, -DARTBOARD_SEGMENT_ROTATION)
 
+export const toBoardWorldPoint = (x: number, y: number): { x: number; y: number } =>
+  rotatePointAroundCenter(x, y, DARTBOARD_CENTER, DARTBOARD_CENTER, DARTBOARD_SEGMENT_ROTATION)
+
 export const polarToCartesian = (
   centerX: number,
   centerY: number,

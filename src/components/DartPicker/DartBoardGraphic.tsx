@@ -15,6 +15,7 @@ import {
   getCornerFill,
   getSegmentAngles,
   polarToCartesian,
+  toBoardWorldPoint,
 } from './dartboardLayout'
 import type { CenterZone, CornerZone } from './dartboardLayout'
 
@@ -25,11 +26,11 @@ export interface DartBoardGraphicProps {
   activeMultiplier: DartMultiplier.Double | DartMultiplier.Triple | null
 }
 
-const CORNER_LABELS: Record<CornerZone, { text: string; x: number; y: number; rotate: number }> = {
-  bull: { text: 'BULL', x: 52, y: 52, rotate: -45 },
-  outerBull: { text: '25', x: 348, y: 52, rotate: 45 },
-  undo: { text: 'UNDO', x: 52, y: 348, rotate: 45 },
-  miss: { text: 'MISS', x: 348, y: 348, rotate: -45 },
+const CORNER_LABELS: Record<CornerZone, { text: string; x: number; y: number }> = {
+  bull: { text: 'BULL', x: 52, y: 52 },
+  outerBull: { text: '25', x: 348, y: 52 },
+  undo: { text: 'UNDO', x: 52, y: 348 },
+  miss: { text: 'MISS', x: 348, y: 348 },
 }
 
 const describeCenterHalf = (sweep: 0 | 1): string =>
@@ -72,50 +73,56 @@ export const DartBoardGraphic = ({
       transform={`rotate(${DARTBOARD_SEGMENT_ROTATION}, ${DARTBOARD_CENTER}, ${DARTBOARD_CENTER})`}
     >
       {DARTBOARD_NUMBERS.map((number, index) => {
-        const { start, end, mid } = getSegmentAngles(index)
+        const { start, end } = getSegmentAngles(index)
         const isHovered = hoveredCorner === null && hoveredNumber === number
         const fill = index % 2 === 0 ? DARTBOARD_COLORS.segmentDark : DARTBOARD_COLORS.segmentLight
 
-        const labelPosition = polarToCartesian(
-          DARTBOARD_CENTER,
-          DARTBOARD_CENTER,
-          (DARTBOARD_INNER_RADIUS + DARTBOARD_OUTER_RADIUS) / 2,
-          mid,
-        )
-
         return (
-          <g key={number}>
-            <path
-              d={describeRingSegment(
-                DARTBOARD_CENTER,
-                DARTBOARD_CENTER,
-                DARTBOARD_INNER_RADIUS,
-                DARTBOARD_OUTER_RADIUS,
-                start,
-                end,
-              )}
-              fill={isHovered ? DARTBOARD_COLORS.segmentHover : fill}
-              stroke={DARTBOARD_COLORS.ringStroke}
-              strokeWidth={1}
-            />
-            <text
-              x={labelPosition.x}
-              y={labelPosition.y}
-              fontSize={18}
-              transform={`rotate(${mid}, ${labelPosition.x}, ${labelPosition.y})`}
-              fill={boardTextProps.fill}
-              fontFamily={boardTextProps.fontFamily}
-              fontWeight={boardTextProps.fontWeight}
-              textAnchor={boardTextProps.textAnchor}
-              dominantBaseline={boardTextProps.dominantBaseline}
-              pointerEvents={boardTextProps.pointerEvents}
-            >
-              {number}
-            </text>
-          </g>
+          <path
+            key={number}
+            d={describeRingSegment(
+              DARTBOARD_CENTER,
+              DARTBOARD_CENTER,
+              DARTBOARD_INNER_RADIUS,
+              DARTBOARD_OUTER_RADIUS,
+              start,
+              end,
+            )}
+            fill={isHovered ? DARTBOARD_COLORS.segmentHover : fill}
+            stroke={DARTBOARD_COLORS.ringStroke}
+            strokeWidth={1}
+          />
         )
       })}
     </g>
+
+    {DARTBOARD_NUMBERS.map((number, index) => {
+      const { mid } = getSegmentAngles(index)
+      const localPosition = polarToCartesian(
+        DARTBOARD_CENTER,
+        DARTBOARD_CENTER,
+        (DARTBOARD_INNER_RADIUS + DARTBOARD_OUTER_RADIUS) / 2,
+        mid,
+      )
+      const labelPosition = toBoardWorldPoint(localPosition.x, localPosition.y)
+
+      return (
+        <text
+          key={`label-${number}`}
+          x={labelPosition.x}
+          y={labelPosition.y}
+          fontSize={18}
+          fill={boardTextProps.fill}
+          fontFamily={boardTextProps.fontFamily}
+          fontWeight={boardTextProps.fontWeight}
+          textAnchor={boardTextProps.textAnchor}
+          dominantBaseline={boardTextProps.dominantBaseline}
+          pointerEvents={boardTextProps.pointerEvents}
+        >
+          {number}
+        </text>
+      )
+    })}
 
     <path
       d={describeCenterHalf(0)}
@@ -146,7 +153,6 @@ export const DartBoardGraphic = ({
       x={DARTBOARD_CENTER - 28}
       y={DARTBOARD_CENTER}
       fontSize={11}
-      transform={`rotate(-90, ${DARTBOARD_CENTER - 28}, ${DARTBOARD_CENTER})`}
       fill={boardTextProps.fill}
       fontFamily={boardTextProps.fontFamily}
       fontWeight={boardTextProps.fontWeight}
@@ -160,7 +166,6 @@ export const DartBoardGraphic = ({
       x={DARTBOARD_CENTER + 28}
       y={DARTBOARD_CENTER}
       fontSize={11}
-      transform={`rotate(90, ${DARTBOARD_CENTER + 28}, ${DARTBOARD_CENTER})`}
       fill={boardTextProps.fill}
       fontFamily={boardTextProps.fontFamily}
       fontWeight={boardTextProps.fontWeight}
@@ -185,7 +190,6 @@ export const DartBoardGraphic = ({
           fontSize={corner === 'outerBull' ? 20 : 14}
           textAnchor="middle"
           dominantBaseline="middle"
-          transform={`rotate(${label.rotate}, ${label.x}, ${label.y})`}
           pointerEvents="none"
         >
           {label.text}
