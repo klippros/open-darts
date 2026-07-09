@@ -7,8 +7,10 @@ import {
   DARTBOARD_FONT_FAMILY,
   DARTBOARD_INNER_RADIUS,
   DARTBOARD_NUMBERS,
+  DARTBOARD_NUMBER_LABEL_RADIUS,
   DARTBOARD_OUTER_RADIUS,
   DARTBOARD_SEGMENT_ROTATION,
+  DARTBOARD_TEXT_CLASS,
   DARTBOARD_VIEWBOX_SIZE,
   describeCornerPath,
   describeRingSegment,
@@ -37,6 +39,7 @@ const describeCenterHalf = (sweep: 0 | 1): string =>
   `M ${DARTBOARD_CENTER} ${DARTBOARD_CENTER - DARTBOARD_CENTER_RADIUS} A ${DARTBOARD_CENTER_RADIUS} ${DARTBOARD_CENTER_RADIUS} 0 0 ${sweep} ${DARTBOARD_CENTER} ${DARTBOARD_CENTER + DARTBOARD_CENTER_RADIUS} Z`
 
 const boardTextProps = {
+  className: DARTBOARD_TEXT_CLASS,
   fill: DARTBOARD_COLORS.segmentText,
   fontFamily: DARTBOARD_FONT_FAMILY,
   fontWeight: 900,
@@ -45,6 +48,30 @@ const boardTextProps = {
   pointerEvents: 'none' as const,
 }
 
+interface BoardLabelProps {
+  x: number
+  y: number
+  fontSize: number
+  children: string | number
+}
+
+const BoardLabel = ({ x, y, fontSize, children }: BoardLabelProps) => (
+  <text
+    x={x}
+    y={y}
+    fontSize={fontSize}
+    className={boardTextProps.className}
+    fill={boardTextProps.fill}
+    fontFamily={boardTextProps.fontFamily}
+    fontWeight={boardTextProps.fontWeight}
+    textAnchor={boardTextProps.textAnchor}
+    dominantBaseline={boardTextProps.dominantBaseline}
+    pointerEvents={boardTextProps.pointerEvents}
+  >
+    {children}
+  </text>
+)
+
 export const DartBoardGraphic = ({
   hoveredNumber,
   hoveredCorner,
@@ -52,6 +79,17 @@ export const DartBoardGraphic = ({
   activeMultiplier,
 }: DartBoardGraphicProps) => (
   <>
+    <defs>
+      <style>
+        {`
+          .${DARTBOARD_TEXT_CLASS} {
+            font-family: 'Archivo Black', sans-serif;
+            font-weight: 900;
+          }
+        `}
+      </style>
+    </defs>
+
     <rect
       width={DARTBOARD_VIEWBOX_SIZE}
       height={DARTBOARD_VIEWBOX_SIZE}
@@ -101,26 +139,15 @@ export const DartBoardGraphic = ({
       const localPosition = polarToCartesian(
         DARTBOARD_CENTER,
         DARTBOARD_CENTER,
-        (DARTBOARD_INNER_RADIUS + DARTBOARD_OUTER_RADIUS) / 2,
+        DARTBOARD_NUMBER_LABEL_RADIUS,
         mid,
       )
       const labelPosition = toBoardWorldPoint(localPosition.x, localPosition.y)
 
       return (
-        <text
-          key={`label-${number}`}
-          x={labelPosition.x}
-          y={labelPosition.y}
-          fontSize={18}
-          fill={boardTextProps.fill}
-          fontFamily={boardTextProps.fontFamily}
-          fontWeight={boardTextProps.fontWeight}
-          textAnchor={boardTextProps.textAnchor}
-          dominantBaseline={boardTextProps.dominantBaseline}
-          pointerEvents={boardTextProps.pointerEvents}
-        >
+        <BoardLabel key={`label-${number}`} x={labelPosition.x} y={labelPosition.y} fontSize={20}>
           {number}
-        </text>
+        </BoardLabel>
       )
     })}
 
@@ -149,51 +176,25 @@ export const DartBoardGraphic = ({
       strokeWidth={2}
     />
 
-    <text
-      x={DARTBOARD_CENTER - 28}
-      y={DARTBOARD_CENTER}
-      fontSize={11}
-      fill={boardTextProps.fill}
-      fontFamily={boardTextProps.fontFamily}
-      fontWeight={boardTextProps.fontWeight}
-      textAnchor={boardTextProps.textAnchor}
-      dominantBaseline={boardTextProps.dominantBaseline}
-      pointerEvents={boardTextProps.pointerEvents}
-    >
-      DOUBLE
-    </text>
-    <text
-      x={DARTBOARD_CENTER + 28}
-      y={DARTBOARD_CENTER}
-      fontSize={11}
-      fill={boardTextProps.fill}
-      fontFamily={boardTextProps.fontFamily}
-      fontWeight={boardTextProps.fontWeight}
-      textAnchor={boardTextProps.textAnchor}
-      dominantBaseline={boardTextProps.dominantBaseline}
-      pointerEvents={boardTextProps.pointerEvents}
-    >
-      TRIPLE
-    </text>
+    <BoardLabel x={DARTBOARD_CENTER - 28} y={DARTBOARD_CENTER} fontSize={16}>
+      D
+    </BoardLabel>
+    <BoardLabel x={DARTBOARD_CENTER + 28} y={DARTBOARD_CENTER} fontSize={16}>
+      T
+    </BoardLabel>
 
     {CORNER_ZONES.map((corner) => {
       const label = CORNER_LABELS[corner]
 
       return (
-        <text
+        <BoardLabel
           key={corner}
           x={label.x}
           y={label.y}
-          fill={DARTBOARD_COLORS.cornerText}
-          fontFamily={DARTBOARD_FONT_FAMILY}
-          fontWeight={900}
-          fontSize={corner === 'outerBull' ? 20 : 14}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          pointerEvents="none"
+          fontSize={corner === 'outerBull' ? 22 : 16}
         >
           {label.text}
-        </text>
+        </BoardLabel>
       )
     })}
   </>

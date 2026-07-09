@@ -68,7 +68,13 @@ export const VisitDartSlots = ({
             textAlign="center"
           >
             <ArrowMark />
-            <Text mt={2} color="white" fontWeight="bold" fontSize="2xl" lineHeight="1">
+            <Text
+              mt={2}
+              color="white"
+              fontFamily="Archivo Black, sans-serif"
+              fontSize="2xl"
+              lineHeight="1"
+            >
               {slot.label ?? '—'}
             </Text>
           </Box>
