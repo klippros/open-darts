@@ -75,9 +75,10 @@ export const DartPicker = ({ onDart, onUndo, inputDisabled = false }: DartPicker
     inputDisabled,
   })
 
-  const hoveredNumber = pointerHoveredNumber ?? keyboardPreview.highlightedNumber
-  const hoveredCorner =
-    pointerHoveredCorner ?? (keyboardPreview.highlightOuterBull ? 'outerBull' : null)
+  const hoveredNumber = keyboardPreview.highlightedNumber ?? pointerHoveredNumber
+  const hoveredCorner = keyboardPreview.highlightOuterBull
+    ? 'outerBull'
+    : pointerHoveredCorner
   const activeMultiplier = pointerActiveMultiplier
 
   return (
