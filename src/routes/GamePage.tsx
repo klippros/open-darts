@@ -7,6 +7,7 @@ import { GameOver } from '../components/GameOver/GameOver'
 import { Scoreboard } from '../components/Scoreboard/Scoreboard'
 import { useRegisterMatchAbort } from '../hooks/useRegisterMatchAbort'
 import { useX01Game } from '../hooks/useX01Game'
+import { mainContentMaxWidth } from '../layout'
 
 const parseStartScore = (value: string | null): number => {
   const parsed = Number(value)
@@ -33,11 +34,13 @@ export const GamePage = () => {
   return (
     <ContentContainer>
       <Box py={{ base: 6, md: 8 }} pb={10}>
-        <Stack gap={8} maxW="720px" mx="auto">
+        <Stack gap={8} maxW={mainContentMaxWidth} mx="auto">
           <Scoreboard
             scoreboard={controller.scoreboard}
             pendingDarts={controller.pendingDarts}
             visits={controller.session.visits}
+            players={controller.session.players}
+            config={controller.session.config}
           />
 
           {controller.isComplete && <GameOver onPlayAgain={restart} />}
