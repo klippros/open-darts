@@ -26,6 +26,11 @@ export const AppNavbar = () => {
         </NavLink>
       </Link>
       <Link asChild>
+        <NavLink to="/stats" style={navLinkStyle}>
+          Stats
+        </NavLink>
+      </Link>
+      <Link asChild>
         <NavLink to="/about" style={navLinkStyle}>
           About
         </NavLink>
