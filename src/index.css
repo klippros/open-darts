@@ -1,0 +1,39 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  overscroll-behavior-x: none;
+}
+
+#root {
+  min-height: 100%;
+}
+
+:root {
+  --main-content-max-width: 1200px;
+}
+
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
