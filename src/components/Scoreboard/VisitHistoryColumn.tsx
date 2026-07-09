@@ -1,15 +1,23 @@
 import { Box, Stack, Text } from '@chakra-ui/react'
 import { formatDart } from '../../lib/formatDart'
+import type { GameModeId } from '../../types/gameMode'
 import type { Player } from '../../types/player'
 import type { Visit } from '../../types/visit'
+import { getVisitHistoryEntryDisplay, getVisitHistoryHeadlineColor } from './visitHistoryDisplay'
 
 export interface VisitHistoryColumnProps {
   player: Player
   visits: Visit[]
+  mode: GameModeId
   align?: 'left' | 'right'
 }
 
-export const VisitHistoryColumn = ({ player, visits, align = 'left' }: VisitHistoryColumnProps) => {
+export const VisitHistoryColumn = ({
+  player,
+  visits,
+  mode,
+  align = 'left',
+}: VisitHistoryColumnProps) => {
   const playerVisits = visits.filter((visit) => visit.playerId === player.id).toReversed()
 
   return (
@@ -27,27 +35,42 @@ export const VisitHistoryColumn = ({ player, visits, align = 'left' }: VisitHist
           No visits yet
         </Text>
       ) : (
-        playerVisits.map((visit) => (
-          <Box
-            key={visit.visitIndex}
-            w="full"
-            maxW="200px"
-            px={3}
-            py={2}
-            borderRadius="12px"
-            borderWidth="1px"
-            borderColor="whiteAlpha.200"
-            bg="whiteAlpha.50"
-            textAlign={align === 'right' ? 'right' : 'left'}
-          >
-            <Text color="white" fontWeight="bold" fontSize="lg">
-              {visit.bust ? 'BUST' : visit.visitScore}
-            </Text>
-            <Text mt={1} color="whiteAlpha.700" fontSize="sm" lineHeight="short">
-              {visit.darts.map((dart) => formatDart(dart)).join(' · ')}
-            </Text>
-          </Box>
-        ))
+        playerVisits.map((visit) => {
+          const display = getVisitHistoryEntryDisplay(visit, mode)
+          const headlineColor = getVisitHistoryHeadlineColor(display.tone)
+
+          return (
+            <Box
+              key={visit.visitIndex}
+              w="full"
+              maxW="200px"
+              px={3}
+              py={2}
+              borderRadius="12px"
+              borderWidth="1px"
+              borderColor="whiteAlpha.200"
+              bg="whiteAlpha.50"
+              textAlign={align === 'right' ? 'right' : 'left'}
+            >
+              {display.sublabel !== undefined && (
+                <Text
+                  color={headlineColor}
+                  fontSize="xs"
+                  fontWeight="semibold"
+                  textTransform="uppercase"
+                >
+                  {display.sublabel}
+                </Text>
+              )}
+              <Text color={headlineColor} fontWeight="bold" fontSize="lg">
+                {display.headline}
+              </Text>
+              <Text mt={1} color="whiteAlpha.700" fontSize="sm" lineHeight="short">
+                {visit.darts.map((dart) => formatDart(dart)).join(' · ')}
+              </Text>
+            </Box>
+          )
+        })
       )}
     </Stack>
   )

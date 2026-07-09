@@ -7,6 +7,7 @@ export interface ScoreboardPlayerEntry {
   playerId: string
   name: string
   primaryScore: number
+  secondaryLabel?: string
   isActive: boolean
 }
 

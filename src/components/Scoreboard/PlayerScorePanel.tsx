@@ -38,7 +38,7 @@ export const PlayerScorePanel = ({ player, visitAverage, isSolo }: PlayerScorePa
       {player.primaryScore}
     </Heading>
     <Text mt={2} fontSize="sm" color="whiteAlpha.600" textAlign="center">
-      {formatAverage(visitAverage)}
+      {player.secondaryLabel ?? formatAverage(visitAverage)}
     </Text>
   </Box>
 )

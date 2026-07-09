@@ -1,16 +1,16 @@
-import { useCallback, useState } from 'react'
-import { createX01Controller } from '../lib/game/createSession'
-import { createSoloHumanPlayer } from '../lib/game/playerFactory'
+import { useCallback, useEffect, useState } from 'react'
+import { createGameController } from '../lib/game/createSession'
+import type { CreateSessionParams } from '../lib/game/createSession'
 import type { DartThrow } from '../types/dart'
-import type { X01Config } from '../types/x01'
 
-export const useX01Game = (config: X01Config) => {
-  const createController = useCallback(
-    () => createX01Controller([createSoloHumanPlayer()], config),
-    [config],
-  )
+export const useGame = (launchParams: CreateSessionParams) => {
+  const createController = useCallback(() => createGameController(launchParams), [launchParams])
 
   const [controller, setController] = useState(createController)
+
+  useEffect(() => {
+    setController(createController())
+  }, [createController])
 
   const recordDart = useCallback((dart: DartThrow) => {
     setController((current) => current.recordDart(dart))

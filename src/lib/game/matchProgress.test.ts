@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { DartMultiplier } from '../../types/dart'
-import { GameModeId, GameStatus } from '../../types/gameMode'
 import type { DartThrow } from '../../types/dart'
+import { GameModeId, GameStatus } from '../../types/gameMode'
+import type { X01Config } from '../../types/x01'
 import type { GameSession } from '../../types/gameSession'
 import { PlayerKind } from '../../types/player'
 import { x01Engine } from '../x01/x01Engine'
@@ -13,10 +14,11 @@ const createTestController = (
   visits: GameSession['visits'] = [],
   pendingDarts: DartThrow[] = [],
 ) => {
+  const config: X01Config = { startScore: 501, doubleIn: false, doubleOut: true }
   const session: GameSession = {
     id: 'test',
     mode: GameModeId.X01,
-    config: { startScore: 501, doubleIn: false, doubleOut: true },
+    config,
     players: [{ id: 'p1', name: 'Player 1', kind: PlayerKind.Human }],
     visits,
     status: GameStatus.InProgress,
@@ -26,7 +28,7 @@ const createTestController = (
   return new GameController(
     session,
     x01Engine,
-    x01Engine.createInitialState(session.players, session.config),
+    x01Engine.createInitialState(session.players, config),
     pendingDarts,
     0,
   )
@@ -77,7 +79,11 @@ describe('matchHasProgress', () => {
       { ...controller.session, status: GameStatus.Completed },
       x01Engine,
       {
-        ...x01Engine.createInitialState(controller.session.players, controller.session.config),
+        ...x01Engine.createInitialState(
+          controller.session.players,
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- test fixture is always x01
+          controller.session.config as X01Config,
+        ),
         winnerId: 'p1',
       },
       [],

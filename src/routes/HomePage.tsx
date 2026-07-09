@@ -1,6 +1,8 @@
 import { Box, Button, Heading, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { Link as RouterLink } from 'react-router-dom'
 import { ContentContainer } from '../components/ContentContainer'
+import { buildPracticeGamePath } from '../lib/game/gameRoute'
+import { GameModeId } from '../types/gameMode'
 import { buildX01PresetPath, X01PresetId } from '../lib/x01/x01Presets'
 
 const GAME_MODES = [
@@ -32,14 +34,33 @@ const GAME_MODES = [
     to: '/game/setup',
     available: true,
   },
-  { id: 'bob', label: "Bob's 27", description: 'Doubles practice', to: null, available: false },
-  { id: '121', label: '121', description: 'Checkout practice', to: null, available: false },
+  {
+    id: 'bob',
+    label: "Bob's 27",
+    description: 'Doubles practice',
+    to: buildPracticeGamePath(GameModeId.Bob27),
+    available: true,
+  },
+  {
+    id: '121',
+    label: '121',
+    description: 'Checkout practice',
+    to: buildPracticeGamePath(GameModeId.OneTwentyOne),
+    available: true,
+  },
   {
     id: 'around-the-clock',
     label: 'Around the Clock',
     description: 'Hit 1 to 20 and bull',
-    to: null,
-    available: false,
+    to: buildPracticeGamePath(GameModeId.AroundTheClock),
+    available: true,
+  },
+  {
+    id: '10-up-1-down',
+    label: '10 Up 1 Down',
+    description: 'Checkout up or down',
+    to: buildPracticeGamePath(GameModeId.TenUpOneDown),
+    available: true,
   },
 ] as const
 

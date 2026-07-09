@@ -6,11 +6,12 @@ import { GameBoardLayout } from '../components/GameBoardLayout'
 import { GameOver } from '../components/GameOver/GameOver'
 import { Scoreboard } from '../components/Scoreboard/Scoreboard'
 import { useRegisterMatchAbort } from '../hooks/useRegisterMatchAbort'
-import { useX01GameFromRoute } from '../hooks/useX01GameFromRoute'
+import { useGameFromRoute } from '../hooks/useGameFromRoute'
+import { showsVisitHistory } from '../lib/game/gameModeDefinitions'
 
 export const GamePage = () => {
   const navigate = useNavigate()
-  const { controller, recordDart, undoDart, restart } = useX01GameFromRoute()
+  const { controller, recordDart, undoDart, restart } = useGameFromRoute()
 
   useRegisterMatchAbort(controller)
 
@@ -21,9 +22,15 @@ export const GamePage = () => {
   return (
     <ContentContainer>
       <Box py={{ base: 6, md: 8 }} pb={10}>
-        <GameBoardLayout players={controller.session.players} visits={controller.session.visits}>
+        <GameBoardLayout
+          players={controller.session.players}
+          visits={controller.session.visits}
+          mode={controller.session.mode}
+          showVisitHistory={showsVisitHistory(controller.session.mode)}
+        >
           <Stack gap={8}>
             <Scoreboard
+              mode={controller.session.mode}
               scoreboard={controller.scoreboard}
               pendingDarts={controller.pendingDarts}
               visits={controller.session.visits}

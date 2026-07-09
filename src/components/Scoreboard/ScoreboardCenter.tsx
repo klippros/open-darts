@@ -2,25 +2,29 @@ import { Stack } from '@chakra-ui/react'
 import { sumDartPoints } from '../../lib/dartScoring'
 import type { ScoreboardPlayerEntry } from '../../lib/game/GameEngine'
 import type { DartThrow } from '../../types/dart'
-import type { X01Config } from '../../types/x01'
+import { toCheckoutSuggestionConfig } from '../../lib/game/gameConfigGuards'
+import type { GameConfig, GameModeId } from '../../types/gameMode'
 import { PlayerScorePanels } from './PlayerScorePanel'
 import { VisitDartSlots } from './VisitDartSlots'
 
 export interface ScoreboardCenterProps {
+  mode: GameModeId
   players: ScoreboardPlayerEntry[]
   visitAverages: Record<string, number | null>
   activePlayer: ScoreboardPlayerEntry | undefined
   pendingDarts: DartThrow[]
-  config: X01Config
+  config: GameConfig
 }
 
 export const ScoreboardCenter = ({
+  mode,
   players,
   visitAverages,
   activePlayer,
   pendingDarts,
   config,
 }: ScoreboardCenterProps) => {
+  const checkoutConfig = toCheckoutSuggestionConfig(mode, config)
   const scoreBeforeVisit =
     activePlayer === undefined ? 0 : activePlayer.primaryScore + sumDartPoints(pendingDarts)
 
@@ -28,11 +32,11 @@ export const ScoreboardCenter = ({
     <Stack gap={5}>
       <PlayerScorePanels players={players} visitAverages={visitAverages} />
 
-      {activePlayer !== undefined && (
+      {checkoutConfig !== null && activePlayer !== undefined && (
         <VisitDartSlots
           scoreBeforeVisit={scoreBeforeVisit}
           pendingDarts={pendingDarts}
-          config={config}
+          config={checkoutConfig}
         />
       )}
     </Stack>
