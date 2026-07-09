@@ -3,11 +3,11 @@ import { useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ContentContainer } from '../components/ContentContainer'
 import { DartPicker } from '../components/DartPicker/DartPicker'
+import { GameBoardLayout } from '../components/GameBoardLayout'
 import { GameOver } from '../components/GameOver/GameOver'
 import { Scoreboard } from '../components/Scoreboard/Scoreboard'
 import { useRegisterMatchAbort } from '../hooks/useRegisterMatchAbort'
 import { useX01Game } from '../hooks/useX01Game'
-import { mainContentMaxWidth } from '../layout'
 
 const parseStartScore = (value: string | null): number => {
   const parsed = Number(value)
@@ -34,29 +34,31 @@ export const GamePage = () => {
   return (
     <ContentContainer>
       <Box py={{ base: 6, md: 8 }} pb={10}>
-        <Stack gap={8} maxW={mainContentMaxWidth} mx="auto">
-          <Scoreboard
-            scoreboard={controller.scoreboard}
-            pendingDarts={controller.pendingDarts}
-            visits={controller.session.visits}
-            players={controller.session.players}
-            config={controller.session.config}
-          />
+        <GameBoardLayout players={controller.session.players} visits={controller.session.visits}>
+          <Stack gap={8}>
+            <Scoreboard
+              scoreboard={controller.scoreboard}
+              pendingDarts={controller.pendingDarts}
+              visits={controller.session.visits}
+              players={controller.session.players}
+              config={controller.session.config}
+            />
 
-          {controller.isComplete && <GameOver onPlayAgain={restart} />}
+            {controller.isComplete && <GameOver onPlayAgain={restart} />}
 
-          <DartPicker
-            onDart={recordDart}
-            onUndo={undoDart}
-            inputDisabled={controller.isComplete}
-          />
+            <DartPicker
+              onDart={recordDart}
+              onUndo={undoDart}
+              inputDisabled={controller.isComplete}
+            />
 
-          {!controller.isComplete && (
-            <Button variant="cancel" alignSelf="flex-start" onClick={handleAbort}>
-              Abort match
-            </Button>
-          )}
-        </Stack>
+            {!controller.isComplete && (
+              <Button variant="cancel" alignSelf="flex-start" onClick={handleAbort}>
+                Abort match
+              </Button>
+            )}
+          </Stack>
+        </GameBoardLayout>
       </Box>
     </ContentContainer>
   )

@@ -69,7 +69,7 @@ export const x01Engine: GameEngine<X01State, X01Config> = {
       visitIndex,
       playerId,
       darts,
-      visitScore: getX01VisitScore(darts),
+      visitScore: outcome.bust ? 0 : getX01VisitScore(darts),
       scoreBefore,
       scoreAfter: outcome.scoreAfter,
       bust: outcome.bust,

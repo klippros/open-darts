@@ -45,7 +45,7 @@ export const VisitHistoryColumn = ({
             textAlign={align === 'right' ? 'right' : 'left'}
           >
             <Text color="white" fontWeight="bold" fontSize="lg">
-              {visit.visitScore}
+              {visit.bust ? 'BUST' : visit.visitScore}
             </Text>
             <Text mt={1} color="whiteAlpha.700" fontSize="sm" lineHeight="short">
               {visit.darts.map((dart) => formatDart(dart)).join(' · ')}

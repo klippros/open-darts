@@ -98,6 +98,7 @@ describe('x01Engine', () => {
     ])
 
     expect(result.visit.bust).toBe(true)
+    expect(result.visit.visitScore).toBe(0)
     expect(result.state.players[player.id]?.remaining).toBe(50)
   })
 

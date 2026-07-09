@@ -9,10 +9,10 @@ export interface PlayerScorePanelProps {
 
 const formatAverage = (average: number | null): string => {
   if (average === null) {
-    return 'Avg —'
+    return '∅ —'
   }
 
-  return `Avg ${average.toFixed(1)}`
+  return `∅ ${average.toFixed(1)}`
 }
 
 export const PlayerScorePanel = ({ player, visitAverage, isSolo }: PlayerScorePanelProps) => (
@@ -28,10 +28,16 @@ export const PlayerScorePanel = ({ player, visitAverage, isSolo }: PlayerScorePa
     <Text fontSize="sm" color="whiteAlpha.600" mb={1}>
       {player.name}
     </Text>
-    <Heading size="3xl" color="white" fontFamily="Archivo Black, sans-serif" lineHeight="1">
+    <Heading
+      size="5xl"
+      color="white"
+      fontFamily="Archivo Black, sans-serif"
+      lineHeight="1"
+      textAlign="center"
+    >
       {player.primaryScore}
     </Heading>
-    <Text mt={2} fontSize="sm" color="whiteAlpha.600">
+    <Text mt={2} fontSize="sm" color="whiteAlpha.600" textAlign="center">
       {formatAverage(visitAverage)}
     </Text>
   </Box>

@@ -1,4 +1,6 @@
 import { Box, Grid, Text } from '@chakra-ui/react'
+import { faArrowRightLong } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { getVisitDartSlots } from '../../lib/x01/x01CheckoutSuggestions'
 import type { DartThrow } from '../../types/dart'
 import type { X01Config } from '../../types/x01'
@@ -12,9 +14,9 @@ export interface VisitDartSlotsProps {
 const SLOT_KEYS = ['first', 'second', 'third'] as const
 
 const ArrowMark = () => (
-  <Text aria-hidden="true" color="whiteAlpha.700" fontSize="lg" lineHeight="1">
-    ↓
-  </Text>
+  <Box aria-hidden="true" w="full" color="whiteAlpha.600" lineHeight={0}>
+    <FontAwesomeIcon icon={faArrowRightLong} style={{ width: '100%', height: '1.1em' }} />
+  </Box>
 )
 
 const getSlotStyles = (kind: 'thrown' | 'suggested' | 'empty') => {

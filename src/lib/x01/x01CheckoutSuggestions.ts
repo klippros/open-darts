@@ -1,24 +1,36 @@
+import type { DartThrow } from '../../types/dart'
 import type { X01Config } from '../../types/x01'
+import { formatDart } from '../formatDart'
 
 const MAX_CHECKOUT_SCORE = 170
 
-const dartScores = (): number[] => {
-  const scores = new Set<number>()
-
-  for (let value = 1; value <= 20; value += 1) {
-    scores.add(value)
-    scores.add(value * 2)
-    scores.add(value * 3)
-  }
-
-  scores.add(25)
-  scores.add(50)
-
-  return [...scores].sort((left, right) => right - left)
+interface CheckoutDart {
+  label: string
+  points: number
 }
 
-const isValidCheckoutFinish = (remaining: number, config: X01Config): boolean => {
-  if (remaining !== 0) {
+const getDartOptions = (): CheckoutDart[] => {
+  const options: CheckoutDart[] = [{ label: 'Bull', points: 50 }, { label: '25', points: 25 }]
+
+  for (let value = 20; value >= 1; value -= 1) {
+    options.push({ label: `T${value}`, points: value * 3 })
+    options.push({ label: `D${value}`, points: value * 2 })
+    options.push({ label: String(value), points: value })
+  }
+
+  return options.sort((left, right) => right.points - left.points)
+}
+
+const getFinishDartOptions = (): CheckoutDart[] =>
+  getDartOptions().filter(isDoubleOutFinishDart)
+
+const isValidCheckoutFinish = (remaining: number): boolean => remaining === 0
+
+const isDoubleOutFinishDart = (dart: CheckoutDart): boolean =>
+  dart.label === 'Bull' || dart.label.startsWith('D')
+
+const isValidFinalDart = (dart: CheckoutDart, remaining: number, config: X01Config): boolean => {
+  if (dart.points !== remaining) {
     return false
   }
 
@@ -26,57 +38,43 @@ const isValidCheckoutFinish = (remaining: number, config: X01Config): boolean =>
     return true
   }
 
-  return remaining === 0
-}
-
-const isValidFinalDart = (points: number, remaining: number, config: X01Config): boolean => {
-  if (points !== remaining) {
-    return false
-  }
-
-  if (!config.doubleOut) {
-    return true
-  }
-
-  if (points === 50) {
-    return true
-  }
-
-  return points >= 2 && points <= 40 && points % 2 === 0
+  return isDoubleOutFinishDart(dart)
 }
 
 const findCheckoutPath = (
   remaining: number,
   dartsRemaining: number,
   config: X01Config,
-  path: number[],
-): number[] | null => {
+  path: CheckoutDart[],
+): CheckoutDart[] | null => {
   if (remaining < 0 || (config.doubleOut && remaining === 1)) {
     return null
   }
 
   if (dartsRemaining === 0) {
-    return isValidCheckoutFinish(remaining, config) ? path : null
+    return isValidCheckoutFinish(remaining) ? path : null
   }
 
   if (dartsRemaining === 1) {
-    for (const points of dartScores()) {
-      if (isValidFinalDart(points, remaining, config)) {
-        return [...path, points]
+    const finishOptions = config.doubleOut ? getFinishDartOptions() : getDartOptions()
+
+    for (const dart of finishOptions) {
+      if (isValidFinalDart(dart, remaining, config)) {
+        return [...path, dart]
       }
     }
 
     return null
   }
 
-  for (const points of dartScores()) {
-    if (points > remaining) {
+  for (const dart of getDartOptions()) {
+    if (dart.points > remaining) {
       continue
     }
 
-    const nextPath = findCheckoutPath(remaining - points, dartsRemaining - 1, config, [
+    const nextPath = findCheckoutPath(remaining - dart.points, dartsRemaining - 1, config, [
       ...path,
-      points,
+      dart,
     ])
 
     if (nextPath !== null) {
@@ -103,7 +101,7 @@ export const suggestCheckoutPath = (
   remaining: number,
   dartsRemaining: number,
   config: X01Config,
-): number[] | null => {
+): CheckoutDart[] | null => {
   if (remaining > MAX_CHECKOUT_SCORE || remaining < 2 || (config.doubleOut && remaining === 1)) {
     return null
   }
@@ -121,13 +119,12 @@ export const suggestCheckoutPath = (
 
 export interface VisitDartSlotView {
   kind: 'thrown' | 'suggested' | 'empty'
-  points: number | null
   label: string | null
 }
 
 export const getVisitDartSlots = (
   scoreBeforeVisit: number,
-  pendingDarts: { points: number }[],
+  pendingDarts: DartThrow[],
   config: X01Config,
 ): VisitDartSlotView[] => {
   const thrownPoints = pendingDarts.reduce((total, dart) => total + dart.points, 0)
@@ -143,24 +140,22 @@ export const getVisitDartSlots = (
     if (thrown !== undefined) {
       slots.push({
         kind: 'thrown',
-        points: thrown.points,
-        label: String(thrown.points),
+        label: formatDart(thrown),
       })
       continue
     }
 
-    const suggestedPoints = checkoutPath[suggestionIndex]
+    const suggestedDart = checkoutPath[suggestionIndex]
 
-    if (suggestedPoints === undefined) {
-      slots.push({ kind: 'empty', points: null, label: null })
+    if (suggestedDart === undefined) {
+      slots.push({ kind: 'empty', label: null })
       continue
     }
 
     suggestionIndex += 1
     slots.push({
       kind: 'suggested',
-      points: suggestedPoints,
-      label: String(suggestedPoints),
+      label: suggestedDart.label,
     })
   }
 
