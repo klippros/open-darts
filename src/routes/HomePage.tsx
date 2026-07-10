@@ -3,67 +3,109 @@ import { Link as RouterLink } from 'react-router-dom'
 import { ContentContainer } from '../components/ContentContainer'
 import { ResumeGameBanner } from '../components/ResumeGameBanner/ResumeGameBanner'
 import { buildPracticeGamePath } from '../lib/game/gameRoute'
+import { explicitGameLaunchState } from '../lib/routing/gameNavigation'
 import { GameModeId } from '../types/gameMode'
 import { buildX01PresetPath, X01PresetId } from '../lib/x01/x01Presets'
 
-const GAME_MODES = [
+const MATCH_MODES = [
   {
     id: X01PresetId.FiveOhOne,
     label: '501',
     description: 'Classic double-out',
     to: buildX01PresetPath(X01PresetId.FiveOhOne),
-    available: true,
   },
   {
     id: X01PresetId.FourOhOne,
     label: '401',
     description: 'Shorter x01 leg',
     to: buildX01PresetPath(X01PresetId.FourOhOne),
-    available: true,
   },
   {
     id: X01PresetId.ThreeOhOne,
     label: '301',
     description: 'Quick x01 leg',
     to: buildX01PresetPath(X01PresetId.ThreeOhOne),
-    available: true,
   },
   {
     id: 'custom-x01',
     label: 'Custom x01',
     description: 'Choose start score and rules',
     to: '/game/setup',
-    available: true,
   },
+] as const
+
+const PRACTICE_MODES = [
   {
     id: 'bob',
     label: "Bob's 27",
     description: 'Doubles practice',
     to: buildPracticeGamePath(GameModeId.Bob27),
-    available: true,
   },
   {
     id: '121',
     label: '121',
     description: 'Checkout practice',
     to: buildPracticeGamePath(GameModeId.OneTwentyOne),
-    available: true,
   },
   {
     id: 'around-the-clock',
     label: 'Around the Clock',
     description: 'Hit 1 to 20 and bull',
     to: buildPracticeGamePath(GameModeId.AroundTheClock),
-    available: true,
   },
   {
     id: '10-up-1-down',
     label: '10 Up 1 Down',
     description: 'Checkout up or down',
     to: buildPracticeGamePath(GameModeId.TenUpOneDown),
-    available: true,
   },
 ] as const
+
+const ModeGrid = ({
+  modes,
+  explicitLaunch = false,
+}: {
+  modes: readonly { id: string; label: string; description: string; to: string }[]
+  explicitLaunch?: boolean
+}) => (
+  <SimpleGrid columns={{ base: 1, sm: 2, lg: 3 }} gap={4}>
+    {modes.map((mode) => {
+      const link = (
+        <>
+          <Text fontSize="lg" fontWeight="semibold" color="white">
+            {mode.label}
+          </Text>
+          <Text fontSize="sm" color="whiteAlpha.700" fontWeight="normal">
+            {mode.description}
+          </Text>
+        </>
+      )
+
+      return (
+        <Button
+          key={mode.id}
+          asChild
+          variant="cta"
+          h="auto"
+          py={5}
+          px={5}
+          flexDirection="column"
+          alignItems="flex-start"
+          gap={1}
+          textAlign="left"
+        >
+          {explicitLaunch ? (
+            <RouterLink to={mode.to} state={explicitGameLaunchState()}>
+              {link}
+            </RouterLink>
+          ) : (
+            <RouterLink to={mode.to}>{link}</RouterLink>
+          )}
+        </Button>
+      )
+    })}
+  </SimpleGrid>
+)
 
 export const HomePage = () => (
   <ContentContainer>
@@ -79,62 +121,36 @@ export const HomePage = () => (
             time.
           </Text>
           <Text color="whiteAlpha.700" fontSize="md" lineHeight="1.65">
-            From classic 501 to fun practice games like Bob&apos;s 27 and Around the Clock. Play
-            solo today, with more modes and opponents coming soon.
+            Play x01 matches solo, with a guest, or against a bot. Practice modes stay focused on
+            solo training for now.
           </Text>
         </Stack>
 
         <ResumeGameBanner />
 
-        <SimpleGrid columns={{ base: 1, sm: 2, lg: 3 }} gap={4}>
-          {GAME_MODES.map((mode) =>
-            mode.available && mode.to !== null ? (
-              <Button
-                key={mode.id}
-                asChild
-                variant="cta"
-                h="auto"
-                py={5}
-                px={5}
-                flexDirection="column"
-                alignItems="flex-start"
-                gap={1}
-                textAlign="left"
-              >
-                <RouterLink to={mode.to}>
-                  <Text fontSize="lg" fontWeight="semibold" color="white">
-                    {mode.label}
-                  </Text>
-                  <Text fontSize="sm" color="whiteAlpha.700" fontWeight="normal">
-                    {mode.description}
-                  </Text>
-                </RouterLink>
-              </Button>
-            ) : (
-              <Button
-                key={mode.id}
-                variant="cta"
-                h="auto"
-                py={5}
-                px={5}
-                flexDirection="column"
-                alignItems="flex-start"
-                gap={1}
-                textAlign="left"
-                disabled
-                opacity={0.7}
-                cursor="not-allowed"
-              >
-                <Text fontSize="lg" fontWeight="semibold" color="white">
-                  {mode.label}
-                </Text>
-                <Text fontSize="sm" color="whiteAlpha.700" fontWeight="normal">
-                  {mode.description}
-                </Text>
-              </Button>
-            ),
-          )}
-        </SimpleGrid>
+        <Stack gap={4}>
+          <Stack gap={1}>
+            <Heading as="h2" size="lg" color="white" fontFamily="Archivo Black, sans-serif">
+              Match
+            </Heading>
+            <Text color="whiteAlpha.700" fontSize="sm" lineHeight="1.55">
+              x01 legs with optional guest or bot opponents.
+            </Text>
+          </Stack>
+          <ModeGrid modes={MATCH_MODES} />
+        </Stack>
+
+        <Stack gap={4}>
+          <Stack gap={1}>
+            <Heading as="h2" size="lg" color="white" fontFamily="Archivo Black, sans-serif">
+              Practice
+            </Heading>
+            <Text color="whiteAlpha.700" fontSize="sm" lineHeight="1.55">
+              Solo training modes to sharpen specific parts of your game.
+            </Text>
+          </Stack>
+          <ModeGrid modes={PRACTICE_MODES} explicitLaunch />
+        </Stack>
       </Stack>
     </Box>
   </ContentContainer>

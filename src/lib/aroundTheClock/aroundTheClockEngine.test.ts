@@ -23,6 +23,17 @@ describe('aroundTheClockEngine', () => {
 
     expect(result.state.players[player.id]?.targetIndex).toBe(1)
     expect(result.visit.metadata).toMatchObject({ targetLabel: '1' })
+    expect(result.visit.visitScore).toBe(1)
+  })
+
+  it('ignores off-target darts in the visit score', () => {
+    const state = aroundTheClockEngine.createInitialState([player], config)
+    const result = aroundTheClockEngine.commitVisit(state, player.id, 0, [
+      numberDart(20, DartMultiplier.Triple),
+      numberDart(1, DartMultiplier.Single),
+    ])
+
+    expect(result.visit.visitScore).toBe(1)
   })
 
   it('shows the current target on the scoreboard', () => {

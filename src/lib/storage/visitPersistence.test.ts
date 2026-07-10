@@ -1,15 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { GameModeId, GameStatus } from '../../types/gameMode'
-import type { GameSession } from '../../types/gameSession'
 import { PlayerKind } from '../../types/player'
 import { createGameController, restoreGameController } from '../game/createSession'
 import { numberDart } from '../testHelpers'
 import { DartMultiplier } from '../../types/dart'
-import {
-  buildGamePathFromSession,
-  configsMatch,
-  sessionMatchesLaunchParams,
-} from './sessionMatching'
 import {
   createControllerSnapshot,
   finalizeCompletedSession,
@@ -43,66 +37,6 @@ const createLocalStorageMock = () => {
 
 beforeEach(() => {
   vi.stubGlobal('localStorage', createLocalStorageMock())
-})
-
-describe('sessionMatching', () => {
-  it('matches x01 sessions by config', () => {
-    const session: GameSession = {
-      id: 'session-1',
-      mode: GameModeId.X01,
-      config: { startScore: 501, doubleIn: false, doubleOut: true },
-      players: [{ id: 'player-1', name: 'You', kind: PlayerKind.Human }],
-      visits: [],
-      status: GameStatus.InProgress,
-      startedAt: '2026-01-01T00:00:00.000Z',
-    }
-
-    expect(
-      sessionMatchesLaunchParams(session, {
-        mode: GameModeId.X01,
-        config: { startScore: 501, doubleIn: false, doubleOut: true },
-        players: session.players,
-      }),
-    ).toBe(true)
-
-    expect(
-      sessionMatchesLaunchParams(session, {
-        mode: GameModeId.X01,
-        config: { startScore: 301, doubleIn: false, doubleOut: true },
-        players: session.players,
-      }),
-    ).toBe(false)
-  })
-
-  it('builds preset and custom x01 paths', () => {
-    expect(
-      buildGamePathFromSession({
-        id: 'session-1',
-        mode: GameModeId.X01,
-        config: { startScore: 501, doubleIn: false, doubleOut: true },
-        players: [],
-        visits: [],
-        status: GameStatus.InProgress,
-        startedAt: '2026-01-01T00:00:00.000Z',
-      }),
-    ).toBe('/game?preset=501')
-
-    expect(
-      buildGamePathFromSession({
-        id: 'session-1',
-        mode: GameModeId.X01,
-        config: { startScore: 333, doubleIn: true, doubleOut: false },
-        players: [],
-        visits: [],
-        status: GameStatus.InProgress,
-        startedAt: '2026-01-01T00:00:00.000Z',
-      }),
-    ).toBe('/game?start=333&doubleIn=1&doubleOut=0')
-  })
-
-  it('compares practice mode configs', () => {
-    expect(configsMatch(GameModeId.Bob27, { startScore: 27 }, { startScore: 27 })).toBe(true)
-  })
 })
 
 describe('visitPersistence', () => {

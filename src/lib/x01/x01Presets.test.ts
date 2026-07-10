@@ -3,8 +3,12 @@ import {
   buildX01CustomGamePath,
   buildX01GameSearchParams,
   getX01PresetConfig,
+  findX01PresetId,
+  formatX01StartScore,
+  parseOptionalStartScore,
   parseStartScore,
   parseX01ConfigFromSearchParams,
+  x01ConfigsMatch,
   X01PresetId,
   x01PresetConfigs,
 } from './x01Presets'
@@ -47,10 +51,26 @@ describe('x01Presets', () => {
         doubleIn: true,
         doubleOut: false,
       }),
-    ).toBe('/game?start=401&doubleIn=1&doubleOut=0')
+    ).toBe('/game/match-setup?start=401&doubleIn=1&doubleOut=0')
 
     expect(buildX01GameSearchParams(x01PresetConfigs[X01PresetId.FiveOhOne]).toString()).toBe(
       'start=501',
     )
+  })
+
+  it('matches x01 configs and finds preset ids', () => {
+    const preset501 = x01PresetConfigs[X01PresetId.FiveOhOne]
+
+    expect(x01ConfigsMatch(preset501, { ...preset501 })).toBe(true)
+    expect(x01ConfigsMatch(preset501, { ...preset501, startScore: 301 })).toBe(false)
+    expect(findX01PresetId(preset501)).toBe(X01PresetId.FiveOhOne)
+    expect(findX01PresetId({ startScore: 333, doubleIn: false, doubleOut: true })).toBeNull()
+  })
+
+  it('parses optional start score input for forms', () => {
+    expect(parseOptionalStartScore('401')).toBe(401)
+    expect(parseOptionalStartScore('')).toBeNull()
+    expect(parseOptionalStartScore('abc')).toBeNull()
+    expect(formatX01StartScore({ startScore: 301, doubleIn: false, doubleOut: true })).toBe('301')
   })
 })

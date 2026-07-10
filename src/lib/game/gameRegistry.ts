@@ -7,9 +7,6 @@ import { tenUpOneDownEngine } from '../tenUpOneDown/tenUpOneDownEngine'
 import { x01Engine } from '../x01/x01Engine'
 import type { GameEngine } from './GameEngine'
 
-export { gameModeDefinitions, getDefaultConfig } from './gameModeDefinitions'
-export type { GameModeDefinition } from './gameModeDefinitions'
-
 export const getEngine = (mode: GameModeId): GameEngine<unknown, GameConfig> => {
   switch (mode) {
     case GameModeId.X01:

@@ -1,14 +1,19 @@
 import { Box, Grid, Stack, Text } from '@chakra-ui/react'
 import { faArrowRightLong } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { getVisitDartSlots, isBogeyCheckoutScore } from '../../lib/x01/x01CheckoutSuggestions'
+import { formatDart } from '../../lib/formatDart'
+import {
+  getVisitDartSlots,
+  isBogeyCheckoutScore,
+} from '../../lib/x01/x01CheckoutSuggestions'
+import type { VisitDartSlotView } from '../../lib/x01/x01CheckoutSuggestions'
 import type { DartThrow } from '../../types/dart'
 import type { X01Config } from '../../types/x01'
 
 export interface VisitDartSlotsProps {
-  scoreBeforeVisit: number
   pendingDarts: DartThrow[]
-  config: X01Config
+  config?: X01Config | null
+  scoreBeforeVisit?: number
 }
 
 const SLOT_KEYS = ['first', 'second', 'third'] as const
@@ -19,7 +24,7 @@ const ArrowMark = () => (
   </Box>
 )
 
-const getSlotStyles = (kind: 'thrown' | 'suggested' | 'empty') => {
+const getSlotStyles = (kind: VisitDartSlotView['kind']) => {
   if (kind === 'thrown') {
     return {
       borderColor: 'whiteAlpha.500',
@@ -43,11 +48,33 @@ const getSlotStyles = (kind: 'thrown' | 'suggested' | 'empty') => {
   }
 }
 
-export const VisitDartSlots = ({ scoreBeforeVisit, pendingDarts, config }: VisitDartSlotsProps) => {
+const getSimpleVisitDartSlots = (pendingDarts: DartThrow[]): VisitDartSlotView[] =>
+  SLOT_KEYS.map((_, index) => {
+    const thrown = pendingDarts[index]
+
+    if (thrown !== undefined) {
+      return {
+        kind: 'thrown',
+        label: formatDart(thrown),
+      }
+    }
+
+    return { kind: 'empty', label: null }
+  })
+
+export const VisitDartSlots = ({
+  pendingDarts,
+  config = null,
+  scoreBeforeVisit = 0,
+}: VisitDartSlotsProps) => {
+  const slots =
+    config === null
+      ? getSimpleVisitDartSlots(pendingDarts)
+      : getVisitDartSlots(scoreBeforeVisit, pendingDarts, config)
+
   const thrownPoints = pendingDarts.reduce((total, dart) => total + dart.points, 0)
   const remaining = scoreBeforeVisit - thrownPoints
-  const slots = getVisitDartSlots(scoreBeforeVisit, pendingDarts, config)
-  const showBogey = isBogeyCheckoutScore(remaining, config)
+  const showBogey = config !== null && isBogeyCheckoutScore(remaining, config)
 
   return (
     <Stack gap={2}>

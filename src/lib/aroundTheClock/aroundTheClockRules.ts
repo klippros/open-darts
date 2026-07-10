@@ -50,3 +50,26 @@ export const resolveAroundTheClockVisit = (
     checkout: false,
   }
 }
+
+export const getAroundTheClockVisitScore = (
+  targetIndex: number,
+  darts: DartThrow[],
+): number => {
+  let currentTarget = targetIndex
+  let visitScore = 0
+
+  for (const dart of darts) {
+    if (!isAroundTheClockTargetHit(dart, currentTarget)) {
+      continue
+    }
+
+    visitScore += dart.points
+    currentTarget += 1
+
+    if (currentTarget >= AROUND_THE_CLOCK_TARGET_COUNT) {
+      break
+    }
+  }
+
+  return visitScore
+}

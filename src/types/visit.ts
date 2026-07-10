@@ -9,5 +9,6 @@ export interface Visit {
   scoreAfter: number
   bust: boolean
   checkout: boolean
+  legIndex?: number
   metadata?: Record<string, unknown>
 }

@@ -1,53 +1,54 @@
 import { GameModeId } from '../../types/gameMode'
 import type { CreateSessionParams } from '../game/createSession'
-import { createSoloHumanPlayer } from '../game/playerFactory'
+import {
+  buildPlayersFromOpponentSetup,
+  parseOpponentSetup,
+} from './opponentSetup'
+import { createSoloHumanPlayer } from './playerFactory'
 import { parseX01ConfigFromSearchParams } from '../x01/x01Presets'
 
-export const buildPracticeGamePath = (
-  mode:
-    | GameModeId.Bob27
-    | GameModeId.OneTwentyOne
-    | GameModeId.AroundTheClock
-    | GameModeId.TenUpOneDown,
-): string => {
-  if (mode === GameModeId.Bob27) {
-    return '/game?mode=bob27'
-  }
+export type PracticeGameMode =
+  | GameModeId.Bob27
+  | GameModeId.OneTwentyOne
+  | GameModeId.AroundTheClock
+  | GameModeId.TenUpOneDown
 
-  if (mode === GameModeId.OneTwentyOne) {
-    return '/game?mode=121'
-  }
+const PRACTICE_MODE_ROUTES: { mode: PracticeGameMode; param: string }[] = [
+  { mode: GameModeId.Bob27, param: 'bob27' },
+  { mode: GameModeId.OneTwentyOne, param: '121' },
+  { mode: GameModeId.TenUpOneDown, param: '10-up-1-down' },
+  { mode: GameModeId.AroundTheClock, param: 'around-the-clock' },
+]
 
-  if (mode === GameModeId.TenUpOneDown) {
-    return '/game?mode=10-up-1-down'
-  }
+export const isPracticeGameMode = (mode: GameModeId): mode is PracticeGameMode =>
+  PRACTICE_MODE_ROUTES.some((entry) => entry.mode === mode)
 
-  return '/game?mode=around-the-clock'
+export const buildPracticeGamePath = (mode: PracticeGameMode): string => {
+  const entry = PRACTICE_MODE_ROUTES.find((route) => route.mode === mode)
+
+  return `/game?mode=${entry?.param ?? 'around-the-clock'}`
 }
 
-export const parseGameLaunchParams = (params: URLSearchParams): CreateSessionParams => {
-  const players = [createSoloHumanPlayer()]
-  const mode = params.get('mode')
+export const parseGameLaunchParams = (
+  params: URLSearchParams,
+  humanName?: string,
+): CreateSessionParams => {
+  const modeParam = params.get('mode')
+  const practiceMode = PRACTICE_MODE_ROUTES.find((route) => route.param === modeParam)?.mode
 
-  if (mode === GameModeId.Bob27) {
-    return { mode: GameModeId.Bob27, players }
+  if (practiceMode !== undefined) {
+    return { mode: practiceMode, players: [createSoloHumanPlayer(humanName)] }
   }
 
-  if (mode === GameModeId.OneTwentyOne) {
-    return { mode: GameModeId.OneTwentyOne, players }
-  }
-
-  if (mode === GameModeId.AroundTheClock) {
-    return { mode: GameModeId.AroundTheClock, players }
-  }
-
-  if (mode === GameModeId.TenUpOneDown) {
-    return { mode: GameModeId.TenUpOneDown, players }
-  }
+  const setup = parseOpponentSetup(params)
 
   return {
     mode: GameModeId.X01,
     config: parseX01ConfigFromSearchParams(params),
-    players,
+    players: buildPlayersFromOpponentSetup(setup, humanName),
+    matchFormat: {
+      legsToWin: setup.legsToWin,
+      startingPlayerIndex: setup.startingPlayerIndex,
+    },
   }
 }

@@ -4,6 +4,7 @@ import { AboutPage } from './routes/AboutPage'
 import { GamePage } from './routes/GamePage'
 import { HistoryPage } from './routes/HistoryPage'
 import { HomePage } from './routes/HomePage'
+import { MatchSetupPage } from './routes/MatchSetupPage'
 import { StatsPage } from './routes/StatsPage'
 import { X01SetupPage } from './routes/X01SetupPage'
 
@@ -14,6 +15,7 @@ export const router = createBrowserRouter(
       children: [
         { index: true, element: <HomePage /> },
         { path: 'game', element: <GamePage /> },
+        { path: 'game/match-setup', element: <MatchSetupPage /> },
         { path: 'game/setup', element: <X01SetupPage /> },
         { path: 'history', element: <HistoryPage /> },
         { path: 'stats', element: <StatsPage /> },

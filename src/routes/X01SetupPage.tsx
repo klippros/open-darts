@@ -2,24 +2,8 @@ import { Box, Button, Heading, Input, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ContentContainer } from '../components/ContentContainer'
-import { buildX01CustomGamePath } from '../lib/x01/x01Presets'
+import { buildX01CustomGamePath, parseOptionalStartScore } from '../lib/x01/x01Presets'
 import type { X01Config } from '../types/x01'
-
-const parseStartScoreInput = (value: string): number | null => {
-  const trimmed = value.trim()
-
-  if (trimmed === '') {
-    return null
-  }
-
-  const parsed = Number(trimmed)
-
-  if (!Number.isInteger(parsed) || parsed < 2 || parsed > 999) {
-    return null
-  }
-
-  return parsed
-}
 
 export const X01SetupPage = () => {
   const navigate = useNavigate()
@@ -29,7 +13,7 @@ export const X01SetupPage = () => {
   const [error, setError] = useState<string | null>(null)
 
   const handleStart = () => {
-    const startScore = parseStartScoreInput(startScoreInput)
+    const startScore = parseOptionalStartScore(startScoreInput)
 
     if (startScore === null) {
       setError('Enter a whole number between 2 and 999.')
@@ -54,8 +38,8 @@ export const X01SetupPage = () => {
               Custom x01
             </Heading>
             <Text color="whiteAlpha.700" fontSize="md" lineHeight="1.65">
-              Pick a start score and optional double-in or straight-out rules, then start playing
-              right away.
+              Pick a start score and optional double-in or straight-out rules, then choose your
+              opponent.
             </Text>
           </Stack>
 
@@ -106,7 +90,7 @@ export const X01SetupPage = () => {
 
           <Stack direction={{ base: 'column', sm: 'row' }} gap={3}>
             <Button variant="emphasis" onClick={handleStart}>
-              Start game
+              Continue
             </Button>
             <Button variant="cancel" onClick={() => void navigate('/')}>
               Back

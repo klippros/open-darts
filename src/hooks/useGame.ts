@@ -3,20 +3,21 @@ import type { CreateSessionParams } from '../lib/game/createSession'
 import { createGameController, restoreGameController } from '../lib/game/createSession'
 import { clearActiveSnapshot } from '../lib/storage/gameStore'
 import { getResumableSnapshot, persistControllerState } from '../lib/storage/visitPersistence'
+import type { ActiveGameSnapshot } from '../types/activeGameSnapshot'
 import type { DartThrow } from '../types/dart'
 
 export interface UseGameOptions {
   routeKey?: string
+  startFresh?: boolean
   shouldRestoreOnLoad?: boolean
-  persistenceEnabled?: boolean
   autoSaveCompletedSessions?: boolean
 }
 
 export const useGame = (launchParams: CreateSessionParams, options: UseGameOptions = {}) => {
   const {
     routeKey = '',
+    startFresh = false,
     shouldRestoreOnLoad = false,
-    persistenceEnabled = true,
     autoSaveCompletedSessions = false,
   } = options
 
@@ -40,24 +41,20 @@ export const useGame = (launchParams: CreateSessionParams, options: UseGameOptio
   const [controller, setController] = useState(createControllerForRoute)
 
   useEffect(() => {
-    if (routeKey.endsWith(':fresh')) {
+    if (startFresh) {
       clearActiveSnapshot()
       setController(createFreshController())
       return
     }
 
     setController(createControllerForRoute())
-  }, [routeKey, createFreshController, createControllerForRoute])
+  }, [routeKey, startFresh, createFreshController, createControllerForRoute])
 
   const persist = useCallback(
     (nextController: typeof controller) => {
-      if (!persistenceEnabled) {
-        return
-      }
-
       persistControllerState(nextController, { autoSaveCompletedSessions })
     },
-    [persistenceEnabled, autoSaveCompletedSessions],
+    [autoSaveCompletedSessions],
   )
 
   const recordDart = useCallback(
@@ -97,6 +94,10 @@ export const useGame = (launchParams: CreateSessionParams, options: UseGameOptio
     setController(createFreshController())
   }, [createFreshController])
 
+  const restoreFromSnapshot = useCallback((snapshot: ActiveGameSnapshot) => {
+    setController(restoreGameController(snapshot))
+  }, [])
+
   return {
     controller,
     recordDart,
@@ -104,5 +105,6 @@ export const useGame = (launchParams: CreateSessionParams, options: UseGameOptio
     finishMatch,
     restart,
     discardSavedGame,
+    restoreFromSnapshot,
   }
 }

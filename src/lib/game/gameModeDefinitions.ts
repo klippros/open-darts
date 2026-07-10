@@ -63,5 +63,4 @@ export const gameModeDefinitions: Record<GameModeId, GameModeDefinition> = {
 export const getDefaultConfig = (mode: GameModeId): GameConfig =>
   gameModeDefinitions[mode].defaultConfig
 
-export const showsVisitHistory = (mode: GameModeId): boolean =>
-  mode === GameModeId.X01 || mode === GameModeId.OneTwentyOne || mode === GameModeId.TenUpOneDown
+export const showsVisitHistory = (_mode: GameModeId): boolean => true

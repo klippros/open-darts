@@ -22,6 +22,7 @@ export const GameBoardLayout = ({
   children,
 }: GameBoardLayoutProps) => {
   const [leftPlayer, rightPlayer] = players
+  const showPlayerName = players.length > 1
 
   return (
     <Grid
@@ -36,7 +37,13 @@ export const GameBoardLayout = ({
       w="full"
     >
       {showVisitHistory && leftPlayer !== undefined && (
-        <VisitHistoryColumn player={leftPlayer} visits={visits} mode={mode} align="left" />
+        <VisitHistoryColumn
+          player={leftPlayer}
+          visits={visits}
+          mode={mode}
+          align="left"
+          showPlayerName={showPlayerName}
+        />
       )}
 
       <Box w="full" maxW={gameMainMaxWidth} justifySelf="center">
@@ -47,7 +54,13 @@ export const GameBoardLayout = ({
         (rightPlayer === undefined ? (
           <Box display={{ base: 'none', lg: 'block' }} aria-hidden="true" />
         ) : (
-          <VisitHistoryColumn player={rightPlayer} visits={visits} mode={mode} align="right" />
+          <VisitHistoryColumn
+            player={rightPlayer}
+            visits={visits}
+            mode={mode}
+            align="right"
+            showPlayerName={showPlayerName}
+          />
         ))}
     </Grid>
   )

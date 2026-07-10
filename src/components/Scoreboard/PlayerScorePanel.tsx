@@ -1,10 +1,24 @@
-import { Box, Grid, Heading, Text } from '@chakra-ui/react'
+import { Box, Flex, Grid, Heading, Text } from '@chakra-ui/react'
 import type { ScoreboardPlayerEntry } from '../../lib/game/GameEngine'
+import { LegWinDots } from './LegWinDots'
+
+export type PlayerScorePanelAlign = 'left' | 'right' | 'solo'
+
+const getPanelAlign = (isSolo: boolean, index: number): PlayerScorePanelAlign => {
+  if (isSolo) {
+    return 'solo'
+  }
+
+  return index === 0 ? 'left' : 'right'
+}
 
 export interface PlayerScorePanelProps {
   player: ScoreboardPlayerEntry
   visitAverage: number | null
   isSolo: boolean
+  panelAlign: PlayerScorePanelAlign
+  legsToWin?: number
+  legsWon?: number
 }
 
 const formatAverage = (average: number | null): string => {
@@ -15,7 +29,67 @@ const formatAverage = (average: number | null): string => {
   return `∅ ${average.toFixed(1)}`
 }
 
-export const PlayerScorePanel = ({ player, visitAverage, isSolo }: PlayerScorePanelProps) => (
+const PlayerScorePanelHeader = ({
+  player,
+  panelAlign,
+  legsToWin,
+  legsWon,
+}: Pick<PlayerScorePanelProps, 'player' | 'panelAlign' | 'legsToWin' | 'legsWon'>) => {
+  const showLegDots = legsToWin !== undefined && legsWon !== undefined
+
+  if (panelAlign === 'solo') {
+    if (!showLegDots) {
+      return null
+    }
+
+    return (
+      <Grid templateColumns="1fr auto 1fr" alignItems="center" mb={1} minH="5">
+        <Box />
+        <LegWinDots legsToWin={legsToWin} legsWon={legsWon} isSolo />
+        <Box />
+      </Grid>
+    )
+  }
+
+  if (!showLegDots) {
+    return (
+      <Flex mb={1} minH="5" justify={panelAlign === 'right' ? 'flex-end' : 'flex-start'}>
+        <Text fontSize="sm" color="whiteAlpha.600">
+          {player.name}
+        </Text>
+      </Flex>
+    )
+  }
+
+  return (
+    <Flex align="center" justify="space-between" mb={1} minH="5" gap={2}>
+      {panelAlign === 'left' ? (
+        <>
+          <Text fontSize="sm" color="whiteAlpha.600">
+            {player.name}
+          </Text>
+          <LegWinDots legsToWin={legsToWin} legsWon={legsWon} />
+        </>
+      ) : (
+        <>
+          <LegWinDots legsToWin={legsToWin} legsWon={legsWon} />
+          <Text fontSize="sm" color="whiteAlpha.600">
+            {player.name}
+          </Text>
+        </>
+      )}
+    </Flex>
+  )
+}
+
+export const PlayerScorePanel = ({
+  player,
+  visitAverage,
+  isSolo,
+  panelAlign,
+  legsToWin,
+  legsWon,
+}: PlayerScorePanelProps) => (
   <Box
     px={5}
     py={4}
@@ -25,9 +99,12 @@ export const PlayerScorePanel = ({ player, visitAverage, isSolo }: PlayerScorePa
     bg={player.isActive ? 'whiteAlpha.100' : 'whiteAlpha.50'}
     gridColumn={isSolo ? '1 / -1' : undefined}
   >
-    <Text fontSize="sm" color="whiteAlpha.600" mb={1}>
-      {player.name}
-    </Text>
+    <PlayerScorePanelHeader
+      player={player}
+      panelAlign={panelAlign}
+      legsToWin={legsToWin}
+      legsWon={legsWon}
+    />
     <Heading
       size="5xl"
       color="white"
@@ -46,21 +123,32 @@ export const PlayerScorePanel = ({ player, visitAverage, isSolo }: PlayerScorePa
 export interface PlayerScorePanelsProps {
   players: ScoreboardPlayerEntry[]
   visitAverages: Record<string, number | null>
+  legsToWin?: number
+  legWins?: Record<string, number>
 }
 
-export const PlayerScorePanels = ({ players, visitAverages }: PlayerScorePanelsProps) => {
+export const PlayerScorePanels = ({
+  players,
+  visitAverages,
+  legsToWin,
+  legWins,
+}: PlayerScorePanelsProps) => {
   const isSolo = players.length === 1
+  const showLegDots = legsToWin !== undefined && legWins !== undefined
 
   return (
     <Grid templateColumns={isSolo ? '1fr' : 'repeat(2, 1fr)'} gap={3}>
-      {players.map((player) => (
-        <PlayerScorePanel
-          key={player.playerId}
-          player={player}
-          visitAverage={visitAverages[player.playerId] ?? null}
-          isSolo={isSolo}
-        />
-      ))}
+      {players.map((player, index) => (
+          <PlayerScorePanel
+            key={player.playerId}
+            player={player}
+            visitAverage={visitAverages[player.playerId] ?? null}
+            isSolo={isSolo}
+            panelAlign={getPanelAlign(isSolo, index)}
+            legsToWin={showLegDots ? legsToWin : undefined}
+            legsWon={showLegDots ? (legWins[player.playerId] ?? 0) : undefined}
+          />
+        ))}
     </Grid>
   )
 }

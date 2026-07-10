@@ -1,9 +1,11 @@
 import { getVisitAverages } from '../../components/Scoreboard/scoreboardStats'
 import { gameModeDefinitions } from '../game/gameModeDefinitions'
 import { isX01Config } from '../game/gameConfigGuards'
+import { getMatchWinnerId } from '../game/matchLegs'
+import { formatLegWinLine } from '../game/matchLegDisplay'
+import { formatX01StartScore } from '../x01/x01Presets'
 import { GameModeId, GameStatus } from '../../types/gameMode'
 import type { GameSession } from '../../types/gameSession'
-import type { Visit } from '../../types/visit'
 
 export interface MatchSummary {
   title: string
@@ -12,7 +14,7 @@ export interface MatchSummary {
 
 export const getSessionModeLabel = (session: GameSession): string => {
   if (isX01Config(session.mode, session.config)) {
-    return String(session.config.startScore)
+    return formatX01StartScore(session.config)
   }
 
   return gameModeDefinitions[session.mode].label
@@ -28,9 +30,6 @@ const getPrimaryPlayerVisits = (session: GameSession) => {
   return session.visits.filter((visit) => visit.playerId === playerId)
 }
 
-const getCheckoutVisit = (playerVisits: Visit[]): Visit | undefined =>
-  [...playerVisits].reverse().find((visit) => visit.checkout) ?? playerVisits.at(-1)
-
 export const getMatchSummary = (session: GameSession): MatchSummary => {
   const playerVisits = getPrimaryPlayerVisits(session)
   const visitCount = playerVisits.length
@@ -42,21 +41,60 @@ export const getMatchSummary = (session: GameSession): MatchSummary => {
 
   if (session.mode === GameModeId.X01) {
     const details = [`${visitCount} visit${visitCount === 1 ? '' : 's'}`]
+    const { matchProgress } = session
+    const checkoutVisit = [...session.visits].reverse().find((visit) => visit.checkout)
+    const legWinner =
+      checkoutVisit === undefined
+        ? undefined
+        : session.players.find((player) => player.id === checkoutVisit.playerId)
+    const matchWinnerId =
+      matchProgress === undefined ? undefined : getMatchWinnerId(session)
+    const matchWinner =
+      matchWinnerId === undefined
+        ? undefined
+        : session.players.find((player) => player.id === matchWinnerId)
+
+    if (matchProgress !== undefined) {
+      if (session.players.length > 1) {
+        details.unshift(formatLegWinLine(session.players, matchProgress))
+        details.unshift(`${matchProgress.legsToWin} leg${matchProgress.legsToWin === 1 ? '' : 's'} to win`)
+      } else {
+        details.unshift(`${matchProgress.legsToWin} leg${matchProgress.legsToWin === 1 ? '' : 's'}`)
+      }
+    }
 
     if (average !== null) {
       details.push(`${average.toFixed(1)} 3-dart average`)
     }
 
-    const checkoutVisit = getCheckoutVisit(playerVisits)
-
-    if (checkoutVisit?.checkout === true) {
+    if (matchProgress !== undefined && matchWinner !== undefined) {
+      details.push(`${matchWinner.name} wins the match`)
+    } else if (checkoutVisit?.checkout === true) {
       details.push(`Checked out from ${checkoutVisit.scoreBefore}`)
+
+      if (legWinner !== undefined && session.players.length > 1) {
+        details.push(`${legWinner.name} wins the leg`)
+      }
     } else if (finishedEarly && lastVisit !== undefined) {
       details.push(`Left on ${lastVisit.scoreAfter}`)
     }
 
+    const humanWon =
+      matchWinner?.id === session.players[0]?.id ||
+      (matchWinner === undefined &&
+        checkoutVisit?.checkout === true &&
+        (session.players.length === 1 || legWinner?.id === session.players[0]?.id))
+
+    let title = 'Session complete'
+
+    if (matchWinner !== undefined) {
+      title = humanWon ? 'Match won!' : `${matchWinner.name} wins`
+    } else if (checkoutVisit?.checkout === true) {
+      title = humanWon ? 'Game shot!' : `${legWinner?.name ?? 'Opponent'} wins`
+    }
+
     return {
-      title: checkoutVisit?.checkout === true ? 'Game shot!' : 'Session complete',
+      title,
       details,
     }
   }

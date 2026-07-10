@@ -1,6 +1,6 @@
 import { Box, Button, Stack, Text } from '@chakra-ui/react'
 import { Link as RouterLink } from 'react-router-dom'
-import { gameModeDefinitions } from '../../lib/game/gameModeDefinitions'
+import { getSessionModeLabel } from '../../lib/history/sessionSummary'
 import { buildGamePathFromSession } from '../../lib/storage/sessionMatching'
 import { getResumableSnapshot } from '../../lib/storage/visitPersistence'
 
@@ -12,7 +12,7 @@ export const ResumeGameBanner = () => {
   }
 
   const { session } = snapshot
-  const modeLabel = gameModeDefinitions[session.mode].label
+  const modeLabel = getSessionModeLabel(session)
   const resumePath = buildGamePathFromSession(session)
   const visitCount = session.visits.length
 

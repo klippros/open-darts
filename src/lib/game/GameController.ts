@@ -4,6 +4,14 @@ import { GameStatus } from '../../types/gameMode'
 import type { Player } from '../../types/player'
 import type { Visit } from '../../types/visit'
 import type { GameEngine, ScoreboardSnapshot } from './GameEngine'
+import {
+  advanceToNextLeg,
+  getLegStartingPlayerIndex,
+  getWinnerIdForCompletedLeg,
+  isMatchComplete,
+  recordLegWin,
+} from './matchLegs'
+import { resolveUndoDartState } from './undoDartStrategy'
 
 export class GameController<State, Config> {
   readonly session: GameSession
@@ -42,9 +50,7 @@ export class GameController<State, Config> {
   }
 
   get isComplete(): boolean {
-    return (
-      this.session.status === GameStatus.Completed || this.engine.isGameComplete(this.engineState)
-    )
+    return this.session.status === GameStatus.Completed
   }
 
   get scoreboard(): ScoreboardSnapshot {
@@ -71,30 +77,29 @@ export class GameController<State, Config> {
   }
 
   undoDart(): GameController<State, Config> {
-    if (this.pendingDarts.length > 0) {
-      return this.clone({ pendingDarts: this.pendingDarts.slice(0, -1) })
-    }
+    const undoState = resolveUndoDartState(this.session, this.turnIndex, this.pendingDarts)
 
-    const lastVisit = this.session.visits.at(-1)
-
-    if (lastVisit === undefined) {
+    if (undoState === null) {
       return this
     }
 
-    const pendingDarts = lastVisit.darts.slice(0, -1)
-    const visits = this.session.visits.slice(0, -1)
-    const engineState = this.rebuildEngineStateFromVisits(visits)
-    const turnIndex = this.getTurnIndexForPlayer(lastVisit.playerId)
-
     const session: GameSession = {
       ...this.session,
-      visits,
-      status: GameStatus.InProgress,
-      completedAt: undefined,
-      finishedEarly: undefined,
+      visits: undoState.visits,
+      matchProgress: undoState.matchProgress,
+      status: undoState.status,
+      completedAt: undoState.completedAt,
+      finishedEarly: undoState.finishedEarly,
     }
+    const engineState = this.rebuildEngineStateFromVisits(undoState.visits)
 
-    return new GameController(session, this.engine, engineState, pendingDarts, turnIndex)
+    return new GameController(
+      session,
+      this.engine,
+      engineState,
+      undoState.pendingDarts,
+      undoState.turnIndex,
+    )
   }
 
   finishMatch(): GameController<State, Config> {
@@ -139,14 +144,49 @@ export class GameController<State, Config> {
       pendingDarts,
     )
 
-    const visits = [...this.session.visits, visit]
-    const isComplete = this.engine.isGameComplete(state)
+    const legIndex = this.session.matchProgress?.currentLeg
+    const visitWithLeg: Visit =
+      legIndex === undefined
+        ? visit
+        : {
+            ...visit,
+            legIndex,
+          }
+    const visits = [...this.session.visits, visitWithLeg]
+    const isLegComplete = this.engine.isGameComplete(state)
+    const { matchProgress } = this.session
+
+    if (isLegComplete && matchProgress !== undefined) {
+      const winnerId = getWinnerIdForCompletedLeg(this.session.mode, state)
+
+      if (winnerId !== undefined) {
+        const progressAfterWin = recordLegWin(matchProgress, winnerId)
+
+        if (isMatchComplete(progressAfterWin, this.session.players.length)) {
+          const session: GameSession = {
+            ...this.session,
+            visits,
+            matchProgress: progressAfterWin,
+            status: GameStatus.Completed,
+            completedAt: new Date().toISOString(),
+          }
+
+          return new GameController(session, this.engine, state, [], this.turnIndex)
+        }
+
+        return this.startNextLeg({
+          ...this.session,
+          visits,
+          matchProgress: progressAfterWin,
+        })
+      }
+    }
 
     const session: GameSession = {
       ...this.session,
       visits,
-      status: isComplete ? GameStatus.Completed : GameStatus.InProgress,
-      completedAt: isComplete ? new Date().toISOString() : undefined,
+      status: isLegComplete ? GameStatus.Completed : GameStatus.InProgress,
+      completedAt: isLegComplete ? new Date().toISOString() : undefined,
     }
 
     const nextTurnIndex = advanceTurn
@@ -164,6 +204,34 @@ export class GameController<State, Config> {
     return new GameController(session, this.engine, engineState, [], turnIndex)
   }
 
+  private startNextLeg(session: GameSession): GameController<State, Config> {
+    const { matchProgress } = session
+
+    if (matchProgress === undefined) {
+      return this
+    }
+
+    const nextProgress = advanceToNextLeg(matchProgress)
+    const engineState = this.engine.createInitialState(
+      session.players,
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- session config matches engine config for the active mode
+      session.config as Config,
+    )
+    const turnIndex = getLegStartingPlayerIndex(
+      nextProgress.startingPlayerIndex,
+      nextProgress.currentLeg,
+      session.players.length,
+    )
+    const nextSession: GameSession = {
+      ...session,
+      matchProgress: nextProgress,
+      status: GameStatus.InProgress,
+      completedAt: undefined,
+    }
+
+    return new GameController(nextSession, this.engine, engineState, [], turnIndex)
+  }
+
   private getPreviewState(): State {
     if (this.pendingDarts.length === 0) {
       return this.engineState
@@ -172,22 +240,16 @@ export class GameController<State, Config> {
     return this.engine.applyDart(this.engineState, this.activePlayerId, this.pendingDarts)
   }
 
-  private getTurnIndexForPlayer(playerId: string): number {
-    const turnIndex = this.session.players.findIndex((player) => player.id === playerId)
-
-    if (turnIndex === -1) {
-      throw new Error(`Unknown player: ${playerId}`)
-    }
-
-    return turnIndex
-  }
-
   private rebuildEngineStateFromVisits(visits: Visit[]): State {
-    const { players, config } = this.session
+    const { players, config, matchProgress } = this.session
+    const legVisits =
+      matchProgress === undefined
+        ? visits
+        : visits.filter((visit) => (visit.legIndex ?? 1) === matchProgress.currentLeg)
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- session config matches engine config for the active mode
     let state = this.engine.createInitialState(players, config as Config)
 
-    for (const visit of visits) {
+    for (const visit of legVisits) {
       const { state: nextState } = this.engine.commitVisit(
         state,
         visit.playerId,
@@ -213,5 +275,3 @@ export class GameController<State, Config> {
     )
   }
 }
-
-export type { Visit, ScoreboardSnapshot }

@@ -26,6 +26,23 @@ export const x01PresetConfigs: Record<X01PresetId, X01Config> = {
 
 export const defaultX01Config = (): X01Config => ({ ...x01PresetConfigs[X01PresetId.FiveOhOne] })
 
+export const x01ConfigsMatch = (left: X01Config, right: X01Config): boolean =>
+  left.startScore === right.startScore &&
+  left.doubleIn === right.doubleIn &&
+  left.doubleOut === right.doubleOut
+
+export const findX01PresetId = (config: X01Config): X01PresetId | null => {
+  for (const presetId of Object.values(X01PresetId)) {
+    if (x01ConfigsMatch(config, x01PresetConfigs[presetId])) {
+      return presetId
+    }
+  }
+
+  return null
+}
+
+export const formatX01StartScore = (config: X01Config): string => String(config.startScore)
+
 export const getX01PresetConfig = (presetId: string): X01Config | null => {
   switch (presetId) {
     case '301':
@@ -60,6 +77,22 @@ export const parseStartScore = (value: string | null, fallback = 501): number =>
 
   if (!Number.isInteger(parsed) || parsed < 2 || parsed > 999) {
     return fallback
+  }
+
+  return parsed
+}
+
+export const parseOptionalStartScore = (value: string): number | null => {
+  const trimmed = value.trim()
+
+  if (trimmed === '') {
+    return null
+  }
+
+  const parsed = Number(trimmed)
+
+  if (!Number.isInteger(parsed) || parsed < 2 || parsed > 999) {
+    return null
   }
 
   return parsed
@@ -100,7 +133,8 @@ export const buildX01GameSearchParams = (config: X01Config): URLSearchParams => 
   return params
 }
 
-export const buildX01PresetPath = (presetId: X01PresetId): string => `/game?preset=${presetId}`
+export const buildX01PresetPath = (presetId: X01PresetId): string =>
+  `/game/match-setup?preset=${presetId}`
 
 export const buildX01CustomGamePath = (config: X01Config): string =>
-  `/game?${buildX01GameSearchParams(config).toString()}`
+  `/game/match-setup?${buildX01GameSearchParams(config).toString()}`

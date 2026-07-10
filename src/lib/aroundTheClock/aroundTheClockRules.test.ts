@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { DartMultiplier } from '../../types/dart'
-import { getAroundTheClockTargetLabel, resolveAroundTheClockVisit } from './aroundTheClockRules'
+import { getAroundTheClockTargetLabel, getAroundTheClockVisitScore, resolveAroundTheClockVisit } from './aroundTheClockRules'
 import { bullDart, numberDart } from '../testHelpers'
 
 describe('aroundTheClockRules', () => {
@@ -23,5 +23,22 @@ describe('aroundTheClockRules', () => {
     const outcome = resolveAroundTheClockVisit(5, [numberDart(7, DartMultiplier.Single)])
 
     expect(outcome).toEqual({ targetIndexAfter: 5, checkout: false })
+  })
+
+  it('only counts points from darts that hit the current target', () => {
+    expect(
+      getAroundTheClockVisitScore(4, [
+        numberDart(20, DartMultiplier.Triple),
+        numberDart(5, DartMultiplier.Single),
+      ]),
+    ).toBe(5)
+
+    expect(
+      getAroundTheClockVisitScore(0, [
+        numberDart(1, DartMultiplier.Single),
+        numberDart(2, DartMultiplier.Single),
+        numberDart(3, DartMultiplier.Single),
+      ]),
+    ).toBe(6)
   })
 })

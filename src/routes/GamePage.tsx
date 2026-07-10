@@ -18,6 +18,7 @@ export const GamePage = () => {
     restart,
     loadState,
     startNewGame,
+    botTurnActive,
     abortDialogOpen,
     requestAbortMatch,
     cancelAbortMatch,
@@ -26,7 +27,7 @@ export const GamePage = () => {
   } = useGamePage()
   const { account, createAccount } = useAccount()
 
-  const inputDisabled = controller.isComplete || loadState.kind === 'conflict'
+  const inputDisabled = controller.isComplete || loadState.kind === 'conflict' || botTurnActive
   const canFinish = matchHasProgress(controller)
 
   return (
@@ -67,17 +68,22 @@ export const GamePage = () => {
               visits={controller.session.visits}
               players={controller.session.players}
               config={controller.session.config}
+              matchProgress={controller.session.matchProgress}
             />
 
             <DartPicker onDart={recordDart} onUndo={undoDart} inputDisabled={inputDisabled} />
 
             {!controller.isComplete && loadState.kind !== 'conflict' && (
-              <HStack gap={3} alignSelf="flex-start">
-                <Button variant="emphasis" disabled={!canFinish} onClick={finishMatch}>
-                  Finish
-                </Button>
-                <Button variant="cancel" onClick={requestAbortMatch}>
+              <HStack gap={3} w="full" justify="space-between">
+                <Button variant="cancel" disabled={botTurnActive} onClick={requestAbortMatch}>
                   Abort match
+                </Button>
+                <Button
+                  variant="emphasis"
+                  disabled={!canFinish || botTurnActive}
+                  onClick={finishMatch}
+                >
+                  Finish
                 </Button>
               </HStack>
             )}

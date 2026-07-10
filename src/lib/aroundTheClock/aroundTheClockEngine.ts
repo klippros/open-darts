@@ -1,8 +1,7 @@
 import type { GameEngine, VisitResult } from '../game/GameEngine'
 import { GameModeId } from '../../types/gameMode'
 import type { AroundTheClockConfig, AroundTheClockState } from '../../types/aroundTheClock'
-import { sumDartPoints } from '../dartScoring'
-import { getAroundTheClockTargetLabel, resolveAroundTheClockVisit } from './aroundTheClockRules'
+import { getAroundTheClockTargetLabel, getAroundTheClockVisitScore, resolveAroundTheClockVisit } from './aroundTheClockRules'
 
 const getPlayerState = (state: AroundTheClockState, playerId: string) => {
   const playerState = state.players[playerId]
@@ -62,7 +61,7 @@ export const aroundTheClockEngine: GameEngine<AroundTheClockState, AroundTheCloc
       visitIndex,
       playerId,
       darts,
-      visitScore: sumDartPoints(darts),
+      visitScore: getAroundTheClockVisitScore(scoreBefore, darts),
       scoreBefore,
       scoreAfter: outcome.targetIndexAfter,
       bust: false,

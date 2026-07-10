@@ -1,4 +1,5 @@
 import type { GameConfig, GameModeId, GameStatus } from './gameMode'
+import type { MatchProgress } from './match'
 import type { Player } from './player'
 import type { Visit } from './visit'
 
@@ -12,4 +13,5 @@ export interface GameSession {
   startedAt: string
   completedAt?: string
   finishedEarly?: boolean
+  matchProgress?: MatchProgress
 }

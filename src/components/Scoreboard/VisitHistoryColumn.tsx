@@ -10,6 +10,7 @@ export interface VisitHistoryColumnProps {
   visits: Visit[]
   mode: GameModeId
   align?: 'left' | 'right'
+  showPlayerName?: boolean
 }
 
 export const VisitHistoryColumn = ({
@@ -17,6 +18,7 @@ export const VisitHistoryColumn = ({
   visits,
   mode,
   align = 'left',
+  showPlayerName = true,
 }: VisitHistoryColumnProps) => {
   const playerVisits = visits.filter((visit) => visit.playerId === player.id).toReversed()
 
@@ -26,9 +28,11 @@ export const VisitHistoryColumn = ({
       align={align === 'right' ? 'flex-end' : 'flex-start'}
       display={{ base: 'none', lg: 'flex' }}
     >
-      <Text fontSize="xs" color="whiteAlpha.500" textTransform="uppercase" letterSpacing="0.08em">
-        {player.name}
-      </Text>
+      {showPlayerName && (
+        <Text fontSize="xs" color="whiteAlpha.500" textTransform="uppercase" letterSpacing="0.08em">
+          {player.name}
+        </Text>
+      )}
 
       {playerVisits.length === 0 ? (
         <Text fontSize="sm" color="whiteAlpha.400">

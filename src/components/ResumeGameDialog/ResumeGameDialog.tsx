@@ -1,6 +1,6 @@
 import { Button, Dialog, Text } from '@chakra-ui/react'
 import { darkDialogContentProps } from '../darkDialogContentProps'
-import { gameModeDefinitions } from '../../lib/game/gameModeDefinitions'
+import { getSessionModeLabel } from '../../lib/history/sessionSummary'
 import type { GameSession } from '../../types/gameSession'
 
 export interface ResumeGameDialogProps {
@@ -16,7 +16,7 @@ export const ResumeGameDialog = ({
   onResumeSaved,
   onStartNew,
 }: ResumeGameDialogProps) => {
-  const modeLabel = gameModeDefinitions[savedSession.mode].label
+  const modeLabel = getSessionModeLabel(savedSession)
 
   return (
     <Dialog.Root

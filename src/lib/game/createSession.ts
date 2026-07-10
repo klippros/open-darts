@@ -4,7 +4,13 @@ import type { GameConfig, GameModeId } from '../../types/gameMode'
 import type { Player } from '../../types/player'
 import type { GameSession } from '../../types/gameSession'
 import { GameController } from './GameController'
-import { getDefaultConfig, getEngine } from './gameRegistry'
+import { getDefaultConfig } from './gameModeDefinitions'
+import { getEngine } from './gameRegistry'
+import type { MatchFormat } from './matchLegs'
+import {
+  createInitialMatchProgress,
+  getLegStartingPlayerIndex,
+} from './matchLegs'
 import { createId } from './playerFactory'
 
 export type AppGameController = GameController<unknown, GameConfig>
@@ -14,13 +20,15 @@ export interface CreateSessionParams {
   config?: GameConfig
   players: Player[]
   sessionId?: string
+  matchFormat?: MatchFormat
 }
 
-export const createGameSession = ({
+const createGameSession = ({
   mode,
   config = getDefaultConfig(mode),
   players,
   sessionId = createId(),
+  matchFormat,
 }: CreateSessionParams): GameSession => ({
   id: sessionId,
   mode,
@@ -29,25 +37,57 @@ export const createGameSession = ({
   visits: [],
   status: GameStatus.InProgress,
   startedAt: new Date().toISOString(),
+  matchProgress:
+    matchFormat === undefined ? undefined : createInitialMatchProgress(players, matchFormat),
 })
+
+const getInitialTurnIndex = (session: GameSession): number => {
+  const { matchProgress, players } = session
+
+  if (matchProgress === undefined) {
+    return 0
+  }
+
+  return getLegStartingPlayerIndex(
+    matchProgress.startingPlayerIndex,
+    matchProgress.currentLeg,
+    players.length,
+  )
+}
 
 export const createGameController = (params: CreateSessionParams): AppGameController => {
   const session = createGameSession(params)
   const engine = getEngine(session.mode)
   const engineState = engine.createInitialState(session.players, session.config)
 
-  return new GameController(session, engine, engineState, [], 0)
+  return new GameController(session, engine, engineState, [], getInitialTurnIndex(session))
 }
 
 export const restoreGameController = (snapshot: ActiveGameSnapshot): AppGameController => {
   const { session, turnIndex, pendingDarts } = snapshot
   const engine = getEngine(session.mode)
+  const engineState = rebuildEngineStateFromVisits(session, engine)
+
+  return new GameController(session, engine, engineState, pendingDarts, turnIndex)
+}
+
+const rebuildEngineStateFromVisits = (
+  session: GameSession,
+  engine: ReturnType<typeof getEngine>,
+): unknown => {
+  const visits =
+    session.matchProgress === undefined
+      ? session.visits
+      : session.visits.filter(
+          (visit) => (visit.legIndex ?? 1) === session.matchProgress?.currentLeg,
+        )
+
   let engineState = engine.createInitialState(session.players, session.config)
 
-  for (const visit of session.visits) {
+  for (const visit of visits) {
     const { state } = engine.commitVisit(engineState, visit.playerId, visit.visitIndex, visit.darts)
     engineState = state
   }
 
-  return new GameController(session, engine, engineState, pendingDarts, turnIndex)
+  return engineState
 }
