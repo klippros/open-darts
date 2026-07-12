@@ -7,10 +7,7 @@ import {
   labelsToCheckoutPath,
 } from './checkoutFallback'
 import type { CheckoutDart } from './checkoutDart'
-import {
-  DOUBLE_OUT_BOGEY_SCORES,
-  getPdcCheckoutLabels,
-} from './pdcCheckoutTable'
+import { DOUBLE_OUT_BOGEY_SCORES, getPdcCheckoutLabels } from './pdcCheckoutTable'
 
 export { checkoutDartFromLabel } from './checkoutDart'
 export type { CheckoutDart } from './checkoutDart'
@@ -20,10 +17,7 @@ export const MAX_CHECKOUT_SCORE = 170
 const isDoubleOutBogeyScore = (remaining: number, rules: CheckoutRules): boolean =>
   rules.doubleOut && DOUBLE_OUT_BOGEY_SCORES.has(remaining)
 
-const getPdcCheckoutPath = (
-  remaining: number,
-  dartsRemaining: number,
-): CheckoutDart[] | null => {
+const getPdcCheckoutPath = (remaining: number, dartsRemaining: number): CheckoutDart[] | null => {
   const labels = getPdcCheckoutLabels(remaining)
 
   if (labels === null || labels.length > dartsRemaining) {
@@ -124,9 +118,7 @@ export const normalizeCheckoutTarget = (
 }
 
 export const isBogeyCheckoutScore = (remaining: number, rules: CheckoutRules): boolean =>
-  remaining >= 2 &&
-  remaining <= MAX_CHECKOUT_SCORE &&
-  !isCheckoutPossible(remaining, rules)
+  remaining >= 2 && remaining <= MAX_CHECKOUT_SCORE && !isCheckoutPossible(remaining, rules)
 
 export const suggestCheckoutPath = (
   remaining: number,

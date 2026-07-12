@@ -10,10 +10,7 @@ import {
 import { appendOpponentSetupParams, parseOpponentSetup } from '../lib/game/opponentSetup'
 import type { OpponentMode, OpponentSetup } from '../lib/game/opponentSetup'
 import { formatX01StartScore, parseX01ConfigFromSearchParams } from '../lib/x01/x01Presets'
-import {
-  BOT_SKILL_LEVEL_MAX,
-  BOT_SKILL_LEVEL_MIN,
-} from '../types/player'
+import { BOT_SKILL_LEVEL_MAX, BOT_SKILL_LEVEL_MIN } from '../types/player'
 import { MatchSetupLegSettings } from './MatchSetupLegSettings'
 import { MatchSetupOpponentOption } from './MatchSetupOpponentOption'
 
@@ -38,8 +35,7 @@ export const MatchSetupPage = () => {
 
   const modeLabel = formatX01StartScore(x01Config)
   const botAverageLabel = formatBotEstimatedThreeDartAverage(setup.botLevel)
-  const opponentStarterLabel =
-    setup.mode === 'guest' ? setup.guestName.trim() || 'Guest' : 'Bot'
+  const opponentStarterLabel = setup.mode === 'guest' ? setup.guestName.trim() || 'Guest' : 'Bot'
 
   const handleStart = () => {
     if (setup.mode === 'guest' && setup.guestName.trim() === '') {

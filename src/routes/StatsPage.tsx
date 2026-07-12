@@ -8,6 +8,7 @@ import {
   PracticeSection,
   X01LegSection,
 } from '../components/StatsPageSections/StatsPageSections'
+import { TotalDartsHero } from '../components/StatsPageSections/TotalDartsHero'
 import { computeAnalytics } from '../lib/analytics/computeAnalytics'
 import type { DateRangePreset } from '../lib/analytics/sessionFilters'
 import { filterSessions } from '../lib/analytics/sessionFilters'
@@ -115,12 +116,12 @@ export const StatsPage = () => {
 
           {hasAnyData ? (
             <>
+              <TotalDartsHero sessions={filteredSessions} />
               <X01LegSection
                 title="501"
                 subtitle="Scoring and checkout stats from your saved 501 legs."
                 emptyMessage="No saved 501 games in this period yet."
                 stats={analytics.x01.fiveOhOne}
-                avgDartsLabel="Avg darts"
                 scope={{ type: 'x01-501' }}
                 onStatSelect={handleStatSelect}
               />
@@ -130,7 +131,6 @@ export const StatsPage = () => {
                   subtitle="301, 401, and custom x01 legs kept separate from 501."
                   emptyMessage="No saved other x01 games in this period yet."
                   stats={analytics.x01.other}
-                  avgDartsLabel="Avg darts"
                   scope={{ type: 'x01-other' }}
                   onStatSelect={handleStatSelect}
                 />

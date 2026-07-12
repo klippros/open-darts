@@ -6,6 +6,7 @@ import {
   countCheckoutVisits,
   countDartsInSession,
   getPrimaryPlayerVisits,
+  getSessionFinalScore,
   getThreeDartAverage,
 } from './visitStats'
 
@@ -76,12 +77,6 @@ const computeCheckoutPracticeStats = (
   }
 }
 
-const getFinalScore = (session: GameSession): number | null => {
-  const lastVisit = getPrimaryPlayerVisits(session).at(-1)
-
-  return lastVisit?.scoreAfter ?? null
-}
-
 const computeBob27Stats = (sessions: GameSession[]): Bob27PracticeStats | null => {
   const modeSessions = sessions.filter((session) => session.mode === GameModeId.Bob27)
 
@@ -92,7 +87,7 @@ const computeBob27Stats = (sessions: GameSession[]): Bob27PracticeStats | null =
   const completedSessions = modeSessions.filter((session) => session.finishedEarly !== true)
   const visits = modeSessions.flatMap((session) => getPrimaryPlayerVisits(session))
   const finalScores = modeSessions
-    .map((session) => getFinalScore(session))
+    .map((session) => getSessionFinalScore(session))
     .filter((score): score is number => score !== null)
 
   return {

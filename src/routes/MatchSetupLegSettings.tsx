@@ -3,11 +3,7 @@ import { clampLegsToWin, getMaxPossibleLegs } from '../lib/game/matchLegs'
 import type { OpponentSetup } from '../lib/game/opponentSetup'
 import { resolveHumanPlayerName } from '../lib/game/playerFactory'
 import { useAccount } from '../hooks/accountContext'
-import {
-  DEFAULT_LEGS_TO_WIN,
-  LEGS_TO_WIN_MAX,
-  LEGS_TO_WIN_MIN,
-} from '../types/match'
+import { DEFAULT_LEGS_TO_WIN, LEGS_TO_WIN_MAX, LEGS_TO_WIN_MIN } from '../types/match'
 import { MatchSetupOpponentOption } from './MatchSetupOpponentOption'
 
 const rangeInputStyle = {

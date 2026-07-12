@@ -1,16 +1,30 @@
 import { GameModeId } from '../../types/gameMode'
 import type { GameSession } from '../../types/gameSession'
 import { isX01Config } from '../game/gameConfigGuards'
-import { MAX_CHECKOUT_SCORE } from '../checkout/checkoutSuggestions'
+import { x01PresetConfigs, X01PresetId } from '../x01/x01Presets'
 import {
+  countDoubleCheckoutStats,
+  mergeDoubleCheckoutStats,
+  type DoubleCheckoutStats,
+  emptyDoubleCheckoutStats,
+} from './doubleCheckoutStats'
+import { filterFiveOhOneSessions, filterOtherX01Sessions } from './sessionScope'
+import {
+  countCheckouts100Plus,
   countDartsInSession,
-  getPrimaryPlayerVisits,
+  countThrown100Plus,
+  countThrown140Plus,
+  countThrown180,
+  getHighestCheckout,
+  getHighestVisit,
   getMaxGameThreeDartAverage,
+  getPrimaryPlayerVisits,
+  getScoringVisits,
   getThreeDartAverage,
   sessionFinishedWithCheckout,
 } from './visitStats'
 
-export const FIVE_OH_ONE_START_SCORE = 501
+export const FIVE_OH_ONE_START_SCORE = x01PresetConfigs[X01PresetId.FiveOhOne].startScore
 
 export interface X01LegStats {
   gameCount: number
@@ -18,9 +32,14 @@ export interface X01LegStats {
   threeDartAverage: number | null
   threeDartAverageUntil170: number | null
   bestGameAverage: number | null
-  checkoutRate: number | null
   avgDarts: number | null
-  checkoutDartCount: number
+  thrown180: number
+  thrown140Plus: number
+  thrown100Plus: number
+  doubleCheckout: DoubleCheckoutStats
+  checkouts100Plus: number
+  highestCheckout: number | null
+  highestVisit: number | null
 }
 
 export interface X01Stats {
@@ -34,16 +53,15 @@ const emptyLegStats = (): X01LegStats => ({
   threeDartAverage: null,
   threeDartAverageUntil170: null,
   bestGameAverage: null,
-  checkoutRate: null,
   avgDarts: null,
-  checkoutDartCount: 0,
+  thrown180: 0,
+  thrown140Plus: 0,
+  thrown100Plus: 0,
+  doubleCheckout: emptyDoubleCheckoutStats(),
+  checkouts100Plus: 0,
+  highestCheckout: null,
+  highestVisit: null,
 })
-
-const isX01Session = (session: GameSession): boolean =>
-  session.mode === GameModeId.X01 && isX01Config(session.mode, session.config)
-
-const getScoringVisits = (session: GameSession) =>
-  getPrimaryPlayerVisits(session).filter((visit) => visit.scoreBefore > MAX_CHECKOUT_SCORE)
 
 const computeX01LegStats = (sessions: GameSession[]): X01LegStats => {
   if (sessions.length === 0) {
@@ -51,42 +69,51 @@ const computeX01LegStats = (sessions: GameSession[]): X01LegStats => {
   }
 
   const allVisits = sessions.flatMap((session) => getPrimaryPlayerVisits(session))
-  const scoringVisits = sessions.flatMap((session) => getScoringVisits(session))
+  const scoringVisits = sessions.flatMap((session) =>
+    getScoringVisits(getPrimaryPlayerVisits(session)),
+  )
   const checkoutSessions = sessions.filter((session) => sessionFinishedWithCheckout(session))
-  const gameCount = sessions.length
-  const checkoutGameCount = checkoutSessions.length
+
+  const doubleCheckout = sessions.reduce<DoubleCheckoutStats>((totals, session) => {
+    if (!isX01Config(session.mode, session.config)) {
+      return totals
+    }
+
+    const visits = getPrimaryPlayerVisits(session)
+    const sessionStats = countDoubleCheckoutStats(
+      visits,
+      {
+        doubleIn: session.config.doubleIn,
+        doubleOut: session.config.doubleOut,
+      },
+      session.config.doubleIn,
+    )
+
+    return mergeDoubleCheckoutStats(totals, sessionStats)
+  }, emptyDoubleCheckoutStats())
 
   return {
-    gameCount,
-    checkoutGameCount,
+    gameCount: sessions.length,
+    checkoutGameCount: checkoutSessions.length,
     threeDartAverage: getThreeDartAverage(allVisits),
     threeDartAverageUntil170: getThreeDartAverage(scoringVisits),
     bestGameAverage: getMaxGameThreeDartAverage(sessions),
-    checkoutRate: gameCount === 0 ? null : (checkoutGameCount / gameCount) * 100,
     avgDarts:
       checkoutSessions.length === 0
         ? null
         : checkoutSessions.reduce((sum, session) => sum + countDartsInSession(session), 0) /
           checkoutSessions.length,
-    checkoutDartCount: checkoutSessions.length,
+    thrown180: countThrown180(allVisits),
+    thrown140Plus: countThrown140Plus(allVisits),
+    thrown100Plus: countThrown100Plus(allVisits),
+    doubleCheckout,
+    checkouts100Plus: countCheckouts100Plus(allVisits),
+    highestCheckout: getHighestCheckout(allVisits),
+    highestVisit: getHighestVisit(allVisits),
   }
 }
 
-export const computeX01Stats = (sessions: GameSession[]): X01Stats => {
-  const x01Sessions = sessions.filter(isX01Session)
-  const fiveOhOneSessions = x01Sessions.filter(
-    (session) =>
-      isX01Config(session.mode, session.config) &&
-      session.config.startScore === FIVE_OH_ONE_START_SCORE,
-  )
-  const otherSessions = x01Sessions.filter(
-    (session) =>
-      isX01Config(session.mode, session.config) &&
-      session.config.startScore !== FIVE_OH_ONE_START_SCORE,
-  )
-
-  return {
-    fiveOhOne: computeX01LegStats(fiveOhOneSessions),
-    other: computeX01LegStats(otherSessions),
-  }
-}
+export const computeX01Stats = (sessions: GameSession[]): X01Stats => ({
+  fiveOhOne: computeX01LegStats(filterFiveOhOneSessions(sessions)),
+  other: computeX01LegStats(filterOtherX01Sessions(sessions)),
+})

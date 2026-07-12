@@ -11,7 +11,13 @@ import { createBotPlayer, createSoloHumanPlayer } from './playerFactory'
 describe('opponentSetup', () => {
   it('builds solo, guest, and bot player lists', () => {
     expect(
-      buildPlayersFromOpponentSetup({ mode: 'solo', guestName: '', botLevel: 5, legsToWin: 1, startingPlayerIndex: 0 }),
+      buildPlayersFromOpponentSetup({
+        mode: 'solo',
+        guestName: '',
+        botLevel: 5,
+        legsToWin: 1,
+        startingPlayerIndex: 0,
+      }),
     ).toHaveLength(1)
     expect(
       buildPlayersFromOpponentSetup({

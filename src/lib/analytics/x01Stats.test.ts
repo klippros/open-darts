@@ -72,7 +72,7 @@ describe('x01Stats', () => {
     expect(stats.fiveOhOne.threeDartAverage).toBe(85)
     expect(stats.fiveOhOne.threeDartAverageUntil170).toBe(90)
     expect(stats.fiveOhOne.bestGameAverage).toBe(85)
-    expect(stats.fiveOhOne.checkoutRate).toBe(100)
+    expect(stats.fiveOhOne.checkoutGameCount).toBe(1)
     expect(stats.other.gameCount).toBe(0)
   })
 
@@ -185,7 +185,6 @@ describe('x01Stats', () => {
     ])
 
     expect(stats.fiveOhOne.avgDarts).toBe(5)
-    expect(stats.fiveOhOne.checkoutDartCount).toBe(1)
-    expect(stats.fiveOhOne.checkoutRate).toBe(50)
+    expect(stats.fiveOhOne.checkoutGameCount).toBe(1)
   })
 })

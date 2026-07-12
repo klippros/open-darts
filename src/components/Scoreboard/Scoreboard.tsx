@@ -7,7 +7,7 @@ import { GameModeId } from '../../types/gameMode'
 import type { GameConfig } from '../../types/gameMode'
 import type { GameSession } from '../../types/gameSession'
 import { ScoreboardCenter } from './ScoreboardCenter'
-import { getVisitAverages } from './scoreboardStats'
+import { getLegAndMatchAverages } from './scoreboardStats'
 
 export interface ScoreboardProps {
   mode: GameModeId
@@ -28,9 +28,12 @@ export const Scoreboard = ({
   config,
   matchProgress,
 }: ScoreboardProps) => {
-  const visitAverages = useMemo(
-    () => (mode === GameModeId.X01 ? getVisitAverages(players, visits) : {}),
-    [mode, players, visits],
+  const legAndMatchAverages = useMemo(
+    () =>
+      mode === GameModeId.X01
+        ? getLegAndMatchAverages(players, visits, matchProgress?.currentLeg)
+        : {},
+    [mode, players, visits, matchProgress?.currentLeg],
   )
   const activePlayer = scoreboard.players.find((player) => player.isActive)
 
@@ -38,7 +41,7 @@ export const Scoreboard = ({
     <ScoreboardCenter
       mode={mode}
       players={scoreboard.players}
-      visitAverages={visitAverages}
+      legAndMatchAverages={legAndMatchAverages}
       activePlayer={activePlayer}
       pendingDarts={pendingDarts}
       config={config}

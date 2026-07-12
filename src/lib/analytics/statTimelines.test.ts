@@ -81,4 +81,40 @@ describe('statTimelines', () => {
     expect(timeline.points[0]?.value).toBeNull()
     expect(hasPlottableTimeline(timeline)).toBe(false)
   })
+
+  it('builds per-session thrown 180 counts', () => {
+    const timeline = buildStatTimeline(
+      [
+        sampleSession({
+          id: 'without-180',
+          completedAt: '2026-01-01T10:00:00.000Z',
+          visits: [sampleVisit({ visitScore: 60, scoreBefore: 501, scoreAfter: 441 })],
+        }),
+        sampleSession({
+          id: 'with-180',
+          completedAt: '2026-01-02T10:00:00.000Z',
+          visits: [
+            sampleVisit({ visitScore: 180, scoreBefore: 501, scoreAfter: 321 }),
+            sampleVisit({
+              visitIndex: 1,
+              checkout: true,
+              visitScore: 40,
+              scoreBefore: 40,
+              scoreAfter: 0,
+              darts: [numberDart(20, DartMultiplier.Double)],
+            }),
+          ],
+        }),
+      ],
+      {
+        scope: { type: 'x01-501' },
+        metric: 'thrown180',
+        metricLabel: '180',
+        scopeLabel: '501',
+      },
+    )
+
+    expect(timeline.points[0]?.value).toBe(0)
+    expect(timeline.points[1]?.value).toBe(1)
+  })
 })

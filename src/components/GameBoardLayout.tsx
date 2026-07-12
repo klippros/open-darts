@@ -10,6 +10,7 @@ export interface GameBoardLayoutProps {
   players: Player[]
   visits: Visit[]
   mode: GameModeId
+  currentLeg?: number
   showVisitHistory: boolean
   children: ReactNode
 }
@@ -18,6 +19,7 @@ export const GameBoardLayout = ({
   players,
   visits,
   mode,
+  currentLeg,
   showVisitHistory,
   children,
 }: GameBoardLayoutProps) => {
@@ -41,6 +43,7 @@ export const GameBoardLayout = ({
           player={leftPlayer}
           visits={visits}
           mode={mode}
+          currentLeg={currentLeg}
           align="left"
           showPlayerName={showPlayerName}
         />
@@ -58,6 +61,7 @@ export const GameBoardLayout = ({
             player={rightPlayer}
             visits={visits}
             mode={mode}
+            currentLeg={currentLeg}
             align="right"
             showPlayerName={showPlayerName}
           />

@@ -7,6 +7,7 @@ import type { GameEngine, ScoreboardSnapshot } from './GameEngine'
 import {
   advanceToNextLeg,
   getLegStartingPlayerIndex,
+  getVisitsForLeg,
   getWinnerIdForCompletedLeg,
   isMatchComplete,
   recordLegWin,
@@ -243,9 +244,7 @@ export class GameController<State, Config> {
   private rebuildEngineStateFromVisits(visits: Visit[]): State {
     const { players, config, matchProgress } = this.session
     const legVisits =
-      matchProgress === undefined
-        ? visits
-        : visits.filter((visit) => (visit.legIndex ?? 1) === matchProgress.currentLeg)
+      matchProgress === undefined ? visits : getVisitsForLeg(visits, matchProgress.currentLeg)
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- session config matches engine config for the active mode
     let state = this.engine.createInitialState(players, config as Config)
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { PlayerKind } from '../../types/player'
 import type { Visit } from '../../types/visit'
-import { getVisitAverages } from './scoreboardStats'
+import { getVisitAverages, getLegAndMatchAverages } from './visitStats'
 
 const player = { id: 'p1', name: 'Player 1', kind: PlayerKind.Human }
 
@@ -29,5 +29,20 @@ describe('getVisitAverages', () => {
     ]
 
     expect(getVisitAverages([player], visits)[player.id]).toBe(30)
+  })
+})
+
+describe('getLegAndMatchAverages', () => {
+  it('computes leg and match averages separately', () => {
+    const averages = getLegAndMatchAverages(
+      [player],
+      [
+        visit({ visitIndex: 0, visitScore: 100, scoreAfter: 401, legIndex: 1 }),
+        visit({ visitIndex: 1, visitScore: 60, scoreAfter: 341, legIndex: 2 }),
+      ],
+      2,
+    )
+
+    expect(averages[player.id]).toEqual({ leg: 60, match: 80 })
   })
 })

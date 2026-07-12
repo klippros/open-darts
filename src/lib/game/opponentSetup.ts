@@ -99,7 +99,10 @@ export const appendOpponentSetupParams = (
   return params
 }
 
-export const buildPlayersFromOpponentSetup = (setup: OpponentSetup, humanName?: string): Player[] => {
+export const buildPlayersFromOpponentSetup = (
+  setup: OpponentSetup,
+  humanName?: string,
+): Player[] => {
   const human = createSoloHumanPlayer(humanName)
 
   if (setup.mode === 'solo') {
@@ -163,8 +166,7 @@ export const opponentSetupsMatch = (left: OpponentSetup, right: OpponentSetup): 
 
 export const playersMatchLaunchSetup = (players: Player[], setup: OpponentSetup): boolean => {
   const [primaryHuman] = players
-  const humanName =
-    primaryHuman?.kind === PlayerKind.Human ? primaryHuman.name : undefined
+  const humanName = primaryHuman?.kind === PlayerKind.Human ? primaryHuman.name : undefined
   const expected = buildPlayersFromOpponentSetup(setup, humanName)
 
   if (players.length !== expected.length) {

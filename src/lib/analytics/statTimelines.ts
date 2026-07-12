@@ -2,12 +2,21 @@ import { GameModeId } from '../../types/gameMode'
 import type { GameSession } from '../../types/gameSession'
 import { getSessionCompletedAt, getSessionModeLabel } from '../history/sessionSummary'
 import { isX01Config } from '../game/gameConfigGuards'
-import { MAX_CHECKOUT_SCORE } from '../checkout/checkoutSuggestions'
-import { FIVE_OH_ONE_START_SCORE } from './x01Stats'
+import { getDoubleCheckoutRate } from './formatAnalytics'
+import { computePlayerStatsForVisits } from './matchPlayerStats'
 import {
-  countCheckoutVisits,
+  filterAroundTheClockSessions,
+  filterBob27Sessions,
+  filterCheckoutPracticeSessions,
+  filterFiveOhOneSessions,
+  filterOtherX01Sessions,
+} from './sessionScope'
+import {
   countDartsInSession,
   getPrimaryPlayerVisits,
+  getScoringVisits,
+  getSessionCheckoutRate,
+  getSessionFinalScore,
   getThreeDartAverage,
   sessionFinishedWithCheckout,
 } from './visitStats'
@@ -15,6 +24,14 @@ import {
 export type StatMetricId =
   | 'threeDartAverage'
   | 'threeDartAverageUntil170'
+  | 'bestGameAverage'
+  | 'thrown180'
+  | 'thrown140Plus'
+  | 'thrown100Plus'
+  | 'highestVisit'
+  | 'doubleCheckoutRate'
+  | 'checkouts100Plus'
+  | 'highestCheckout'
   | 'checkoutRate'
   | 'avgDarts'
   | 'avgVisits'
@@ -51,27 +68,48 @@ export interface StatTimeline {
   points: StatTimelinePoint[]
 }
 
-const getScoringVisits = (session: GameSession) =>
-  getPrimaryPlayerVisits(session).filter((visit) => visit.scoreBefore > MAX_CHECKOUT_SCORE)
+const getX01SessionPlayerStats = (session: GameSession) => {
+  if (!isX01Config(session.mode, session.config)) {
+    return null
+  }
 
-const getFinalScore = (session: GameSession): number | null => {
-  const lastVisit = getPrimaryPlayerVisits(session).at(-1)
-
-  return lastVisit?.scoreAfter ?? null
+  return computePlayerStatsForVisits(
+    getPrimaryPlayerVisits(session),
+    {
+      doubleIn: session.config.doubleIn,
+      doubleOut: session.config.doubleOut,
+    },
+    session.config.doubleIn,
+  )
 }
 
 const getX01SessionMetric = (session: GameSession, metric: StatMetricId): number | null => {
   const visits = getPrimaryPlayerVisits(session)
+  const playerStats = getX01SessionPlayerStats(session)
 
   switch (metric) {
     case 'threeDartAverage':
+    case 'bestGameAverage':
       return getThreeDartAverage(visits)
     case 'threeDartAverageUntil170':
-      return getThreeDartAverage(getScoringVisits(session))
-    case 'checkoutRate':
-      return sessionFinishedWithCheckout(session) ? 100 : 0
+      return getThreeDartAverage(getScoringVisits(visits))
+    case 'thrown180':
+      return playerStats?.thrown180 ?? null
+    case 'thrown140Plus':
+      return playerStats?.thrown140Plus ?? null
+    case 'thrown100Plus':
+      return playerStats?.thrown100Plus ?? null
+    case 'highestVisit':
+      return playerStats?.highestVisit ?? null
+    case 'doubleCheckoutRate':
+      return getDoubleCheckoutRate(playerStats?.doubleCheckout ?? { attempts: 0, successes: 0 })
+    case 'checkouts100Plus':
+      return playerStats?.checkouts100Plus ?? null
+    case 'highestCheckout':
+      return playerStats?.highestCheckout ?? null
     case 'avgDarts':
       return sessionFinishedWithCheckout(session) ? countDartsInSession(session) : null
+    case 'checkoutRate':
     case 'avgVisits':
     case 'avgFinalScore':
     case 'bestDarts':
@@ -85,14 +123,20 @@ const getCheckoutPracticeSessionMetric = (
   session: GameSession,
   metric: StatMetricId,
 ): number | null => {
-  const visits = getPrimaryPlayerVisits(session)
-
   switch (metric) {
     case 'checkoutRate':
-      return visits.length === 0 ? null : (countCheckoutVisits(visits) / visits.length) * 100
+      return getSessionCheckoutRate(session)
     case 'threeDartAverage':
-      return getThreeDartAverage(visits)
+      return getThreeDartAverage(getPrimaryPlayerVisits(session))
     case 'threeDartAverageUntil170':
+    case 'bestGameAverage':
+    case 'thrown180':
+    case 'thrown140Plus':
+    case 'thrown100Plus':
+    case 'highestVisit':
+    case 'doubleCheckoutRate':
+    case 'checkouts100Plus':
+    case 'highestCheckout':
     case 'avgDarts':
     case 'avgVisits':
     case 'avgFinalScore':
@@ -108,10 +152,18 @@ const getBob27SessionMetric = (session: GameSession, metric: StatMetricId): numb
     case 'avgVisits':
       return getPrimaryPlayerVisits(session).length
     case 'avgFinalScore':
-      return getFinalScore(session)
+      return getSessionFinalScore(session)
     case 'threeDartAverage':
     case 'threeDartAverageUntil170':
-    case 'checkoutRate':
+    case 'bestGameAverage':
+    case 'thrown180':
+    case 'thrown140Plus':
+    case 'thrown100Plus':
+    case 'highestVisit':
+    case 'doubleCheckoutRate':
+    case 'checkouts100Plus':
+    case 'highestCheckout':
+      return null
     case 'avgDarts':
     case 'bestDarts':
       return null
@@ -136,6 +188,14 @@ const getAroundTheClockSessionMetric = (
       return dartCount
     case 'threeDartAverage':
     case 'threeDartAverageUntil170':
+    case 'bestGameAverage':
+    case 'thrown180':
+    case 'thrown140Plus':
+    case 'thrown100Plus':
+    case 'highestVisit':
+    case 'doubleCheckoutRate':
+    case 'checkouts100Plus':
+    case 'highestCheckout':
     case 'checkoutRate':
     case 'avgVisits':
     case 'avgFinalScore':
@@ -148,14 +208,22 @@ const getAroundTheClockSessionMetric = (
 export const getStatTimelineFormat = (metric: StatMetricId): StatTimelineFormat => {
   switch (metric) {
     case 'checkoutRate':
+    case 'doubleCheckoutRate':
       return 'percent'
     case 'avgDarts':
     case 'avgVisits':
     case 'avgFinalScore':
     case 'bestDarts':
+    case 'thrown180':
+    case 'thrown140Plus':
+    case 'thrown100Plus':
+    case 'highestVisit':
+    case 'checkouts100Plus':
+    case 'highestCheckout':
       return 'integer'
     case 'threeDartAverage':
     case 'threeDartAverageUntil170':
+    case 'bestGameAverage':
       return 'average'
   }
 
@@ -168,25 +236,15 @@ const filterSessionsForScope = (
 ): GameSession[] => {
   switch (scope.type) {
     case 'x01-501':
-      return sessions.filter(
-        (session) =>
-          session.mode === GameModeId.X01 &&
-          isX01Config(session.mode, session.config) &&
-          session.config.startScore === FIVE_OH_ONE_START_SCORE,
-      )
+      return filterFiveOhOneSessions(sessions)
     case 'x01-other':
-      return sessions.filter(
-        (session) =>
-          session.mode === GameModeId.X01 &&
-          isX01Config(session.mode, session.config) &&
-          session.config.startScore !== FIVE_OH_ONE_START_SCORE,
-      )
+      return filterOtherX01Sessions(sessions)
     case 'practice-checkout':
-      return sessions.filter((session) => session.mode === scope.mode)
+      return filterCheckoutPracticeSessions(sessions, scope.mode)
     case 'practice-bob27':
-      return sessions.filter((session) => session.mode === GameModeId.Bob27)
+      return filterBob27Sessions(sessions)
     case 'practice-around-the-clock':
-      return sessions.filter((session) => session.mode === GameModeId.AroundTheClock)
+      return filterAroundTheClockSessions(sessions)
     default:
       return []
   }

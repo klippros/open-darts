@@ -1,17 +1,11 @@
 import { GameModeId } from '../../types/gameMode'
 import type { CreateSessionParams } from '../game/createSession'
-import {
-  buildPlayersFromOpponentSetup,
-  parseOpponentSetup,
-} from './opponentSetup'
+import { buildPlayersFromOpponentSetup, parseOpponentSetup } from './opponentSetup'
 import { createSoloHumanPlayer } from './playerFactory'
 import { parseX01ConfigFromSearchParams } from '../x01/x01Presets'
 
 export type PracticeGameMode =
-  | GameModeId.Bob27
-  | GameModeId.OneTwentyOne
-  | GameModeId.AroundTheClock
-  | GameModeId.TenUpOneDown
+  GameModeId.Bob27 | GameModeId.OneTwentyOne | GameModeId.AroundTheClock | GameModeId.TenUpOneDown
 
 const PRACTICE_MODE_ROUTES: { mode: PracticeGameMode; param: string }[] = [
   { mode: GameModeId.Bob27, param: 'bob27' },

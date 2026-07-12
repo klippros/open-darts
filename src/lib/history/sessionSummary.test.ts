@@ -56,14 +56,14 @@ describe('sessionSummary', () => {
     ).toBe("Bob's 27")
   })
 
-  it('summarizes x01 sessions with visit count and average', () => {
-    expect(getSessionResultSummary(sampleSession())).toBe('2 visits · 50.0 3-dart average')
+  it('summarizes x01 sessions without visit stats in the text summary', () => {
+    expect(getSessionResultSummary(sampleSession())).toBe('')
   })
 
   it('builds match summaries for completed games', () => {
     expect(getMatchSummary(sampleSession())).toEqual({
       title: 'Session complete',
-      details: ['2 visits', '50.0 3-dart average'],
+      details: [],
     })
   })
 
@@ -98,7 +98,7 @@ describe('sessionSummary', () => {
       ),
     ).toEqual({
       title: 'Game shot!',
-      details: ['2 visits', '75.0 3-dart average', 'Checked out from 50'],
+      details: ['Checked out from 50'],
     })
   })
 

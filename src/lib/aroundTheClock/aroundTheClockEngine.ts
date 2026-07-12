@@ -1,7 +1,11 @@
 import type { GameEngine, VisitResult } from '../game/GameEngine'
 import { GameModeId } from '../../types/gameMode'
 import type { AroundTheClockConfig, AroundTheClockState } from '../../types/aroundTheClock'
-import { getAroundTheClockTargetLabel, getAroundTheClockVisitScore, resolveAroundTheClockVisit } from './aroundTheClockRules'
+import {
+  getAroundTheClockTargetLabel,
+  getAroundTheClockVisitScore,
+  resolveAroundTheClockVisit,
+} from './aroundTheClockRules'
 
 const getPlayerState = (state: AroundTheClockState, playerId: string) => {
   const playerState = state.players[playerId]

@@ -1,5 +1,6 @@
 import { Box, Stack, Text } from '@chakra-ui/react'
 import { formatDart } from '../../lib/formatDart'
+import { getVisitsForLeg } from '../../lib/game/matchLegs'
 import type { GameModeId } from '../../types/gameMode'
 import type { Player } from '../../types/player'
 import type { Visit } from '../../types/visit'
@@ -9,6 +10,7 @@ export interface VisitHistoryColumnProps {
   player: Player
   visits: Visit[]
   mode: GameModeId
+  currentLeg?: number
   align?: 'left' | 'right'
   showPlayerName?: boolean
 }
@@ -17,10 +19,12 @@ export const VisitHistoryColumn = ({
   player,
   visits,
   mode,
+  currentLeg,
   align = 'left',
   showPlayerName = true,
 }: VisitHistoryColumnProps) => {
-  const playerVisits = visits.filter((visit) => visit.playerId === player.id).toReversed()
+  const legVisits = currentLeg === undefined ? visits : getVisitsForLeg(visits, currentLeg)
+  const playerVisits = legVisits.filter((visit) => visit.playerId === player.id).toReversed()
 
   return (
     <Stack

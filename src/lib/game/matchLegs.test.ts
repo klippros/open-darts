@@ -7,6 +7,7 @@ import { DartMultiplier } from '../../types/dart'
 import {
   createInitialMatchProgress,
   getLegStartingPlayerIndex,
+  getLegWinnerIdFromVisits,
   getMaxPossibleLegs,
   isMatchComplete,
   parseLegsToWin,
@@ -27,6 +28,36 @@ describe('matchLegs', () => {
     expect(getLegStartingPlayerIndex(0, 1, 2)).toBe(0)
     expect(getLegStartingPlayerIndex(0, 2, 2)).toBe(1)
     expect(getLegStartingPlayerIndex(1, 2, 2)).toBe(0)
+  })
+
+  it('finds the leg winner from checkout visits', () => {
+    const visits = [
+      {
+        visitIndex: 0,
+        playerId: 'player-1',
+        darts: [],
+        visitScore: 60,
+        scoreBefore: 501,
+        scoreAfter: 441,
+        bust: false,
+        checkout: false,
+        legIndex: 2,
+      },
+      {
+        visitIndex: 1,
+        playerId: 'player-2',
+        darts: [],
+        visitScore: 40,
+        scoreBefore: 40,
+        scoreAfter: 0,
+        bust: false,
+        checkout: true,
+        legIndex: 2,
+      },
+    ]
+
+    expect(getLegWinnerIdFromVisits(visits, 2)).toBe('player-2')
+    expect(getLegWinnerIdFromVisits(visits, 1)).toBeUndefined()
   })
 
   it('calculates max possible legs for first-to formats', () => {
@@ -69,8 +100,7 @@ describe('matchLegs', () => {
 })
 
 describe('multi-leg x01 matches', () => {
-  const checkoutDart = (scoreBefore: number) =>
-    numberDart(scoreBefore / 2, DartMultiplier.Double)
+  const checkoutDart = (scoreBefore: number) => numberDart(scoreBefore / 2, DartMultiplier.Double)
 
   it('continues until a player reaches the legs-to-win target', () => {
     const human = createSoloHumanPlayer()
@@ -113,8 +143,7 @@ describe('multi-leg x01 matches', () => {
 })
 
 describe('solo multi-leg x01 sessions', () => {
-  const checkoutDart = (scoreBefore: number) =>
-    numberDart(scoreBefore / 2, DartMultiplier.Double)
+  const checkoutDart = (scoreBefore: number) => numberDart(scoreBefore / 2, DartMultiplier.Double)
 
   it('plays exactly the configured number of legs with no match winner', () => {
     const human = createSoloHumanPlayer()

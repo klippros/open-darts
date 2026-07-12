@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { DartMultiplier } from '../../types/dart'
-import { getAroundTheClockTargetLabel, getAroundTheClockVisitScore, resolveAroundTheClockVisit } from './aroundTheClockRules'
+import {
+  getAroundTheClockTargetLabel,
+  getAroundTheClockVisitScore,
+  resolveAroundTheClockVisit,
+} from './aroundTheClockRules'
 import { bullDart, numberDart } from '../testHelpers'
 
 describe('aroundTheClockRules', () => {

@@ -1,11 +1,7 @@
 import { GameModeId } from '../../types/gameMode'
 import type { GameSession } from '../../types/gameSession'
 import type { MatchProgress } from '../../types/match'
-import {
-  DEFAULT_LEGS_TO_WIN,
-  LEGS_TO_WIN_MAX,
-  LEGS_TO_WIN_MIN,
-} from '../../types/match'
+import { DEFAULT_LEGS_TO_WIN, LEGS_TO_WIN_MAX, LEGS_TO_WIN_MIN } from '../../types/match'
 import type { Player } from '../../types/player'
 import type { Visit } from '../../types/visit'
 import type { X01State } from '../../types/x01'
@@ -103,13 +99,31 @@ export const getLegStartingPlayerIndex = (
 export const getVisitsForLeg = (visits: Visit[], legNumber: number): Visit[] =>
   visits.filter((visit) => (visit.legIndex ?? 1) === legNumber)
 
+export const getPlayedLegNumbers = (visits: Visit[]): number[] => {
+  const legNumbers = new Set<number>()
+
+  for (const visit of visits) {
+    legNumbers.add(visit.legIndex ?? 1)
+  }
+
+  return [...legNumbers].sort((left, right) => left - right)
+}
+
+export const getLegWinnerIdFromVisits = (
+  visits: Visit[],
+  legNumber: number,
+): string | undefined => {
+  const checkoutVisit = [...getVisitsForLeg(visits, legNumber)]
+    .reverse()
+    .find((visit) => visit.checkout)
+
+  return checkoutVisit?.playerId
+}
+
 export const getCurrentLegVisits = (visits: Visit[], matchProgress: MatchProgress): Visit[] =>
   getVisitsForLeg(visits, matchProgress.currentLeg)
 
-export const recordLegWin = (
-  matchProgress: MatchProgress,
-  winnerId: string,
-): MatchProgress => ({
+export const recordLegWin = (matchProgress: MatchProgress, winnerId: string): MatchProgress => ({
   ...matchProgress,
   legWins: {
     ...matchProgress.legWins,

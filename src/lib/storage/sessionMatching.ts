@@ -11,11 +11,7 @@ import {
   opponentSetupsMatch,
   playersMatchLaunchSetup,
 } from '../game/opponentSetup'
-import {
-  buildX01GameSearchParams,
-  findX01PresetId,
-  x01ConfigsMatch,
-} from '../x01/x01Presets'
+import { buildX01GameSearchParams, findX01PresetId, x01ConfigsMatch } from '../x01/x01Presets'
 
 export const configsMatch = (mode: GameModeId, left: GameConfig, right: GameConfig): boolean => {
   if (isX01Config(mode, left) && isX01Config(mode, right)) {
@@ -52,10 +48,7 @@ export const sessionMatchesLaunchParams = (
     return session.players.length === launchParams.players.length
   }
 
-  if (
-    sessionHuman.kind !== launchHuman.kind ||
-    sessionHuman.name !== launchHuman.name
-  ) {
+  if (sessionHuman.kind !== launchHuman.kind || sessionHuman.name !== launchHuman.name) {
     return false
   }
 

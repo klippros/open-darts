@@ -34,9 +34,11 @@ describe('pdcCheckoutTable', () => {
       }
     }
 
-    expect(Object.keys(PDC_CHECKOUT_PATHS).map(Number).sort((a, b) => a - b)).toEqual(
-      expectedScores,
-    )
+    expect(
+      Object.keys(PDC_CHECKOUT_PATHS)
+        .map(Number)
+        .sort((a, b) => a - b),
+    ).toEqual(expectedScores)
   })
 
   it('passes table validation with no issues', () => {

@@ -2,10 +2,7 @@ import { Box, Grid, Stack, Text } from '@chakra-ui/react'
 import { faArrowRightLong } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { formatDart } from '../../lib/formatDart'
-import {
-  getVisitDartSlots,
-  isBogeyCheckoutScore,
-} from '../../lib/checkout/checkoutSuggestions'
+import { getVisitDartSlots, isBogeyCheckoutScore } from '../../lib/checkout/checkoutSuggestions'
 import type { VisitDartSlotView } from '../../lib/checkout/checkoutSuggestions'
 import type { DartThrow } from '../../types/dart'
 import type { CheckoutRules } from '../../types/checkout'

@@ -58,6 +58,7 @@ export const GamePage = () => {
           players={controller.session.players}
           visits={controller.session.visits}
           mode={controller.session.mode}
+          currentLeg={controller.session.matchProgress?.currentLeg}
           showVisitHistory={showsVisitHistory(controller.session.mode)}
         >
           <Stack gap={8}>

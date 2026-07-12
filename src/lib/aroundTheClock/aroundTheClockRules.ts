@@ -51,10 +51,7 @@ export const resolveAroundTheClockVisit = (
   }
 }
 
-export const getAroundTheClockVisitScore = (
-  targetIndex: number,
-  darts: DartThrow[],
-): number => {
+export const getAroundTheClockVisitScore = (targetIndex: number, darts: DartThrow[]): number => {
   let currentTarget = targetIndex
   let visitScore = 0
 

@@ -7,10 +7,7 @@ import { GameController } from './GameController'
 import { getDefaultConfig } from './gameModeDefinitions'
 import { getEngine } from './gameRegistry'
 import type { MatchFormat } from './matchLegs'
-import {
-  createInitialMatchProgress,
-  getLegStartingPlayerIndex,
-} from './matchLegs'
+import { createInitialMatchProgress, getLegStartingPlayerIndex, getVisitsForLeg } from './matchLegs'
 import { createId } from './playerFactory'
 
 export type AppGameController = GameController<unknown, GameConfig>
@@ -78,9 +75,7 @@ const rebuildEngineStateFromVisits = (
   const visits =
     session.matchProgress === undefined
       ? session.visits
-      : session.visits.filter(
-          (visit) => (visit.legIndex ?? 1) === session.matchProgress?.currentLeg,
-        )
+      : getVisitsForLeg(session.visits, session.matchProgress.currentLeg)
 
   let engineState = engine.createInitialState(session.players, session.config)
 

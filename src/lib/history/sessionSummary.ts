@@ -1,4 +1,4 @@
-import { getVisitAverages } from '../../components/Scoreboard/scoreboardStats'
+import { getVisitAverages, getPrimaryPlayerVisits } from '../analytics/visitStats'
 import { gameModeDefinitions } from '../game/gameModeDefinitions'
 import { isX01Config } from '../game/gameConfigGuards'
 import { getMatchWinnerId } from '../game/matchLegs'
@@ -20,16 +20,6 @@ export const getSessionModeLabel = (session: GameSession): string => {
   return gameModeDefinitions[session.mode].label
 }
 
-const getPrimaryPlayerVisits = (session: GameSession) => {
-  const playerId = session.players[0]?.id
-
-  if (playerId === undefined) {
-    return session.visits
-  }
-
-  return session.visits.filter((visit) => visit.playerId === playerId)
-}
-
 export const getMatchSummary = (session: GameSession): MatchSummary => {
   const playerVisits = getPrimaryPlayerVisits(session)
   const visitCount = playerVisits.length
@@ -40,15 +30,14 @@ export const getMatchSummary = (session: GameSession): MatchSummary => {
   const lastVisit = playerVisits.at(-1)
 
   if (session.mode === GameModeId.X01) {
-    const details = [`${visitCount} visit${visitCount === 1 ? '' : 's'}`]
+    const details: string[] = []
     const { matchProgress } = session
     const checkoutVisit = [...session.visits].reverse().find((visit) => visit.checkout)
     const legWinner =
       checkoutVisit === undefined
         ? undefined
         : session.players.find((player) => player.id === checkoutVisit.playerId)
-    const matchWinnerId =
-      matchProgress === undefined ? undefined : getMatchWinnerId(session)
+    const matchWinnerId = matchProgress === undefined ? undefined : getMatchWinnerId(session)
     const matchWinner =
       matchWinnerId === undefined
         ? undefined
@@ -57,14 +46,12 @@ export const getMatchSummary = (session: GameSession): MatchSummary => {
     if (matchProgress !== undefined) {
       if (session.players.length > 1) {
         details.unshift(formatLegWinLine(session.players, matchProgress))
-        details.unshift(`${matchProgress.legsToWin} leg${matchProgress.legsToWin === 1 ? '' : 's'} to win`)
+        details.unshift(
+          `${matchProgress.legsToWin} leg${matchProgress.legsToWin === 1 ? '' : 's'} to win`,
+        )
       } else {
         details.unshift(`${matchProgress.legsToWin} leg${matchProgress.legsToWin === 1 ? '' : 's'}`)
       }
-    }
-
-    if (average !== null) {
-      details.push(`${average.toFixed(1)} 3-dart average`)
     }
 
     if (matchProgress !== undefined && matchWinner !== undefined) {

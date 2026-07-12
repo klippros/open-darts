@@ -11,7 +11,7 @@ import { VisitDartSlots } from './VisitDartSlots'
 export interface ScoreboardCenterProps {
   mode: GameModeId
   players: ScoreboardPlayerEntry[]
-  visitAverages: Record<string, number | null>
+  legAndMatchAverages: Record<string, { leg: number | null; match: number | null }>
   activePlayer: ScoreboardPlayerEntry | undefined
   pendingDarts: DartThrow[]
   config: GameConfig
@@ -21,7 +21,7 @@ export interface ScoreboardCenterProps {
 export const ScoreboardCenter = ({
   mode,
   players,
-  visitAverages,
+  legAndMatchAverages,
   activePlayer,
   pendingDarts,
   config,
@@ -35,7 +35,8 @@ export const ScoreboardCenter = ({
     <Stack gap={5}>
       <PlayerScorePanels
         players={players}
-        visitAverages={visitAverages}
+        legAndMatchAverages={legAndMatchAverages}
+        currentLeg={matchProgress?.currentLeg}
         legsToWin={matchProgress?.legsToWin}
         legWins={matchProgress?.legWins}
       />

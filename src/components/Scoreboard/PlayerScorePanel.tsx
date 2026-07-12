@@ -14,19 +14,31 @@ const getPanelAlign = (isSolo: boolean, index: number): PlayerScorePanelAlign =>
 
 export interface PlayerScorePanelProps {
   player: ScoreboardPlayerEntry
-  visitAverage: number | null
+  legAverage: number | null
+  matchAverage: number | null
+  currentLeg?: number
   isSolo: boolean
   panelAlign: PlayerScorePanelAlign
   legsToWin?: number
   legsWon?: number
 }
 
-const formatAverage = (average: number | null): string => {
-  if (average === null) {
-    return '∅ —'
+const formatLegAverage = (average: number | null): string =>
+  average === null ? '∅ —' : `∅ ${average.toFixed(1)}`
+
+const formatMatchAverage = (average: number | null): string =>
+  average === null ? '—' : average.toFixed(1)
+
+const formatAveragesDisplay = (
+  legAverage: number | null,
+  matchAverage: number | null,
+  currentLeg?: number,
+): string => {
+  if (currentLeg === undefined || currentLeg < 2) {
+    return formatLegAverage(legAverage)
   }
 
-  return `∅ ${average.toFixed(1)}`
+  return `${formatLegAverage(legAverage)} / ${formatMatchAverage(matchAverage)}`
 }
 
 const PlayerScorePanelHeader = ({
@@ -84,7 +96,9 @@ const PlayerScorePanelHeader = ({
 
 export const PlayerScorePanel = ({
   player,
-  visitAverage,
+  legAverage,
+  matchAverage,
+  currentLeg,
   isSolo,
   panelAlign,
   legsToWin,
@@ -115,21 +129,23 @@ export const PlayerScorePanel = ({
       {player.primaryScore}
     </Heading>
     <Text mt={2} fontSize="sm" color="whiteAlpha.600" textAlign="center">
-      {player.secondaryLabel ?? formatAverage(visitAverage)}
+      {player.secondaryLabel ?? formatAveragesDisplay(legAverage, matchAverage, currentLeg)}
     </Text>
   </Box>
 )
 
 export interface PlayerScorePanelsProps {
   players: ScoreboardPlayerEntry[]
-  visitAverages: Record<string, number | null>
+  legAndMatchAverages: Record<string, { leg: number | null; match: number | null }>
+  currentLeg?: number
   legsToWin?: number
   legWins?: Record<string, number>
 }
 
 export const PlayerScorePanels = ({
   players,
-  visitAverages,
+  legAndMatchAverages,
+  currentLeg,
   legsToWin,
   legWins,
 }: PlayerScorePanelsProps) => {
@@ -138,17 +154,23 @@ export const PlayerScorePanels = ({
 
   return (
     <Grid templateColumns={isSolo ? '1fr' : 'repeat(2, 1fr)'} gap={3}>
-      {players.map((player, index) => (
+      {players.map((player, index) => {
+        const averages = legAndMatchAverages[player.playerId] ?? { leg: null, match: null }
+
+        return (
           <PlayerScorePanel
             key={player.playerId}
             player={player}
-            visitAverage={visitAverages[player.playerId] ?? null}
+            legAverage={averages.leg}
+            matchAverage={averages.match}
+            currentLeg={currentLeg}
             isSolo={isSolo}
             panelAlign={getPanelAlign(isSolo, index)}
             legsToWin={showLegDots ? legsToWin : undefined}
             legsWon={showLegDots ? (legWins[player.playerId] ?? 0) : undefined}
           />
-        ))}
+        )
+      })}
     </Grid>
   )
 }
