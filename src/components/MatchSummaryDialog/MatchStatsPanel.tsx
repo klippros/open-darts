@@ -9,6 +9,8 @@ import {
 } from '../../lib/analytics/matchPlayerStats'
 import {
   getLegWinnerIdFromVisits,
+  getLegStartingPlayerIndex,
+  getMatchWinnerId,
   getPlayedLegNumbers,
   getVisitsForLeg,
 } from '../../lib/game/matchLegs'
@@ -77,10 +79,32 @@ export const MatchStatsPanel = ({ session }: MatchStatsPanelProps) => {
     )
   }, [legScopeForVisits, session.visits])
 
-  const legWinnerId =
-    legScopeForVisits === undefined
-      ? undefined
-      : getLegWinnerIdFromVisits(session.visits, legScopeForVisits)
+  const highlightedPlayerId = useMemo(() => {
+    if (selectedScope === 'match') {
+      return getMatchWinnerId(session)
+    }
+
+    if (legScopeForVisits === undefined) {
+      return undefined
+    }
+
+    return getLegWinnerIdFromVisits(session.visits, legScopeForVisits)
+  }, [legScopeForVisits, selectedScope, session])
+
+  const legStarterPlayerId = useMemo(() => {
+    if (session.players.length !== 2) {
+      return undefined
+    }
+
+    const legNumber = selectedScope === 'match' ? 1 : selectedScope
+    const startingPlayerIndex = getLegStartingPlayerIndex(
+      session.matchProgress?.startingPlayerIndex ?? 0,
+      legNumber,
+      session.players.length,
+    )
+
+    return session.players[startingPlayerIndex]?.id
+  }, [selectedScope, session.matchProgress?.startingPlayerIndex, session.players])
 
   if (session.mode !== GameModeId.X01) {
     return null
@@ -97,7 +121,8 @@ export const MatchStatsPanel = ({ session }: MatchStatsPanelProps) => {
         players={session.players.map((player) => ({ id: player.id, name: player.name }))}
         statsByPlayer={statsByPlayer}
         rows={statRows}
-        highlightPlayerIds={legWinnerId === undefined ? [] : [legWinnerId]}
+        highlightPlayerIds={highlightedPlayerId === undefined ? [] : [highlightedPlayerId]}
+        legStarterPlayerId={legStarterPlayerId}
         additionalRows={legVisitRows}
       />
     </>

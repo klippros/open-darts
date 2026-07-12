@@ -1,5 +1,6 @@
 import { Box, Flex, Grid, Heading, Text } from '@chakra-ui/react'
 import type { ScoreboardPlayerEntry } from '../../lib/game/GameEngine'
+import { LegStarterIcon } from '../LegStarterIcon/LegStarterIcon'
 import { LegWinDots } from './LegWinDots'
 
 export type PlayerScorePanelAlign = 'left' | 'right' | 'solo'
@@ -21,6 +22,7 @@ export interface PlayerScorePanelProps {
   panelAlign: PlayerScorePanelAlign
   legsToWin?: number
   legsWon?: number
+  isLegStarter?: boolean
 }
 
 const formatLegAverage = (average: number | null): string =>
@@ -41,12 +43,44 @@ const formatAveragesDisplay = (
   return `${formatLegAverage(legAverage)} / ${formatMatchAverage(matchAverage)}`
 }
 
+const PlayerNameWithLegStarter = ({
+  name,
+  isLegStarter,
+  nameFirst,
+}: {
+  name: string
+  isLegStarter: boolean
+  nameFirst: boolean
+}) => (
+  <Flex align="center" gap={1}>
+    {nameFirst ? (
+      <>
+        <Text fontSize="sm" color="whiteAlpha.600">
+          {name}
+        </Text>
+        {isLegStarter && <LegStarterIcon direction="left" />}
+      </>
+    ) : (
+      <>
+        {isLegStarter && <LegStarterIcon direction="right" />}
+        <Text fontSize="sm" color="whiteAlpha.600">
+          {name}
+        </Text>
+      </>
+    )}
+  </Flex>
+)
+
 const PlayerScorePanelHeader = ({
   player,
   panelAlign,
   legsToWin,
   legsWon,
-}: Pick<PlayerScorePanelProps, 'player' | 'panelAlign' | 'legsToWin' | 'legsWon'>) => {
+  isLegStarter,
+}: Pick<
+  PlayerScorePanelProps,
+  'player' | 'panelAlign' | 'legsToWin' | 'legsWon' | 'isLegStarter'
+>) => {
   const showLegDots = legsToWin !== undefined && legsWon !== undefined
 
   if (panelAlign === 'solo') {
@@ -66,9 +100,11 @@ const PlayerScorePanelHeader = ({
   if (!showLegDots) {
     return (
       <Flex mb={1} minH="5" justify={panelAlign === 'right' ? 'flex-end' : 'flex-start'}>
-        <Text fontSize="sm" color="whiteAlpha.600">
-          {player.name}
-        </Text>
+        <PlayerNameWithLegStarter
+          name={player.name}
+          isLegStarter={isLegStarter}
+          nameFirst={panelAlign === 'left'}
+        />
       </Flex>
     )
   }
@@ -77,17 +113,17 @@ const PlayerScorePanelHeader = ({
     <Flex align="center" justify="space-between" mb={1} minH="5" gap={2}>
       {panelAlign === 'left' ? (
         <>
-          <Text fontSize="sm" color="whiteAlpha.600">
-            {player.name}
-          </Text>
-          <LegWinDots legsToWin={legsToWin} legsWon={legsWon} />
+          <PlayerNameWithLegStarter name={player.name} isLegStarter={isLegStarter} nameFirst />
+          <LegWinDots legsToWin={legsToWin} legsWon={legsWon} reverseOrder />
         </>
       ) : (
         <>
           <LegWinDots legsToWin={legsToWin} legsWon={legsWon} />
-          <Text fontSize="sm" color="whiteAlpha.600">
-            {player.name}
-          </Text>
+          <PlayerNameWithLegStarter
+            name={player.name}
+            isLegStarter={isLegStarter}
+            nameFirst={false}
+          />
         </>
       )}
     </Flex>
@@ -103,6 +139,7 @@ export const PlayerScorePanel = ({
   panelAlign,
   legsToWin,
   legsWon,
+  isLegStarter = false,
 }: PlayerScorePanelProps) => (
   <Box
     px={5}
@@ -118,6 +155,7 @@ export const PlayerScorePanel = ({
       panelAlign={panelAlign}
       legsToWin={legsToWin}
       legsWon={legsWon}
+      isLegStarter={isLegStarter}
     />
     <Heading
       size="5xl"
@@ -140,6 +178,7 @@ export interface PlayerScorePanelsProps {
   currentLeg?: number
   legsToWin?: number
   legWins?: Record<string, number>
+  legStartingPlayerIndex?: number
 }
 
 export const PlayerScorePanels = ({
@@ -148,6 +187,7 @@ export const PlayerScorePanels = ({
   currentLeg,
   legsToWin,
   legWins,
+  legStartingPlayerIndex,
 }: PlayerScorePanelsProps) => {
   const isSolo = players.length === 1
   const showLegDots = legsToWin !== undefined && legWins !== undefined
@@ -168,6 +208,7 @@ export const PlayerScorePanels = ({
             panelAlign={getPanelAlign(isSolo, index)}
             legsToWin={showLegDots ? legsToWin : undefined}
             legsWon={showLegDots ? (legWins[player.playerId] ?? 0) : undefined}
+            isLegStarter={!isSolo && legStartingPlayerIndex === index}
           />
         )
       })}

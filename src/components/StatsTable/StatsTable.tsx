@@ -1,11 +1,10 @@
-import { Box, Flex, Grid, Stack, Text } from '@chakra-ui/react'
-import { faTrophy } from '@fortawesome/free-solid-svg-icons'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Box, Grid, Stack, Text } from '@chakra-ui/react'
 import type { MatchStatRowDefinition, MatchStatRowId } from '../../lib/analytics/matchStatRows'
 import { getVisibleMatchStatRows } from '../../lib/analytics/matchStatRows'
 import type { LegVisitTableRow } from '../../lib/analytics/legVisitRows'
 import type { PlayerMatchStats } from '../../lib/analytics/matchPlayerStats'
 import { emptyPlayerMatchStats } from '../../lib/analytics/matchPlayerStats'
+import { PlayerMatchColumnHeader } from '../PlayerMatchColumnHeader/PlayerMatchColumnHeader'
 
 export interface StatsTablePlayer {
   id: string
@@ -20,6 +19,7 @@ export interface StatsTableProps {
   onRowClick?: (rowId: MatchStatRowId) => void
   isRowClickable?: (rowId: MatchStatRowId) => boolean
   highlightPlayerIds?: string[]
+  legStarterPlayerId?: string
   additionalRows?: LegVisitTableRow[]
 }
 
@@ -31,6 +31,7 @@ export const StatsTable = ({
   onRowClick,
   isRowClickable,
   highlightPlayerIds = [],
+  legStarterPlayerId,
   additionalRows = [],
 }: StatsTableProps) => {
   const playerIds = players.map((player) => player.id)
@@ -77,14 +78,11 @@ export const StatsTable = ({
             <Box />
             {players.map((player) => (
               <Box key={`name-${player.id}`} textAlign="right">
-                <Flex align="center" gap={1.5} justify="flex-end">
-                  {highlightPlayerIds.includes(player.id) && (
-                    <FontAwesomeIcon icon={faTrophy} aria-hidden />
-                  )}
-                  <Text fontSize="sm" color="whiteAlpha.700">
-                    {player.name}
-                  </Text>
-                </Flex>
+                <PlayerMatchColumnHeader
+                  name={player.name}
+                  showTrophy={highlightPlayerIds.includes(player.id)}
+                  showLegStarter={legStarterPlayerId === player.id}
+                />
               </Box>
             ))}
           </Grid>
