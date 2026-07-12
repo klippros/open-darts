@@ -22,7 +22,7 @@ export interface ScoreCallerCallbacks {
   onVisitCommitted?: (visit: Visit, controller: AppGameController) => void
   onTurnStarted?: (controller: AppGameController) => void
   onLegStarted?: (controller: AppGameController) => void
-  onUndo?: () => void
+  onUndo?: (sessionId: string) => void
 }
 
 const announceLegStart = (controller: AppGameController): void => {
@@ -35,13 +35,12 @@ const announceLegStart = (controller: AppGameController): void => {
 
 export const useVisitScoreCaller = (): ScoreCallerCallbacks => {
   const { scoreCallerEnabled } = useSettings()
-  const sessionIdRef = useRef('')
 
-  const handleUndo = useCallback(() => {
+  const handleUndo = useCallback((sessionId: string) => {
     cancelCallouts()
 
-    if (sessionIdRef.current !== '') {
-      clearAnnouncedCallouts(sessionIdRef.current)
+    if (sessionId !== '') {
+      clearAnnouncedCallouts(sessionId)
     }
   }, [])
 
@@ -54,7 +53,6 @@ export const useVisitScoreCaller = (): ScoreCallerCallbacks => {
 
     return {
       onVisitCommitted: (visit, controller) => {
-        sessionIdRef.current = controller.session.id
         const endPhrase = buildVisitEndCallout(
           visit,
           controller.session,
@@ -63,7 +61,6 @@ export const useVisitScoreCaller = (): ScoreCallerCallbacks => {
         announceCalloutOnce(visitEndCalloutKey(controller.session.id, visit.visitIndex), endPhrase)
       },
       onTurnStarted: (controller) => {
-        sessionIdRef.current = controller.session.id
         const leg = controller.session.matchProgress?.currentLeg
         announceCalloutOnce(
           turnRequireCalloutKey(
@@ -76,7 +73,6 @@ export const useVisitScoreCaller = (): ScoreCallerCallbacks => {
         )
       },
       onLegStarted: (controller) => {
-        sessionIdRef.current = controller.session.id
         announceLegStart(controller)
       },
       onUndo: handleUndo,
@@ -89,11 +85,7 @@ export const useScoreCallerInitialLeg = (
   loadReady: boolean,
 ): void => {
   const { scoreCallerEnabled } = useSettings()
-  const announcedSessionIdRef = useRef<string | null>(null)
-
-  useEffect(() => {
-    announcedSessionIdRef.current = null
-  }, [controller.session.id])
+  const sessionContextRef = useRef<{ sessionId: string; hadVisits: boolean } | null>(null)
 
   useEffect(() => {
     if (!scoreCallerEnabled || !loadReady) {
@@ -102,15 +94,18 @@ export const useScoreCallerInitialLeg = (
 
     const { matchProgress, visits, id: sessionId } = controller.session
 
-    if (matchProgress === undefined || visits.length > 0) {
+    if (sessionContextRef.current?.sessionId !== sessionId) {
+      sessionContextRef.current = { sessionId, hadVisits: visits.length > 0 }
+    } else if (visits.length > 0) {
+      sessionContextRef.current.hadVisits = true
+    }
+
+    const hadVisits = sessionContextRef.current.hadVisits
+
+    if (matchProgress === undefined || hadVisits || matchProgress.currentLeg !== 1) {
       return
     }
 
-    if (announcedSessionIdRef.current === sessionId) {
-      return
-    }
-
-    announcedSessionIdRef.current = sessionId
     announceLegStart(controller)
   }, [
     controller,

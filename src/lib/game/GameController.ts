@@ -7,11 +7,11 @@ import type { GameEngine, ScoreboardSnapshot } from './GameEngine'
 import {
   advanceToNextLeg,
   getLegStartingPlayerIndex,
-  getVisitsForLeg,
   getWinnerIdForCompletedLeg,
   isMatchComplete,
   recordLegWin,
 } from './matchLegs'
+import { rebuildEngineStateFromSession } from './rebuildEngineState'
 import { resolveUndoDartState } from './undoDartStrategy'
 
 export class GameController<State, Config> {
@@ -92,7 +92,7 @@ export class GameController<State, Config> {
       completedAt: undoState.completedAt,
       finishedEarly: undoState.finishedEarly,
     }
-    const engineState = this.rebuildEngineStateFromVisits(undoState.visits)
+    const engineState = rebuildEngineStateFromSession(session, this.engine)
 
     return new GameController(
       session,
@@ -239,26 +239,6 @@ export class GameController<State, Config> {
     }
 
     return this.engine.applyDart(this.engineState, this.activePlayerId, this.pendingDarts)
-  }
-
-  private rebuildEngineStateFromVisits(visits: Visit[]): State {
-    const { players, config, matchProgress } = this.session
-    const legVisits =
-      matchProgress === undefined ? visits : getVisitsForLeg(visits, matchProgress.currentLeg)
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- session config matches engine config for the active mode
-    let state = this.engine.createInitialState(players, config as Config)
-
-    for (const visit of legVisits) {
-      const { state: nextState } = this.engine.commitVisit(
-        state,
-        visit.playerId,
-        visit.visitIndex,
-        visit.darts,
-      )
-      state = nextState
-    }
-
-    return state
   }
 
   private clone(overrides: {

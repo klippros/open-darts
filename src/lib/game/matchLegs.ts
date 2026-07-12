@@ -148,18 +148,22 @@ export const advanceToNextLeg = (matchProgress: MatchProgress): MatchProgress =>
   currentLeg: matchProgress.currentLeg + 1,
 })
 
-export const revertLegWin = (matchProgress: MatchProgress, winnerId: string): MatchProgress => {
+export const decrementLegWin = (matchProgress: MatchProgress, winnerId: string): MatchProgress => {
   const currentWins = matchProgress.legWins[winnerId] ?? 0
 
   return {
     ...matchProgress,
-    currentLeg: Math.max(1, matchProgress.currentLeg - 1),
     legWins: {
       ...matchProgress.legWins,
       [winnerId]: Math.max(0, currentWins - 1),
     },
   }
 }
+
+export const revertLegWin = (matchProgress: MatchProgress, winnerId: string): MatchProgress => ({
+  ...decrementLegWin(matchProgress, winnerId),
+  currentLeg: Math.max(1, matchProgress.currentLeg - 1),
+})
 
 export const getLegWinnerIdFromX01State = (state: X01State): string | undefined => state.winnerId
 

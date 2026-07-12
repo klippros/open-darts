@@ -79,7 +79,7 @@ export const useGame = (launchParams: CreateSessionParams, options: UseGameOptio
     return createFreshController()
   }, [shouldRestoreOnLoad, createFreshController])
 
-  const [controller, setController] = useState(createControllerForRoute)
+  const [controller, setController] = useState(() => createControllerForRoute())
   const routeSyncRef = useRef<{ routeKey: string; startFresh: boolean } | null>(null)
 
   useEffect(() => {
@@ -138,10 +138,15 @@ export const useGame = (launchParams: CreateSessionParams, options: UseGameOptio
   )
 
   const undoDart = useCallback(() => {
-    onUndo?.()
-
     setController((current) => {
       const next = current.undoDart()
+
+      if (next === current) {
+        return current
+      }
+
+      onUndo?.(current.session.id)
+
       persist(next)
       return next
     })

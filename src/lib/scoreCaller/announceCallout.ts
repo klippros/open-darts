@@ -3,8 +3,10 @@ import { enqueueCallout } from './speakCallout'
 const announcedKeys = new Set<string>()
 
 export const clearAnnouncedCallouts = (sessionId: string): void => {
-  for (const key of announcedKeys) {
-    if (key.startsWith(`${sessionId}:`)) {
+  const prefix = `${sessionId}:`
+
+  for (const key of [...announcedKeys]) {
+    if (key.startsWith(prefix)) {
       announcedKeys.delete(key)
     }
   }

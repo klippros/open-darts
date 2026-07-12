@@ -4,7 +4,7 @@ import type { Player } from '../../types/player'
 import { PlayerKind } from '../../types/player'
 import type { DartThrow } from '../../types/dart'
 import type { Visit } from '../../types/visit'
-import { getCurrentLegVisits, revertLegWin } from './matchLegs'
+import { decrementLegWin, revertLegWin } from './matchLegs'
 
 export const hasBotOpponent = (players: Player[]): boolean =>
   players.some((player) => player.kind === PlayerKind.Bot)
@@ -32,7 +32,6 @@ const findLastVisitIndexForPlayer = (visits: Visit[], playerId: string): number 
 }
 
 const applyCheckoutUndoProgress = (
-  visits: Visit[],
   matchProgress: GameSession['matchProgress'],
   removedVisit: Visit,
 ): GameSession['matchProgress'] => {
@@ -40,10 +39,15 @@ const applyCheckoutUndoProgress = (
     return matchProgress
   }
 
-  const legVisitsAfterUndo = getCurrentLegVisits(visits, matchProgress)
+  const removedLegIndex = removedVisit.legIndex ?? 1
+  const winnerId = removedVisit.playerId
 
-  if (legVisitsAfterUndo.length === 0 && matchProgress.currentLeg > 1) {
-    return revertLegWin(matchProgress, removedVisit.playerId)
+  if (removedLegIndex < matchProgress.currentLeg) {
+    return revertLegWin(matchProgress, winnerId)
+  }
+
+  if ((matchProgress.legWins[winnerId] ?? 0) > 0) {
+    return decrementLegWin(matchProgress, winnerId)
   }
 
   return matchProgress
@@ -78,7 +82,7 @@ export const undoLastDartChronological = (
     visits,
     pendingDarts: lastVisit.darts.slice(0, -1),
     turnIndex: session.players.findIndex((player) => player.id === lastVisit.playerId),
-    matchProgress: applyCheckoutUndoProgress(visits, session.matchProgress, lastVisit),
+    matchProgress: applyCheckoutUndoProgress(session.matchProgress, lastVisit),
     status: GameStatus.InProgress,
     completedAt: undefined,
     finishedEarly: undefined,
@@ -131,7 +135,7 @@ export const undoLastDartForPlayer = (
     visits,
     pendingDarts: nextPendingDarts,
     turnIndex: targetTurnIndex,
-    matchProgress: applyCheckoutUndoProgress(visits, session.matchProgress, lastHumanVisit),
+    matchProgress: applyCheckoutUndoProgress(session.matchProgress, lastHumanVisit),
     status: GameStatus.InProgress,
     completedAt: undefined,
     finishedEarly: undefined,

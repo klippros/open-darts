@@ -194,3 +194,108 @@ describe('GameController', () => {
     expect(finished.isComplete).toBe(true)
   })
 })
+
+describe('GameController multi-leg checkout undo', () => {
+  const playerOne = createPlayer('One', PlayerKind.Human, 'p1')
+  const playerTwo = createPlayer('Two', PlayerKind.Human, 'p2')
+  const shortLegConfig = { startScore: 100, doubleIn: false, doubleOut: true }
+
+  const recordVisit = (
+    controller: ReturnType<typeof createGameController>,
+    darts: ReturnType<typeof numberDart>[],
+  ) => darts.reduce((current, dart) => current.recordDart(dart), controller)
+
+  const scoreSixtyVisit = [
+    numberDart(20, DartMultiplier.Single),
+    numberDart(20, DartMultiplier.Single),
+    numberDart(20, DartMultiplier.Single),
+  ]
+
+  const checkoutFromForty = numberDart(20, DartMultiplier.Double)
+
+  const playLegOneToCheckout = (controller: ReturnType<typeof createGameController>) =>
+    recordVisit(recordVisit(recordVisit(controller, scoreSixtyVisit), scoreSixtyVisit), [
+      checkoutFromForty,
+    ])
+
+  it('undoes a leg-winning checkout and restores the previous leg score', () => {
+    let controller = createGameController({
+      mode: GameModeId.X01,
+      config: shortLegConfig,
+      players: [playerOne, playerTwo],
+      matchFormat: { legsToWin: 3, startingPlayerIndex: 0 },
+    })
+
+    controller = playLegOneToCheckout(controller)
+
+    expect(controller.session.matchProgress?.currentLeg).toBe(2)
+    expect(controller.scoreboard.players[0]?.primaryScore).toBe(100)
+
+    const undone = controller.undoDart()
+
+    expect(undone.session.matchProgress?.currentLeg).toBe(1)
+    expect(undone.session.matchProgress?.legWins[playerOne.id]).toBe(0)
+    expect(undone.isComplete).toBe(false)
+    expect(undone.scoreboard.players[0]?.primaryScore).toBe(40)
+    expect(undone.scoreboard.players[1]?.primaryScore).toBe(40)
+  })
+
+  it('undoes a match-winning checkout without reverting to the previous leg', () => {
+    let controller = createGameController({
+      mode: GameModeId.X01,
+      config: shortLegConfig,
+      players: [playerOne, playerTwo],
+      matchFormat: { legsToWin: 2, startingPlayerIndex: 0 },
+    })
+
+    controller = playLegOneToCheckout(controller)
+    controller = recordVisit(controller, [
+      numberDart(1, DartMultiplier.Single),
+      numberDart(1, DartMultiplier.Single),
+      numberDart(1, DartMultiplier.Single),
+    ])
+    controller = recordVisit(controller, scoreSixtyVisit)
+    controller = recordVisit(controller, [
+      numberDart(1, DartMultiplier.Single),
+      numberDart(1, DartMultiplier.Single),
+      numberDart(1, DartMultiplier.Single),
+    ])
+    controller = controller.recordDart(checkoutFromForty)
+
+    expect(controller.isComplete).toBe(true)
+    expect(controller.session.matchProgress?.currentLeg).toBe(2)
+    expect(controller.session.matchProgress?.legWins[playerOne.id]).toBe(2)
+
+    const undone = controller.undoDart()
+
+    expect(undone.isComplete).toBe(false)
+    expect(undone.session.status).toBe(GameStatus.InProgress)
+    expect(undone.session.matchProgress?.currentLeg).toBe(2)
+    expect(undone.session.matchProgress?.legWins[playerOne.id]).toBe(1)
+    expect(undone.scoreboard.players[0]?.primaryScore).toBe(40)
+    expect(undone.scoreboard.players[1]?.primaryScore).toBe(94)
+  })
+
+  it('undoes a leg-winning checkout after undoing partial next-leg play', () => {
+    let controller = createGameController({
+      mode: GameModeId.X01,
+      config: shortLegConfig,
+      players: [playerOne, playerTwo],
+      matchFormat: { legsToWin: 3, startingPlayerIndex: 0 },
+    })
+
+    controller = playLegOneToCheckout(controller)
+    controller = recordVisit(controller, scoreSixtyVisit)
+
+    expect(controller.session.matchProgress?.currentLeg).toBe(2)
+    expect(controller.session.visits.at(-1)?.legIndex).toBe(2)
+
+    controller = controller.undoDart().undoDart().undoDart()
+    controller = controller.undoDart()
+
+    expect(controller.session.matchProgress?.currentLeg).toBe(1)
+    expect(controller.session.matchProgress?.legWins[playerOne.id]).toBe(0)
+    expect(controller.scoreboard.players[0]?.primaryScore).toBe(40)
+    expect(controller.scoreboard.players[1]?.primaryScore).toBe(40)
+  })
+})
