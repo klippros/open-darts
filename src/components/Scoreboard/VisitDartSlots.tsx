@@ -5,14 +5,14 @@ import { formatDart } from '../../lib/formatDart'
 import {
   getVisitDartSlots,
   isBogeyCheckoutScore,
-} from '../../lib/x01/x01CheckoutSuggestions'
-import type { VisitDartSlotView } from '../../lib/x01/x01CheckoutSuggestions'
+} from '../../lib/checkout/checkoutSuggestions'
+import type { VisitDartSlotView } from '../../lib/checkout/checkoutSuggestions'
 import type { DartThrow } from '../../types/dart'
-import type { X01Config } from '../../types/x01'
+import type { CheckoutRules } from '../../types/checkout'
 
 export interface VisitDartSlotsProps {
   pendingDarts: DartThrow[]
-  config?: X01Config | null
+  config?: CheckoutRules | null
   scoreBeforeVisit?: number
 }
 

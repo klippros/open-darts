@@ -1,14 +1,20 @@
 import type { GameEngine, VisitResult } from '../game/GameEngine'
 import { GameModeId } from '../../types/gameMode'
+import type { CheckoutRules } from '../../types/checkout'
 import type { TenUpOneDownConfig, TenUpOneDownState } from '../../types/tenUpOneDown'
 import type { X01Config } from '../../types/x01'
 import { sumDartPoints } from '../dartScoring'
-import { normalizeCheckoutTarget } from '../x01/x01CheckoutSuggestions'
+import { normalizeCheckoutTarget } from '../checkout/checkoutSuggestions'
 import { previewX01Remaining } from '../x01/x01Rules'
 import { resolveTenUpOneDownVisit } from './tenUpOneDownRules'
 
 const toX01Config = (config: TenUpOneDownConfig): X01Config => ({
   startScore: config.startScore,
+  doubleIn: false,
+  doubleOut: config.doubleOut,
+})
+
+const toCheckoutRules = (config: TenUpOneDownConfig): CheckoutRules => ({
   doubleIn: false,
   doubleOut: config.doubleOut,
 })
@@ -28,8 +34,8 @@ export const tenUpOneDownEngine: GameEngine<TenUpOneDownState, TenUpOneDownConfi
   maxDartsPerVisit: 3,
 
   createInitialState: (players, config) => {
-    const x01Config = toX01Config(config)
-    const targetScore = normalizeCheckoutTarget(config.startScore, x01Config, {
+    const checkoutRules = toCheckoutRules(config)
+    const targetScore = normalizeCheckoutTarget(config.startScore, checkoutRules, {
       minScore: config.minScore,
       prefer: 'up',
     })

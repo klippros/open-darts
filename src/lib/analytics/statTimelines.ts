@@ -2,7 +2,7 @@ import { GameModeId } from '../../types/gameMode'
 import type { GameSession } from '../../types/gameSession'
 import { getSessionCompletedAt, getSessionModeLabel } from '../history/sessionSummary'
 import { isX01Config } from '../game/gameConfigGuards'
-import { MAX_CHECKOUT_SCORE } from '../x01/x01CheckoutSuggestions'
+import { MAX_CHECKOUT_SCORE } from '../checkout/checkoutSuggestions'
 import { FIVE_OH_ONE_START_SCORE } from './x01Stats'
 import {
   countCheckoutVisits,

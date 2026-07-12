@@ -1,14 +1,20 @@
 import type { GameEngine, VisitResult } from '../game/GameEngine'
 import { GameModeId } from '../../types/gameMode'
+import type { CheckoutRules } from '../../types/checkout'
 import type { OneTwentyOneConfig, OneTwentyOneState } from '../../types/oneTwentyOne'
 import type { X01Config } from '../../types/x01'
 import { sumDartPoints } from '../dartScoring'
-import { normalizeCheckoutTarget } from '../x01/x01CheckoutSuggestions'
+import { normalizeCheckoutTarget } from '../checkout/checkoutSuggestions'
 import { previewX01Remaining } from '../x01/x01Rules'
 import { resolveOneTwentyOneVisit } from './oneTwentyOneRules'
 
 const toX01Config = (config: OneTwentyOneConfig): X01Config => ({
   startScore: config.startScore,
+  doubleIn: false,
+  doubleOut: config.doubleOut,
+})
+
+const toCheckoutRules = (config: OneTwentyOneConfig): CheckoutRules => ({
   doubleIn: false,
   doubleOut: config.doubleOut,
 })
@@ -28,8 +34,8 @@ export const oneTwentyOneEngine: GameEngine<OneTwentyOneState, OneTwentyOneConfi
   maxDartsPerVisit: 3,
 
   createInitialState: (players, config) => {
-    const x01Config = toX01Config(config)
-    const targetScore = normalizeCheckoutTarget(config.startScore, x01Config, { prefer: 'up' })
+    const checkoutRules = toCheckoutRules(config)
+    const targetScore = normalizeCheckoutTarget(config.startScore, checkoutRules, { prefer: 'up' })
 
     return {
       config,

@@ -3,7 +3,7 @@ import type { DartThrow } from '../../types/dart'
 import type { BotSkillLevel } from '../../types/player'
 import type { X01State } from '../../types/x01'
 import { isDoubleDart, sumDartPoints } from '../dartScoring'
-import { isInCheckoutRange, suggestCheckoutPath } from '../x01/x01CheckoutSuggestions'
+import { isInCheckoutRange, suggestCheckoutPath } from '../checkout/checkoutSuggestions'
 import { getBotSkillProfile } from './botSkill'
 import {
   createDoubleDart,

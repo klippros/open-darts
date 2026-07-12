@@ -1,7 +1,7 @@
 import { GameModeId } from '../../types/gameMode'
 import type { GameSession } from '../../types/gameSession'
 import { isX01Config } from '../game/gameConfigGuards'
-import { MAX_CHECKOUT_SCORE } from '../x01/x01CheckoutSuggestions'
+import { MAX_CHECKOUT_SCORE } from '../checkout/checkoutSuggestions'
 import {
   countDartsInSession,
   getPrimaryPlayerVisits,

@@ -1,3 +1,4 @@
+import type { CheckoutRules } from '../../types/checkout'
 import { GameModeId } from '../../types/gameMode'
 import type { GameConfig } from '../../types/gameMode'
 import type { OneTwentyOneConfig } from '../../types/oneTwentyOne'
@@ -17,17 +18,19 @@ export const isTenUpOneDownConfig = (
   _config: GameConfig,
 ): _config is TenUpOneDownConfig => mode === GameModeId.TenUpOneDown
 
-export const toCheckoutSuggestionConfig = (
+export const toCheckoutSuggestionRules = (
   mode: GameModeId,
   config: GameConfig,
-): X01Config | null => {
+): CheckoutRules | null => {
   if (isX01Config(mode, config)) {
-    return config
+    return {
+      doubleIn: config.doubleIn,
+      doubleOut: config.doubleOut,
+    }
   }
 
   if (isOneTwentyOneConfig(mode, config)) {
     return {
-      startScore: config.startScore,
       doubleIn: false,
       doubleOut: config.doubleOut,
     }
@@ -35,7 +38,6 @@ export const toCheckoutSuggestionConfig = (
 
   if (isTenUpOneDownConfig(mode, config)) {
     return {
-      startScore: config.startScore,
       doubleIn: false,
       doubleOut: config.doubleOut,
     }
