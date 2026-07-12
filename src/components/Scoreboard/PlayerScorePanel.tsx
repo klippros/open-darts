@@ -76,7 +76,7 @@ const PlayerScorePanelHeader = ({
   panelAlign,
   legsToWin,
   legsWon,
-  isLegStarter,
+  isLegStarter = false,
 }: Pick<
   PlayerScorePanelProps,
   'player' | 'panelAlign' | 'legsToWin' | 'legsWon' | 'isLegStarter'

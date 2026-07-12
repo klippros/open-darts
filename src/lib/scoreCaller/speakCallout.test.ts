@@ -4,6 +4,13 @@ describe('speakCallout', () => {
   const speak = vi.fn()
   const cancel = vi.fn()
   const resume = vi.fn()
+  const speechSynthesisMock = {
+    speak,
+    cancel,
+    resume,
+    speaking: false,
+    pending: false,
+  }
 
   beforeEach(async () => {
     vi.resetModules()
@@ -11,6 +18,8 @@ describe('speakCallout', () => {
     speak.mockClear()
     cancel.mockClear()
     resume.mockClear()
+    speechSynthesisMock.speaking = false
+    speechSynthesisMock.pending = false
 
     class MockSpeechSynthesisUtterance {
       lang = ''
@@ -26,14 +35,9 @@ describe('speakCallout', () => {
     })
 
     vi.stubGlobal('SpeechSynthesisUtterance', MockSpeechSynthesisUtterance)
+
     vi.stubGlobal('window', {
-      speechSynthesis: {
-        speak,
-        cancel,
-        resume,
-        speaking: false,
-        pending: false,
-      },
+      speechSynthesis: speechSynthesisMock,
       setTimeout,
       clearTimeout,
     })
@@ -73,8 +77,8 @@ describe('speakCallout', () => {
       utterance.onend?.()
     })
 
-    window.speechSynthesis.speaking = false
-    window.speechSynthesis.pending = false
+    speechSynthesisMock.speaking = false
+    speechSynthesisMock.pending = false
 
     enqueueCallout('Second phrase.')
     vi.advanceTimersByTime(0)

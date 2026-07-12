@@ -1,4 +1,3 @@
-import { GameModeId } from '../../types/gameMode'
 import type { GameSession } from '../../types/gameSession'
 import { isX01Config } from '../game/gameConfigGuards'
 import { x01PresetConfigs, X01PresetId } from '../x01/x01Presets'

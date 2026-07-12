@@ -48,13 +48,14 @@ export const computePlayerStatsForVisits = (
 })
 
 export const computeMatchPlayerStats = (session: GameSession): Record<string, PlayerMatchStats> => {
-  if (!isX01Config(session.mode, session.config)) {
+  const { config } = session
+  if (!isX01Config(session.mode, config)) {
     return {}
   }
 
   const rules = {
-    doubleIn: session.config.doubleIn,
-    doubleOut: session.config.doubleOut,
+    doubleIn: config.doubleIn,
+    doubleOut: config.doubleOut,
   }
 
   return Object.fromEntries(
@@ -63,7 +64,7 @@ export const computeMatchPlayerStats = (session: GameSession): Record<string, Pl
       computePlayerStatsForVisits(
         session.visits.filter((visit) => visit.playerId === player.id),
         rules,
-        session.config.doubleIn,
+        config.doubleIn,
       ),
     ]),
   )
@@ -73,14 +74,15 @@ export const computeLegPlayerStats = (
   session: GameSession,
   legNumber: number,
 ): Record<string, PlayerMatchStats> => {
-  if (!isX01Config(session.mode, session.config)) {
+  const { config } = session
+  if (!isX01Config(session.mode, config)) {
     return {}
   }
 
   const legVisits = getVisitsForLeg(session.visits, legNumber)
   const rules = {
-    doubleIn: session.config.doubleIn,
-    doubleOut: session.config.doubleOut,
+    doubleIn: config.doubleIn,
+    doubleOut: config.doubleOut,
   }
 
   return Object.fromEntries(
@@ -89,7 +91,7 @@ export const computeLegPlayerStats = (
       computePlayerStatsForVisits(
         legVisits.filter((visit) => visit.playerId === player.id),
         rules,
-        session.config.doubleIn,
+        config.doubleIn,
       ),
     ]),
   )
