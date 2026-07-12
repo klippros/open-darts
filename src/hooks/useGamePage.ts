@@ -5,12 +5,19 @@ import { useAccount } from './accountContext'
 import { useBotTurn } from './useBotTurn'
 import { isBotTurn } from '../lib/bots/generateBotDart'
 import { useGameFromRoute } from './useGameFromRoute'
+import { useScoreCallerInitialLeg, useVisitScoreCaller } from './useVisitScoreCaller'
 
 export const useGamePage = () => {
   const navigate = useNavigate()
   const { account } = useAccount()
-  const game = useGameFromRoute({ autoSaveCompletedSessions: account !== null })
   const [abortDialogOpen, setAbortDialogOpen] = useState(false)
+  const scoreCallerCallbacks = useVisitScoreCaller()
+  const game = useGameFromRoute({
+    autoSaveCompletedSessions: account !== null,
+    ...scoreCallerCallbacks,
+  })
+
+  useScoreCallerInitialLeg(game.controller, game.loadState.kind === 'ready')
 
   useBotTurn({
     controller: game.controller,

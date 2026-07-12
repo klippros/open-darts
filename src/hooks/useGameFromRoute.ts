@@ -8,16 +8,24 @@ import { buildGamePathFromSession } from '../lib/storage/sessionMatching'
 import { getResumableSnapshot } from '../lib/storage/visitPersistence'
 import type { ActiveGameSnapshot } from '../types/activeGameSnapshot'
 import { useGame } from './useGame'
+import type { UseGameOptions } from './useGame'
 
 export type GameLoadState =
   { kind: 'ready' } | { kind: 'conflict'; savedSnapshot: ActiveGameSnapshot }
 
-export interface UseGameFromRouteOptions {
-  autoSaveCompletedSessions?: boolean
-}
+export type UseGameFromRouteOptions = Pick<
+  UseGameOptions,
+  'autoSaveCompletedSessions' | 'onVisitCommitted' | 'onTurnStarted' | 'onLegStarted' | 'onUndo'
+>
 
 export const useGameFromRoute = (options: UseGameFromRouteOptions = {}) => {
-  const { autoSaveCompletedSessions = false } = options
+  const {
+    autoSaveCompletedSessions = false,
+    onVisitCommitted,
+    onTurnStarted,
+    onLegStarted,
+    onUndo,
+  } = options
   const navigate = useNavigate()
   const location = useLocation()
   const { account } = useAccount()
@@ -56,13 +64,23 @@ export const useGameFromRoute = (options: UseGameFromRouteOptions = {}) => {
     [startFresh, explicitLaunch, savedSnapshot, launchParams],
   )
 
-  const initialLoadStrategy = useMemo(() => resolveStrategy(), [resolveStrategy])
+  const shouldRestoreOnLoadRef = useRef<boolean | null>(null)
+  const restoreRouteKeyRef = useRef<string | null>(null)
+
+  if (restoreRouteKeyRef.current !== routeKey || startFresh) {
+    restoreRouteKeyRef.current = routeKey
+    shouldRestoreOnLoadRef.current = startFresh ? false : resolveStrategy().shouldRestoreOnLoad
+  }
 
   const game = useGame(launchParams, {
     routeKey,
     startFresh,
-    shouldRestoreOnLoad: initialLoadStrategy.shouldRestoreOnLoad,
+    shouldRestoreOnLoad: shouldRestoreOnLoadRef.current ?? false,
     autoSaveCompletedSessions,
+    onVisitCommitted,
+    onTurnStarted,
+    onLegStarted,
+    onUndo,
   })
 
   const { shouldShowResumePrompt } = useMemo(
