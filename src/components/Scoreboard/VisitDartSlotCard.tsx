@@ -1,4 +1,4 @@
-import { Box, Text } from '@chakra-ui/react'
+import { Box, Button, Text } from '@chakra-ui/react'
 import { faArrowRightLong } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
@@ -57,40 +57,8 @@ export const VisitDartSlotCard = ({
   const styles = getVariantStyles(variant)
   const isInteractive = onClick !== undefined && !disabled && variant === 'selectable'
 
-  return (
-    <Box
-      as={isInteractive ? 'button' : 'div'}
-      type={isInteractive ? 'button' : undefined}
-      onClick={isInteractive ? onClick : undefined}
-      disabled={isInteractive ? disabled : undefined}
-      aria-label={ariaLabel}
-      px={3}
-      py={4}
-      borderRadius="14px"
-      borderWidth="1px"
-      borderColor={styles.borderColor}
-      bg={styles.bg}
-      opacity={styles.opacity}
-      textAlign="center"
-      w="full"
-      cursor={isInteractive ? 'pointer' : 'default'}
-      transition="border-color 0.15s ease, background 0.15s ease, transform 0.15s ease"
-      _hover={
-        isInteractive
-          ? {
-              borderColor: 'orange.300',
-              bg: 'whiteAlpha.200',
-              transform: 'scale(1.02)',
-            }
-          : undefined
-      }
-      _active={isInteractive ? { transform: 'scale(0.98)' } : undefined}
-      _focusVisible={
-        isInteractive
-          ? { outline: '2px solid', outlineColor: 'orange.300', outlineOffset: '2px' }
-          : undefined
-      }
-    >
+  const slotContent = (
+    <>
       <ArrowMark />
       <Text
         mt={2}
@@ -101,6 +69,51 @@ export const VisitDartSlotCard = ({
       >
         {label ?? '—'}
       </Text>
+    </>
+  )
+
+  const slotStyles = {
+    px: 3,
+    py: 4,
+    borderRadius: '14px',
+    borderWidth: '1px',
+    borderColor: styles.borderColor,
+    bg: styles.bg,
+    opacity: styles.opacity,
+    textAlign: 'center' as const,
+    w: 'full',
+    transition: 'border-color 0.15s ease, background 0.15s ease, transform 0.15s ease',
+  }
+
+  if (isInteractive) {
+    return (
+      <Button
+        type="button"
+        variant="ghost"
+        onClick={onClick}
+        disabled={disabled}
+        aria-label={ariaLabel}
+        h="auto"
+        display="block"
+        fontWeight="normal"
+        whiteSpace="normal"
+        {...slotStyles}
+        _hover={{
+          borderColor: 'orange.300',
+          bg: 'whiteAlpha.200',
+          transform: 'scale(1.02)',
+        }}
+        _active={{ transform: 'scale(0.98)' }}
+        _focusVisible={{ outline: '2px solid', outlineColor: 'orange.300', outlineOffset: '2px' }}
+      >
+        {slotContent}
+      </Button>
+    )
+  }
+
+  return (
+    <Box cursor="default" {...slotStyles}>
+      {slotContent}
     </Box>
   )
 }

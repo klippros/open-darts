@@ -78,7 +78,10 @@ export class GameController<State, Config> {
   }
 
   recordDarts(darts: DartThrow[]): GameController<State, Config> {
-    return darts.reduce((controller, dart) => controller.recordDart(dart), this)
+    return darts.reduce<GameController<State, Config>>(
+      (controller, dart) => controller.recordDart(dart),
+      this,
+    )
   }
 
   undoDart(): GameController<State, Config> {

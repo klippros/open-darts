@@ -1,4 +1,4 @@
-import { Box, Stack, Text } from '@chakra-ui/react'
+import { Button, Stack, Text } from '@chakra-ui/react'
 
 export interface SetupOptionCardProps {
   label: string
@@ -13,19 +13,22 @@ export const SetupOptionCard = ({
   selected,
   onSelect,
 }: SetupOptionCardProps) => (
-  <Box
-    as="button"
+  <Button
     type="button"
+    variant="ghost"
     onClick={onSelect}
+    h="auto"
     w="full"
+    display="block"
     textAlign="left"
+    fontWeight="normal"
+    whiteSpace="normal"
     borderWidth="2px"
     borderColor={selected ? 'orange.300' : 'whiteAlpha.200'}
     borderRadius="lg"
     bg={selected ? 'rgba(246, 173, 85, 0.14)' : 'whiteAlpha.50'}
     px={4}
     py={4}
-    cursor="pointer"
     transition="border-color 0.15s ease, background 0.15s ease"
     _hover={{
       borderColor: selected ? 'orange.200' : 'whiteAlpha.400',
@@ -41,5 +44,5 @@ export const SetupOptionCard = ({
         {description}
       </Text>
     </Stack>
-  </Box>
+  </Button>
 )

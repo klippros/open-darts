@@ -2,7 +2,7 @@ import { AroundTheClockAimMode } from '../../types/aroundTheClock'
 import { GameModeId } from '../../types/gameMode'
 import type { GameSession } from '../../types/gameSession'
 import { getAroundTheClockConfig } from '../aroundTheClock/aroundTheClockConfig'
-import { isX01Config } from '../game/gameConfigGuards'
+import { isAroundTheClockConfig, isX01Config } from '../game/gameConfigGuards'
 import { x01PresetConfigs, X01PresetId } from '../x01/x01Presets'
 
 const FIVE_OH_ONE_START_SCORE = x01PresetConfigs[X01PresetId.FiveOhOne].startScore
@@ -39,7 +39,7 @@ export const filterAroundTheClockSessions = (
   aimMode?: AroundTheClockAimMode,
 ): GameSession[] =>
   sessions.filter((session) => {
-    if (session.mode !== GameModeId.AroundTheClock) {
+    if (!isAroundTheClockConfig(session.mode, session.config)) {
       return false
     }
 

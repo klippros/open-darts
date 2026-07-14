@@ -3,7 +3,7 @@ import type { GameSession } from '../../types/gameSession'
 import type { AroundTheClockAimMode } from '../../types/aroundTheClock'
 import { getAroundTheClockConfig } from '../aroundTheClock/aroundTheClockConfig'
 import { getSessionCompletedAt, getSessionModeLabel } from '../history/sessionSummary'
-import { isX01Config } from '../game/gameConfigGuards'
+import { isAroundTheClockConfig, isX01Config } from '../game/gameConfigGuards'
 import { getDoubleCheckoutRate } from './formatAnalytics'
 import { computePlayerStatsForVisits } from './matchPlayerStats'
 import {
@@ -183,7 +183,11 @@ const getAroundTheClockSessionMetric = (
   metric: StatMetricId,
   aimMode?: AroundTheClockAimMode,
 ): number | null => {
-  if (aimMode !== undefined && getAroundTheClockConfig(session.config).aimMode !== aimMode) {
+  if (
+    aimMode !== undefined &&
+    (!isAroundTheClockConfig(session.mode, session.config) ||
+      getAroundTheClockConfig(session.config).aimMode !== aimMode)
+  ) {
     return null
   }
 

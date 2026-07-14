@@ -1,10 +1,10 @@
 import { AroundTheClockAimMode } from '../../types/aroundTheClock'
 import type { DartThrow } from '../../types/dart'
 import type { GameSession } from '../../types/gameSession'
-import { GameModeId } from '../../types/gameMode'
 import type { Visit } from '../../types/visit'
 import { getAroundTheClockCurrentTargetIndex } from '../aroundTheClock/buildAroundTheClockDarts'
 import { getAroundTheClockConfig } from '../aroundTheClock/aroundTheClockConfig'
+import { isAroundTheClockConfig } from '../game/gameConfigGuards'
 import {
   AROUND_THE_CLOCK_TARGET_COUNT,
   getAroundTheClockTargetLabel,
@@ -80,7 +80,7 @@ export interface AroundTheClockSessionStats {
 export const computeAroundTheClockSingleSessionStats = (
   session: GameSession,
 ): AroundTheClockSingleSessionStats | null => {
-  if (session.mode !== GameModeId.AroundTheClock) {
+  if (!isAroundTheClockConfig(session.mode, session.config)) {
     return null
   }
 
@@ -190,7 +190,7 @@ export const aggregateAroundTheClockSessionStats = (
   aimMode: AroundTheClockAimMode,
 ): AroundTheClockSessionStats => {
   const modeSessions = sessions.filter((session) => {
-    if (session.mode !== GameModeId.AroundTheClock) {
+    if (!isAroundTheClockConfig(session.mode, session.config)) {
       return false
     }
 
