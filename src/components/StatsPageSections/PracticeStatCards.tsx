@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Box, Grid, SimpleGrid, Stack, Text } from '@chakra-ui/react'
+import { Box, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import type {
   CheckoutPracticeStats,
   OtherPracticeStats,
@@ -8,7 +8,6 @@ import {
   isAroundTheClockPracticeStats,
   isBob27PracticeStats,
 } from '../../lib/analytics/practiceStats'
-import type { AroundTheClockPerTargetStats } from '../../lib/analytics/aroundTheClockStats'
 import type { StatTimelineSelection } from '../../lib/analytics/statTimelines'
 import {
   formatAverage,
@@ -17,6 +16,7 @@ import {
   formatPercent,
 } from '../../lib/analytics/formatAnalytics'
 import { StatCard } from './StatCard'
+import { AroundTheClockHeatmap } from './AroundTheClockHeatmap/AroundTheClockHeatmap'
 
 const PracticeModeCard = ({ title, children }: { title: string; children: ReactNode }) => (
   <Box
@@ -78,68 +78,6 @@ export const CheckoutPracticeCard = ({
         />
       </SimpleGrid>
     </PracticeModeCard>
-  )
-}
-
-const AroundTheClockTargetTable = ({ targets }: { targets: AroundTheClockPerTargetStats[] }) => {
-  const targetsWithData = targets.filter((target) => target.attemptCount > 0)
-
-  if (targetsWithData.length === 0) {
-    return null
-  }
-
-  const gridTemplateColumns = 'minmax(4rem, 0.8fr) repeat(3, minmax(0, 1fr))'
-
-  return (
-    <Box
-      borderWidth="1px"
-      borderColor="whiteAlpha.200"
-      borderRadius="lg"
-      bg="whiteAlpha.50"
-      overflow="hidden"
-    >
-      <Stack gap={0}>
-        <Grid templateColumns={gridTemplateColumns} px={4} py={2} columnGap={3}>
-          <Text fontSize="sm" color="whiteAlpha.700">
-            Target
-          </Text>
-          <Text fontSize="sm" color="whiteAlpha.700" textAlign="right">
-            Avg darts
-          </Text>
-          <Text fontSize="sm" color="whiteAlpha.700" textAlign="right">
-            Best
-          </Text>
-          <Text fontSize="sm" color="whiteAlpha.700" textAlign="right">
-            Attempts
-          </Text>
-        </Grid>
-
-        {targetsWithData.map((target) => (
-          <Grid
-            key={target.targetIndex}
-            templateColumns={gridTemplateColumns}
-            px={4}
-            py={2.5}
-            columnGap={3}
-            borderTopWidth="1px"
-            borderColor="whiteAlpha.100"
-          >
-            <Text fontSize="sm" color="whiteAlpha.700" alignSelf="center">
-              {target.label}
-            </Text>
-            <Text fontSize="sm" color="whiteAlpha.900" textAlign="right" alignSelf="center">
-              {formatCount(target.avgDartsPerHit)}
-            </Text>
-            <Text fontSize="sm" color="whiteAlpha.900" textAlign="right" alignSelf="center">
-              {formatInteger(target.bestDarts)}
-            </Text>
-            <Text fontSize="sm" color="whiteAlpha.900" textAlign="right" alignSelf="center">
-              {target.attemptCount}
-            </Text>
-          </Grid>
-        ))}
-      </Stack>
-    </Box>
   )
 }
 
@@ -234,7 +172,7 @@ export const OtherPracticeCard = ({
             }}
           />
         </SimpleGrid>
-        <AroundTheClockTargetTable targets={stats.targets} />
+        <AroundTheClockHeatmap targets={stats.targets} />
       </Stack>
     )}
   </PracticeModeCard>

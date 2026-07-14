@@ -14,6 +14,8 @@ import {
 
 export const AROUND_THE_CLOCK_TARGET_COUNT = 21
 
+export const isAroundTheClockBullTarget = (targetIndex: number): boolean => targetIndex >= 20
+
 export const getAroundTheClockTargetLabel = (targetIndex: number): string => {
   if (targetIndex >= 20) {
     return 'Bull'
