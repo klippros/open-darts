@@ -5,6 +5,7 @@ import type { ActiveGameSnapshot } from '../../types/activeGameSnapshot'
 import { PlayerKind } from '../../types/player'
 import {
   clearActiveSnapshot,
+  clearStoredSessions,
   loadActiveSnapshot,
   loadStoredSessions,
   removeStoredSession,
@@ -91,6 +92,17 @@ describe('gameStore', () => {
     removeStoredSession(session.id, storage)
 
     expect(loadStoredSessions(storage)).toEqual([])
+  })
+
+  it('clears all stored sessions', () => {
+    const storage = createMemoryStorage()
+
+    saveStoredSession(sampleSession({ id: 'session-1', status: GameStatus.Completed }), storage)
+    saveStoredSession(sampleSession({ id: 'session-2', status: GameStatus.Completed }), storage)
+    clearStoredSessions(storage)
+
+    expect(loadStoredSessions(storage)).toEqual([])
+    expect(storage.data.has(StorageKey.Sessions)).toBe(false)
   })
 
   it('saves and clears the active snapshot', () => {

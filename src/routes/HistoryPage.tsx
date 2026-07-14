@@ -1,17 +1,19 @@
 import { Box, Button, Heading, Stack, Text } from '@chakra-ui/react'
-import { useMemo, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { BetaBanner } from '../components/BetaBanner/BetaBanner'
 import { ContentContainer } from '../components/ContentContainer'
 import { CreateAccountForm } from '../components/CreateAccountForm/CreateAccountForm'
 import { HistoryList } from '../components/HistoryList/HistoryList'
+import { ResetStatsDialog } from '../components/ResetStatsDialog/ResetStatsDialog'
 import { useAccount } from '../hooks/accountContext'
 import { sortSessionsByDate } from '../lib/history/sessionSummary'
-import { loadStoredSessions } from '../lib/storage/gameStore'
+import { clearStoredSessions, loadStoredSessions } from '../lib/storage/gameStore'
 
 export const HistoryPage = () => {
   const { account, createAccount, signOut } = useAccount()
   const [showAccountForm, setShowAccountForm] = useState(false)
-  const sessions = useMemo(() => sortSessionsByDate(loadStoredSessions()), [])
+  const [resetDialogOpen, setResetDialogOpen] = useState(false)
+  const [sessions, setSessions] = useState(() => sortSessionsByDate(loadStoredSessions()))
 
   const handleCreateAccount = (input: Parameters<typeof createAccount>[0]) => {
     const error = createAccount(input)
@@ -22,6 +24,14 @@ export const HistoryPage = () => {
 
     return error
   }
+
+  const handleResetConfirm = useCallback(() => {
+    clearStoredSessions()
+    setSessions([])
+    setResetDialogOpen(false)
+  }, [])
+
+  const hasSavedGames = sessions.length > 0
 
   return (
     <ContentContainer>
@@ -73,15 +83,28 @@ export const HistoryPage = () => {
                       Your completed games are still stored locally on this device.
                     </Text>
                   </Stack>
-                  <Button
-                    variant="cta"
-                    flexShrink={0}
-                    onClick={() => {
-                      setShowAccountForm(true)
-                    }}
-                  >
-                    Create profile
-                  </Button>
+                  <Stack direction={{ base: 'column', sm: 'row' }} gap={2} flexShrink={0}>
+                    {hasSavedGames && (
+                      <Button
+                        variant="destructive"
+                        flexShrink={0}
+                        onClick={() => {
+                          setResetDialogOpen(true)
+                        }}
+                      >
+                        Reset history and stats
+                      </Button>
+                    )}
+                    <Button
+                      variant="cta"
+                      flexShrink={0}
+                      onClick={() => {
+                        setShowAccountForm(true)
+                      }}
+                    >
+                      Create profile
+                    </Button>
+                  </Stack>
                 </Stack>
               )}
             </Box>
@@ -103,9 +126,22 @@ export const HistoryPage = () => {
                     {account.email ?? 'Local profile on this device'}
                   </Text>
                 </Stack>
-                <Button variant="cancel" flexShrink={0} onClick={signOut}>
-                  Sign out
-                </Button>
+                <Stack direction={{ base: 'column', sm: 'row' }} gap={2} flexShrink={0}>
+                  {hasSavedGames && (
+                    <Button
+                      variant="destructive"
+                      flexShrink={0}
+                      onClick={() => {
+                        setResetDialogOpen(true)
+                      }}
+                    >
+                      Reset history and stats
+                    </Button>
+                  )}
+                  <Button variant="cancel" flexShrink={0} onClick={signOut}>
+                    Sign out
+                  </Button>
+                </Stack>
               </Stack>
             </Box>
           )}
@@ -113,6 +149,11 @@ export const HistoryPage = () => {
           <HistoryList sessions={sessions} />
         </Stack>
       </Box>
+      <ResetStatsDialog
+        open={resetDialogOpen}
+        onOpenChange={setResetDialogOpen}
+        onConfirm={handleResetConfirm}
+      />
     </ContentContainer>
   )
 }

@@ -79,6 +79,10 @@ export const removeStoredSession = (
   storage.setItem(StorageKey.Sessions, JSON.stringify(sessions))
 }
 
+export const clearStoredSessions = (storage: StorageAdapter = browserLocalStorage): void => {
+  storage.removeItem(StorageKey.Sessions)
+}
+
 export const loadActiveSnapshot = (
   storage: StorageAdapter = browserLocalStorage,
 ): ActiveGameSnapshot | null => {
