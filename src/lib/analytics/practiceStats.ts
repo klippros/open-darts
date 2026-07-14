@@ -1,10 +1,16 @@
+import { AroundTheClockAimMode } from '../../types/aroundTheClock'
 import { GameModeId } from '../../types/gameMode'
 import type { GameSession } from '../../types/gameSession'
 import { gameModeDefinitions } from '../game/gameModeDefinitions'
+import { getAroundTheClockAimModeLabel } from '../aroundTheClock/aroundTheClockConfig'
 import { getSessionModeLabel } from '../history/sessionSummary'
 import {
+  aggregateAroundTheClockSessionStats,
+  type AroundTheClockPerTargetStats,
+} from './aroundTheClockStats'
+import { filterAroundTheClockSessions } from './sessionScope'
+import {
   countCheckoutVisits,
-  countDartsInSession,
   getPrimaryPlayerVisits,
   getSessionFinalScore,
   getThreeDartAverage,
@@ -30,11 +36,16 @@ export interface Bob27PracticeStats {
 
 export interface AroundTheClockPracticeStats {
   mode: GameModeId.AroundTheClock
+  aimMode: AroundTheClockAimMode
   label: string
   gameCount: number
   completedCount: number
-  avgDarts: number | null
-  bestDarts: number | null
+  completionRate: number | null
+  avgDartsFullRun: number | null
+  bestDartsFullRun: number | null
+  avgDartsPerField: number | null
+  bestDartsPerField: number | null
+  targets: AroundTheClockPerTargetStats[]
 }
 
 export type OtherPracticeStats = Bob27PracticeStats | AroundTheClockPracticeStats
@@ -45,6 +56,13 @@ export interface PracticeStats {
 }
 
 const CHECKOUT_PRACTICE_MODES = [GameModeId.OneTwentyOne, GameModeId.TenUpOneDown] as const
+
+const AROUND_THE_CLOCK_AIM_MODES = [
+  AroundTheClockAimMode.Singles,
+  AroundTheClockAimMode.Doubles,
+  AroundTheClockAimMode.Trebles,
+  AroundTheClockAimMode.Any,
+] as const
 
 const getSessionLabel = (sessions: GameSession[], mode: GameModeId): string => {
   const [firstSession] = sessions
@@ -103,28 +121,31 @@ const computeBob27Stats = (sessions: GameSession[]): Bob27PracticeStats | null =
   }
 }
 
-const computeAroundTheClockStats = (
+const computeAroundTheClockStatsForAimMode = (
   sessions: GameSession[],
+  aimMode: AroundTheClockAimMode,
 ): AroundTheClockPracticeStats | null => {
-  const modeSessions = sessions.filter((session) => session.mode === GameModeId.AroundTheClock)
+  const aimModeSessions = filterAroundTheClockSessions(sessions, aimMode)
 
-  if (modeSessions.length === 0) {
+  if (aimModeSessions.length === 0) {
     return null
   }
 
-  const completedSessions = modeSessions.filter((session) => session.finishedEarly !== true)
-  const dartCounts = completedSessions.map((session) => countDartsInSession(session))
+  const aggregated = aggregateAroundTheClockSessionStats(aimModeSessions, aimMode)
+  const completedSessions = aimModeSessions.filter((session) => session.finishedEarly !== true)
 
   return {
     mode: GameModeId.AroundTheClock,
-    label: getSessionLabel(modeSessions, GameModeId.AroundTheClock),
-    gameCount: modeSessions.length,
+    aimMode,
+    label: `${gameModeDefinitions[GameModeId.AroundTheClock].label} · ${getAroundTheClockAimModeLabel(aimMode)}`,
+    gameCount: aimModeSessions.length,
     completedCount: completedSessions.length,
-    avgDarts:
-      dartCounts.length === 0
-        ? null
-        : dartCounts.reduce((sum, count) => sum + count, 0) / dartCounts.length,
-    bestDarts: dartCounts.length === 0 ? null : Math.min(...dartCounts),
+    completionRate: aggregated.completionRate,
+    avgDartsFullRun: aggregated.avgDartsFullRun,
+    bestDartsFullRun: aggregated.bestDartsFullRun,
+    avgDartsPerField: aggregated.avgDartsPerField,
+    bestDartsPerField: aggregated.bestDartsPerField,
+    targets: aggregated.targets,
   }
 }
 
@@ -134,9 +155,12 @@ export const computePracticeStats = (sessions: GameSession[]): PracticeStats => 
 
     return stats === null ? [] : [stats]
   }),
-  other: [computeBob27Stats(sessions), computeAroundTheClockStats(sessions)].flatMap((stats) =>
-    stats === null ? [] : [stats],
-  ),
+  other: [
+    computeBob27Stats(sessions),
+    ...AROUND_THE_CLOCK_AIM_MODES.map((aimMode) =>
+      computeAroundTheClockStatsForAimMode(sessions, aimMode),
+    ),
+  ].flatMap((stats) => (stats === null ? [] : [stats])),
 })
 
 export const isBob27PracticeStats = (stats: OtherPracticeStats): stats is Bob27PracticeStats =>

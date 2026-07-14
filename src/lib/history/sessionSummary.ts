@@ -1,6 +1,11 @@
 import { getVisitAverages, getPrimaryPlayerVisits } from '../analytics/visitStats'
+import { computeAroundTheClockSingleSessionStats } from '../analytics/aroundTheClockStats'
 import { gameModeDefinitions } from '../game/gameModeDefinitions'
-import { isX01Config } from '../game/gameConfigGuards'
+import { isX01Config, isAroundTheClockConfig } from '../game/gameConfigGuards'
+import {
+  getAroundTheClockAimModeLabel,
+  getAroundTheClockConfig,
+} from '../aroundTheClock/aroundTheClockConfig'
 import { getMatchWinnerId } from '../game/matchLegs'
 import { formatLegWinLine } from '../game/matchLegDisplay'
 import { formatX01StartScore } from '../x01/x01Presets'
@@ -15,6 +20,12 @@ export interface MatchSummary {
 export const getSessionModeLabel = (session: GameSession): string => {
   if (isX01Config(session.mode, session.config)) {
     return formatX01StartScore(session.config)
+  }
+
+  if (isAroundTheClockConfig(session.mode, session.config)) {
+    const { aimMode } = getAroundTheClockConfig(session.config)
+
+    return `${gameModeDefinitions[session.mode].label} · ${getAroundTheClockAimModeLabel(aimMode)}`
   }
 
   return gameModeDefinitions[session.mode].label
@@ -101,10 +112,23 @@ export const getMatchSummary = (session: GameSession): MatchSummary => {
   }
 
   if (session.mode === GameModeId.AroundTheClock) {
+    const stats = computeAroundTheClockSingleSessionStats(session)
     const details = [`${visitCount} visit${visitCount === 1 ? '' : 's'}`]
+
+    if (stats !== null) {
+      if (stats.fieldsCompleted > 0) {
+        details.push(`${stats.fieldsCompleted}/${stats.totalFields} fields`)
+      }
+
+      if (stats.avgDartsPerField !== null) {
+        details.push(`${stats.dartsThrown} darts (${stats.avgDartsPerField.toFixed(1)} per field)`)
+      }
+    }
 
     if (!finishedEarly) {
       details.push('Hit every target through bull')
+    } else if (stats?.currentTargetLabel != null) {
+      details.push(`Stopped on ${stats.currentTargetLabel}`)
     }
 
     return {

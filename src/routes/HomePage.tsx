@@ -51,7 +51,7 @@ const PRACTICE_MODES = [
     id: 'around-the-clock',
     label: 'Around the Clock',
     description: 'Hit 1 to 20 and bull',
-    to: buildPracticeGamePath(GameModeId.AroundTheClock),
+    to: '/game/around-the-clock/setup',
   },
   {
     id: '10-up-1-down',

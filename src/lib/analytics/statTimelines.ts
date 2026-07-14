@@ -1,5 +1,7 @@
 import { GameModeId } from '../../types/gameMode'
 import type { GameSession } from '../../types/gameSession'
+import type { AroundTheClockAimMode } from '../../types/aroundTheClock'
+import { getAroundTheClockConfig } from '../aroundTheClock/aroundTheClockConfig'
 import { getSessionCompletedAt, getSessionModeLabel } from '../history/sessionSummary'
 import { isX01Config } from '../game/gameConfigGuards'
 import { getDoubleCheckoutRate } from './formatAnalytics'
@@ -37,13 +39,14 @@ export type StatMetricId =
   | 'avgVisits'
   | 'avgFinalScore'
   | 'bestDarts'
+  | 'completionRate'
 
 export type StatTimelineScope =
   | { type: 'x01-501' }
   | { type: 'x01-other' }
   | { type: 'practice-checkout'; mode: GameModeId.OneTwentyOne | GameModeId.TenUpOneDown }
   | { type: 'practice-bob27' }
-  | { type: 'practice-around-the-clock' }
+  | { type: 'practice-around-the-clock'; aimMode?: AroundTheClockAimMode }
 
 export interface StatTimelineSelection {
   scope: StatTimelineScope
@@ -113,6 +116,7 @@ const getX01SessionMetric = (session: GameSession, metric: StatMetricId): number
     case 'avgVisits':
     case 'avgFinalScore':
     case 'bestDarts':
+    case 'completionRate':
       return null
   }
 
@@ -141,6 +145,7 @@ const getCheckoutPracticeSessionMetric = (
     case 'avgVisits':
     case 'avgFinalScore':
     case 'bestDarts':
+    case 'completionRate':
       return null
   }
 
@@ -166,6 +171,7 @@ const getBob27SessionMetric = (session: GameSession, metric: StatMetricId): numb
       return null
     case 'avgDarts':
     case 'bestDarts':
+    case 'completionRate':
       return null
   }
 
@@ -175,17 +181,22 @@ const getBob27SessionMetric = (session: GameSession, metric: StatMetricId): numb
 const getAroundTheClockSessionMetric = (
   session: GameSession,
   metric: StatMetricId,
+  aimMode?: AroundTheClockAimMode,
 ): number | null => {
-  if (session.finishedEarly === true) {
+  if (aimMode !== undefined && getAroundTheClockConfig(session.config).aimMode !== aimMode) {
     return null
   }
 
   const dartCount = countDartsInSession(session)
+  const isCompleted = session.finishedEarly !== true
 
   switch (metric) {
+    case 'completionRate':
+      return isCompleted ? 100 : 0
     case 'avgDarts':
+      return isCompleted ? dartCount : null
     case 'bestDarts':
-      return dartCount
+      return isCompleted ? dartCount : null
     case 'threeDartAverage':
     case 'threeDartAverageUntil170':
     case 'bestGameAverage':
@@ -209,6 +220,7 @@ export const getStatTimelineFormat = (metric: StatMetricId): StatTimelineFormat 
   switch (metric) {
     case 'checkoutRate':
     case 'doubleCheckoutRate':
+    case 'completionRate':
       return 'percent'
     case 'avgDarts':
     case 'avgVisits':
@@ -244,7 +256,7 @@ const filterSessionsForScope = (
     case 'practice-bob27':
       return filterBob27Sessions(sessions)
     case 'practice-around-the-clock':
-      return filterAroundTheClockSessions(sessions)
+      return filterAroundTheClockSessions(sessions, scope.aimMode)
     default:
       return []
   }
@@ -263,7 +275,7 @@ const getSessionMetricValue = (
     case 'practice-bob27':
       return getBob27SessionMetric(session, selection.metric)
     case 'practice-around-the-clock':
-      return getAroundTheClockSessionMetric(session, selection.metric)
+      return getAroundTheClockSessionMetric(session, selection.metric, selection.scope.aimMode)
     default:
       return null
   }

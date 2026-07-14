@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { DartMultiplier } from '../../types/dart'
 import { GameModeId } from '../../types/gameMode'
+import { AroundTheClockAimMode } from '../../types/aroundTheClock'
 import { PlayerKind } from '../../types/player'
 import { aroundTheClockEngine } from './aroundTheClockEngine'
 import { numberDart } from '../testHelpers'
 
 const player = { id: 'p1', name: 'Player 1', kind: PlayerKind.Human }
-const config = { finishOnBull: true }
+const config = { finishOnBull: true, aimMode: AroundTheClockAimMode.Any }
 
 describe('aroundTheClockEngine', () => {
   it('creates initial state at target 1', () => {
@@ -43,7 +44,7 @@ describe('aroundTheClockEngine', () => {
     expect(scoreboard.mode).toBe(GameModeId.AroundTheClock)
     expect(scoreboard.players[0]).toMatchObject({
       primaryScore: 1,
-      secondaryLabel: 'Target 1',
+      secondaryLabel: 'Target 1 · Any',
     })
   })
 })

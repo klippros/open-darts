@@ -149,7 +149,11 @@ export const PracticeSection = ({ checkout, other, onStatSelect }: PracticeSecti
           <CheckoutPracticeCard key={stats.mode} stats={stats} onStatSelect={onStatSelect} />
         ))}
         {other.map((stats) => (
-          <OtherPracticeCard key={stats.mode} stats={stats} onStatSelect={onStatSelect} />
+          <OtherPracticeCard
+            key={'aimMode' in stats ? `${stats.mode}-${stats.aimMode}` : stats.mode}
+            stats={stats}
+            onStatSelect={onStatSelect}
+          />
         ))}
       </Stack>
     </Stack>

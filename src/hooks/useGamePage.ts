@@ -1,6 +1,7 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { clearActiveSnapshot } from '../lib/storage/gameStore'
+import { parseGameLaunchParams } from '../lib/game/gameRoute'
 import { useAccount } from './accountContext'
 import { useBotTurn } from './useBotTurn'
 import { isBotTurn } from '../lib/bots/generateBotDart'
@@ -10,8 +11,13 @@ import { useScoreCallerInitialLeg, useVisitScoreCaller } from './useVisitScoreCa
 export const useGamePage = () => {
   const navigate = useNavigate()
   const { account } = useAccount()
+  const [searchParams] = useSearchParams()
   const [abortDialogOpen, setAbortDialogOpen] = useState(false)
-  const scoreCallerCallbacks = useVisitScoreCaller()
+  const mode = useMemo(
+    () => parseGameLaunchParams(searchParams, account?.displayName).mode,
+    [searchParams, account?.displayName],
+  )
+  const scoreCallerCallbacks = useVisitScoreCaller(mode)
   const game = useGameFromRoute({
     autoSaveCompletedSessions: account !== null,
     ...scoreCallerCallbacks,

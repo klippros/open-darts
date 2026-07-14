@@ -1,5 +1,13 @@
+export enum AroundTheClockAimMode {
+  Singles = 'singles',
+  Doubles = 'doubles',
+  Trebles = 'trebles',
+  Any = 'any',
+}
+
 export interface AroundTheClockConfig {
   finishOnBull: boolean
+  aimMode?: AroundTheClockAimMode
 }
 
 export interface AroundTheClockPlayerState {

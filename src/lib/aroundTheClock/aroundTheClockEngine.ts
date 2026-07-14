@@ -1,6 +1,7 @@
 import type { GameEngine, VisitResult } from '../game/GameEngine'
 import { GameModeId } from '../../types/gameMode'
 import type { AroundTheClockConfig, AroundTheClockState } from '../../types/aroundTheClock'
+import { getAroundTheClockAimModeLabel, getAroundTheClockConfig } from './aroundTheClockConfig'
 import {
   getAroundTheClockTargetLabel,
   getAroundTheClockVisitScore,
@@ -26,24 +27,29 @@ export const aroundTheClockEngine: GameEngine<AroundTheClockState, AroundTheCloc
     players: Object.fromEntries(players.map((player) => [player.id, { targetIndex: 0 }])),
   }),
 
-  getScoreboard: (state, players, activePlayerId) => ({
-    mode: GameModeId.AroundTheClock,
-    players: players.map((player) => {
-      const playerState = getPlayerState(state, player.id)
+  getScoreboard: (state, players, activePlayerId) => {
+    const { aimMode } = getAroundTheClockConfig(state.config)
 
-      return {
-        playerId: player.id,
-        name: player.name,
-        primaryScore: playerState.targetIndex >= 20 ? 25 : playerState.targetIndex + 1,
-        secondaryLabel: `Target ${getAroundTheClockTargetLabel(playerState.targetIndex)}`,
-        isActive: player.id === activePlayerId,
-      }
-    }),
-  }),
+    return {
+      mode: GameModeId.AroundTheClock,
+      players: players.map((player) => {
+        const playerState = getPlayerState(state, player.id)
+
+        return {
+          playerId: player.id,
+          name: player.name,
+          primaryScore: playerState.targetIndex >= 20 ? 25 : playerState.targetIndex + 1,
+          secondaryLabel: `Target ${getAroundTheClockTargetLabel(playerState.targetIndex)} · ${getAroundTheClockAimModeLabel(aimMode)}`,
+          isActive: player.id === activePlayerId,
+        }
+      }),
+    }
+  },
 
   applyDart: (state, playerId, pendingDarts) => {
     const playerState = getPlayerState(state, playerId)
-    const outcome = resolveAroundTheClockVisit(playerState.targetIndex, pendingDarts)
+    const { aimMode } = getAroundTheClockConfig(state.config)
+    const outcome = resolveAroundTheClockVisit(playerState.targetIndex, pendingDarts, aimMode)
 
     return {
       ...state,
@@ -58,14 +64,15 @@ export const aroundTheClockEngine: GameEngine<AroundTheClockState, AroundTheCloc
 
   commitVisit: (state, playerId, visitIndex, darts): VisitResult<AroundTheClockState> => {
     const playerState = getPlayerState(state, playerId)
+    const { aimMode } = getAroundTheClockConfig(state.config)
     const scoreBefore = playerState.targetIndex
-    const outcome = resolveAroundTheClockVisit(scoreBefore, darts)
+    const outcome = resolveAroundTheClockVisit(scoreBefore, darts, aimMode)
 
     const visit: VisitResult<AroundTheClockState>['visit'] = {
       visitIndex,
       playerId,
       darts,
-      visitScore: getAroundTheClockVisitScore(scoreBefore, darts),
+      visitScore: getAroundTheClockVisitScore(scoreBefore, darts, aimMode),
       scoreBefore,
       scoreAfter: outcome.targetIndexAfter,
       bust: false,
@@ -96,7 +103,8 @@ export const aroundTheClockEngine: GameEngine<AroundTheClockState, AroundTheCloc
 
   shouldEndVisitEarly: (state, playerId, darts) => {
     const playerState = getPlayerState(state, playerId)
-    const outcome = resolveAroundTheClockVisit(playerState.targetIndex, darts)
+    const { aimMode } = getAroundTheClockConfig(state.config)
+    const outcome = resolveAroundTheClockVisit(playerState.targetIndex, darts, aimMode)
 
     return outcome.checkout
   },

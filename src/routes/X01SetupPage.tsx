@@ -1,7 +1,11 @@
-import { Box, Button, Heading, Input, Stack, Text } from '@chakra-ui/react'
+import { Box, Input, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ContentContainer } from '../components/ContentContainer'
+import { SetupPageActions } from '../components/SetupPageLayout/SetupPageActions'
+import { SetupPageHeader } from '../components/SetupPageLayout/SetupPageHeader'
+import { SetupPageLayout } from '../components/SetupPageLayout/SetupPageLayout'
+import { SetupOptionCard } from '../components/SetupPageLayout/SetupOptionCard'
+import { SetupSection } from '../components/SetupPageLayout/SetupSection'
 import { buildX01CustomGamePath, parseOptionalStartScore } from '../lib/x01/x01Presets'
 import type { X01Config } from '../types/x01'
 
@@ -30,24 +34,23 @@ export const X01SetupPage = () => {
   }
 
   return (
-    <ContentContainer>
-      <Box py={{ base: 6, md: 10 }} pb={10} maxW="480px">
-        <Stack gap={6}>
-          <Stack gap={2}>
-            <Heading as="h1" size="xl" color="white" fontFamily="Archivo Black, sans-serif">
-              Custom x01
-            </Heading>
-            <Text color="whiteAlpha.700" fontSize="md" lineHeight="1.65">
-              Pick a start score and optional double-in or straight-out rules, then choose your
-              opponent.
-            </Text>
-          </Stack>
+    <SetupPageLayout>
+      <Stack gap={8}>
+        <SetupPageHeader
+          title="Custom x01"
+          description="Pick a start score and optional double-in or straight-out rules, then choose your opponent."
+        />
 
-          <Stack gap={4}>
+        <SetupSection title="Start score">
+          <Box
+            borderWidth="1px"
+            borderColor="whiteAlpha.200"
+            borderRadius="lg"
+            bg="whiteAlpha.50"
+            px={4}
+            py={4}
+          >
             <Stack gap={2}>
-              <Text color="whiteAlpha.800" fontSize="sm">
-                Start score
-              </Text>
               <Input
                 value={startScoreInput}
                 onChange={(event) => {
@@ -66,38 +69,36 @@ export const X01SetupPage = () => {
                 </Text>
               )}
             </Stack>
+          </Box>
+        </SetupSection>
 
-            <Button
-              variant={doubleIn ? 'emphasis' : 'cta'}
-              justifyContent="flex-start"
-              onClick={() => {
+        <SetupSection title="Rules">
+          <Stack gap={2}>
+            <SetupOptionCard
+              label="Double in"
+              description="Require a double before scores count"
+              selected={doubleIn}
+              onSelect={() => {
                 setDoubleIn((current) => !current)
               }}
-            >
-              Double in {doubleIn ? 'on' : 'off'}
-            </Button>
-
-            <Button
-              variant={doubleOut ? 'emphasis' : 'cta'}
-              justifyContent="flex-start"
-              onClick={() => {
+            />
+            <SetupOptionCard
+              label="Double out"
+              description="Must finish on a double or bull"
+              selected={doubleOut}
+              onSelect={() => {
                 setDoubleOut((current) => !current)
               }}
-            >
-              Double out {doubleOut ? 'on' : 'off'}
-            </Button>
+            />
           </Stack>
+        </SetupSection>
 
-          <Stack direction={{ base: 'column', sm: 'row' }} gap={3}>
-            <Button variant="emphasis" onClick={handleStart}>
-              Continue
-            </Button>
-            <Button variant="cancel" onClick={() => void navigate('/')}>
-              Back
-            </Button>
-          </Stack>
-        </Stack>
-      </Box>
-    </ContentContainer>
+        <SetupPageActions
+          primaryLabel="Continue"
+          onBack={() => void navigate('/')}
+          onPrimary={handleStart}
+        />
+      </Stack>
+    </SetupPageLayout>
   )
 }

@@ -58,6 +58,7 @@ export const GamePage = () => {
           players={controller.session.players}
           visits={controller.session.visits}
           mode={controller.session.mode}
+          config={controller.session.config}
           currentLeg={controller.session.matchProgress?.currentLeg}
           showVisitHistory={showsVisitHistory(controller.session.mode)}
         >

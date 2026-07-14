@@ -1,15 +1,19 @@
 import { Box, Grid } from '@chakra-ui/react'
 import type { ReactNode } from 'react'
 import { gameMainMaxWidth } from '../layout'
-import type { GameModeId } from '../types/gameMode'
+import { getAroundTheClockConfig } from '../lib/aroundTheClock/aroundTheClockConfig'
+import { isAroundTheClockConfig } from '../lib/game/gameConfigGuards'
+import type { GameConfig, GameModeId } from '../types/gameMode'
 import type { Player } from '../types/player'
 import type { Visit } from '../types/visit'
+import { AroundTheClockHistoryColumn } from './Scoreboard/AroundTheClockHistoryColumn'
 import { VisitHistoryColumn } from './Scoreboard/VisitHistoryColumn'
 
 export interface GameBoardLayoutProps {
   players: Player[]
   visits: Visit[]
   mode: GameModeId
+  config: GameConfig
   currentLeg?: number
   showVisitHistory: boolean
   children: ReactNode
@@ -19,12 +23,37 @@ export const GameBoardLayout = ({
   players,
   visits,
   mode,
+  config,
   currentLeg,
   showVisitHistory,
   children,
 }: GameBoardLayoutProps) => {
   const [leftPlayer, rightPlayer] = players
   const showPlayerName = players.length > 1
+  const aroundTheClockConfig = isAroundTheClockConfig(mode, config)
+    ? getAroundTheClockConfig(config)
+    : null
+
+  const renderHistoryColumn = (player: Player, align: 'left' | 'right') =>
+    aroundTheClockConfig !== null ? (
+      <AroundTheClockHistoryColumn
+        player={player}
+        visits={visits}
+        config={aroundTheClockConfig}
+        currentLeg={currentLeg}
+        align={align}
+        showPlayerName={showPlayerName}
+      />
+    ) : (
+      <VisitHistoryColumn
+        player={player}
+        visits={visits}
+        mode={mode}
+        currentLeg={currentLeg}
+        align={align}
+        showPlayerName={showPlayerName}
+      />
+    )
 
   return (
     <Grid
@@ -38,16 +67,7 @@ export const GameBoardLayout = ({
       mx="auto"
       w="full"
     >
-      {showVisitHistory && leftPlayer !== undefined && (
-        <VisitHistoryColumn
-          player={leftPlayer}
-          visits={visits}
-          mode={mode}
-          currentLeg={currentLeg}
-          align="left"
-          showPlayerName={showPlayerName}
-        />
-      )}
+      {showVisitHistory && leftPlayer !== undefined && renderHistoryColumn(leftPlayer, 'left')}
 
       <Box w="full" maxW={gameMainMaxWidth} justifySelf="center">
         {children}
@@ -57,14 +77,7 @@ export const GameBoardLayout = ({
         (rightPlayer === undefined ? (
           <Box display={{ base: 'none', lg: 'block' }} aria-hidden="true" />
         ) : (
-          <VisitHistoryColumn
-            player={rightPlayer}
-            visits={visits}
-            mode={mode}
-            currentLeg={currentLeg}
-            align="right"
-            showPlayerName={showPlayerName}
-          />
+          renderHistoryColumn(rightPlayer, 'right')
         ))}
     </Grid>
   )

@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import type { AppGameController } from '../lib/game/createSession'
+import { supportsScoreCaller } from '../lib/game/gameModeDefinitions'
+import type { GameModeId } from '../types/gameMode'
 import {
   announceCalloutOnce,
   clearAnnouncedCallouts,
@@ -33,7 +35,7 @@ const announceLegStart = (controller: AppGameController): void => {
   announceCalloutOnce(legRequireCalloutKey(sessionId, leg), buildVisitStartCallout(controller))
 }
 
-export const useVisitScoreCaller = (): ScoreCallerCallbacks => {
+export const useVisitScoreCaller = (mode: GameModeId): ScoreCallerCallbacks => {
   const { scoreCallerEnabled } = useSettings()
 
   const handleUndo = useCallback((sessionId: string) => {
@@ -45,7 +47,7 @@ export const useVisitScoreCaller = (): ScoreCallerCallbacks => {
   }, [])
 
   return useMemo((): ScoreCallerCallbacks => {
-    if (!scoreCallerEnabled) {
+    if (!scoreCallerEnabled || !supportsScoreCaller(mode)) {
       return {
         onUndo: handleUndo,
       }
@@ -77,7 +79,7 @@ export const useVisitScoreCaller = (): ScoreCallerCallbacks => {
       },
       onUndo: handleUndo,
     }
-  }, [handleUndo, scoreCallerEnabled])
+  }, [handleUndo, mode, scoreCallerEnabled])
 }
 
 export const useScoreCallerInitialLeg = (
@@ -86,9 +88,10 @@ export const useScoreCallerInitialLeg = (
 ): void => {
   const { scoreCallerEnabled } = useSettings()
   const sessionContextRef = useRef<{ sessionId: string; hadVisits: boolean } | null>(null)
+  const mode = controller.session.mode
 
   useEffect(() => {
-    if (!scoreCallerEnabled || !loadReady) {
+    if (!scoreCallerEnabled || !supportsScoreCaller(mode) || !loadReady) {
       return
     }
 
@@ -113,6 +116,7 @@ export const useScoreCallerInitialLeg = (
     controller.session.matchProgress?.currentLeg,
     controller.session.visits.length,
     loadReady,
+    mode,
     scoreCallerEnabled,
   ])
 }

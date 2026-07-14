@@ -11,6 +11,7 @@ import { saveStoredSession } from '../../lib/storage/gameStore'
 import { darkDialogContentProps } from '../darkDialogContentProps'
 import { SaveAccountDialog } from '../SaveAccountDialog/SaveAccountDialog'
 import { MatchLegScore } from './MatchLegScore'
+import { AroundTheClockSummaryPanel } from './AroundTheClockSummaryPanel'
 import { MatchStatsPanel } from './MatchStatsPanel'
 
 export interface MatchSummaryDialogProps {
@@ -85,7 +86,11 @@ export const MatchSummaryDialog = ({
             </Dialog.Header>
             <Dialog.Body>
               <Stack gap={5}>
-                {session.mode !== GameModeId.X01 && (
+                {session.mode === GameModeId.AroundTheClock && (
+                  <AroundTheClockSummaryPanel session={session} />
+                )}
+
+                {session.mode !== GameModeId.X01 && session.mode !== GameModeId.AroundTheClock && (
                   <>
                     <Text
                       fontSize="sm"

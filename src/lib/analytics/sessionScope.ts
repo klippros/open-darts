@@ -1,5 +1,7 @@
+import { AroundTheClockAimMode } from '../../types/aroundTheClock'
 import { GameModeId } from '../../types/gameMode'
 import type { GameSession } from '../../types/gameSession'
+import { getAroundTheClockConfig } from '../aroundTheClock/aroundTheClockConfig'
 import { isX01Config } from '../game/gameConfigGuards'
 import { x01PresetConfigs, X01PresetId } from '../x01/x01Presets'
 
@@ -32,5 +34,18 @@ export const filterCheckoutPracticeSessions = (
 export const filterBob27Sessions = (sessions: GameSession[]): GameSession[] =>
   sessions.filter((session) => session.mode === GameModeId.Bob27)
 
-export const filterAroundTheClockSessions = (sessions: GameSession[]): GameSession[] =>
-  sessions.filter((session) => session.mode === GameModeId.AroundTheClock)
+export const filterAroundTheClockSessions = (
+  sessions: GameSession[],
+  aimMode?: AroundTheClockAimMode,
+): GameSession[] =>
+  sessions.filter((session) => {
+    if (session.mode !== GameModeId.AroundTheClock) {
+      return false
+    }
+
+    if (aimMode === undefined) {
+      return true
+    }
+
+    return getAroundTheClockConfig(session.config).aimMode === aimMode
+  })

@@ -3,6 +3,7 @@ import { GameModeId, GameStatus } from '../../types/gameMode'
 import type { GameSession } from '../../types/gameSession'
 import { PlayerKind } from '../../types/player'
 import { DartMultiplier } from '../../types/dart'
+import { AroundTheClockAimMode } from '../../types/aroundTheClock'
 import { numberDart, bullDart } from '../testHelpers'
 import { computePracticeStats } from './practiceStats'
 
@@ -79,11 +80,11 @@ describe('practiceStats', () => {
     ])
   })
 
-  it('summarizes around the clock by dart count for completed games', () => {
+  it('summarizes around the clock per aim mode with per-target stats', () => {
     const stats = computePracticeStats([
       sampleSession({
         mode: GameModeId.AroundTheClock,
-        config: { finishOnBull: true },
+        config: { finishOnBull: true, aimMode: AroundTheClockAimMode.Any },
         visits: [
           sampleVisit({
             scoreBefore: 0,
@@ -106,11 +107,79 @@ describe('practiceStats', () => {
       sampleSession({
         id: 'early',
         mode: GameModeId.AroundTheClock,
-        config: { finishOnBull: true },
+        config: { finishOnBull: true, aimMode: AroundTheClockAimMode.Any },
         finishedEarly: true,
         visits: [
           sampleVisit({
             darts: [numberDart(1, DartMultiplier.Single), numberDart(1, DartMultiplier.Single)],
+          }),
+        ],
+      }),
+      sampleSession({
+        id: 'doubles',
+        mode: GameModeId.AroundTheClock,
+        config: { finishOnBull: true, aimMode: AroundTheClockAimMode.Doubles },
+        finishedEarly: true,
+        visits: [
+          sampleVisit({
+            scoreBefore: 0,
+            scoreAfter: 0,
+            darts: [numberDart(1, DartMultiplier.Single)],
+          }),
+        ],
+      }),
+    ])
+
+    const anyStats = stats.other.find(
+      (entry) =>
+        entry.mode === GameModeId.AroundTheClock &&
+        'aimMode' in entry &&
+        entry.aimMode === AroundTheClockAimMode.Any,
+    )
+    const doublesStats = stats.other.find(
+      (entry) =>
+        entry.mode === GameModeId.AroundTheClock &&
+        'aimMode' in entry &&
+        entry.aimMode === AroundTheClockAimMode.Doubles,
+    )
+
+    expect(anyStats).toEqual(
+      expect.objectContaining({
+        mode: GameModeId.AroundTheClock,
+        aimMode: AroundTheClockAimMode.Any,
+        gameCount: 2,
+        completedCount: 1,
+        completionRate: 50,
+        avgDartsFullRun: 4,
+        bestDartsFullRun: 4,
+      }),
+    )
+    expect(anyStats && 'targets' in anyStats && anyStats.targets[0]).toMatchObject({
+      label: '1',
+      attemptCount: 1,
+      hitCount: 1,
+      bestDarts: 1,
+    })
+    expect(doublesStats).toEqual(
+      expect.objectContaining({
+        aimMode: AroundTheClockAimMode.Doubles,
+        gameCount: 1,
+        completedCount: 0,
+        completionRate: 0,
+      }),
+    )
+  })
+
+  it('groups legacy sessions without aim mode as any', () => {
+    const stats = computePracticeStats([
+      sampleSession({
+        mode: GameModeId.AroundTheClock,
+        config: { finishOnBull: true },
+        visits: [
+          sampleVisit({
+            scoreBefore: 0,
+            scoreAfter: 1,
+            darts: [numberDart(1, DartMultiplier.Single)],
           }),
         ],
       }),
@@ -119,10 +188,8 @@ describe('practiceStats', () => {
     expect(stats.other).toEqual([
       expect.objectContaining({
         mode: GameModeId.AroundTheClock,
-        gameCount: 2,
-        completedCount: 1,
-        avgDarts: 4,
-        bestDarts: 4,
+        aimMode: AroundTheClockAimMode.Any,
+        gameCount: 1,
       }),
     ])
   })

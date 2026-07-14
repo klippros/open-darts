@@ -1,5 +1,16 @@
 import type { DartThrow } from '../../types/dart'
-import { hitsBull, hitsNumberSegment } from '../segmentMatching'
+import { AroundTheClockAimMode } from '../../types/aroundTheClock'
+import {
+  hitsBull,
+  hitsDoubleOnNumber,
+  hitsDoubleOnOuterBull,
+  hitsNumberSegment,
+  hitsOuterBull,
+  hitsSingleOnInnerBull,
+  hitsSingleOnNumber,
+  hitsSingleOnOuterBull,
+  hitsTripleOnNumber,
+} from '../segmentMatching'
 
 export const AROUND_THE_CLOCK_TARGET_COUNT = 21
 
@@ -11,12 +22,48 @@ export const getAroundTheClockTargetLabel = (targetIndex: number): string => {
   return String(targetIndex + 1)
 }
 
-export const isAroundTheClockTargetHit = (dart: DartThrow, targetIndex: number): boolean => {
+const isAroundTheClockBullHit = (dart: DartThrow, aimMode: AroundTheClockAimMode): boolean => {
+  switch (aimMode) {
+    case AroundTheClockAimMode.Any:
+      return hitsOuterBull(dart) || hitsBull(dart)
+    case AroundTheClockAimMode.Singles:
+      return hitsSingleOnOuterBull(dart) || hitsSingleOnInnerBull(dart)
+    case AroundTheClockAimMode.Doubles:
+      return hitsDoubleOnOuterBull(dart) || hitsBull(dart)
+    case AroundTheClockAimMode.Trebles:
+      return hitsBull(dart)
+  }
+}
+
+const isAroundTheClockNumberHit = (
+  dart: DartThrow,
+  targetIndex: number,
+  aimMode: AroundTheClockAimMode,
+): boolean => {
+  const value = targetIndex + 1
+
+  switch (aimMode) {
+    case AroundTheClockAimMode.Any:
+      return hitsNumberSegment(dart, value)
+    case AroundTheClockAimMode.Singles:
+      return hitsSingleOnNumber(dart, value)
+    case AroundTheClockAimMode.Doubles:
+      return hitsDoubleOnNumber(dart, value)
+    case AroundTheClockAimMode.Trebles:
+      return hitsTripleOnNumber(dart, value)
+  }
+}
+
+export const isAroundTheClockTargetHit = (
+  dart: DartThrow,
+  targetIndex: number,
+  aimMode: AroundTheClockAimMode = AroundTheClockAimMode.Any,
+): boolean => {
   if (targetIndex >= 20) {
-    return hitsBull(dart)
+    return isAroundTheClockBullHit(dart, aimMode)
   }
 
-  return hitsNumberSegment(dart, targetIndex + 1)
+  return isAroundTheClockNumberHit(dart, targetIndex, aimMode)
 }
 
 export interface AroundTheClockVisitOutcome {
@@ -27,11 +74,12 @@ export interface AroundTheClockVisitOutcome {
 export const resolveAroundTheClockVisit = (
   targetIndex: number,
   darts: DartThrow[],
+  aimMode: AroundTheClockAimMode = AroundTheClockAimMode.Any,
 ): AroundTheClockVisitOutcome => {
   let currentTarget = targetIndex
 
   for (const dart of darts) {
-    if (!isAroundTheClockTargetHit(dart, currentTarget)) {
+    if (!isAroundTheClockTargetHit(dart, currentTarget, aimMode)) {
       continue
     }
 
@@ -51,12 +99,16 @@ export const resolveAroundTheClockVisit = (
   }
 }
 
-export const getAroundTheClockVisitScore = (targetIndex: number, darts: DartThrow[]): number => {
+export const getAroundTheClockVisitScore = (
+  targetIndex: number,
+  darts: DartThrow[],
+  aimMode: AroundTheClockAimMode = AroundTheClockAimMode.Any,
+): number => {
   let currentTarget = targetIndex
   let visitScore = 0
 
   for (const dart of darts) {
-    if (!isAroundTheClockTargetHit(dart, currentTarget)) {
+    if (!isAroundTheClockTargetHit(dart, currentTarget, aimMode)) {
       continue
     }
 

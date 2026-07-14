@@ -1,5 +1,6 @@
 import { GameModeId } from '../../types/gameMode'
 import type { CreateSessionParams } from '../game/createSession'
+import { parseAroundTheClockConfigFromSearchParams } from '../aroundTheClock/aroundTheClockConfig'
 import { buildPlayersFromOpponentSetup, parseOpponentSetup } from './opponentSetup'
 import { createSoloHumanPlayer } from './playerFactory'
 import { parseX01ConfigFromSearchParams } from '../x01/x01Presets'
@@ -29,6 +30,14 @@ export const parseGameLaunchParams = (
 ): CreateSessionParams => {
   const modeParam = params.get('mode')
   const practiceMode = PRACTICE_MODE_ROUTES.find((route) => route.param === modeParam)?.mode
+
+  if (practiceMode === GameModeId.AroundTheClock) {
+    return {
+      mode: practiceMode,
+      players: [createSoloHumanPlayer(humanName)],
+      config: parseAroundTheClockConfigFromSearchParams(params),
+    }
+  }
 
   if (practiceMode !== undefined) {
     return { mode: practiceMode, players: [createSoloHumanPlayer(humanName)] }

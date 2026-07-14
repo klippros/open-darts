@@ -1,6 +1,7 @@
 import { GameModeId } from '../../types/gameMode'
 import type { GameConfig } from '../../types/gameMode'
 import type { AroundTheClockConfig } from '../../types/aroundTheClock'
+import { AroundTheClockAimMode } from '../../types/aroundTheClock'
 import type { Bob27Config } from '../../types/bob27'
 import type { OneTwentyOneConfig } from '../../types/oneTwentyOne'
 import type { TenUpOneDownConfig } from '../../types/tenUpOneDown'
@@ -42,6 +43,7 @@ export const gameModeDefinitions: Record<GameModeId, GameModeDefinition> = {
     mode: GameModeId.AroundTheClock,
     defaultConfig: {
       finishOnBull: true,
+      aimMode: AroundTheClockAimMode.Any,
     } satisfies AroundTheClockConfig,
     label: 'Around the Clock',
     description: 'Hit 1 to 20 and bull',
@@ -64,3 +66,5 @@ export const getDefaultConfig = (mode: GameModeId): GameConfig =>
   gameModeDefinitions[mode].defaultConfig
 
 export const showsVisitHistory = (_mode: GameModeId): boolean => true
+
+export const supportsScoreCaller = (mode: GameModeId): boolean => mode !== GameModeId.AroundTheClock
