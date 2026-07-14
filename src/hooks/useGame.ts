@@ -137,6 +137,31 @@ export const useGame = (launchParams: CreateSessionParams, options: UseGameOptio
     [persist],
   )
 
+  const recordDarts = useCallback(
+    (darts: DartThrow[]) => {
+      if (darts.length === 0) {
+        return
+      }
+
+      setController((current) => {
+        const next = darts.reduce((controller, dart) => controller.recordDart(dart), current)
+        const visitCommitted = next.session.visits.length > current.session.visits.length
+
+        if (visitCommitted) {
+          const visit = next.session.visits.at(-1)
+
+          if (visit !== undefined) {
+            notifyAfterVisitCommit(current, next, visit, scoreCallerCallbacksRef.current)
+          }
+        }
+
+        persist(next)
+        return next
+      })
+    },
+    [persist],
+  )
+
   const undoDart = useCallback(() => {
     setController((current) => {
       const next = current.undoDart()
@@ -187,6 +212,7 @@ export const useGame = (launchParams: CreateSessionParams, options: UseGameOptio
   return {
     controller,
     recordDart,
+    recordDarts,
     undoDart,
     finishMatch,
     restart,

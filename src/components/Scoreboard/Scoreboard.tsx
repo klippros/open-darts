@@ -44,6 +44,7 @@ export const Scoreboard = ({
       legAndMatchAverages={legAndMatchAverages}
       activePlayer={activePlayer}
       pendingDarts={pendingDarts}
+      visits={visits}
       config={config}
       matchProgress={matchProgress}
     />

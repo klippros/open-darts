@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { DartMultiplier } from '../../types/dart'
 import { AroundTheClockAimMode } from '../../types/aroundTheClock'
 import {
+  getAroundTheClockTargetAimLabel,
   getAroundTheClockTargetLabel,
   getAroundTheClockVisitScore,
   isAroundTheClockTargetHit,
@@ -14,6 +15,18 @@ describe('aroundTheClockRules', () => {
     expect(getAroundTheClockTargetLabel(0)).toBe('1')
     expect(getAroundTheClockTargetLabel(19)).toBe('20')
     expect(getAroundTheClockTargetLabel(20)).toBe('Bull')
+  })
+
+  it('labels aim requirements for each mode', () => {
+    expect(getAroundTheClockTargetAimLabel(11, AroundTheClockAimMode.Any)).toBe('12')
+    expect(getAroundTheClockTargetAimLabel(11, AroundTheClockAimMode.Singles)).toBe('S12')
+    expect(getAroundTheClockTargetAimLabel(11, AroundTheClockAimMode.Doubles)).toBe('D12')
+    expect(getAroundTheClockTargetAimLabel(11, AroundTheClockAimMode.Trebles)).toBe('T12')
+    expect(getAroundTheClockTargetAimLabel(20, AroundTheClockAimMode.Any)).toBe('25/Bull')
+    expect(getAroundTheClockTargetAimLabel(20, AroundTheClockAimMode.Singles)).toBe('25/Bull')
+    expect(getAroundTheClockTargetAimLabel(20, AroundTheClockAimMode.Doubles)).toBe('Bull')
+    expect(getAroundTheClockTargetAimLabel(20, AroundTheClockAimMode.Trebles)).toBe('Bull')
+    expect(getAroundTheClockTargetAimLabel(21, AroundTheClockAimMode.Any)).toBe('Done')
   })
 
   it('advances on hits and can finish on bull in one visit', () => {

@@ -1,6 +1,9 @@
 import { AroundTheClockAimMode } from '../../types/aroundTheClock'
+import type { DartThrow } from '../../types/dart'
 import type { GameSession } from '../../types/gameSession'
 import { GameModeId } from '../../types/gameMode'
+import type { Visit } from '../../types/visit'
+import { getAroundTheClockCurrentTargetIndex } from '../aroundTheClock/buildAroundTheClockDarts'
 import { getAroundTheClockConfig } from '../aroundTheClock/aroundTheClockConfig'
 import {
   AROUND_THE_CLOCK_TARGET_COUNT,
@@ -11,7 +14,41 @@ import {
   extractAroundTheClockTargetAttempts,
   getAroundTheClockCompletedTargets,
 } from '../aroundTheClock/aroundTheClockTargetHits'
-import { countDartsInSession, getPrimaryPlayerVisits } from './visitStats'
+import { countDartsInSession, getPlayerVisits, getPrimaryPlayerVisits } from './visitStats'
+
+export interface AroundTheClockLiveStats {
+  dartsThrown: number
+  avgDartsPerTarget: number | null
+}
+
+export const getAroundTheClockLiveStats = (
+  visits: Visit[],
+  playerId: string,
+  committedTargetIndex: number,
+  pendingDarts: DartThrow[],
+  aimMode: AroundTheClockAimMode,
+  isActive: boolean,
+): AroundTheClockLiveStats => {
+  const playerVisits = getPlayerVisits(visits, playerId)
+  const dartsThrown =
+    playerVisits.reduce((sum, visit) => sum + visit.darts.length, 0) +
+    (isActive ? pendingDarts.length : 0)
+
+  const effectiveTargetIndex = isActive
+    ? getAroundTheClockCurrentTargetIndex(committedTargetIndex, pendingDarts, aimMode)
+    : (playerVisits.at(-1)?.scoreAfter ?? committedTargetIndex)
+
+  const fieldsCompleted = effectiveTargetIndex
+  const avgDartsPerTarget = fieldsCompleted === 0 ? null : dartsThrown / fieldsCompleted
+
+  return { dartsThrown, avgDartsPerTarget }
+}
+
+export const formatAroundTheClockLiveStatsLabel = (stats: AroundTheClockLiveStats): string => {
+  const average = stats.avgDartsPerTarget === null ? '—' : stats.avgDartsPerTarget.toFixed(1)
+
+  return `${stats.dartsThrown} darts · ${average} per target`
+}
 
 export interface AroundTheClockSingleSessionStats {
   dartsThrown: number

@@ -24,6 +24,39 @@ export const getAroundTheClockTargetLabel = (targetIndex: number): string => {
   return String(targetIndex + 1)
 }
 
+export const getAroundTheClockTargetAimLabel = (
+  targetIndex: number,
+  aimMode: AroundTheClockAimMode,
+): string => {
+  if (targetIndex >= AROUND_THE_CLOCK_TARGET_COUNT) {
+    return 'Done'
+  }
+
+  if (isAroundTheClockBullTarget(targetIndex)) {
+    switch (aimMode) {
+      case AroundTheClockAimMode.Any:
+      case AroundTheClockAimMode.Singles:
+        return '25/Bull'
+      case AroundTheClockAimMode.Doubles:
+      case AroundTheClockAimMode.Trebles:
+        return 'Bull'
+    }
+  }
+
+  const value = String(targetIndex + 1)
+
+  switch (aimMode) {
+    case AroundTheClockAimMode.Any:
+      return value
+    case AroundTheClockAimMode.Singles:
+      return `S${value}`
+    case AroundTheClockAimMode.Doubles:
+      return `D${value}`
+    case AroundTheClockAimMode.Trebles:
+      return `T${value}`
+  }
+}
+
 const isAroundTheClockBullHit = (dart: DartThrow, aimMode: AroundTheClockAimMode): boolean => {
   switch (aimMode) {
     case AroundTheClockAimMode.Any:

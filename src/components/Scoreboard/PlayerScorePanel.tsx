@@ -164,7 +164,7 @@ export const PlayerScorePanel = ({
       lineHeight="1"
       textAlign="center"
     >
-      {player.primaryScore}
+      {player.primaryDisplay ?? player.primaryScore}
     </Heading>
     <Text mt={2} fontSize="sm" color="whiteAlpha.600" textAlign="center">
       {player.secondaryLabel ?? formatAveragesDisplay(legAverage, matchAverage, currentLeg)}

@@ -7,7 +7,9 @@ export interface ScoreboardPlayerEntry {
   playerId: string
   name: string
   primaryScore: number
+  primaryDisplay?: string
   secondaryLabel?: string
+  aroundTheClockTargetIndex?: number
   isActive: boolean
 }
 

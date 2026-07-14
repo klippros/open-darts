@@ -1,11 +1,10 @@
-import { Box, Grid, Text } from '@chakra-ui/react'
-import { faArrowRightLong } from '@fortawesome/free-solid-svg-icons'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Grid } from '@chakra-ui/react'
 import { formatDart } from '../../lib/formatDart'
 import { getVisitDartSlots } from '../../lib/checkout/checkoutSuggestions'
 import type { VisitDartSlotView } from '../../lib/checkout/checkoutSuggestions'
 import type { DartThrow } from '../../types/dart'
 import type { CheckoutRules } from '../../types/checkout'
+import { VisitDartSlotCard } from './VisitDartSlotCard'
 
 export interface VisitDartSlotsProps {
   pendingDarts: DartThrow[]
@@ -14,36 +13,6 @@ export interface VisitDartSlotsProps {
 }
 
 const SLOT_KEYS = ['first', 'second', 'third'] as const
-
-const ArrowMark = () => (
-  <Box aria-hidden="true" w="full" color="whiteAlpha.600" lineHeight={0}>
-    <FontAwesomeIcon icon={faArrowRightLong} style={{ width: '100%', height: '1.1em' }} />
-  </Box>
-)
-
-const getSlotStyles = (kind: VisitDartSlotView['kind']) => {
-  if (kind === 'thrown') {
-    return {
-      borderColor: 'whiteAlpha.500',
-      bg: 'whiteAlpha.200',
-      opacity: 1,
-    }
-  }
-
-  if (kind === 'suggested') {
-    return {
-      borderColor: 'whiteAlpha.200',
-      bg: 'whiteAlpha.80',
-      opacity: 0.55,
-    }
-  }
-
-  return {
-    borderColor: 'whiteAlpha.200',
-    bg: 'whiteAlpha.50',
-    opacity: 0.35,
-  }
-}
 
 const getSimpleVisitDartSlots = (pendingDarts: DartThrow[]): VisitDartSlotView[] =>
   SLOT_KEYS.map((_, index) => {
@@ -59,6 +28,18 @@ const getSimpleVisitDartSlots = (pendingDarts: DartThrow[]): VisitDartSlotView[]
     return { kind: 'empty', label: null }
   })
 
+const toSlotVariant = (kind: VisitDartSlotView['kind']) => {
+  if (kind === 'thrown') {
+    return 'thrown' as const
+  }
+
+  if (kind === 'suggested') {
+    return 'empty' as const
+  }
+
+  return 'empty' as const
+}
+
 export const VisitDartSlots = ({
   pendingDarts,
   config = null,
@@ -71,34 +52,13 @@ export const VisitDartSlots = ({
 
   return (
     <Grid templateColumns="repeat(3, 1fr)" gap={3}>
-      {slots.map((slot, index) => {
-        const styles = getSlotStyles(slot.kind)
-
-        return (
-          <Box
-            key={SLOT_KEYS[index]}
-            px={3}
-            py={4}
-            borderRadius="14px"
-            borderWidth="1px"
-            borderColor={styles.borderColor}
-            bg={styles.bg}
-            opacity={styles.opacity}
-            textAlign="center"
-          >
-            <ArrowMark />
-            <Text
-              mt={2}
-              color="white"
-              fontFamily="Archivo Black, sans-serif"
-              fontSize="2xl"
-              lineHeight="1"
-            >
-              {slot.label ?? '—'}
-            </Text>
-          </Box>
-        )
-      })}
+      {slots.map((slot, index) => (
+        <VisitDartSlotCard
+          key={SLOT_KEYS[index]}
+          label={slot.label}
+          variant={toSlotVariant(slot.kind)}
+        />
+      ))}
     </Grid>
   )
 }

@@ -1,8 +1,9 @@
 import type { GameEngine, VisitResult } from '../game/GameEngine'
 import { GameModeId } from '../../types/gameMode'
 import type { AroundTheClockConfig, AroundTheClockState } from '../../types/aroundTheClock'
-import { getAroundTheClockAimModeLabel, getAroundTheClockConfig } from './aroundTheClockConfig'
+import { getAroundTheClockConfig } from './aroundTheClockConfig'
 import {
+  getAroundTheClockTargetAimLabel,
   getAroundTheClockTargetLabel,
   getAroundTheClockVisitScore,
   resolveAroundTheClockVisit,
@@ -39,7 +40,8 @@ export const aroundTheClockEngine: GameEngine<AroundTheClockState, AroundTheCloc
           playerId: player.id,
           name: player.name,
           primaryScore: playerState.targetIndex >= 20 ? 25 : playerState.targetIndex + 1,
-          secondaryLabel: `Target ${getAroundTheClockTargetLabel(playerState.targetIndex)} · ${getAroundTheClockAimModeLabel(aimMode)}`,
+          primaryDisplay: getAroundTheClockTargetAimLabel(playerState.targetIndex, aimMode),
+          aroundTheClockTargetIndex: playerState.targetIndex,
           isActive: player.id === activePlayerId,
         }
       }),

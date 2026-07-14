@@ -77,6 +77,10 @@ export class GameController<State, Config> {
     return this.clone({ pendingDarts })
   }
 
+  recordDarts(darts: DartThrow[]): GameController<State, Config> {
+    return darts.reduce((controller, dart) => controller.recordDart(dart), this)
+  }
+
   undoDart(): GameController<State, Config> {
     const undoState = resolveUndoDartState(this.session, this.turnIndex, this.pendingDarts)
 

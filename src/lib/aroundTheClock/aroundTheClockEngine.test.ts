@@ -44,7 +44,8 @@ describe('aroundTheClockEngine', () => {
     expect(scoreboard.mode).toBe(GameModeId.AroundTheClock)
     expect(scoreboard.players[0]).toMatchObject({
       primaryScore: 1,
-      secondaryLabel: 'Target 1 · Any',
+      primaryDisplay: '1',
+      aroundTheClockTargetIndex: 0,
     })
   })
 })

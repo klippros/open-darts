@@ -1,18 +1,23 @@
 import { Box, Button, HStack, Stack } from '@chakra-ui/react'
 import { ContentContainer } from '../components/ContentContainer'
+import { AroundTheClockDartPicker } from '../components/DartPicker/AroundTheClockDartPicker'
 import { DartPicker } from '../components/DartPicker/DartPicker'
 import { GameBoardLayout } from '../components/GameBoardLayout'
 import { Scoreboard } from '../components/Scoreboard/Scoreboard'
 import { useAccount } from '../hooks/accountContext'
 import { useGamePage } from '../hooks/useGamePage'
+import { isAroundTheClockConfig } from '../lib/game/gameConfigGuards'
 import { showsVisitHistory } from '../lib/game/gameModeDefinitions'
 import { matchHasProgress } from '../lib/game/matchProgress'
+import type { AroundTheClockState } from '../types/aroundTheClock'
+import { GameModeId } from '../types/gameMode'
 import { GamePageDialogs } from './GamePageDialogs'
 
 export const GamePage = () => {
   const {
     controller,
     recordDart,
+    recordDarts,
     undoDart,
     finishMatch,
     restart,
@@ -29,6 +34,11 @@ export const GamePage = () => {
 
   const inputDisabled = controller.isComplete || loadState.kind === 'conflict' || botTurnActive
   const canFinish = matchHasProgress(controller)
+  const isAroundTheClock = controller.session.mode === GameModeId.AroundTheClock
+  const aroundTheClockState = isAroundTheClock
+    ? (controller.engineState as AroundTheClockState)
+    : null
+  const committedTargetIndex = aroundTheClockState?.players[controller.activePlayerId]?.targetIndex
 
   return (
     <ContentContainer>
@@ -73,7 +83,20 @@ export const GamePage = () => {
               matchProgress={controller.session.matchProgress}
             />
 
-            <DartPicker onDart={recordDart} onUndo={undoDart} inputDisabled={inputDisabled} />
+            {isAroundTheClock &&
+            isAroundTheClockConfig(controller.session.mode, controller.session.config) &&
+            committedTargetIndex !== undefined ? (
+              <AroundTheClockDartPicker
+                committedTargetIndex={committedTargetIndex}
+                pendingDarts={controller.pendingDarts}
+                config={controller.session.config}
+                onDarts={recordDarts}
+                onUndo={undoDart}
+                inputDisabled={inputDisabled}
+              />
+            ) : (
+              <DartPicker onDart={recordDart} onUndo={undoDart} inputDisabled={inputDisabled} />
+            )}
 
             {!controller.isComplete && loadState.kind !== 'conflict' && (
               <HStack gap={3} w="full" justify="space-between">

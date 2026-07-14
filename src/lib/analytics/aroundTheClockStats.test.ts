@@ -10,6 +10,8 @@ import {
   computeAroundTheClockSingleSessionStats,
   aggregatePerTargetStats,
   aggregateAroundTheClockSessionStats,
+  formatAroundTheClockLiveStatsLabel,
+  getAroundTheClockLiveStats,
 } from './aroundTheClockStats'
 
 const sampleSession = (overrides: Partial<GameSession> = {}): GameSession => ({
@@ -56,6 +58,36 @@ describe('aroundTheClockStats', () => {
       avgDartsPerHit: null,
       bestDarts: null,
     })
+  })
+
+  it('tracks live darts thrown and average per completed target', () => {
+    const visits = [
+      {
+        visitIndex: 0,
+        playerId: 'player-1',
+        darts: [numberDart(1, DartMultiplier.Single), missDart(), missDart()],
+        visitScore: 1,
+        scoreBefore: 0,
+        scoreAfter: 1,
+        bust: false,
+        checkout: false,
+      },
+    ]
+
+    const stats = getAroundTheClockLiveStats(
+      visits,
+      'player-1',
+      1,
+      [numberDart(2, DartMultiplier.Single)],
+      AroundTheClockAimMode.Any,
+      true,
+    )
+
+    expect(stats).toEqual({
+      dartsThrown: 4,
+      avgDartsPerTarget: 2,
+    })
+    expect(formatAroundTheClockLiveStatsLabel(stats)).toBe('4 darts · 2.0 per target')
   })
 
   it('computes avg darts per field from total darts and completed fields', () => {
