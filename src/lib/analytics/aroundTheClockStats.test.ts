@@ -242,4 +242,44 @@ describe('aroundTheClockStats', () => {
       bestDartsPerField: 1,
     })
   })
+
+  it('aggregates per-target attempt count and best darts across visits', () => {
+    const aggregated = aggregateAroundTheClockSessionStats(
+      [
+        sampleSession({
+          visits: [
+            {
+              visitIndex: 0,
+              playerId: 'player-1',
+              darts: [missDart(), missDart(), missDart()],
+              visitScore: 0,
+              scoreBefore: 0,
+              scoreAfter: 0,
+              bust: false,
+              checkout: false,
+            },
+            {
+              visitIndex: 1,
+              playerId: 'player-1',
+              darts: [numberDart(1, DartMultiplier.Single)],
+              visitScore: 1,
+              scoreBefore: 0,
+              scoreAfter: 1,
+              bust: false,
+              checkout: false,
+            },
+          ],
+        }),
+      ],
+      AroundTheClockAimMode.Any,
+    )
+
+    expect(aggregated.targets[0]).toMatchObject({
+      label: '1',
+      attemptCount: 4,
+      hitCount: 1,
+      bestDarts: 4,
+      avgDartsPerHit: 4,
+    })
+  })
 })

@@ -18,10 +18,7 @@ export interface AroundTheClockCompletedTarget {
   dartsToHit: number
 }
 
-const recordFailedAttempt = (
-  attempts: AroundTheClockTargetAttempt[],
-  targetIndex: number,
-): void => {
+const recordMissAttempt = (attempts: AroundTheClockTargetAttempt[], targetIndex: number): void => {
   attempts.push({
     targetIndex,
     label: getAroundTheClockTargetLabel(targetIndex),
@@ -30,48 +27,51 @@ const recordFailedAttempt = (
   })
 }
 
-const extractAttemptsFromVisit = (
-  visit: Visit,
-  aimMode: AroundTheClockAimMode,
+export const extractAroundTheClockTargetAttempts = (
+  visits: Visit[],
+  aimMode: AroundTheClockAimMode = AroundTheClockAimMode.Any,
 ): AroundTheClockTargetAttempt[] => {
   const attempts: AroundTheClockTargetAttempt[] = []
-  let currentTarget = visit.scoreBefore
-  let dartsOnCurrentTarget = 0
 
-  for (const dart of visit.darts) {
-    dartsOnCurrentTarget += 1
-
-    if (!isAroundTheClockTargetHit(dart, currentTarget, aimMode)) {
-      continue
-    }
-
-    attempts.push({
-      targetIndex: currentTarget,
-      label: getAroundTheClockTargetLabel(currentTarget),
-      dartsToHit: dartsOnCurrentTarget,
-      hit: true,
-    })
-
-    currentTarget += 1
-    dartsOnCurrentTarget = 0
-
-    if (currentTarget >= AROUND_THE_CLOCK_TARGET_COUNT) {
-      break
-    }
+  if (visits.length === 0) {
+    return attempts
   }
 
-  if (dartsOnCurrentTarget > 0) {
-    recordFailedAttempt(attempts, currentTarget)
+  let dartsOnCurrentTarget = 0
+
+  for (const visit of visits) {
+    let currentTarget = visit.scoreBefore
+
+    for (const dart of visit.darts) {
+      if (currentTarget >= AROUND_THE_CLOCK_TARGET_COUNT) {
+        break
+      }
+
+      dartsOnCurrentTarget += 1
+
+      if (!isAroundTheClockTargetHit(dart, currentTarget, aimMode)) {
+        recordMissAttempt(attempts, currentTarget)
+        continue
+      }
+
+      attempts.push({
+        targetIndex: currentTarget,
+        label: getAroundTheClockTargetLabel(currentTarget),
+        dartsToHit: dartsOnCurrentTarget,
+        hit: true,
+      })
+
+      currentTarget += 1
+      dartsOnCurrentTarget = 0
+
+      if (currentTarget >= AROUND_THE_CLOCK_TARGET_COUNT) {
+        break
+      }
+    }
   }
 
   return attempts
 }
-
-export const extractAroundTheClockTargetAttempts = (
-  visits: Visit[],
-  aimMode: AroundTheClockAimMode = AroundTheClockAimMode.Any,
-): AroundTheClockTargetAttempt[] =>
-  visits.flatMap((visit) => extractAttemptsFromVisit(visit, aimMode))
 
 export const getAroundTheClockCompletedTargets = (
   visits: Visit[],
