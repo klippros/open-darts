@@ -1,57 +1,86 @@
 import type { DartThrow } from '../../types/dart'
-import type { CheckoutRules } from '../../types/checkout'
 import type { OneTwentyOneConfig } from '../../types/oneTwentyOne'
-import type { X01Config } from '../../types/x01'
-import { normalizeCheckoutTarget } from '../checkout/checkoutSuggestions'
 import { resolveX01Visit } from '../x01/x01Rules'
+import { toOneTwentyOneX01Config } from './oneTwentyOneConfig'
 
-const toX01Config = (config: OneTwentyOneConfig): X01Config => ({
-  startScore: config.startScore,
-  doubleIn: false,
-  doubleOut: config.doubleOut,
-})
+const MIN_ROUND_TARGET = 2
 
-const toCheckoutRules = (config: OneTwentyOneConfig): CheckoutRules => ({
-  doubleIn: false,
-  doubleOut: config.doubleOut,
-})
-
-export interface OneTwentyOneVisitOutcome {
-  targetScoreAfter: number
-  bust: boolean
-  checkout: boolean
+export interface OneTwentyOneRoundContext {
+  roundTarget: number
+  remaining: number
+  visitsOnTarget: number
+  lives: number
+  peakTarget: number
 }
 
-export const resolveOneTwentyOneVisit = (
-  targetScore: number,
+export interface OneTwentyOneRoundOutcome {
+  roundTargetAfter: number
+  remainingAfter: number
+  visitsOnTargetAfter: number
+  livesAfter: number
+  peakTargetAfter: number
+  bust: boolean
+  checkout: boolean
+  roundFailed: boolean
+  lifeGained: boolean
+  lifeLost: boolean
+}
+
+export const resolveOneTwentyOneRoundVisit = (
+  context: OneTwentyOneRoundContext,
   darts: DartThrow[],
   config: OneTwentyOneConfig,
-): OneTwentyOneVisitOutcome => {
-  const outcome = resolveX01Visit(targetScore, darts, toX01Config(config), true)
-
-  const checkoutRules = toCheckoutRules(config)
+): OneTwentyOneRoundOutcome => {
+  const { roundTarget, remaining, visitsOnTarget, lives, peakTarget } = context
+  const outcome = resolveX01Visit(remaining, darts, toOneTwentyOneX01Config(config), true)
+  const isFirstVisitOnTarget = visitsOnTarget === 0
 
   if (outcome.checkout) {
+    const roundTargetAfter = roundTarget + config.increment
+
     return {
-      targetScoreAfter: normalizeCheckoutTarget(targetScore + config.increment, checkoutRules, {
-        prefer: 'up',
-      }),
+      roundTargetAfter,
+      remainingAfter: roundTargetAfter,
+      visitsOnTargetAfter: 0,
+      livesAfter: isFirstVisitOnTarget ? lives + 1 : lives,
+      peakTargetAfter: Math.max(peakTarget, roundTargetAfter),
       bust: false,
       checkout: true,
+      roundFailed: false,
+      lifeGained: isFirstVisitOnTarget,
+      lifeLost: false,
     }
   }
 
-  if (outcome.bust) {
+  const visitsAfterThisVisit = visitsOnTarget + 1
+
+  if (visitsAfterThisVisit >= config.maxVisitsPerTarget) {
+    const roundTargetAfter = Math.max(MIN_ROUND_TARGET, roundTarget - config.increment)
+
     return {
-      targetScoreAfter: normalizeCheckoutTarget(config.startScore, checkoutRules, { prefer: 'up' }),
-      bust: true,
+      roundTargetAfter,
+      remainingAfter: roundTargetAfter,
+      visitsOnTargetAfter: 0,
+      livesAfter: lives - 1,
+      peakTargetAfter: peakTarget,
+      bust: outcome.bust,
       checkout: false,
+      roundFailed: true,
+      lifeGained: false,
+      lifeLost: true,
     }
   }
 
   return {
-    targetScoreAfter: targetScore,
-    bust: false,
+    roundTargetAfter: roundTarget,
+    remainingAfter: outcome.scoreAfter,
+    visitsOnTargetAfter: visitsAfterThisVisit,
+    livesAfter: lives,
+    peakTargetAfter: peakTarget,
+    bust: outcome.bust,
     checkout: false,
+    roundFailed: false,
+    lifeGained: false,
+    lifeLost: false,
   }
 }

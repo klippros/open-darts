@@ -1,11 +1,17 @@
 export interface OneTwentyOneConfig {
   startScore: number
   increment: number
+  startingLives: number
+  maxVisitsPerTarget: number
   doubleOut: boolean
 }
 
 export interface OneTwentyOnePlayerState {
-  targetScore: number
+  roundTarget: number
+  remaining: number
+  lives: number
+  visitsOnTarget: number
+  peakTarget: number
 }
 
 export interface OneTwentyOneState {

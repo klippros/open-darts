@@ -1,23 +1,11 @@
 import type { GameEngine, VisitResult } from '../game/GameEngine'
 import { GameModeId } from '../../types/gameMode'
-import type { CheckoutRules } from '../../types/checkout'
 import type { OneTwentyOneConfig, OneTwentyOneState } from '../../types/oneTwentyOne'
-import type { X01Config } from '../../types/x01'
 import { sumDartPoints } from '../dartScoring'
 import { normalizeCheckoutTarget } from '../checkout/checkoutSuggestions'
-import { previewX01Remaining } from '../x01/x01Rules'
-import { resolveOneTwentyOneVisit } from './oneTwentyOneRules'
-
-const toX01Config = (config: OneTwentyOneConfig): X01Config => ({
-  startScore: config.startScore,
-  doubleIn: false,
-  doubleOut: config.doubleOut,
-})
-
-const toCheckoutRules = (config: OneTwentyOneConfig): CheckoutRules => ({
-  doubleIn: false,
-  doubleOut: config.doubleOut,
-})
+import { previewX01Remaining, resolveX01Visit } from '../x01/x01Rules'
+import { toOneTwentyOneCheckoutRules, toOneTwentyOneX01Config } from './oneTwentyOneConfig'
+import { resolveOneTwentyOneRoundVisit } from './oneTwentyOneRules'
 
 const getPlayerState = (state: OneTwentyOneState, playerId: string) => {
   const playerState = state.players[playerId]
@@ -29,17 +17,30 @@ const getPlayerState = (state: OneTwentyOneState, playerId: string) => {
   return playerState
 }
 
+const createPlayerState = (
+  config: OneTwentyOneConfig,
+  roundTarget: number,
+): OneTwentyOneState['players'][string] => ({
+  roundTarget,
+  remaining: roundTarget,
+  lives: config.startingLives,
+  visitsOnTarget: 0,
+  peakTarget: roundTarget,
+})
+
 export const oneTwentyOneEngine: GameEngine<OneTwentyOneState, OneTwentyOneConfig> = {
   mode: GameModeId.OneTwentyOne,
   maxDartsPerVisit: 3,
 
   createInitialState: (players, config) => {
-    const checkoutRules = toCheckoutRules(config)
-    const targetScore = normalizeCheckoutTarget(config.startScore, checkoutRules, { prefer: 'up' })
+    const checkoutRules = toOneTwentyOneCheckoutRules(config)
+    const roundTarget = normalizeCheckoutTarget(config.startScore, checkoutRules, { prefer: 'up' })
 
     return {
       config,
-      players: Object.fromEntries(players.map((player) => [player.id, { targetScore }])),
+      players: Object.fromEntries(
+        players.map((player) => [player.id, createPlayerState(config, roundTarget)]),
+      ),
     }
   },
 
@@ -51,8 +52,9 @@ export const oneTwentyOneEngine: GameEngine<OneTwentyOneState, OneTwentyOneConfi
       return {
         playerId: player.id,
         name: player.name,
-        primaryScore: playerState.targetScore,
-        secondaryLabel: 'Checkout target',
+        primaryScore: playerState.remaining,
+        lives: playerState.lives,
+        visitsOnTarget: playerState.visitsOnTarget,
         isActive: player.id === activePlayerId,
       }
     }),
@@ -61,9 +63,9 @@ export const oneTwentyOneEngine: GameEngine<OneTwentyOneState, OneTwentyOneConfi
   applyDart: (state, playerId, pendingDarts) => {
     const playerState = getPlayerState(state, playerId)
     const remaining = previewX01Remaining(
-      playerState.targetScore,
+      playerState.remaining,
       pendingDarts,
-      toX01Config(state.config),
+      toOneTwentyOneX01Config(state.config),
       true,
     )
 
@@ -72,7 +74,8 @@ export const oneTwentyOneEngine: GameEngine<OneTwentyOneState, OneTwentyOneConfi
       players: {
         ...state.players,
         [playerId]: {
-          targetScore: remaining,
+          ...playerState,
+          remaining,
         },
       },
     }
@@ -80,8 +83,18 @@ export const oneTwentyOneEngine: GameEngine<OneTwentyOneState, OneTwentyOneConfi
 
   commitVisit: (state, playerId, visitIndex, darts): VisitResult<OneTwentyOneState> => {
     const playerState = getPlayerState(state, playerId)
-    const scoreBefore = playerState.targetScore
-    const outcome = resolveOneTwentyOneVisit(scoreBefore, darts, state.config)
+    const scoreBefore = playerState.remaining
+    const outcome = resolveOneTwentyOneRoundVisit(
+      {
+        roundTarget: playerState.roundTarget,
+        remaining: scoreBefore,
+        visitsOnTarget: playerState.visitsOnTarget,
+        lives: playerState.lives,
+        peakTarget: playerState.peakTarget,
+      },
+      darts,
+      state.config,
+    )
 
     const visit: VisitResult<OneTwentyOneState>['visit'] = {
       visitIndex,
@@ -89,12 +102,19 @@ export const oneTwentyOneEngine: GameEngine<OneTwentyOneState, OneTwentyOneConfi
       darts,
       visitScore: outcome.bust ? 0 : sumDartPoints(darts),
       scoreBefore,
-      scoreAfter: outcome.targetScoreAfter,
+      scoreAfter: outcome.remainingAfter,
       bust: outcome.bust,
       checkout: outcome.checkout,
       metadata: {
-        targetScore: scoreBefore,
-        nextTargetScore: outcome.targetScoreAfter,
+        roundTarget: playerState.roundTarget,
+        roundTargetAfter: outcome.roundTargetAfter,
+        remainingAfter: outcome.remainingAfter,
+        livesAfter: outcome.livesAfter,
+        peakTargetAfter: outcome.peakTargetAfter,
+        roundFailed: outcome.roundFailed,
+        lifeGained: outcome.lifeGained,
+        lifeLost: outcome.lifeLost,
+        visitsOnTargetAfter: outcome.visitsOnTargetAfter,
       },
     }
 
@@ -103,7 +123,11 @@ export const oneTwentyOneEngine: GameEngine<OneTwentyOneState, OneTwentyOneConfi
       players: {
         ...state.players,
         [playerId]: {
-          targetScore: outcome.targetScoreAfter,
+          roundTarget: outcome.roundTargetAfter,
+          remaining: outcome.remainingAfter,
+          lives: outcome.livesAfter,
+          visitsOnTarget: outcome.visitsOnTargetAfter,
+          peakTarget: outcome.peakTargetAfter,
         },
       },
       winnerId: state.winnerId,
@@ -118,10 +142,16 @@ export const oneTwentyOneEngine: GameEngine<OneTwentyOneState, OneTwentyOneConfi
 
   shouldEndVisitEarly: (state, playerId, darts) => {
     const playerState = getPlayerState(state, playerId)
-    const outcome = resolveOneTwentyOneVisit(playerState.targetScore, darts, state.config)
+    const outcome = resolveX01Visit(
+      playerState.remaining,
+      darts,
+      toOneTwentyOneX01Config(state.config),
+      true,
+    )
 
     return outcome.checkout || outcome.bust
   },
 
-  isGameComplete: () => false,
+  isGameComplete: (state) =>
+    Object.values(state.players).some((playerState) => playerState.lives <= 0),
 }

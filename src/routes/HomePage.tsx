@@ -44,7 +44,7 @@ const PRACTICE_MODES = [
   {
     id: '121',
     label: '121',
-    description: 'Checkout practice',
+    description: 'Lives ladder from 121',
     to: buildPracticeGamePath(GameModeId.OneTwentyOne),
   },
   {

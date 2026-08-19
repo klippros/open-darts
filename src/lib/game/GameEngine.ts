@@ -10,6 +10,8 @@ export interface ScoreboardPlayerEntry {
   primaryDisplay?: string
   secondaryLabel?: string
   aroundTheClockTargetIndex?: number
+  lives?: number
+  visitsOnTarget?: number
   isActive: boolean
 }
 

@@ -7,6 +7,10 @@ import {
   getAroundTheClockConfig,
 } from '../aroundTheClock/aroundTheClockConfig'
 import { formatChallengeMatchScore, isChallengeMode } from '../game/challenge'
+import {
+  getOneTwentyOnePeakTargetFromVisit,
+  getOneTwentyOneRoundTargetFromVisit,
+} from '../oneTwentyOne/oneTwentyOneVisitMetadata'
 import { getMatchWinnerId } from '../game/matchLegs'
 import { formatLegWinLine } from '../game/matchLegDisplay'
 import { formatX01StartScore } from '../x01/x01Presets'
@@ -169,18 +173,25 @@ export const getMatchSummary = (session: GameSession): MatchSummary => {
   }
 
   if (session.mode === GameModeId.OneTwentyOne) {
+    const peakTarget = getOneTwentyOnePeakTargetFromVisit(lastVisit)
     const details = [`${visitCount} visit${visitCount === 1 ? '' : 's'}`]
 
     if (average !== null) {
       details.push(`${average.toFixed(1)} 3-dart average`)
     }
 
-    if (finishedEarly && lastVisit !== undefined) {
-      details.push(`Stopped on ${lastVisit.scoreAfter}`)
+    if (peakTarget !== undefined) {
+      details.push(`Peak ${peakTarget}`)
+    } else if (finishedEarly && lastVisit !== undefined) {
+      const roundTarget = getOneTwentyOneRoundTargetFromVisit(lastVisit)
+
+      details.push(`Stopped on ${roundTarget ?? lastVisit.scoreAfter}`)
     }
 
+    const title = finishedEarly ? '121 session ended' : '121 game over'
+
     return {
-      title: '121 session complete',
+      title,
       details,
     }
   }

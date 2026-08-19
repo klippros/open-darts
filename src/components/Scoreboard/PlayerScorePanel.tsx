@@ -1,5 +1,9 @@
 import { Box, Flex, Grid, Heading, Text } from '@chakra-ui/react'
 import type { ScoreboardPlayerEntry } from '../../lib/game/GameEngine'
+import {
+  formatOneTwentyOneLives,
+  formatOneTwentyOneLivesAriaLabel,
+} from '../../lib/oneTwentyOne/formatOneTwentyOneLives'
 import { LegStarterIcon } from '../LegStarterIcon/LegStarterIcon'
 import { ChallengeLegDots } from './ChallengeLegDots'
 import { LegWinDots } from './LegWinDots'
@@ -88,8 +92,25 @@ const PlayerScorePanelHeader = ({
   const showLegDots =
     legsToWin !== undefined && legsWon !== undefined && challengeLegStatuses === undefined
   const showChallengeLegDots = challengeLegStatuses !== undefined && challengeLegStatuses.length > 0
+  const showOneTwentyOneLives = player.lives !== undefined
 
   if (panelAlign === 'solo') {
+    if (showOneTwentyOneLives) {
+      return (
+        <Grid templateColumns="1fr auto 1fr" alignItems="center" mb={1} minH="5">
+          <Box />
+          <Text
+            fontSize="md"
+            lineHeight="1"
+            aria-label={formatOneTwentyOneLivesAriaLabel(player.lives ?? 0)}
+          >
+            {formatOneTwentyOneLives(player.lives ?? 0)}
+          </Text>
+          <Box />
+        </Grid>
+      )
+    }
+
     if (showChallengeLegDots) {
       return (
         <Grid templateColumns="1fr auto 1fr" alignItems="center" mb={1} minH="5">

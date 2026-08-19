@@ -195,6 +195,34 @@ describe('GameController', () => {
     expect(finished.pendingDarts).toHaveLength(0)
     expect(finished.isComplete).toBe(true)
   })
+
+  it('completes the session when the last life is lost in 121', () => {
+    const failedVisit = [
+      numberDart(20, DartMultiplier.Single),
+      numberDart(20, DartMultiplier.Single),
+      numberDart(20, DartMultiplier.Single),
+    ]
+
+    let controller = createGameController({
+      mode: GameModeId.OneTwentyOne,
+      config: {
+        startScore: 121,
+        increment: 1,
+        startingLives: 1,
+        maxVisitsPerTarget: 3,
+        doubleOut: true,
+      },
+      players: [soloPlayer],
+    })
+
+    for (let visit = 0; visit < 3; visit += 1) {
+      controller = failedVisit.reduce((current, dart) => current.recordDart(dart), controller)
+    }
+
+    expect(controller.isComplete).toBe(true)
+    expect(controller.session.finishedEarly).toBeUndefined()
+    expect(controller.session.status).toBe(GameStatus.Completed)
+  })
 })
 
 describe('GameController challenge mode', () => {

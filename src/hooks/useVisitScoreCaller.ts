@@ -7,9 +7,12 @@ import {
   clearAnnouncedCallouts,
   legRequireCalloutKey,
   legStartCalloutKey,
-  turnRequireCalloutKey,
   visitEndCalloutKey,
 } from '../lib/scoreCaller/announceCallout'
+import {
+  announceVisitStartCallout,
+  isSoloPracticeSession,
+} from '../lib/scoreCaller/announceVisitStartCallout'
 import { buildLegStartCallout } from '../lib/scoreCaller/buildLegStartCallout'
 import {
   buildVisitEndCallout,
@@ -61,22 +64,13 @@ export const useVisitScoreCaller = (mode: GameModeId): ScoreCallerCallbacks => {
           createVisitEndCalloutContext(controller.session, controller.isComplete),
         )
         announceCalloutOnce(visitEndCalloutKey(controller.session.id, visit.visitIndex), endPhrase)
+
+        if (!controller.isComplete && isSoloPracticeSession(controller.session)) {
+          announceVisitStartCallout(controller)
+        }
       },
-      onTurnStarted: (controller) => {
-        const leg = controller.session.matchProgress?.currentLeg
-        announceCalloutOnce(
-          turnRequireCalloutKey(
-            controller.session.id,
-            leg,
-            controller.turnIndex,
-            controller.session.visits.length,
-          ),
-          buildVisitStartCallout(controller),
-        )
-      },
-      onLegStarted: (controller) => {
-        announceLegStart(controller)
-      },
+      onTurnStarted: announceVisitStartCallout,
+      onLegStarted: announceLegStart,
       onUndo: handleUndo,
     }
   }, [handleUndo, mode, scoreCallerEnabled])
@@ -105,7 +99,16 @@ export const useScoreCallerInitialLeg = (
 
     const hadVisits = sessionContextRef.current.hadVisits
 
-    if (matchProgress === undefined || hadVisits || matchProgress.currentLeg !== 1) {
+    if (hadVisits) {
+      return
+    }
+
+    if (matchProgress === undefined) {
+      announceVisitStartCallout(controller)
+      return
+    }
+
+    if (matchProgress.currentLeg !== 1) {
       return
     }
 

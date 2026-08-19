@@ -78,8 +78,14 @@ describe('computeAnalytics', () => {
         sampleSession({
           id: '121',
           mode: GameModeId.OneTwentyOne,
-          config: { startScore: 121, increment: 20, doubleOut: true },
-          visits: [sampleVisit({ checkout: true, scoreAfter: 141, visitScore: 121 })],
+          config: {
+            startScore: 121,
+            increment: 1,
+            startingLives: 3,
+            maxVisitsPerTarget: 3,
+            doubleOut: true,
+          },
+          visits: [sampleVisit({ checkout: true, scoreAfter: 122, visitScore: 121 })],
         }),
       ],
       { dateRange: 'all' },

@@ -27,25 +27,43 @@ describe('getVisitHistoryEntryDisplay', () => {
     })
   })
 
-  it('shows a failed checkout target in checkout practice modes', () => {
-    const display = getVisitHistoryEntryDisplay(baseVisit, GameModeId.OneTwentyOne)
-
-    expect(display).toEqual({
-      headline: '60',
-      sublabel: 'Failed',
-      tone: 'failed',
-    })
-  })
-
-  it('shows bust visits as failed checkout targets in checkout practice modes', () => {
+  it('shows scoring visits like x01 in 121', () => {
     const display = getVisitHistoryEntryDisplay(
-      { ...baseVisit, bust: true, scoreBefore: 121 },
+      { ...baseVisit, visitScore: 60, scoreBefore: 121, scoreAfter: 61 },
       GameModeId.OneTwentyOne,
     )
 
     expect(display).toEqual({
-      headline: '121',
-      sublabel: 'Failed',
+      headline: '60',
+      tone: 'default',
+    })
+  })
+
+  it('shows bust visits in 121', () => {
+    const display = getVisitHistoryEntryDisplay(
+      { ...baseVisit, bust: true, scoreBefore: 121, visitScore: 0, scoreAfter: 121 },
+      GameModeId.OneTwentyOne,
+    )
+
+    expect(display).toEqual({
+      headline: 'BUST',
+      tone: 'failed',
+    })
+  })
+
+  it('shows lost life visits in 121', () => {
+    const display = getVisitHistoryEntryDisplay(
+      {
+        ...baseVisit,
+        scoreAfter: 120,
+        metadata: { roundFailed: true },
+      },
+      GameModeId.OneTwentyOne,
+    )
+
+    expect(display).toEqual({
+      headline: '120',
+      sublabel: 'Lost life',
       tone: 'failed',
     })
   })

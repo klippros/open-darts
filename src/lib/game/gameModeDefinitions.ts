@@ -3,8 +3,8 @@ import type { GameConfig } from '../../types/gameMode'
 import type { AroundTheClockConfig } from '../../types/aroundTheClock'
 import { AroundTheClockAimMode } from '../../types/aroundTheClock'
 import type { Bob27Config } from '../../types/bob27'
-import type { OneTwentyOneConfig } from '../../types/oneTwentyOne'
 import type { TenUpOneDownConfig } from '../../types/tenUpOneDown'
+import { DEFAULT_ONE_TWENTY_ONE_CONFIG } from '../oneTwentyOne/oneTwentyOneConfig'
 import { x01PresetConfigs, X01PresetId } from '../x01/x01Presets'
 
 export interface GameModeDefinition {
@@ -31,13 +31,9 @@ export const gameModeDefinitions: Record<GameModeId, GameModeDefinition> = {
   },
   [GameModeId.OneTwentyOne]: {
     mode: GameModeId.OneTwentyOne,
-    defaultConfig: {
-      startScore: 121,
-      increment: 20,
-      doubleOut: true,
-    } satisfies OneTwentyOneConfig,
+    defaultConfig: DEFAULT_ONE_TWENTY_ONE_CONFIG,
     label: '121',
-    description: 'Checkout practice',
+    description: 'Lives ladder from 121',
   },
   [GameModeId.AroundTheClock]: {
     mode: GameModeId.AroundTheClock,

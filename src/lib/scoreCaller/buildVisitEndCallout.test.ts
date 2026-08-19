@@ -29,7 +29,7 @@ describe('buildVisitEndCallout', () => {
       buildVisitEndCallout(
         visit,
         createGameController({ mode: GameModeId.X01, players: [solo] }).session,
-        { isMatchComplete: false },
+        { isMatchComplete: false, isSessionComplete: false },
       ),
     ).toBe('One hundred eight.')
   })
@@ -50,7 +50,7 @@ describe('buildVisitEndCallout', () => {
       buildVisitEndCallout(
         visit,
         createGameController({ mode: GameModeId.X01, players: [solo] }).session,
-        { isMatchComplete: false },
+        { isMatchComplete: false, isSessionComplete: false },
       ),
     ).toBe('No score.')
   })
@@ -93,5 +93,55 @@ describe('buildVisitEndCallout', () => {
         createVisitEndCalloutContext(controller.session, controller.isComplete),
       ),
     ).toBe('Game shot! And the match!')
+  })
+
+  it('announces game over when a 121 session ends on the last life', () => {
+    const failedVisit: Visit = {
+      visitIndex: 2,
+      playerId: solo.id,
+      darts: [],
+      visitScore: 60,
+      scoreBefore: 121,
+      scoreAfter: 120,
+      bust: false,
+      checkout: false,
+      metadata: {
+        roundFailed: true,
+        livesAfter: 0,
+      },
+    }
+
+    expect(
+      buildVisitEndCallout(
+        failedVisit,
+        createGameController({
+          mode: GameModeId.OneTwentyOne,
+          players: [solo],
+        }).session,
+        { isMatchComplete: false, isSessionComplete: true },
+      ),
+    ).toBe('Game over.')
+  })
+
+  it('does not announce game shot on checkout in 121', () => {
+    const controller = createGameController({
+      mode: GameModeId.OneTwentyOne,
+      players: [solo],
+    })
+    const next = controller.recordDarts([
+      numberDart(20, DartMultiplier.Triple),
+      numberDart(17, DartMultiplier.Triple),
+      numberDart(5, DartMultiplier.Double),
+    ])
+    const [visit] = next.session.visits
+
+    expect(visit?.checkout).toBe(true)
+    expect(
+      buildVisitEndCallout(
+        visit!,
+        next.session,
+        createVisitEndCalloutContext(next.session, next.isComplete),
+      ),
+    ).toBeNull()
   })
 })

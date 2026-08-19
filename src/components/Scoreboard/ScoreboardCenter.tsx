@@ -13,8 +13,10 @@ import {
   getChallengeLegStatuses,
   isChallengeMode,
 } from '../../lib/game/challenge'
+import { formatOneTwentyOneVisitProgressLabel } from '../../lib/oneTwentyOne/formatOneTwentyOneVisitProgress'
 import {
   isAroundTheClockConfig,
+  isOneTwentyOneConfig,
   isX01Config,
   toCheckoutSuggestionRules,
 } from '../../lib/game/gameConfigGuards'
@@ -60,6 +62,16 @@ const buildChallengeSecondaryLabel = (
   )
 
   return visitLabel
+}
+
+const buildOneTwentyOneSecondaryLabel = (
+  activePlayer: ScoreboardPlayerEntry,
+  maxVisitsPerTarget: number,
+  pendingDarts: DartThrow[],
+): string => {
+  const visitsUsed = (activePlayer.visitsOnTarget ?? 0) + (pendingDarts.length > 0 ? 1 : 0)
+
+  return formatOneTwentyOneVisitProgressLabel(visitsUsed, maxVisitsPerTarget)
 }
 
 export const ScoreboardCenter = ({
@@ -115,6 +127,24 @@ export const ScoreboardCenter = ({
       return players.map((player) =>
         player.playerId === activePlayer.playerId && challengeLabel !== undefined
           ? { ...player, secondaryLabel: challengeLabel }
+          : player,
+      )
+    }
+
+    if (
+      mode === GameModeId.OneTwentyOne &&
+      isOneTwentyOneConfig(mode, config) &&
+      activePlayer !== undefined
+    ) {
+      const visitLabel = buildOneTwentyOneSecondaryLabel(
+        activePlayer,
+        config.maxVisitsPerTarget,
+        pendingDarts,
+      )
+
+      return players.map((player) =>
+        player.playerId === activePlayer.playerId
+          ? { ...player, secondaryLabel: visitLabel }
           : player,
       )
     }

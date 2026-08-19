@@ -7,6 +7,7 @@ import { capitalizeCallout, numberToWords } from './numberToWords'
 
 export interface VisitEndCalloutContext {
   isMatchComplete: boolean
+  isSessionComplete: boolean
 }
 
 export const buildVisitEndCallout = (
@@ -32,7 +33,23 @@ export const buildVisitEndCallout = (
     return capitalizeCallout(`${numberToWords(visit.visitScore)}.`)
   }
 
-  if (mode === GameModeId.OneTwentyOne || mode === GameModeId.TenUpOneDown) {
+  if (mode === GameModeId.OneTwentyOne) {
+    if (context.isSessionComplete) {
+      return 'Game over.'
+    }
+
+    if (visit.checkout) {
+      return null
+    }
+
+    if (visit.bust || visit.visitScore === 0) {
+      return 'No score.'
+    }
+
+    return capitalizeCallout(`${numberToWords(visit.visitScore)}.`)
+  }
+
+  if (mode === GameModeId.TenUpOneDown) {
     if (visit.checkout) {
       return 'Game shot!'
     }
@@ -61,17 +78,15 @@ export const buildVisitEndCallout = (
 
 export const createVisitEndCalloutContext = (
   session: GameSession,
-  isGameComplete: boolean,
+  isSessionComplete: boolean,
 ): VisitEndCalloutContext => {
   const { matchProgress, players } = session
 
-  if (
-    matchProgress !== undefined &&
-    isGameComplete &&
-    isMatchComplete(matchProgress, players.length)
-  ) {
-    return { isMatchComplete: true }
+  return {
+    isMatchComplete:
+      matchProgress !== undefined &&
+      isSessionComplete &&
+      isMatchComplete(matchProgress, players.length),
+    isSessionComplete,
   }
-
-  return { isMatchComplete: false }
 }

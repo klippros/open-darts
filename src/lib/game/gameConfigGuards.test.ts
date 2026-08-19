@@ -21,6 +21,8 @@ describe('toCheckoutSuggestionRules', () => {
     const rules = toCheckoutSuggestionRules(GameModeId.OneTwentyOne, {
       startScore: 121,
       increment: 1,
+      startingLives: 3,
+      maxVisitsPerTarget: 3,
       doubleOut: true,
     })
 
@@ -64,7 +66,13 @@ describe('toCheckoutSuggestionRules', () => {
       },
       {
         mode: GameModeId.OneTwentyOne,
-        config: { startScore: 121, increment: 1, doubleOut: true },
+        config: {
+          startScore: 121,
+          increment: 1,
+          startingLives: 3,
+          maxVisitsPerTarget: 3,
+          doubleOut: true,
+        },
       },
       {
         mode: GameModeId.TenUpOneDown,

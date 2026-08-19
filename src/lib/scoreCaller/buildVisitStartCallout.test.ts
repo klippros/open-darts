@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
+import { DartMultiplier } from '../../types/dart'
 import { GameModeId } from '../../types/gameMode'
 import { PlayerKind } from '../../types/player'
 import { createGameController } from '../game/createSession'
 import { createPlayer } from '../game/playerFactory'
+import { numberDart } from '../testHelpers'
 import { buildVisitStartCallout } from './buildVisitStartCallout'
 
 describe('buildVisitStartCallout', () => {
@@ -43,6 +45,21 @@ describe('buildVisitStartCallout', () => {
     })
 
     expect(buildVisitStartCallout(controller)).toBe('You require one hundred twenty.')
+  })
+
+  it('announces remaining score in 121', () => {
+    let controller = createGameController({
+      mode: GameModeId.OneTwentyOne,
+      players: [solo],
+    })
+
+    controller = controller.recordDarts([
+      numberDart(20, DartMultiplier.Single),
+      numberDart(20, DartMultiplier.Single),
+      numberDart(20, DartMultiplier.Single),
+    ])
+
+    expect(buildVisitStartCallout(controller)).toBe('You require sixty one.')
   })
 
   it('returns null for modes without checkout rules', () => {
