@@ -3,8 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { clearActiveSnapshot } from '../lib/storage/gameStore'
 import { parseGameLaunchParams } from '../lib/game/gameRoute'
 import { useAccount } from './accountContext'
-import { useBotTurn } from './useBotTurn'
-import { isBotTurn } from '../lib/bots/generateBotDart'
 import { useGameFromRoute } from './useGameFromRoute'
 import { useScoreCallerInitialLeg, useVisitScoreCaller } from './useVisitScoreCaller'
 
@@ -25,12 +23,6 @@ export const useGamePage = () => {
 
   useScoreCallerInitialLeg(game.controller, game.loadState.kind === 'ready')
 
-  useBotTurn({
-    controller: game.controller,
-    recordDart: game.recordDart,
-    enabled: game.loadState.kind === 'ready',
-  })
-
   const requestAbortMatch = () => {
     setAbortDialogOpen(true)
   }
@@ -47,7 +39,6 @@ export const useGamePage = () => {
 
   return {
     ...game,
-    botTurnActive: isBotTurn(game.controller),
     abortDialogOpen,
     requestAbortMatch,
     cancelAbortMatch,

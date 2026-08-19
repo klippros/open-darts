@@ -1,7 +1,11 @@
 import { GameModeId } from '../../types/gameMode'
 import type { CreateSessionParams } from '../game/createSession'
 import { parseAroundTheClockConfigFromSearchParams } from '../aroundTheClock/aroundTheClockConfig'
-import { buildPlayersFromOpponentSetup, parseOpponentSetup } from './opponentSetup'
+import {
+  buildPlayersFromOpponentSetup,
+  getChallengeConfigFromSetup,
+  parseOpponentSetup,
+} from './opponentSetup'
 import { createSoloHumanPlayer } from './playerFactory'
 import { parseX01ConfigFromSearchParams } from '../x01/x01Presets'
 
@@ -43,15 +47,18 @@ export const parseGameLaunchParams = (
     return { mode: practiceMode, players: [createSoloHumanPlayer(humanName)] }
   }
 
-  const setup = parseOpponentSetup(params)
+  const x01Config = parseX01ConfigFromSearchParams(params)
+  const setup = parseOpponentSetup(params, 2, x01Config.startScore)
+  const challenge = getChallengeConfigFromSetup(setup, x01Config.startScore)
 
   return {
     mode: GameModeId.X01,
-    config: parseX01ConfigFromSearchParams(params),
+    config: x01Config,
     players: buildPlayersFromOpponentSetup(setup, humanName),
     matchFormat: {
       legsToWin: setup.legsToWin,
       startingPlayerIndex: setup.startingPlayerIndex,
+      challenge,
     },
   }
 }

@@ -39,12 +39,12 @@ describe('sessionMatching', () => {
 
   it('matches in-progress sessions for a logged-in primary human name', () => {
     const human = { id: 'player-1', name: 'Alex', kind: PlayerKind.Human }
-    const bot = { id: 'player-2', name: 'Dart Bot (Level 5)', kind: PlayerKind.Bot, botLevel: 5 }
+    const guest = { id: 'player-2', name: 'Guest', kind: PlayerKind.Human }
     const session: GameSession = {
       id: 'session-1',
       mode: GameModeId.X01,
       config: { startScore: 501, doubleIn: false, doubleOut: true },
-      players: [human, bot],
+      players: [human, guest],
       visits: [
         {
           visitIndex: 0,
@@ -63,7 +63,7 @@ describe('sessionMatching', () => {
         legsToWin: 2,
         startingPlayerIndex: 0,
         currentLeg: 1,
-        legWins: { [human.id]: 0, [bot.id]: 0 },
+        legWins: { [human.id]: 0, [guest.id]: 0 },
       },
     }
 
@@ -71,7 +71,7 @@ describe('sessionMatching', () => {
       sessionMatchesLaunchParams(session, {
         mode: GameModeId.X01,
         config: session.config,
-        players: [human, bot],
+        players: [human, guest],
         matchFormat: { legsToWin: 2, startingPlayerIndex: 0 },
       }),
     ).toBe(true)

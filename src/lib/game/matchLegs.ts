@@ -1,14 +1,16 @@
 import { GameModeId } from '../../types/gameMode'
 import type { GameSession } from '../../types/gameSession'
-import type { MatchProgress } from '../../types/match'
+import type { ChallengeConfig, MatchProgress } from '../../types/match'
 import { DEFAULT_LEGS_TO_WIN, LEGS_TO_WIN_MAX, LEGS_TO_WIN_MIN } from '../../types/match'
 import type { Player } from '../../types/player'
 import type { Visit } from '../../types/visit'
 import type { X01State } from '../../types/x01'
+import { isChallengeMode } from './challenge'
 
 export interface MatchFormat {
   legsToWin: number
   startingPlayerIndex: number
+  challenge?: ChallengeConfig
 }
 
 export const DEFAULT_MATCH_FORMAT: MatchFormat = {
@@ -70,7 +72,12 @@ export const createInitialMatchProgress = (
   const legsToWin = clampLegsToWin(format.legsToWin)
   const startingPlayerIndex = clampStartingPlayerIndex(format.startingPlayerIndex, players.length)
 
-  if (players.length === 1 && legsToWin === 1 && startingPlayerIndex === 0) {
+  if (
+    players.length === 1 &&
+    legsToWin === 1 &&
+    startingPlayerIndex === 0 &&
+    format.challenge === undefined
+  ) {
     return undefined
   }
 
@@ -79,6 +86,7 @@ export const createInitialMatchProgress = (
     startingPlayerIndex,
     currentLeg: 1,
     legWins: Object.fromEntries(players.map((player) => [player.id, 0])),
+    ...(format.challenge === undefined ? {} : { challenge: format.challenge, legLosses: 0 }),
   }
 }
 
@@ -131,9 +139,31 @@ export const recordLegWin = (matchProgress: MatchProgress, winnerId: string): Ma
   },
 })
 
+export const recordLegLoss = (matchProgress: MatchProgress): MatchProgress => ({
+  ...matchProgress,
+  legLosses: (matchProgress.legLosses ?? 0) + 1,
+})
+
+export const decrementLegLoss = (matchProgress: MatchProgress): MatchProgress => ({
+  ...matchProgress,
+  legLosses: Math.max(0, (matchProgress.legLosses ?? 0) - 1),
+})
+
+export const revertLegLoss = (matchProgress: MatchProgress): MatchProgress => ({
+  ...decrementLegLoss(matchProgress),
+  currentLeg: Math.max(1, matchProgress.currentLeg - 1),
+})
+
 export const isSoloLegMatch = (playerCount: number): boolean => playerCount === 1
 
 export const isMatchComplete = (matchProgress: MatchProgress, playerCount: number): boolean => {
+  if (isChallengeMode(matchProgress) && isSoloLegMatch(playerCount)) {
+    const wins = Object.values(matchProgress.legWins)[0] ?? 0
+    const losses = matchProgress.legLosses ?? 0
+
+    return wins >= matchProgress.legsToWin || losses >= matchProgress.legsToWin
+  }
+
   if (isSoloLegMatch(playerCount)) {
     const soloLegsCompleted = Object.values(matchProgress.legWins)[0] ?? 0
 
@@ -170,7 +200,27 @@ export const getLegWinnerIdFromX01State = (state: X01State): string | undefined 
 export const getMatchWinnerId = (session: GameSession): string | undefined => {
   const { matchProgress, players } = session
 
-  if (matchProgress === undefined || players.length === 0 || isSoloLegMatch(players.length)) {
+  if (matchProgress === undefined || players.length === 0) {
+    return undefined
+  }
+
+  if (isChallengeMode(matchProgress) && isSoloLegMatch(players.length)) {
+    const [human] = players
+
+    if (human === undefined) {
+      return undefined
+    }
+
+    const wins = matchProgress.legWins[human.id] ?? 0
+
+    if (wins >= matchProgress.legsToWin) {
+      return human.id
+    }
+
+    return undefined
+  }
+
+  if (isSoloLegMatch(players.length)) {
     return undefined
   }
 

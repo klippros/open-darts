@@ -6,12 +6,12 @@ import { PlayerKind } from '../../types/player'
 import { resolveGameLoadStrategy } from './gameLoadStrategy'
 
 const human = { id: 'player-1', name: 'Alice', kind: PlayerKind.Human }
-const bot = { id: 'player-2', name: 'Dart Bot (Level 5)', kind: PlayerKind.Bot, botLevel: 5 }
+const guest = { id: 'player-2', name: 'Guest', kind: PlayerKind.Human }
 
 const x01LaunchParams: CreateSessionParams = {
   mode: GameModeId.X01,
   config: { startScore: 501, doubleIn: false, doubleOut: true },
-  players: [human, bot],
+  players: [human, guest],
   matchFormat: { legsToWin: 2, startingPlayerIndex: 0 },
 }
 
@@ -20,7 +20,7 @@ const matchingSnapshot: ActiveGameSnapshot = {
     id: 'session-1',
     mode: GameModeId.X01,
     config: { startScore: 501, doubleIn: false, doubleOut: true },
-    players: [human, bot],
+    players: [human, guest],
     visits: [],
     status: GameStatus.InProgress,
     startedAt: '2026-01-01T00:00:00.000Z',
@@ -28,7 +28,7 @@ const matchingSnapshot: ActiveGameSnapshot = {
       legsToWin: 2,
       startingPlayerIndex: 0,
       currentLeg: 1,
-      legWins: { [human.id]: 0, [bot.id]: 0 },
+      legWins: { [human.id]: 0, [guest.id]: 0 },
     },
   },
   turnIndex: 0,

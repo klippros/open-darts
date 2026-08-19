@@ -121,8 +121,8 @@ export const HomePage = () => (
             time.
           </Text>
           <Text color="whiteAlpha.700" fontSize="md" lineHeight="1.65">
-            Play x01 matches solo, with a guest, or against a bot. Practice modes stay focused on
-            solo training for now.
+            Play x01 matches solo, with a guest, or in challenge mode. Practice modes stay focused
+            on solo training for now.
           </Text>
         </Stack>
 
@@ -134,7 +134,7 @@ export const HomePage = () => (
               Match
             </Heading>
             <Text color="whiteAlpha.700" fontSize="sm" lineHeight="1.55">
-              x01 legs with optional guest or bot opponents.
+              x01 legs with optional guest opponents or visit-limit challenge mode.
             </Text>
           </Stack>
           <ModeGrid modes={MATCH_MODES} />

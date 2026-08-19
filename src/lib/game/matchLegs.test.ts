@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { ChallengeLegEndMode } from '../../types/match'
 import { PlayerKind } from '../../types/player'
 import { createGameController } from './createSession'
 import { GameModeId } from '../../types/gameMode'
@@ -12,9 +13,11 @@ import {
   isMatchComplete,
   parseLegsToWin,
   parseStartingPlayerIndex,
+  recordLegLoss,
   recordLegWin,
 } from './matchLegs'
-import { createBotPlayer, createSoloHumanPlayer } from './playerFactory'
+import { createChallengeConfig } from './challenge'
+import { createGuestPlayer, createSoloHumanPlayer } from './playerFactory'
 
 describe('matchLegs', () => {
   it('parses legs to win and starter params', () => {
@@ -67,8 +70,8 @@ describe('matchLegs', () => {
 
   it('ends the match when a player reaches the legs-to-win target', () => {
     const human = createSoloHumanPlayer()
-    const bot = createBotPlayer(5)
-    const progress = createInitialMatchProgress([human, bot], {
+    const guest = createGuestPlayer('Guest')
+    const progress = createInitialMatchProgress([human, guest], {
       legsToWin: 2,
       startingPlayerIndex: 0,
     })
@@ -97,6 +100,27 @@ describe('matchLegs', () => {
     const afterThreeLegs = recordLegWin(afterTwoLegs, human.id)
     expect(isMatchComplete(afterThreeLegs, 1)).toBe(true)
   })
+
+  it('ends challenge matches on wins or losses', () => {
+    const human = createSoloHumanPlayer()
+    const progress = createInitialMatchProgress([human], {
+      legsToWin: 2,
+      startingPlayerIndex: 0,
+      challenge: createChallengeConfig(5, ChallengeLegEndMode.PlayToCheckout, 501),
+    })
+
+    expect(progress).toBeDefined()
+
+    const afterWin = recordLegWin(progress!, human.id)
+    expect(isMatchComplete(afterWin, 1)).toBe(false)
+
+    const afterTwoWins = recordLegWin(afterWin, human.id)
+    expect(isMatchComplete(afterTwoWins, 1)).toBe(true)
+
+    const afterLoss = recordLegLoss(progress!)
+    const afterTwoLosses = recordLegLoss(afterLoss)
+    expect(isMatchComplete(afterTwoLosses, 1)).toBe(true)
+  })
 })
 
 describe('multi-leg x01 matches', () => {
@@ -104,11 +128,11 @@ describe('multi-leg x01 matches', () => {
 
   it('continues until a player reaches the legs-to-win target', () => {
     const human = createSoloHumanPlayer()
-    const bot = createBotPlayer(5)
+    const guest = createGuestPlayer('Guest')
     let controller = createGameController({
       mode: GameModeId.X01,
       config: { startScore: 40, doubleIn: false, doubleOut: true },
-      players: [human, bot],
+      players: [human, guest],
       matchFormat: { legsToWin: 2, startingPlayerIndex: 0 },
     })
 
@@ -116,12 +140,12 @@ describe('multi-leg x01 matches', () => {
     expect(controller.session.matchProgress?.legWins[human.id]).toBe(1)
     expect(controller.session.matchProgress?.currentLeg).toBe(2)
     expect(controller.isComplete).toBe(false)
-    expect(controller.activePlayerId).toBe(bot.id)
+    expect(controller.activePlayerId).toBe(guest.id)
 
     controller = controller.recordDart(checkoutDart(40))
     expect(controller.isComplete).toBe(false)
     expect(controller.session.matchProgress?.currentLeg).toBe(3)
-    expect(controller.session.matchProgress?.legWins[bot.id]).toBe(1)
+    expect(controller.session.matchProgress?.legWins[guest.id]).toBe(1)
 
     controller = controller.recordDart(checkoutDart(40))
     expect(controller.isComplete).toBe(true)
@@ -130,15 +154,16 @@ describe('multi-leg x01 matches', () => {
 
   it('starts on the selected player for leg one', () => {
     const human = createSoloHumanPlayer()
-    const bot = createBotPlayer(5)
+    const guest = createGuestPlayer('Guest')
     const controller = createGameController({
       mode: GameModeId.X01,
       config: { startScore: 501, doubleIn: false, doubleOut: true },
-      players: [human, bot],
+      players: [human, guest],
       matchFormat: { legsToWin: 3, startingPlayerIndex: 1 },
     })
 
-    expect(controller.activePlayer.kind).toBe(PlayerKind.Bot)
+    expect(controller.activePlayer.kind).toBe(PlayerKind.Human)
+    expect(controller.activePlayerId).toBe(guest.id)
   })
 })
 

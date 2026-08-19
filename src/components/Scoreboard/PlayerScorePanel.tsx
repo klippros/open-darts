@@ -1,7 +1,9 @@
 import { Box, Flex, Grid, Heading, Text } from '@chakra-ui/react'
 import type { ScoreboardPlayerEntry } from '../../lib/game/GameEngine'
 import { LegStarterIcon } from '../LegStarterIcon/LegStarterIcon'
+import { ChallengeLegDots } from './ChallengeLegDots'
 import { LegWinDots } from './LegWinDots'
+import { ChallengeLegStatus } from '../../types/match'
 
 export type PlayerScorePanelAlign = 'left' | 'right' | 'solo'
 
@@ -22,6 +24,7 @@ export interface PlayerScorePanelProps {
   panelAlign: PlayerScorePanelAlign
   legsToWin?: number
   legsWon?: number
+  challengeLegStatuses?: ChallengeLegStatus[]
   isLegStarter?: boolean
 }
 
@@ -76,14 +79,27 @@ const PlayerScorePanelHeader = ({
   panelAlign,
   legsToWin,
   legsWon,
+  challengeLegStatuses,
   isLegStarter = false,
 }: Pick<
   PlayerScorePanelProps,
-  'player' | 'panelAlign' | 'legsToWin' | 'legsWon' | 'isLegStarter'
+  'player' | 'panelAlign' | 'legsToWin' | 'legsWon' | 'challengeLegStatuses' | 'isLegStarter'
 >) => {
-  const showLegDots = legsToWin !== undefined && legsWon !== undefined
+  const showLegDots =
+    legsToWin !== undefined && legsWon !== undefined && challengeLegStatuses === undefined
+  const showChallengeLegDots = challengeLegStatuses !== undefined && challengeLegStatuses.length > 0
 
   if (panelAlign === 'solo') {
+    if (showChallengeLegDots) {
+      return (
+        <Grid templateColumns="1fr auto 1fr" alignItems="center" mb={1} minH="5">
+          <Box />
+          <ChallengeLegDots legStatuses={challengeLegStatuses} />
+          <Box />
+        </Grid>
+      )
+    }
+
     if (!showLegDots) {
       return null
     }
@@ -139,6 +155,7 @@ export const PlayerScorePanel = ({
   panelAlign,
   legsToWin,
   legsWon,
+  challengeLegStatuses,
   isLegStarter = false,
 }: PlayerScorePanelProps) => (
   <Box
@@ -155,6 +172,7 @@ export const PlayerScorePanel = ({
       panelAlign={panelAlign}
       legsToWin={legsToWin}
       legsWon={legsWon}
+      challengeLegStatuses={challengeLegStatuses}
       isLegStarter={isLegStarter}
     />
     <Heading
@@ -178,6 +196,8 @@ export interface PlayerScorePanelsProps {
   currentLeg?: number
   legsToWin?: number
   legWins?: Record<string, number>
+  legLosses?: number
+  challengeLegStatuses?: ChallengeLegStatus[]
   legStartingPlayerIndex?: number
 }
 
@@ -187,10 +207,12 @@ export const PlayerScorePanels = ({
   currentLeg,
   legsToWin,
   legWins,
+  challengeLegStatuses,
   legStartingPlayerIndex,
 }: PlayerScorePanelsProps) => {
   const isSolo = players.length === 1
-  const showLegDots = legsToWin !== undefined && legWins !== undefined
+  const showLegDots =
+    legsToWin !== undefined && legWins !== undefined && challengeLegStatuses === undefined
 
   return (
     <Grid templateColumns={isSolo ? '1fr' : 'repeat(2, 1fr)'} gap={3}>
@@ -208,6 +230,7 @@ export const PlayerScorePanels = ({
             panelAlign={getPanelAlign(isSolo, index)}
             legsToWin={showLegDots ? legsToWin : undefined}
             legsWon={showLegDots ? (legWins[player.playerId] ?? 0) : undefined}
+            challengeLegStatuses={challengeLegStatuses}
             isLegStarter={!isSolo && legStartingPlayerIndex === index}
           />
         )

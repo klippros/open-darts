@@ -23,7 +23,6 @@ export const GamePage = () => {
     restart,
     loadState,
     startNewGame,
-    botTurnActive,
     abortDialogOpen,
     requestAbortMatch,
     cancelAbortMatch,
@@ -32,7 +31,7 @@ export const GamePage = () => {
   } = useGamePage()
   const { account, createAccount } = useAccount()
 
-  const inputDisabled = controller.isComplete || loadState.kind === 'conflict' || botTurnActive
+  const inputDisabled = controller.isComplete || loadState.kind === 'conflict'
   const canFinish = matchHasProgress(controller)
   const isAroundTheClock = controller.session.mode === GameModeId.AroundTheClock
   const aroundTheClockState = isAroundTheClock
@@ -100,14 +99,10 @@ export const GamePage = () => {
 
             {!controller.isComplete && loadState.kind !== 'conflict' && (
               <HStack gap={3} w="full" justify="space-between">
-                <Button variant="cancel" disabled={botTurnActive} onClick={requestAbortMatch}>
+                <Button variant="cancel" onClick={requestAbortMatch}>
                   Abort match
                 </Button>
-                <Button
-                  variant="emphasis"
-                  disabled={!canFinish || botTurnActive}
-                  onClick={finishMatch}
-                >
+                <Button variant="emphasis" disabled={!canFinish} onClick={finishMatch}>
                   Finish
                 </Button>
               </HStack>

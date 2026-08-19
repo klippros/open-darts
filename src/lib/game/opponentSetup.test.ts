@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { ChallengeLegEndMode } from '../../types/match'
 import { PlayerKind } from '../../types/player'
 import {
   appendOpponentSetupParams,
@@ -6,15 +7,16 @@ import {
   parseOpponentSetup,
   playersMatchLaunchSetup,
 } from './opponentSetup'
-import { createBotPlayer, createSoloHumanPlayer } from './playerFactory'
+import { createGuestPlayer, createSoloHumanPlayer } from './playerFactory'
 
 describe('opponentSetup', () => {
-  it('builds solo, guest, and bot player lists', () => {
+  it('builds solo, guest, and challenge player lists', () => {
     expect(
       buildPlayersFromOpponentSetup({
         mode: 'solo',
         guestName: '',
-        botLevel: 5,
+        maxVisits: 9,
+        legEndMode: ChallengeLegEndMode.PlayToCheckout,
         legsToWin: 1,
         startingPlayerIndex: 0,
       }),
@@ -23,7 +25,8 @@ describe('opponentSetup', () => {
       buildPlayersFromOpponentSetup({
         mode: 'guest',
         guestName: 'Alex',
-        botLevel: 5,
+        maxVisits: 9,
+        legEndMode: ChallengeLegEndMode.PlayToCheckout,
         legsToWin: 1,
         startingPlayerIndex: 0,
       }),
@@ -33,51 +36,58 @@ describe('opponentSetup', () => {
     ])
     expect(
       buildPlayersFromOpponentSetup(
-        { mode: 'solo', guestName: '', botLevel: 5, legsToWin: 1, startingPlayerIndex: 0 },
+        {
+          mode: 'solo',
+          guestName: '',
+          maxVisits: 9,
+          legEndMode: ChallengeLegEndMode.PlayToCheckout,
+          legsToWin: 1,
+          startingPlayerIndex: 0,
+        },
         'Alex',
       ),
     ).toMatchObject([{ name: 'Alex', kind: PlayerKind.Human }])
     expect(
       buildPlayersFromOpponentSetup({
-        mode: 'bot',
+        mode: 'challenge',
         guestName: '',
-        botLevel: 8,
+        maxVisits: 8,
+        legEndMode: ChallengeLegEndMode.StopAtLimit,
         legsToWin: 1,
         startingPlayerIndex: 0,
-      })[1],
-    ).toMatchObject({
-      kind: PlayerKind.Bot,
-      botLevel: 8,
-      name: 'Dart Bot (Level 8)',
-    })
+      }),
+    ).toHaveLength(1)
   })
 
-  it('parses and serializes opponent params', () => {
+  it('parses and serializes challenge params', () => {
     const params = appendOpponentSetupParams(new URLSearchParams('preset=501'), {
-      mode: 'bot',
+      mode: 'challenge',
       guestName: '',
-      botLevel: 6,
+      maxVisits: 6,
+      legEndMode: ChallengeLegEndMode.StopAtLimit,
       legsToWin: 3,
-      startingPlayerIndex: 1,
+      startingPlayerIndex: 0,
     })
 
-    expect(parseOpponentSetup(params)).toEqual({
-      mode: 'bot',
+    expect(parseOpponentSetup(params, 2, 501)).toEqual({
+      mode: 'challenge',
       guestName: '',
-      botLevel: 6,
+      maxVisits: 6,
+      legEndMode: ChallengeLegEndMode.StopAtLimit,
       legsToWin: 3,
-      startingPlayerIndex: 1,
+      startingPlayerIndex: 0,
     })
   })
 
   it('matches launch setup without comparing player ids', () => {
-    const players = [createSoloHumanPlayer(), createBotPlayer(3)]
+    const players = [createSoloHumanPlayer()]
 
     expect(
       playersMatchLaunchSetup(players, {
-        mode: 'bot',
+        mode: 'challenge',
         guestName: '',
-        botLevel: 3,
+        maxVisits: 9,
+        legEndMode: ChallengeLegEndMode.PlayToCheckout,
         legsToWin: 1,
         startingPlayerIndex: 0,
       }),
@@ -87,32 +97,20 @@ describe('opponentSetup', () => {
       playersMatchLaunchSetup(players, {
         mode: 'guest',
         guestName: 'Alex',
-        botLevel: 3,
+        maxVisits: 9,
+        legEndMode: ChallengeLegEndMode.PlayToCheckout,
         legsToWin: 1,
         startingPlayerIndex: 0,
       }),
     ).toBe(false)
   })
 
-  it('matches launch setup using the saved primary human name', () => {
-    const players = [createSoloHumanPlayer('Alex'), createBotPlayer(3)]
-
-    expect(
-      playersMatchLaunchSetup(players, {
-        mode: 'bot',
-        guestName: '',
-        botLevel: 3,
-        legsToWin: 1,
-        startingPlayerIndex: 0,
-      }),
-    ).toBe(true)
-  })
-
   it('defaults guest name when serializing guest mode', () => {
     const params = appendOpponentSetupParams(new URLSearchParams(), {
       mode: 'guest',
       guestName: '   ',
-      botLevel: 5,
+      maxVisits: 9,
+      legEndMode: ChallengeLegEndMode.PlayToCheckout,
       legsToWin: 1,
       startingPlayerIndex: 0,
     })

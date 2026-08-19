@@ -9,12 +9,12 @@ import { buildLegStartCallout } from './buildLegStartCallout'
 
 describe('buildLegStartCallout', () => {
   const human = createPlayer('Smith', PlayerKind.Human, 'human')
-  const bot = createPlayer('Jones', PlayerKind.Bot, 'bot')
+  const guest = createPlayer('Jones', PlayerKind.Human, 'guest')
 
   it('returns null without match progress', () => {
     const controller = createGameController({
       mode: GameModeId.X01,
-      players: [human, bot],
+      players: [human, guest],
     })
 
     expect(buildLegStartCallout(controller)).toBeNull()
@@ -23,7 +23,7 @@ describe('buildLegStartCallout', () => {
   it('announces the leg and first thrower in a multi-player match', () => {
     const controller = createGameController({
       mode: GameModeId.X01,
-      players: [human, bot],
+      players: [human, guest],
       matchFormat: { legsToWin: 2, startingPlayerIndex: 0 },
     })
 
@@ -44,7 +44,7 @@ describe('buildLegStartCallout', () => {
     let controller = createGameController({
       mode: GameModeId.X01,
       config: { startScore: 40, doubleIn: false, doubleOut: true },
-      players: [human, bot],
+      players: [human, guest],
       matchFormat: { legsToWin: 2, startingPlayerIndex: 0 },
     })
 

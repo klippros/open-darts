@@ -62,6 +62,8 @@ export const sessionMatchesLaunchParams = (
             startingPlayerIndex: launchParams.matchFormat.startingPlayerIndex,
             currentLeg: 1,
             legWins: Object.fromEntries(launchParams.players.map((player) => [player.id, 0])),
+            challenge: launchParams.matchFormat.challenge,
+            legLosses: launchParams.matchFormat.challenge === undefined ? undefined : 0,
           },
   })
 
@@ -77,7 +79,7 @@ export const buildGamePathFromSession = (session: GameSession): string => {
         ? buildX01GameSearchParams(session.config)
         : new URLSearchParams({ preset: presetId })
 
-    appendOpponentSetupParams(params, opponentSetup)
+    appendOpponentSetupParams(params, opponentSetup, session.config.startScore)
 
     return `/game?${params.toString()}`
   }

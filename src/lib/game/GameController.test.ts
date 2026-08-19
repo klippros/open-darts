@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
+import { ChallengeLegEndMode } from '../../types/match'
 import { DartMultiplier } from '../../types/dart'
 import { GameModeId, GameStatus } from '../../types/gameMode'
 import { PlayerKind } from '../../types/player'
 import { createGameController } from './createSession'
-import { createPlayer } from './playerFactory'
+import { createChallengeConfig } from './challenge'
+import { createPlayer, createSoloHumanPlayer } from './playerFactory'
 import { numberDart } from '../testHelpers'
 
 describe('GameController', () => {
@@ -192,6 +194,119 @@ describe('GameController', () => {
     expect(finished.session.visits).toHaveLength(1)
     expect(finished.pendingDarts).toHaveLength(0)
     expect(finished.isComplete).toBe(true)
+  })
+})
+
+describe('GameController challenge mode', () => {
+  const recordVisit = (
+    controller: ReturnType<typeof createGameController>,
+    darts: ReturnType<typeof numberDart>[],
+  ) => darts.reduce((current, dart) => current.recordDart(dart), controller)
+
+  const checkoutDart = (scoreBefore: number) => numberDart(scoreBefore / 2, DartMultiplier.Double)
+
+  it('records a leg win when checkout is within the visit limit', () => {
+    const human = createSoloHumanPlayer()
+    let controller = createGameController({
+      mode: GameModeId.X01,
+      config: { startScore: 40, doubleIn: false, doubleOut: true },
+      players: [human],
+      matchFormat: {
+        legsToWin: 2,
+        startingPlayerIndex: 0,
+        challenge: createChallengeConfig(2, ChallengeLegEndMode.PlayToCheckout, 40),
+      },
+    })
+
+    controller = controller.recordDart(checkoutDart(40))
+
+    expect(controller.session.matchProgress?.legWins[human.id]).toBe(1)
+    expect(controller.session.matchProgress?.legLosses).toBe(0)
+  })
+
+  it('records a leg loss when checkout exceeds the visit limit in play-to-checkout mode', () => {
+    const human = createSoloHumanPlayer()
+    let controller = createGameController({
+      mode: GameModeId.X01,
+      config: { startScore: 40, doubleIn: false, doubleOut: true },
+      players: [human],
+      matchFormat: {
+        legsToWin: 3,
+        startingPlayerIndex: 0,
+        challenge: createChallengeConfig(2, ChallengeLegEndMode.PlayToCheckout, 40),
+      },
+    })
+
+    controller = recordVisit(controller, [
+      numberDart(5, DartMultiplier.Single),
+      numberDart(5, DartMultiplier.Single),
+      numberDart(5, DartMultiplier.Single),
+    ])
+    controller = recordVisit(controller, [
+      numberDart(5, DartMultiplier.Single),
+      numberDart(5, DartMultiplier.Single),
+      numberDart(5, DartMultiplier.Single),
+    ])
+    controller = controller.recordDart(numberDart(5, DartMultiplier.Double))
+
+    expect(controller.session.matchProgress?.legWins[human.id]).toBe(0)
+    expect(controller.session.matchProgress?.legLosses).toBe(1)
+    expect(controller.session.matchProgress?.currentLeg).toBe(2)
+  })
+
+  it('ends the leg immediately when stop-at-limit is reached', () => {
+    const human = createSoloHumanPlayer()
+    let controller = createGameController({
+      mode: GameModeId.X01,
+      config: { startScore: 501, doubleIn: false, doubleOut: true },
+      players: [human],
+      matchFormat: {
+        legsToWin: 3,
+        startingPlayerIndex: 0,
+        challenge: createChallengeConfig(3, ChallengeLegEndMode.StopAtLimit, 501),
+      },
+    })
+
+    controller = recordVisit(controller, [
+      numberDart(20, DartMultiplier.Single),
+      numberDart(20, DartMultiplier.Single),
+      numberDart(20, DartMultiplier.Single),
+    ])
+    controller = recordVisit(controller, [
+      numberDart(20, DartMultiplier.Single),
+      numberDart(20, DartMultiplier.Single),
+      numberDart(20, DartMultiplier.Single),
+    ])
+    controller = recordVisit(controller, [
+      numberDart(20, DartMultiplier.Single),
+      numberDart(20, DartMultiplier.Single),
+      numberDart(20, DartMultiplier.Single),
+    ])
+
+    expect(controller.session.matchProgress?.legLosses).toBe(1)
+    expect(controller.session.matchProgress?.currentLeg).toBe(2)
+    expect(controller.isComplete).toBe(false)
+    expect(controller.scoreboard.players[0]?.primaryScore).toBe(501)
+  })
+
+  it('completes the match after enough challenge wins', () => {
+    const human = createSoloHumanPlayer()
+    let controller = createGameController({
+      mode: GameModeId.X01,
+      config: { startScore: 40, doubleIn: false, doubleOut: true },
+      players: [human],
+      matchFormat: {
+        legsToWin: 2,
+        startingPlayerIndex: 0,
+        challenge: createChallengeConfig(1, ChallengeLegEndMode.PlayToCheckout, 40),
+      },
+    })
+
+    controller = controller.recordDart(checkoutDart(40))
+    controller = controller.recordDart(checkoutDart(40))
+
+    expect(controller.isComplete).toBe(true)
+    expect(controller.session.matchProgress?.legWins[human.id]).toBe(2)
   })
 })
 

@@ -7,7 +7,17 @@ import {
 } from '../../lib/analytics/aroundTheClockStats'
 import { getAroundTheClockConfig } from '../../lib/aroundTheClock/aroundTheClockConfig'
 import type { ScoreboardPlayerEntry } from '../../lib/game/GameEngine'
-import { isAroundTheClockConfig, toCheckoutSuggestionRules } from '../../lib/game/gameConfigGuards'
+import {
+  countPlayerVisitsInLeg,
+  formatChallengeVisitProgressLabel,
+  getChallengeLegStatuses,
+  isChallengeMode,
+} from '../../lib/game/challenge'
+import {
+  isAroundTheClockConfig,
+  isX01Config,
+  toCheckoutSuggestionRules,
+} from '../../lib/game/gameConfigGuards'
 import { getLegStartingPlayerIndex } from '../../lib/game/matchLegs'
 import { GameModeId } from '../../types/gameMode'
 import type { MatchProgress } from '../../types/match'
@@ -26,6 +36,30 @@ export interface ScoreboardCenterProps {
   visits: Visit[]
   config: GameConfig
   matchProgress?: MatchProgress
+}
+
+const buildChallengeSecondaryLabel = (
+  visits: Visit[],
+  matchProgress: MatchProgress,
+  activePlayer: ScoreboardPlayerEntry,
+  pendingDarts: DartThrow[],
+): string | undefined => {
+  const challenge = matchProgress.challenge
+
+  if (challenge === undefined) {
+    return undefined
+  }
+
+  const currentLeg = matchProgress.currentLeg
+  const committedVisits = countPlayerVisitsInLeg(visits, currentLeg, activePlayer.playerId)
+  const visitsUsed = committedVisits + (pendingDarts.length > 0 ? 1 : 0)
+  const visitLabel = formatChallengeVisitProgressLabel(
+    visitsUsed,
+    challenge.maxVisits,
+    activePlayer.primaryScore,
+  )
+
+  return visitLabel
 }
 
 export const ScoreboardCenter = ({
@@ -51,7 +85,40 @@ export const ScoreboardCenter = ({
         )
       : undefined
 
+  const challengeLegStatuses = useMemo(() => {
+    if (
+      !isChallengeMode(matchProgress) ||
+      activePlayer === undefined ||
+      matchProgress === undefined
+    ) {
+      return undefined
+    }
+
+    return getChallengeLegStatuses(visits, activePlayer.playerId, matchProgress)
+  }, [activePlayer, matchProgress, visits])
+
   const playersForDisplay = useMemo(() => {
+    if (
+      mode === GameModeId.X01 &&
+      isX01Config(mode, config) &&
+      isChallengeMode(matchProgress) &&
+      activePlayer !== undefined &&
+      matchProgress !== undefined
+    ) {
+      const challengeLabel = buildChallengeSecondaryLabel(
+        visits,
+        matchProgress,
+        activePlayer,
+        pendingDarts,
+      )
+
+      return players.map((player) =>
+        player.playerId === activePlayer.playerId && challengeLabel !== undefined
+          ? { ...player, secondaryLabel: challengeLabel }
+          : player,
+      )
+    }
+
     if (mode !== GameModeId.AroundTheClock || !isAroundTheClockConfig(mode, config)) {
       return players
     }
@@ -74,7 +141,7 @@ export const ScoreboardCenter = ({
         secondaryLabel: formatAroundTheClockLiveStatsLabel(liveStats),
       }
     })
-  }, [config, mode, pendingDarts, players, visits])
+  }, [activePlayer, config, matchProgress, mode, pendingDarts, players, visits])
 
   return (
     <Stack gap={5}>
@@ -84,6 +151,7 @@ export const ScoreboardCenter = ({
         currentLeg={matchProgress?.currentLeg}
         legsToWin={matchProgress?.legsToWin}
         legWins={matchProgress?.legWins}
+        challengeLegStatuses={challengeLegStatuses}
         legStartingPlayerIndex={legStartingPlayerIndex}
       />
 

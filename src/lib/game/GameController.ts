@@ -1,14 +1,19 @@
 import type { DartThrow } from '../../types/dart'
+import { GameModeId } from '../../types/gameMode'
 import type { GameSession } from '../../types/gameSession'
 import { GameStatus } from '../../types/gameMode'
 import type { Player } from '../../types/player'
 import type { Visit } from '../../types/visit'
+import type { X01State } from '../../types/x01'
 import type { GameEngine, ScoreboardSnapshot } from './GameEngine'
+import { countPlayerVisitsInLeg, isChallengeMode, resolveChallengeLegOutcome } from './challenge'
+import { ChallengeLegStatus } from '../../types/match'
 import {
   advanceToNextLeg,
   getLegStartingPlayerIndex,
   getWinnerIdForCompletedLeg,
   isMatchComplete,
+  recordLegLoss,
   recordLegWin,
 } from './matchLegs'
 import { rebuildEngineStateFromSession } from './rebuildEngineState'
@@ -164,6 +169,35 @@ export class GameController<State, Config> {
     const isLegComplete = this.engine.isGameComplete(state)
     const { matchProgress } = this.session
 
+    if (matchProgress !== undefined && isChallengeMode(matchProgress)) {
+      const challenge = matchProgress.challenge
+
+      if (challenge === undefined) {
+        throw new Error('Challenge mode requires challenge config')
+      }
+
+      const currentLeg = matchProgress.currentLeg
+      const visitsUsed = countPlayerVisitsInLeg(visits, currentLeg, this.activePlayerId)
+      const remaining = isLegComplete ? 0 : this.getPlayerRemaining(state, this.activePlayerId)
+      const outcome = resolveChallengeLegOutcome(challenge, visitsUsed, remaining, isLegComplete)
+
+      if (outcome === ChallengeLegStatus.Won) {
+        return this.finishChallengeLegTransition({
+          visits,
+          matchProgress: recordLegWin(matchProgress, this.activePlayerId),
+          engineState: state,
+        })
+      }
+
+      if (outcome === ChallengeLegStatus.Lost) {
+        return this.finishChallengeLegTransition({
+          visits,
+          matchProgress: recordLegLoss(matchProgress),
+          engineState: state,
+        })
+      }
+    }
+
     if (isLegComplete && matchProgress !== undefined) {
       const winnerId = getWinnerIdForCompletedLeg(this.session.mode, state)
 
@@ -210,6 +244,44 @@ export class GameController<State, Config> {
     turnIndex: number,
   ): GameController<State, Config> {
     return new GameController(session, this.engine, engineState, [], turnIndex)
+  }
+
+  private finishChallengeLegTransition({
+    visits,
+    matchProgress,
+    engineState,
+  }: {
+    visits: Visit[]
+    matchProgress: NonNullable<GameSession['matchProgress']>
+    engineState: State
+  }): GameController<State, Config> {
+    if (isMatchComplete(matchProgress, this.session.players.length)) {
+      const session: GameSession = {
+        ...this.session,
+        visits,
+        matchProgress,
+        status: GameStatus.Completed,
+        completedAt: new Date().toISOString(),
+      }
+
+      return new GameController(session, this.engine, engineState, [], this.turnIndex)
+    }
+
+    return this.startNextLeg({
+      ...this.session,
+      visits,
+      matchProgress,
+    })
+  }
+
+  private getPlayerRemaining(state: State, playerId: string): number {
+    if (this.session.mode === GameModeId.X01) {
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- x01 engine state is X01State when mode is X01
+      const x01State = state as X01State
+      return x01State.players[playerId]?.remaining ?? 0
+    }
+
+    return 0
   }
 
   private startNextLeg(session: GameSession): GameController<State, Config> {

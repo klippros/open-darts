@@ -1,7 +1,13 @@
 import type { GameSession } from '../../types/gameSession'
-import { DEFAULT_BOT_SKILL_LEVEL, PlayerKind } from '../../types/player'
-import type { BotSkillLevel, Player } from '../../types/player'
-import { normalizeBotSkillLevel, parseBotSkillLevel } from '../bots/botSkill'
+import { ChallengeLegEndMode, type ChallengeConfig } from '../../types/match'
+import type { Player } from '../../types/player'
+import {
+  clampMaxVisits,
+  createChallengeConfig,
+  DEFAULT_MAX_VISITS,
+  parseChallengeLegEndMode,
+  parseMaxVisits,
+} from './challenge'
 import type { MatchFormat } from './matchLegs'
 import {
   clampLegsToWin,
@@ -11,52 +17,72 @@ import {
   parseLegsToWin,
   parseStartingPlayerIndex,
 } from './matchLegs'
-import { createBotPlayer, createGuestPlayer, createSoloHumanPlayer } from './playerFactory'
+import { createGuestPlayer, createSoloHumanPlayer } from './playerFactory'
 
-export type OpponentMode = 'solo' | 'guest' | 'bot'
+export type OpponentMode = 'solo' | 'guest' | 'challenge'
 
 export interface OpponentSetup extends MatchFormat {
   mode: OpponentMode
   guestName: string
-  botLevel: BotSkillLevel
+  maxVisits: number
+  legEndMode: ChallengeLegEndMode
 }
 
 export const DEFAULT_OPPONENT_SETUP: OpponentSetup = {
   mode: 'solo',
   guestName: '',
-  botLevel: DEFAULT_BOT_SKILL_LEVEL,
+  maxVisits: DEFAULT_MAX_VISITS,
+  legEndMode: ChallengeLegEndMode.PlayToCheckout,
   ...DEFAULT_MATCH_FORMAT,
 }
 
-const opponentModes = new Set<string>(['solo', 'guest', 'bot'])
+const opponentModes = new Set<string>(['solo', 'guest', 'challenge'])
 
 export const isOpponentMode = (value: string): value is OpponentMode => opponentModes.has(value)
 
-export const parseOpponentSetup = (params: URLSearchParams, playerCount = 2): OpponentSetup => {
+export const parseOpponentSetup = (
+  params: URLSearchParams,
+  playerCount = 2,
+  startScore = 501,
+): OpponentSetup => {
   const modeParam = params.get('opponent')
   const mode = modeParam !== null && isOpponentMode(modeParam) ? modeParam : 'solo'
   const guestName = params.get('guestName')?.trim() ?? ''
-  const effectivePlayerCount = mode === 'solo' ? 1 : playerCount
+  const effectivePlayerCount = mode === 'solo' || mode === 'challenge' ? 1 : playerCount
 
   return {
     mode,
     guestName,
-    botLevel: parseBotSkillLevel(params.get('botLevel')),
+    maxVisits: parseMaxVisits(params.get('maxVisits'), startScore),
+    legEndMode: parseChallengeLegEndMode(params.get('challengeEnd')),
     legsToWin: parseLegsToWin(params.get('legs')),
     startingPlayerIndex: parseStartingPlayerIndex(params.get('starter'), effectivePlayerCount),
   }
 }
 
+export const getChallengeConfigFromSetup = (
+  setup: OpponentSetup,
+  startScore: number,
+): ChallengeConfig | undefined => {
+  if (setup.mode !== 'challenge') {
+    return undefined
+  }
+
+  return createChallengeConfig(setup.maxVisits, setup.legEndMode, startScore)
+}
+
 export const appendOpponentSetupParams = (
   params: URLSearchParams,
   setup: OpponentSetup,
+  startScore = 501,
 ): URLSearchParams => {
   const legsToWin = clampLegsToWin(setup.legsToWin)
 
   if (setup.mode === 'solo') {
     params.delete('opponent')
     params.delete('guestName')
-    params.delete('botLevel')
+    params.delete('maxVisits')
+    params.delete('challengeEnd')
     params.delete('starter')
 
     if (legsToWin === DEFAULT_MATCH_FORMAT.legsToWin) {
@@ -72,14 +98,23 @@ export const appendOpponentSetupParams = (
 
   if (setup.mode === 'guest') {
     params.set('guestName', setup.guestName.trim() || 'Guest')
+    params.delete('maxVisits')
+    params.delete('challengeEnd')
   } else {
     params.delete('guestName')
-  }
+    const maxVisits = clampMaxVisits(setup.maxVisits, startScore)
 
-  if (setup.mode === 'bot') {
-    params.set('botLevel', String(normalizeBotSkillLevel(setup.botLevel)))
-  } else {
-    params.delete('botLevel')
+    if (maxVisits === DEFAULT_MAX_VISITS) {
+      params.delete('maxVisits')
+    } else {
+      params.set('maxVisits', String(maxVisits))
+    }
+
+    if (setup.legEndMode === ChallengeLegEndMode.PlayToCheckout) {
+      params.delete('challengeEnd')
+    } else {
+      params.set('challengeEnd', setup.legEndMode)
+    }
   }
 
   if (legsToWin === DEFAULT_MATCH_FORMAT.legsToWin) {
@@ -88,12 +123,16 @@ export const appendOpponentSetupParams = (
     params.set('legs', String(legsToWin))
   }
 
-  const startingPlayerIndex = clampStartingPlayerIndex(setup.startingPlayerIndex, 2)
+  if (setup.mode === 'guest') {
+    const startingPlayerIndex = clampStartingPlayerIndex(setup.startingPlayerIndex, 2)
 
-  if (startingPlayerIndex === 0) {
-    params.delete('starter')
+    if (startingPlayerIndex === 0) {
+      params.delete('starter')
+    } else {
+      params.set('starter', '1')
+    }
   } else {
-    params.set('starter', '1')
+    params.delete('starter')
   }
 
   return params
@@ -105,68 +144,61 @@ export const buildPlayersFromOpponentSetup = (
 ): Player[] => {
   const human = createSoloHumanPlayer(humanName)
 
-  if (setup.mode === 'solo') {
+  if (setup.mode === 'solo' || setup.mode === 'challenge') {
     return [human]
   }
 
-  if (setup.mode === 'guest') {
-    const guestName = setup.guestName.trim() || 'Guest'
+  const guestName = setup.guestName.trim() || 'Guest'
 
-    return [human, createGuestPlayer(guestName)]
-  }
-
-  return [human, createBotPlayer(normalizeBotSkillLevel(setup.botLevel))]
-}
-
-export const getOpponentSetupFromPlayers = (players: Player[]): OpponentSetup => {
-  if (players.length <= 1) {
-    return DEFAULT_OPPONENT_SETUP
-  }
-
-  const [, opponent] = players
-
-  if (opponent === undefined) {
-    return DEFAULT_OPPONENT_SETUP
-  }
-
-  if (opponent.kind === PlayerKind.Bot) {
-    return {
-      mode: 'bot',
-      guestName: '',
-      botLevel: normalizeBotSkillLevel(opponent.botLevel),
-      ...DEFAULT_MATCH_FORMAT,
-    }
-  }
-
-  return {
-    mode: 'guest',
-    guestName: opponent.name,
-    botLevel: DEFAULT_BOT_SKILL_LEVEL,
-    ...DEFAULT_MATCH_FORMAT,
-  }
+  return [human, createGuestPlayer(guestName)]
 }
 
 export const getOpponentSetupFromSession = (
   session: Pick<GameSession, 'players' | 'matchProgress'>,
 ): OpponentSetup => {
-  const base = getOpponentSetupFromPlayers(session.players)
+  const { matchProgress } = session
+
+  if (matchProgress?.challenge !== undefined) {
+    return {
+      mode: 'challenge',
+      guestName: '',
+      maxVisits: matchProgress.challenge.maxVisits,
+      legEndMode: matchProgress.challenge.legEndMode,
+      legsToWin: matchProgress.legsToWin,
+      startingPlayerIndex: matchProgress.startingPlayerIndex,
+    }
+  }
+
+  if (session.players.length <= 1) {
+    return {
+      ...DEFAULT_OPPONENT_SETUP,
+      legsToWin: matchProgress?.legsToWin ?? DEFAULT_MATCH_FORMAT.legsToWin,
+      startingPlayerIndex: matchProgress?.startingPlayerIndex ?? 0,
+    }
+  }
+
+  const [, opponent] = session.players
 
   return {
-    ...base,
-    legsToWin: session.matchProgress?.legsToWin ?? DEFAULT_MATCH_FORMAT.legsToWin,
-    startingPlayerIndex: session.matchProgress?.startingPlayerIndex ?? 0,
+    mode: 'guest',
+    guestName: opponent?.name ?? 'Guest',
+    maxVisits: DEFAULT_MAX_VISITS,
+    legEndMode: ChallengeLegEndMode.PlayToCheckout,
+    legsToWin: matchProgress?.legsToWin ?? DEFAULT_MATCH_FORMAT.legsToWin,
+    startingPlayerIndex: matchProgress?.startingPlayerIndex ?? 0,
   }
 }
 
 export const opponentSetupsMatch = (left: OpponentSetup, right: OpponentSetup): boolean =>
   left.mode === right.mode &&
   left.guestName === right.guestName &&
-  normalizeBotSkillLevel(left.botLevel) === normalizeBotSkillLevel(right.botLevel) &&
+  left.maxVisits === right.maxVisits &&
+  left.legEndMode === right.legEndMode &&
   matchFormatsEqual(left, right)
 
 export const playersMatchLaunchSetup = (players: Player[], setup: OpponentSetup): boolean => {
   const [primaryHuman] = players
-  const humanName = primaryHuman?.kind === PlayerKind.Human ? primaryHuman.name : undefined
+  const humanName = primaryHuman?.name
   const expected = buildPlayersFromOpponentSetup(setup, humanName)
 
   if (players.length !== expected.length) {
@@ -180,10 +212,6 @@ export const playersMatchLaunchSetup = (players: Player[], setup: OpponentSetup)
       return false
     }
 
-    return (
-      player.kind === expectedPlayer.kind &&
-      player.name === expectedPlayer.name &&
-      normalizeBotSkillLevel(player.botLevel) === normalizeBotSkillLevel(expectedPlayer.botLevel)
-    )
+    return player.kind === expectedPlayer.kind && player.name === expectedPlayer.name
   })
 }

@@ -1,4 +1,5 @@
 import { Box, Stack, Text } from '@chakra-ui/react'
+import { getChallengeMaxLegs } from '../lib/game/challenge'
 import { clampLegsToWin, getMaxPossibleLegs } from '../lib/game/matchLegs'
 import type { OpponentSetup } from '../lib/game/opponentSetup'
 import { resolveHumanPlayerName } from '../lib/game/playerFactory'
@@ -27,7 +28,12 @@ export const MatchSetupLegSettings = ({
   const primaryPlayerLabel = resolveHumanPlayerName(account?.displayName)
   const legCount = clampLegsToWin(setup.legsToWin ?? DEFAULT_LEGS_TO_WIN)
   const isSolo = setup.mode === 'solo'
-  const maxLegs = isSolo ? legCount : getMaxPossibleLegs(legCount, 2)
+  const isChallenge = setup.mode === 'challenge'
+  const maxLegs = isSolo
+    ? legCount
+    : isChallenge
+      ? getChallengeMaxLegs(legCount)
+      : getMaxPossibleLegs(legCount, 2)
 
   return (
     <>
@@ -39,7 +45,9 @@ export const MatchSetupLegSettings = ({
           <Text color="whiteAlpha.600" fontSize="sm" lineHeight="1.55">
             {isSolo
               ? `Play ${legCount} leg${legCount === 1 ? '' : 's'} in this session.`
-              : `Win the match by taking this many legs first. A close match can take up to ${maxLegs} legs.`}
+              : isChallenge
+                ? `Win the match by taking ${legCount} legs within the visit limit before ${legCount} losses.`
+                : `Win the match by taking this many legs first. A close match can take up to ${maxLegs} legs.`}
           </Text>
         </Stack>
         <Box
@@ -86,7 +94,7 @@ export const MatchSetupLegSettings = ({
         </Box>
       </Stack>
 
-      {!isSolo && (
+      {!isSolo && !isChallenge && (
         <Stack gap={3}>
           <Text color="whiteAlpha.800" fontSize="sm" fontWeight="semibold">
             First throw

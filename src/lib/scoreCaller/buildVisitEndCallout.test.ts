@@ -11,7 +11,7 @@ import { buildVisitEndCallout, createVisitEndCalloutContext } from './buildVisit
 describe('buildVisitEndCallout', () => {
   const solo = createPlayer('Solo', PlayerKind.Human, 'solo')
   const human = createPlayer('Smith', PlayerKind.Human, 'human')
-  const bot = createPlayer('Jones', PlayerKind.Bot, 'bot')
+  const guest = createPlayer('Jones', PlayerKind.Human, 'guest')
 
   it('announces scored visits', () => {
     const visit: Visit = {
@@ -78,7 +78,7 @@ describe('buildVisitEndCallout', () => {
     let controller = createGameController({
       mode: GameModeId.X01,
       config: { startScore: 40, doubleIn: false, doubleOut: true },
-      players: [human, bot],
+      players: [human, guest],
       matchFormat: { legsToWin: 1, startingPlayerIndex: 0 },
     })
 

@@ -6,6 +6,7 @@ import {
   getAroundTheClockAimModeLabel,
   getAroundTheClockConfig,
 } from '../aroundTheClock/aroundTheClockConfig'
+import { formatChallengeMatchScore, isChallengeMode } from '../game/challenge'
 import { getMatchWinnerId } from '../game/matchLegs'
 import { formatLegWinLine } from '../game/matchLegDisplay'
 import { formatX01StartScore } from '../x01/x01Presets'
@@ -55,7 +56,20 @@ export const getMatchSummary = (session: GameSession): MatchSummary => {
         : session.players.find((player) => player.id === matchWinnerId)
 
     if (matchProgress !== undefined) {
-      if (session.players.length > 1) {
+      if (isChallengeMode(matchProgress)) {
+        const humanId = session.players[0]?.id
+        const wins = humanId === undefined ? 0 : (matchProgress.legWins[humanId] ?? 0)
+        const losses = matchProgress.legLosses ?? 0
+        const maxVisits = matchProgress.challenge?.maxVisits
+
+        details.unshift(formatChallengeMatchScore(wins, losses))
+
+        if (maxVisits !== undefined) {
+          details.unshift(
+            `First to ${matchProgress.legsToWin} legs within ${maxVisits} visit${maxVisits === 1 ? '' : 's'}`,
+          )
+        }
+      } else if (session.players.length > 1) {
         details.unshift(formatLegWinLine(session.players, matchProgress))
         details.unshift(
           `${matchProgress.legsToWin} leg${matchProgress.legsToWin === 1 ? '' : 's'} to win`,
@@ -65,7 +79,17 @@ export const getMatchSummary = (session: GameSession): MatchSummary => {
       }
     }
 
-    if (matchProgress !== undefined && matchWinner !== undefined) {
+    if (matchProgress !== undefined && isChallengeMode(matchProgress)) {
+      const humanId = session.players[0]?.id
+      const wins = humanId === undefined ? 0 : (matchProgress.legWins[humanId] ?? 0)
+      const losses = matchProgress.legLosses ?? 0
+
+      if (matchWinner !== undefined) {
+        details.push(`Won ${wins} legs within the visit limit`)
+      } else if (losses >= matchProgress.legsToWin) {
+        details.push(`Lost ${losses} legs over the visit limit`)
+      }
+    } else if (matchProgress !== undefined && matchWinner !== undefined) {
       details.push(`${matchWinner.name} wins the match`)
     } else if (checkoutVisit?.checkout === true) {
       details.push(`Checked out from ${checkoutVisit.scoreBefore}`)
@@ -81,11 +105,18 @@ export const getMatchSummary = (session: GameSession): MatchSummary => {
       matchWinner?.id === session.players[0]?.id ||
       (matchWinner === undefined &&
         checkoutVisit?.checkout === true &&
-        (session.players.length === 1 || legWinner?.id === session.players[0]?.id))
+        (session.players.length === 1 || legWinner?.id === session.players[0]?.id) &&
+        !isChallengeMode(matchProgress))
 
     let title = 'Session complete'
 
-    if (matchWinner !== undefined) {
+    if (isChallengeMode(matchProgress)) {
+      if (matchWinner !== undefined) {
+        title = 'Match won!'
+      } else if ((matchProgress.legLosses ?? 0) >= matchProgress.legsToWin) {
+        title = 'Match lost'
+      }
+    } else if (matchWinner !== undefined) {
       title = humanWon ? 'Match won!' : `${matchWinner.name} wins`
     } else if (checkoutVisit?.checkout === true) {
       title = humanWon ? 'Game shot!' : `${legWinner?.name ?? 'Opponent'} wins`
