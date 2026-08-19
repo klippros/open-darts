@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { AppGameController, CreateSessionParams } from '../lib/game/createSession'
 import { createGameController, restoreGameController } from '../lib/game/createSession'
+import { shouldCreateFreshControllerOnStartFresh } from '../lib/routing/shouldCreateFreshControllerOnStartFresh'
 import { clearActiveSnapshot } from '../lib/storage/gameStore'
 import { getResumableSnapshot, persistControllerState } from '../lib/storage/visitPersistence'
 import type { ActiveGameSnapshot } from '../types/activeGameSnapshot'
@@ -88,7 +89,11 @@ export const useGame = (launchParams: CreateSessionParams, options: UseGameOptio
 
     if (startFresh) {
       clearActiveSnapshot()
-      setController(createFreshController())
+
+      if (shouldCreateFreshControllerOnStartFresh(previous, routeKey)) {
+        setController(createFreshController())
+      }
+
       return
     }
 
