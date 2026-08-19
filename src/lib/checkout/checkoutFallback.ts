@@ -3,15 +3,76 @@ import type { CheckoutDart } from './checkoutDart'
 import { checkoutDartFromLabel } from './checkoutDart'
 
 const DOUBLE_FINISH_SEGMENT_PREFERENCE_ORDER = [
-  20, 10, 5, 16, 8, 4, 2, 12, 6, 3, 18, 14, 15, 17, 19, 1,
+  20, 16, 10, 8, 12, 6, 4, 2, 18, 14, 15, 17, 19, 7, 9, 11, 13, 5, 3, 1,
 ] as const
 
 const WEDGE_SEGMENT_PREFERENCE_ORDER = [
   20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1,
 ] as const
 
+const UNKNOWN_FINISH_PREFERENCE_RANK = 999
+
 const isDoubleOutFinishDart = (dart: CheckoutDart): boolean =>
   dart.label === 'Bull' || dart.label.startsWith('D')
+
+const getFinishPreferenceRank = (dart: CheckoutDart): number => {
+  if (dart.label === 'Bull') {
+    return 0
+  }
+
+  if (!dart.label.startsWith('D')) {
+    return UNKNOWN_FINISH_PREFERENCE_RANK
+  }
+
+  const segment = Number(dart.label.slice(1))
+  const index = DOUBLE_FINISH_SEGMENT_PREFERENCE_ORDER.indexOf(
+    segment as (typeof DOUBLE_FINISH_SEGMENT_PREFERENCE_ORDER)[number],
+  )
+
+  return index === -1 ? UNKNOWN_FINISH_PREFERENCE_RANK : index + 1
+}
+
+const isTrebleDart = (dart: CheckoutDart): boolean => dart.label.startsWith('T')
+
+const isDoubleDart = (dart: CheckoutDart): boolean => dart.label.startsWith('D')
+
+const isBullOrOuterBullSetupDart = (dart: CheckoutDart): boolean =>
+  dart.label === 'Bull' || dart.label === '25'
+
+type CheckoutPathScore = readonly [
+  finishRank: number,
+  dartCount: number,
+  trebleCount: number,
+  doubleCount: number,
+  bullCount: number,
+  firstSetupDartPoints: number,
+  totalSetupPoints: number,
+]
+
+const scoreCheckoutPath = (path: CheckoutDart[]): CheckoutPathScore => {
+  const finish = path[path.length - 1]
+  const setup = path.slice(0, -1)
+
+  return [
+    getFinishPreferenceRank(finish),
+    path.length,
+    setup.filter(isTrebleDart).length,
+    setup.filter(isDoubleDart).length,
+    setup.filter(isBullOrOuterBullSetupDart).length,
+    setup[0]?.points ?? 0,
+    setup.reduce((total, dart) => total + dart.points, 0),
+  ]
+}
+
+const isCheckoutPathScoreBetter = (left: CheckoutPathScore, right: CheckoutPathScore): boolean => {
+  for (let index = 0; index < left.length; index += 1) {
+    if (left[index] !== right[index]) {
+      return left[index] < right[index]
+    }
+  }
+
+  return false
+}
 
 const getFinishDartOptionsInPreferenceOrder = (): CheckoutDart[] => {
   const options: CheckoutDart[] = [{ label: 'Bull', points: 50 }]
@@ -97,24 +158,33 @@ export const getSingleDartFinish = (
   return null
 }
 
-export const findFallbackCheckoutPath = (
+const collectFallbackCheckoutPaths = (
   remaining: number,
   dartsRemaining: number,
   rules: CheckoutRules,
   path: CheckoutDart[] = [],
-): CheckoutDart[] | null => {
+  paths: CheckoutDart[][] = [],
+): void => {
   if (remaining < 0 || (rules.doubleOut && remaining === 1)) {
-    return null
+    return
   }
 
   if (dartsRemaining === 0) {
-    return remaining === 0 ? path : null
+    if (remaining === 0) {
+      paths.push(path)
+    }
+
+    return
   }
 
   if (dartsRemaining === 1) {
     const finish = getSingleDartFinish(remaining, rules)
 
-    return finish === null ? null : [...path, finish]
+    if (finish !== null) {
+      paths.push([...path, finish])
+    }
+
+    return
   }
 
   for (const dart of getFallbackSetupDartOptionsInPreferenceOrder()) {
@@ -122,17 +192,56 @@ export const findFallbackCheckoutPath = (
       continue
     }
 
-    const nextPath = findFallbackCheckoutPath(remaining - dart.points, dartsRemaining - 1, rules, [
-      ...path,
-      dart,
-    ])
+    collectFallbackCheckoutPaths(
+      remaining - dart.points,
+      dartsRemaining - 1,
+      rules,
+      [...path, dart],
+      paths,
+    )
+  }
+}
 
-    if (nextPath !== null) {
-      return nextPath
+const pickBestCheckoutPath = (paths: CheckoutDart[][]): CheckoutDart[] | null => {
+  let bestPath: CheckoutDart[] | null = null
+  let bestScore: CheckoutPathScore | null = null
+
+  for (const path of paths) {
+    const score = scoreCheckoutPath(path)
+
+    if (bestScore === null || isCheckoutPathScoreBetter(score, bestScore)) {
+      bestPath = path
+      bestScore = score
     }
   }
 
-  return null
+  return bestPath
+}
+
+export const findFallbackCheckoutPath = (
+  remaining: number,
+  dartsRemaining: number,
+  rules: CheckoutRules,
+): CheckoutDart[] | null => {
+  const paths: CheckoutDart[][] = []
+
+  collectFallbackCheckoutPaths(remaining, dartsRemaining, rules, [], paths)
+
+  return pickBestCheckoutPath(paths)
+}
+
+export const findBestFallbackCheckoutPath = (
+  remaining: number,
+  maxDartsRemaining: number,
+  rules: CheckoutRules,
+): CheckoutDart[] | null => {
+  const paths: CheckoutDart[][] = []
+
+  for (let dartCount = 1; dartCount <= maxDartsRemaining; dartCount += 1) {
+    collectFallbackCheckoutPaths(remaining, dartCount, rules, [], paths)
+  }
+
+  return pickBestCheckoutPath(paths)
 }
 
 export const labelsToCheckoutPath = (labels: readonly string[]): CheckoutDart[] =>

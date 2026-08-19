@@ -2,6 +2,7 @@ import type { DartThrow } from '../../types/dart'
 import type { CheckoutRules } from '../../types/checkout'
 import { formatDart } from '../formatDart'
 import {
+  findBestFallbackCheckoutPath,
   findFallbackCheckoutPath,
   getSingleDartFinish,
   labelsToCheckoutPath,
@@ -149,15 +150,7 @@ export const suggestCheckoutPath = (
     }
   }
 
-  for (let dartCount = 1; dartCount <= dartsRemaining; dartCount += 1) {
-    const fallbackPath = findFallbackCheckoutPath(remaining, dartCount, rules)
-
-    if (fallbackPath !== null) {
-      return fallbackPath
-    }
-  }
-
-  return null
+  return findBestFallbackCheckoutPath(remaining, dartsRemaining, rules)
 }
 
 export interface VisitDartSlotView {
