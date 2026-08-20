@@ -53,7 +53,7 @@ export const SettingsMenu = ({
             }}
           />
         )}
-        <Popover.Positioner zIndex="tooltip">
+        <Popover.Positioner css={{ '--z-index': 'zIndex.popover' }}>
           <Popover.Content
             bg={darkDialogContentProps.bg}
             borderWidth={darkDialogContentProps.borderWidth}
