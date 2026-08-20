@@ -168,6 +168,7 @@ export const ScoreboardCenter = ({
 
       return {
         ...player,
+        primaryDisplay: String(liveStats.dartsThrown),
         secondaryLabel: formatAroundTheClockLiveStatsLabel(liveStats),
       }
     })

@@ -78,6 +78,7 @@ export const AroundTheClockDartPicker = ({
                     slotIndex,
                   )}
                   variant="thrown"
+                  size="comfortable"
                 />
               )
             }
@@ -86,10 +87,11 @@ export const AroundTheClockDartPicker = ({
               return (
                 <VisitDartSlotCard
                   key={ordinal}
-                  label={ORDINAL_LABELS[ordinal]}
+                  label={currentTargetLabel}
                   variant="selectable"
+                  size="comfortable"
                   disabled={inputDisabled}
-                  ariaLabel={`Hit on ${ORDINAL_LABELS[ordinal]} dart`}
+                  ariaLabel={`Hit ${currentTargetLabel} on ${ORDINAL_LABELS[ordinal]} dart`}
                   onClick={() => {
                     onDarts(
                       buildDartsForOrdinalHit(ordinal, committedTargetIndex, pendingDarts, aimMode),
@@ -99,13 +101,16 @@ export const AroundTheClockDartPicker = ({
               )
             }
 
-            return <VisitDartSlotCard key={ordinal} label={null} variant="empty" />
+            return (
+              <VisitDartSlotCard key={ordinal} label={null} variant="empty" size="comfortable" />
+            )
           })}
         </Grid>
 
         <VisitDartSlotCard
           label={dartsLeft === 1 ? 'Miss' : `Miss ${dartsLeft} darts`}
           variant={dartsLeft === 0 || inputDisabled ? 'empty' : 'selectable'}
+          size="comfortable"
           disabled={inputDisabled || dartsLeft === 0}
           ariaLabel={dartsLeft === 1 ? 'Miss' : `Miss ${dartsLeft} darts`}
           onClick={
@@ -122,8 +127,7 @@ export const AroundTheClockDartPicker = ({
         </Button>
 
         <Text fontSize="xs" color="whiteAlpha.500" lineHeight="1.5">
-          Press 1st, 2nd, or 3rd when you hit {currentTargetLabel} on that dart. Miss all records
-          the remaining darts as misses.
+          Press the dart you hit on. "Miss all" records the remaining darts of this visit as misses.
         </Text>
       </Stack>
     </Box>

@@ -42,6 +42,7 @@ const getVariantStyles = (variant: VisitDartSlotCardVariant) => {
 export interface VisitDartSlotCardProps {
   label: string | null
   variant: VisitDartSlotCardVariant
+  size?: 'default' | 'comfortable'
   onClick?: () => void
   disabled?: boolean
   ariaLabel?: string
@@ -50,12 +51,14 @@ export interface VisitDartSlotCardProps {
 export const VisitDartSlotCard = ({
   label,
   variant,
+  size = 'default',
   onClick,
   disabled = false,
   ariaLabel,
 }: VisitDartSlotCardProps) => {
   const styles = getVariantStyles(variant)
   const isInteractive = onClick !== undefined && !disabled && variant === 'selectable'
+  const isComfortable = size === 'comfortable'
 
   const slotContent = (
     <>
@@ -74,7 +77,8 @@ export const VisitDartSlotCard = ({
 
   const slotStyles = {
     px: 3,
-    py: 4,
+    py: isComfortable ? 7 : 4,
+    minH: isComfortable ? '6.5rem' : undefined,
     borderRadius: '14px',
     borderWidth: '1px',
     borderColor: styles.borderColor,
@@ -82,6 +86,11 @@ export const VisitDartSlotCard = ({
     opacity: styles.opacity,
     textAlign: 'center' as const,
     w: 'full',
+    h: 'full',
+    display: 'flex' as const,
+    flexDirection: 'column' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
     transition: 'border-color 0.15s ease, background 0.15s ease, transform 0.15s ease',
   }
 
@@ -93,8 +102,6 @@ export const VisitDartSlotCard = ({
         onClick={onClick}
         disabled={disabled}
         aria-label={ariaLabel}
-        h="auto"
-        display="block"
         fontWeight="normal"
         whiteSpace="normal"
         {...slotStyles}

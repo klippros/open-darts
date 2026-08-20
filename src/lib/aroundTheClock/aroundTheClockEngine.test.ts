@@ -37,14 +37,13 @@ describe('aroundTheClockEngine', () => {
     expect(result.visit.visitScore).toBe(1)
   })
 
-  it('shows the current target on the scoreboard', () => {
+  it('exposes the current target index on the scoreboard', () => {
     const state = aroundTheClockEngine.createInitialState([player], config)
     const scoreboard = aroundTheClockEngine.getScoreboard(state, [player], player.id)
 
     expect(scoreboard.mode).toBe(GameModeId.AroundTheClock)
     expect(scoreboard.players[0]).toMatchObject({
       primaryScore: 1,
-      primaryDisplay: '1',
       aroundTheClockTargetIndex: 0,
     })
   })

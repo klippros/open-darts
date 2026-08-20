@@ -3,7 +3,6 @@ import { GameModeId } from '../../types/gameMode'
 import type { AroundTheClockConfig, AroundTheClockState } from '../../types/aroundTheClock'
 import { getAroundTheClockConfig } from './aroundTheClockConfig'
 import {
-  getAroundTheClockTargetAimLabel,
   getAroundTheClockTargetLabel,
   getAroundTheClockVisitScore,
   resolveAroundTheClockVisit,
@@ -28,25 +27,20 @@ export const aroundTheClockEngine: GameEngine<AroundTheClockState, AroundTheCloc
     players: Object.fromEntries(players.map((player) => [player.id, { targetIndex: 0 }])),
   }),
 
-  getScoreboard: (state, players, activePlayerId) => {
-    const { aimMode } = getAroundTheClockConfig(state.config)
+  getScoreboard: (state, players, activePlayerId) => ({
+    mode: GameModeId.AroundTheClock,
+    players: players.map((player) => {
+      const playerState = getPlayerState(state, player.id)
 
-    return {
-      mode: GameModeId.AroundTheClock,
-      players: players.map((player) => {
-        const playerState = getPlayerState(state, player.id)
-
-        return {
-          playerId: player.id,
-          name: player.name,
-          primaryScore: playerState.targetIndex >= 20 ? 25 : playerState.targetIndex + 1,
-          primaryDisplay: getAroundTheClockTargetAimLabel(playerState.targetIndex, aimMode),
-          aroundTheClockTargetIndex: playerState.targetIndex,
-          isActive: player.id === activePlayerId,
-        }
-      }),
-    }
-  },
+      return {
+        playerId: player.id,
+        name: player.name,
+        primaryScore: playerState.targetIndex >= 20 ? 25 : playerState.targetIndex + 1,
+        aroundTheClockTargetIndex: playerState.targetIndex,
+        isActive: player.id === activePlayerId,
+      }
+    }),
+  }),
 
   applyDart: (state, playerId, pendingDarts) => {
     const playerState = getPlayerState(state, playerId)

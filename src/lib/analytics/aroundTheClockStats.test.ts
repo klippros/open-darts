@@ -60,7 +60,7 @@ describe('aroundTheClockStats', () => {
     })
   })
 
-  it('tracks live darts thrown and average per completed target', () => {
+  it('tracks live darts thrown, current-target darts, and average per completed target', () => {
     const visits = [
       {
         visitIndex: 0,
@@ -85,9 +85,41 @@ describe('aroundTheClockStats', () => {
 
     expect(stats).toEqual({
       dartsThrown: 4,
+      dartsOnCurrentTarget: 0,
       avgDartsPerTarget: 2,
     })
-    expect(formatAroundTheClockLiveStatsLabel(stats)).toBe('4 darts · 2.0 per target')
+    expect(formatAroundTheClockLiveStatsLabel(stats)).toBe('0 on target · 2.0 avg')
+  })
+
+  it('counts pending misses toward the current target', () => {
+    const visits = [
+      {
+        visitIndex: 0,
+        playerId: 'player-1',
+        darts: [numberDart(1, DartMultiplier.Single), missDart(), missDart()],
+        visitScore: 1,
+        scoreBefore: 0,
+        scoreAfter: 1,
+        bust: false,
+        checkout: false,
+      },
+    ]
+
+    const stats = getAroundTheClockLiveStats(
+      visits,
+      'player-1',
+      1,
+      [missDart(), missDart()],
+      AroundTheClockAimMode.Any,
+      true,
+    )
+
+    expect(stats).toEqual({
+      dartsThrown: 5,
+      dartsOnCurrentTarget: 4,
+      avgDartsPerTarget: 5,
+    })
+    expect(formatAroundTheClockLiveStatsLabel(stats)).toBe('4 on target · 5.0 avg')
   })
 
   it('computes avg darts per field from total darts and completed fields', () => {

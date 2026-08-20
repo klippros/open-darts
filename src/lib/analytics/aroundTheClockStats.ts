@@ -8,6 +8,7 @@ import { isAroundTheClockConfig } from '../game/gameConfigGuards'
 import {
   AROUND_THE_CLOCK_TARGET_COUNT,
   getAroundTheClockTargetLabel,
+  isAroundTheClockTargetHit,
 } from '../aroundTheClock/aroundTheClockRules'
 import type { AroundTheClockTargetAttempt } from '../aroundTheClock/aroundTheClockTargetHits'
 import {
@@ -18,7 +19,46 @@ import { countDartsInSession, getPlayerVisits, getPrimaryPlayerVisits } from './
 
 export interface AroundTheClockLiveStats {
   dartsThrown: number
+  dartsOnCurrentTarget: number
   avgDartsPerTarget: number | null
+}
+
+const countDartsOnCurrentTarget = (
+  visits: Visit[],
+  pendingDarts: DartThrow[],
+  aimMode: AroundTheClockAimMode,
+): number => {
+  let dartsOnCurrentTarget = 0
+  let currentTarget = 0
+
+  const applyDart = (dart: DartThrow): void => {
+    if (currentTarget >= AROUND_THE_CLOCK_TARGET_COUNT) {
+      return
+    }
+
+    dartsOnCurrentTarget += 1
+
+    if (!isAroundTheClockTargetHit(dart, currentTarget, aimMode)) {
+      return
+    }
+
+    currentTarget += 1
+    dartsOnCurrentTarget = 0
+  }
+
+  for (const visit of visits) {
+    currentTarget = visit.scoreBefore
+
+    for (const dart of visit.darts) {
+      applyDart(dart)
+    }
+  }
+
+  for (const dart of pendingDarts) {
+    applyDart(dart)
+  }
+
+  return dartsOnCurrentTarget
 }
 
 export const getAroundTheClockLiveStats = (
@@ -30,9 +70,9 @@ export const getAroundTheClockLiveStats = (
   isActive: boolean,
 ): AroundTheClockLiveStats => {
   const playerVisits = getPlayerVisits(visits, playerId)
+  const activePendingDarts = isActive ? pendingDarts : []
   const dartsThrown =
-    playerVisits.reduce((sum, visit) => sum + visit.darts.length, 0) +
-    (isActive ? pendingDarts.length : 0)
+    playerVisits.reduce((sum, visit) => sum + visit.darts.length, 0) + activePendingDarts.length
 
   const effectiveTargetIndex = isActive
     ? getAroundTheClockCurrentTargetIndex(committedTargetIndex, pendingDarts, aimMode)
@@ -40,14 +80,15 @@ export const getAroundTheClockLiveStats = (
 
   const fieldsCompleted = effectiveTargetIndex
   const avgDartsPerTarget = fieldsCompleted === 0 ? null : dartsThrown / fieldsCompleted
+  const dartsOnCurrentTarget = countDartsOnCurrentTarget(playerVisits, activePendingDarts, aimMode)
 
-  return { dartsThrown, avgDartsPerTarget }
+  return { dartsThrown, dartsOnCurrentTarget, avgDartsPerTarget }
 }
 
 export const formatAroundTheClockLiveStatsLabel = (stats: AroundTheClockLiveStats): string => {
   const average = stats.avgDartsPerTarget === null ? '—' : stats.avgDartsPerTarget.toFixed(1)
 
-  return `${stats.dartsThrown} darts · ${average} per target`
+  return `${stats.dartsOnCurrentTarget} on target · ${average} avg`
 }
 
 export interface AroundTheClockSingleSessionStats {
