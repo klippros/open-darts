@@ -2,10 +2,11 @@ import { Box, Flex, HStack, Link } from '@chakra-ui/react'
 import { Link as RouterLink } from 'react-router-dom'
 import openDartsLogo from '../../assets/open-darts-logo.svg'
 import klipprosLogo from '../../assets/klippros-logo.svg'
-import { AppNavbar } from '../AppNavbar'
-import { SettingsMenu } from '../SettingsMenu/SettingsMenu'
-import { ContentContainer } from '../ContentContainer'
 import { toolbarControlSize } from '../../layout'
+import { AppNavbar } from '../AppNavbar/AppNavbar'
+import { ContentContainer } from '../ContentContainer'
+import { MobileNavMenu } from '../MobileNavMenu/MobileNavMenu'
+import { SettingsMenu } from '../SettingsMenu/SettingsMenu'
 
 export const AppHeader = () => (
   <Box as="header" flexShrink={0} position="relative" zIndex={1}>
@@ -41,9 +42,12 @@ export const AppHeader = () => (
               </RouterLink>
             </Link>
           </HStack>
-          <HStack gap={6} flexShrink={0} align="center">
+          <HStack gap={{ base: 2, md: 6 }} flexShrink={0} align="center">
             <AppNavbar />
-            <SettingsMenu />
+            <MobileNavMenu />
+            <Box display={{ base: 'none', md: 'block' }}>
+              <SettingsMenu />
+            </Box>
           </HStack>
         </Flex>
       </Box>
