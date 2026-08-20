@@ -9,12 +9,21 @@ export interface StatTimelineDialogProps {
   onClose: () => void
 }
 
+const formatPointUnit = (unit: StatTimeline['pointUnitLabel'], count: number): string => {
+  if (unit === 'leg') {
+    return count === 1 ? 'leg' : 'legs'
+  }
+
+  return count === 1 ? 'session' : 'sessions'
+}
+
 export const StatTimelineDialog = ({ open, timeline, onClose }: StatTimelineDialogProps) => {
   if (timeline === null) {
     return null
   }
 
   const plottablePoints = timeline.points.filter((point) => point.value !== null)
+  const unitLabel = formatPointUnit(timeline.pointUnitLabel, plottablePoints.length)
 
   return (
     <Dialog.Root
@@ -39,8 +48,8 @@ export const StatTimelineDialog = ({ open, timeline, onClose }: StatTimelineDial
           <Dialog.Header>
             <Dialog.Title color="white">{timeline.metricLabel}</Dialog.Title>
             <Dialog.Description color="whiteAlpha.700">
-              {timeline.scopeLabel} · {plottablePoints.length} match
-              {plottablePoints.length === 1 ? '' : 'es'} with data · hover points for details
+              {timeline.scopeLabel} · {plottablePoints.length} {unitLabel} with data · hover points
+              for details
             </Dialog.Description>
           </Dialog.Header>
           <Dialog.Body>
@@ -48,7 +57,8 @@ export const StatTimelineDialog = ({ open, timeline, onClose }: StatTimelineDial
               <StatTimelineChart points={timeline.points} format={timeline.format} />
             ) : (
               <Text fontSize="sm" color="whiteAlpha.700" lineHeight="1.55">
-                No matches in this period have a value for this stat yet.
+                No {formatPointUnit(timeline.pointUnitLabel, 2)} in this period have a value for
+                this stat yet.
               </Text>
             )}
           </Dialog.Body>

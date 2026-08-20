@@ -12,7 +12,7 @@ export enum MatchStatRowId {
   Checkouts = 'checkouts',
   Checkouts100Plus = 'checkouts100Plus',
   HighestCheckout = 'highestCheckout',
-  BestGameAverage = 'bestGameAverage',
+  BestLegAverage = 'bestLegAverage',
   ThreeDartAverageUntil170 = 'threeDartAverageUntil170',
   AvgDarts = 'avgDarts',
 }
@@ -99,8 +99,8 @@ const sharedMatchStatRows: MatchStatRowDefinition[] = [
 
 const statsPageOnlyRows: MatchStatRowDefinition[] = [
   {
-    id: MatchStatRowId.BestGameAverage,
-    label: 'Best game avg',
+    id: MatchStatRowId.BestLegAverage,
+    label: 'Best leg avg',
     formatValue: () => '—',
     isVisible: () => true,
   },
@@ -140,8 +140,8 @@ export const x01LegStatsToPlayerMatchStats = (stats: X01LegStats): PlayerMatchSt
 
 export const formatStatsPageRowValue = (rowId: MatchStatRowId, stats: X01LegStats): string => {
   switch (rowId) {
-    case MatchStatRowId.BestGameAverage:
-      return formatAverage(stats.bestGameAverage)
+    case MatchStatRowId.BestLegAverage:
+      return formatAverage(stats.bestLegAverage)
     case MatchStatRowId.AvgDarts:
       return formatInteger(stats.avgDarts)
     default:

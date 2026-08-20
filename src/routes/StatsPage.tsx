@@ -68,8 +68,8 @@ export const StatsPage = () => {
   }, [])
 
   const hasAnyData =
-    analytics.x01.fiveOhOne.gameCount > 0 ||
-    analytics.x01.other.gameCount > 0 ||
+    analytics.x01.fiveOhOne.legCount > 0 ||
+    analytics.x01.other.legCount > 0 ||
     analytics.practice.checkout.length > 0 ||
     analytics.practice.other.length > 0
 
@@ -125,7 +125,7 @@ export const StatsPage = () => {
                 scope={{ type: 'x01-501' }}
                 onStatSelect={handleStatSelect}
               />
-              {analytics.x01.other.gameCount > 0 && (
+              {analytics.x01.other.legCount > 0 && (
                 <X01LegSection
                   title="Other x01"
                   subtitle="301, 401, and custom x01 legs kept separate from 501."

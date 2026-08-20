@@ -64,7 +64,11 @@ describe('statTimelines', () => {
       },
     )
 
-    expect(timeline.points.map((point) => point.sessionId)).toEqual(['earlier', 'later'])
+    expect(timeline.pointUnitLabel).toBe('leg')
+    expect(timeline.points.map((point) => point.sessionId)).toEqual([
+      'earlier:leg:1',
+      'later:leg:1',
+    ])
     expect(timeline.points[0]?.value).toBe(80)
     expect(timeline.points[1]?.value).toBe(75)
     expect(hasPlottableTimeline(timeline)).toBe(true)
@@ -82,7 +86,7 @@ describe('statTimelines', () => {
     expect(hasPlottableTimeline(timeline)).toBe(false)
   })
 
-  it('builds per-session thrown 180 counts', () => {
+  it('builds per-leg thrown 180 counts', () => {
     const timeline = buildStatTimeline(
       [
         sampleSession({
@@ -116,5 +120,63 @@ describe('statTimelines', () => {
 
     expect(timeline.points[0]?.value).toBe(0)
     expect(timeline.points[1]?.value).toBe(1)
+  })
+
+  it('emits one timeline point per leg in a multi-leg match', () => {
+    const timeline = buildStatTimeline(
+      [
+        sampleSession({
+          id: 'best-of-three',
+          completedAt: '2026-01-03T10:00:00.000Z',
+          visits: [
+            sampleVisit({
+              visitScore: 100,
+              scoreBefore: 501,
+              scoreAfter: 401,
+              legIndex: 1,
+            }),
+            sampleVisit({
+              visitIndex: 1,
+              checkout: true,
+              visitScore: 100,
+              scoreBefore: 100,
+              scoreAfter: 0,
+              legIndex: 1,
+            }),
+            sampleVisit({
+              visitIndex: 2,
+              visitScore: 40,
+              scoreBefore: 501,
+              scoreAfter: 461,
+              legIndex: 2,
+            }),
+            sampleVisit({
+              visitIndex: 3,
+              checkout: true,
+              visitScore: 40,
+              scoreBefore: 40,
+              scoreAfter: 0,
+              legIndex: 2,
+            }),
+          ],
+        }),
+      ],
+      {
+        scope: { type: 'x01-501' },
+        metric: 'threeDartAverage',
+        metricLabel: '3-dart average',
+        scopeLabel: '501',
+      },
+    )
+
+    expect(timeline.points).toHaveLength(2)
+    expect(timeline.points.map((point) => point.sessionId)).toEqual([
+      'best-of-three:leg:1',
+      'best-of-three:leg:2',
+    ])
+    expect(timeline.points[0]?.value).toBe(100)
+    expect(timeline.points[1]?.value).toBe(40)
+    expect(timeline.points[0]?.sessionLabel).toBe('501 · Leg 1')
+    expect(timeline.points[1]?.sessionLabel).toBe('501 · Leg 2')
   })
 })

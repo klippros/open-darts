@@ -54,9 +54,9 @@ const timelineRowConfig: Record<MatchStatRowId, { metric: StatMetricId; metricLa
     metric: 'highestCheckout',
     metricLabel: 'Highest checkout',
   },
-  [MatchStatRowId.BestGameAverage]: {
-    metric: 'bestGameAverage',
-    metricLabel: 'Best game avg',
+  [MatchStatRowId.BestLegAverage]: {
+    metric: 'bestLegAverage',
+    metricLabel: 'Best leg avg',
   },
   [MatchStatRowId.ThreeDartAverageUntil170]: {
     metric: 'threeDartAverageUntil170',
@@ -85,7 +85,7 @@ export const X01LegSection = ({
   scope,
   onStatSelect,
 }: X01LegSectionProps) => {
-  if (stats.gameCount === 0) {
+  if (stats.legCount === 0) {
     return (
       <Stack gap={4}>
         <SectionHeading title={title} subtitle={subtitle} />
@@ -102,7 +102,7 @@ export const X01LegSection = ({
     <Stack gap={4}>
       <SectionHeading
         title={title}
-        subtitle={`${stats.gameCount} saved game${stats.gameCount === 1 ? '' : 's'} · ${stats.checkoutGameCount} checked out`}
+        subtitle={`${stats.legCount} saved leg${stats.legCount === 1 ? '' : 's'} · ${stats.checkoutLegCount} checked out`}
       />
       <StatsTable
         players={[{ id: STATS_PAGE_PLAYER_ID, name: '' }]}

@@ -71,9 +71,9 @@ describe('x01Stats', () => {
 
     expect(stats.fiveOhOne.threeDartAverage).toBe(85)
     expect(stats.fiveOhOne.threeDartAverageUntil170).toBe(90)
-    expect(stats.fiveOhOne.bestGameAverage).toBe(85)
-    expect(stats.fiveOhOne.checkoutGameCount).toBe(1)
-    expect(stats.other.gameCount).toBe(0)
+    expect(stats.fiveOhOne.bestLegAverage).toBe(85)
+    expect(stats.fiveOhOne.checkoutLegCount).toBe(1)
+    expect(stats.other.legCount).toBe(0)
   })
 
   it('keeps 501 and other x01 stats separate', () => {
@@ -109,18 +109,18 @@ describe('x01Stats', () => {
       }),
     ])
 
-    expect(stats.fiveOhOne.gameCount).toBe(1)
+    expect(stats.fiveOhOne.legCount).toBe(1)
     expect(stats.fiveOhOne.threeDartAverage).toBe(75)
-    expect(stats.fiveOhOne.bestGameAverage).toBe(75)
+    expect(stats.fiveOhOne.bestLegAverage).toBe(75)
     expect(stats.fiveOhOne.avgDarts).toBe(3)
 
-    expect(stats.other.gameCount).toBe(1)
+    expect(stats.other.legCount).toBe(1)
     expect(stats.other.threeDartAverage).toBe(30)
-    expect(stats.other.bestGameAverage).toBe(30)
+    expect(stats.other.bestLegAverage).toBe(30)
     expect(stats.other.avgDarts).toBe(2)
   })
 
-  it('tracks the best single-game 3-dart average', () => {
+  it('tracks the best single-leg 3-dart average', () => {
     const stats = computeX01Stats([
       sampleSession({
         id: 'hot-leg',
@@ -152,7 +152,7 @@ describe('x01Stats', () => {
     ])
 
     expect(stats.fiveOhOne.threeDartAverage).toBe(76)
-    expect(stats.fiveOhOne.bestGameAverage).toBe(100)
+    expect(stats.fiveOhOne.bestLegAverage).toBe(100)
   })
 
   it('averages darts for checked-out legs within each x01 group', () => {
@@ -185,6 +185,66 @@ describe('x01Stats', () => {
     ])
 
     expect(stats.fiveOhOne.avgDarts).toBe(5)
-    expect(stats.fiveOhOne.checkoutGameCount).toBe(1)
+    expect(stats.fiveOhOne.checkoutLegCount).toBe(1)
+    expect(stats.fiveOhOne.legCount).toBe(2)
+  })
+
+  it('aggregates multi-leg matches as individual legs', () => {
+    const stats = computeX01Stats([
+      sampleSession({
+        id: 'best-of-three',
+        visits: [
+          sampleVisit({
+            visitScore: 100,
+            scoreBefore: 501,
+            scoreAfter: 401,
+            legIndex: 1,
+            darts: [numberDart(20, DartMultiplier.Triple), numberDart(20, DartMultiplier.Triple)],
+          }),
+          sampleVisit({
+            visitIndex: 1,
+            visitScore: 100,
+            scoreBefore: 401,
+            scoreAfter: 301,
+            legIndex: 1,
+          }),
+          sampleVisit({
+            visitIndex: 2,
+            checkout: true,
+            visitScore: 100,
+            scoreBefore: 100,
+            scoreAfter: 0,
+            legIndex: 1,
+            darts: [numberDart(20, DartMultiplier.Triple), numberDart(20, DartMultiplier.Triple)],
+          }),
+          sampleVisit({
+            visitIndex: 3,
+            visitScore: 40,
+            scoreBefore: 501,
+            scoreAfter: 461,
+            legIndex: 2,
+            darts: [numberDart(20, DartMultiplier.Single), numberDart(20, DartMultiplier.Single)],
+          }),
+          sampleVisit({
+            visitIndex: 4,
+            checkout: true,
+            visitScore: 40,
+            scoreBefore: 40,
+            scoreAfter: 0,
+            legIndex: 2,
+            darts: [numberDart(20, DartMultiplier.Double)],
+          }),
+        ],
+      }),
+    ])
+
+    // Visit-weighted: (100+100+100+40+40) / 5 = 76
+    expect(stats.fiveOhOne.threeDartAverage).toBe(76)
+    expect(stats.fiveOhOne.legCount).toBe(2)
+    expect(stats.fiveOhOne.checkoutLegCount).toBe(2)
+    // Hot leg average is 100, not the blended match average of 76
+    expect(stats.fiveOhOne.bestLegAverage).toBe(100)
+    // Leg 1: 2+1+2 = 5 darts; leg 2: 2+1 = 3 darts → avg 4
+    expect(stats.fiveOhOne.avgDarts).toBe(4)
   })
 })

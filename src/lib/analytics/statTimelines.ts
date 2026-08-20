@@ -1,6 +1,7 @@
 import { GameModeId } from '../../types/gameMode'
 import type { GameSession } from '../../types/gameSession'
 import type { AroundTheClockAimMode } from '../../types/aroundTheClock'
+import type { Visit } from '../../types/visit'
 import { getAroundTheClockConfig } from '../aroundTheClock/aroundTheClockConfig'
 import { getSessionCompletedAt, getSessionModeLabel } from '../history/sessionSummary'
 import { isAroundTheClockConfig, isX01Config } from '../game/gameConfigGuards'
@@ -20,13 +21,19 @@ import {
   getSessionCheckoutRate,
   getSessionFinalScore,
   getThreeDartAverage,
-  sessionFinishedWithCheckout,
 } from './visitStats'
+import {
+  countDartsInVisits,
+  expandX01SessionLegs,
+  getX01LegSlicePointId,
+  legFinishedWithCheckout,
+  type X01LegSlice,
+} from './x01LegSlices'
 
 export type StatMetricId =
   | 'threeDartAverage'
   | 'threeDartAverageUntil170'
-  | 'bestGameAverage'
+  | 'bestLegAverage'
   | 'thrown180'
   | 'thrown140Plus'
   | 'thrown100Plus'
@@ -68,16 +75,17 @@ export interface StatTimeline {
   metricLabel: string
   scopeLabel: string
   format: StatTimelineFormat
+  pointUnitLabel: 'leg' | 'session'
   points: StatTimelinePoint[]
 }
 
-const getX01SessionPlayerStats = (session: GameSession) => {
+const getX01PlayerStatsForVisits = (session: GameSession, visits: Visit[]) => {
   if (!isX01Config(session.mode, session.config)) {
     return null
   }
 
   return computePlayerStatsForVisits(
-    getPrimaryPlayerVisits(session),
+    visits,
     {
       doubleIn: session.config.doubleIn,
       doubleOut: session.config.doubleOut,
@@ -86,13 +94,13 @@ const getX01SessionPlayerStats = (session: GameSession) => {
   )
 }
 
-const getX01SessionMetric = (session: GameSession, metric: StatMetricId): number | null => {
-  const visits = getPrimaryPlayerVisits(session)
-  const playerStats = getX01SessionPlayerStats(session)
+const getX01LegMetric = (slice: X01LegSlice, metric: StatMetricId): number | null => {
+  const { visits, session } = slice
+  const playerStats = getX01PlayerStatsForVisits(session, visits)
 
   switch (metric) {
     case 'threeDartAverage':
-    case 'bestGameAverage':
+    case 'bestLegAverage':
       return getThreeDartAverage(visits)
     case 'threeDartAverageUntil170':
       return getThreeDartAverage(getScoringVisits(visits))
@@ -111,7 +119,7 @@ const getX01SessionMetric = (session: GameSession, metric: StatMetricId): number
     case 'highestCheckout':
       return playerStats?.highestCheckout ?? null
     case 'avgDarts':
-      return sessionFinishedWithCheckout(session) ? countDartsInSession(session) : null
+      return legFinishedWithCheckout(visits) ? countDartsInVisits(visits) : null
     case 'checkoutRate':
     case 'avgVisits':
     case 'avgFinalScore':
@@ -121,6 +129,16 @@ const getX01SessionMetric = (session: GameSession, metric: StatMetricId): number
   }
 
   return null
+}
+
+const getX01LegSessionLabel = (slice: X01LegSlice, legCountInSession: number): string => {
+  const modeLabel = getSessionModeLabel(slice.session)
+
+  if (legCountInSession <= 1) {
+    return modeLabel
+  }
+
+  return `${modeLabel} · Leg ${slice.legNumber}`
 }
 
 const getCheckoutPracticeSessionMetric = (
@@ -133,7 +151,7 @@ const getCheckoutPracticeSessionMetric = (
     case 'threeDartAverage':
       return getThreeDartAverage(getPrimaryPlayerVisits(session))
     case 'threeDartAverageUntil170':
-    case 'bestGameAverage':
+    case 'bestLegAverage':
     case 'thrown180':
     case 'thrown140Plus':
     case 'thrown100Plus':
@@ -160,7 +178,7 @@ const getBob27SessionMetric = (session: GameSession, metric: StatMetricId): numb
       return getSessionFinalScore(session)
     case 'threeDartAverage':
     case 'threeDartAverageUntil170':
-    case 'bestGameAverage':
+    case 'bestLegAverage':
     case 'thrown180':
     case 'thrown140Plus':
     case 'thrown100Plus':
@@ -203,7 +221,7 @@ const getAroundTheClockSessionMetric = (
       return isCompleted ? dartCount : null
     case 'threeDartAverage':
     case 'threeDartAverageUntil170':
-    case 'bestGameAverage':
+    case 'bestLegAverage':
     case 'thrown180':
     case 'thrown140Plus':
     case 'thrown100Plus':
@@ -239,7 +257,7 @@ export const getStatTimelineFormat = (metric: StatMetricId): StatTimelineFormat 
       return 'integer'
     case 'threeDartAverage':
     case 'threeDartAverageUntil170':
-    case 'bestGameAverage':
+    case 'bestLegAverage':
       return 'average'
   }
 
@@ -266,14 +284,48 @@ const filterSessionsForScope = (
   }
 }
 
-const getSessionMetricValue = (
+const isX01TimelineScope = (scope: StatTimelineScope): boolean =>
+  scope.type === 'x01-501' || scope.type === 'x01-other'
+
+const buildX01TimelinePoints = (
+  sessions: GameSession[],
+  metric: StatMetricId,
+): StatTimelinePoint[] => {
+  const points = sessions.flatMap((session) => {
+    const legs = expandX01SessionLegs(session)
+
+    return legs.map((slice) => ({
+      sessionId: getX01LegSlicePointId(slice),
+      completedAt: getSessionCompletedAt(session),
+      sessionLabel: getX01LegSessionLabel(slice, legs.length),
+      value: getX01LegMetric(slice, metric),
+      legNumber: slice.legNumber,
+    }))
+  })
+
+  return points
+    .sort((left, right) => {
+      const byCompletedAt = left.completedAt.localeCompare(right.completedAt)
+
+      if (byCompletedAt !== 0) {
+        return byCompletedAt
+      }
+
+      return left.legNumber - right.legNumber
+    })
+    .map(({ sessionId, completedAt, sessionLabel, value }) => ({
+      sessionId,
+      completedAt,
+      sessionLabel,
+      value,
+    }))
+}
+
+const getPracticeSessionMetricValue = (
   session: GameSession,
   selection: StatTimelineSelection,
 ): number | null => {
   switch (selection.scope.type) {
-    case 'x01-501':
-    case 'x01-other':
-      return getX01SessionMetric(session, selection.metric)
     case 'practice-checkout':
       return getCheckoutPracticeSessionMetric(session, selection.metric)
     case 'practice-bob27':
@@ -289,7 +341,19 @@ export const buildStatTimeline = (
   sessions: GameSession[],
   selection: StatTimelineSelection,
 ): StatTimeline => {
-  const scopedSessions = filterSessionsForScope(sessions, selection.scope).sort((left, right) =>
+  const scopedSessions = filterSessionsForScope(sessions, selection.scope)
+
+  if (isX01TimelineScope(selection.scope)) {
+    return {
+      metricLabel: selection.metricLabel,
+      scopeLabel: selection.scopeLabel,
+      format: getStatTimelineFormat(selection.metric),
+      pointUnitLabel: 'leg',
+      points: buildX01TimelinePoints(scopedSessions, selection.metric),
+    }
+  }
+
+  const sortedSessions = [...scopedSessions].sort((left, right) =>
     getSessionCompletedAt(left).localeCompare(getSessionCompletedAt(right)),
   )
 
@@ -297,11 +361,12 @@ export const buildStatTimeline = (
     metricLabel: selection.metricLabel,
     scopeLabel: selection.scopeLabel,
     format: getStatTimelineFormat(selection.metric),
-    points: scopedSessions.map((session) => ({
+    pointUnitLabel: 'session',
+    points: sortedSessions.map((session) => ({
       sessionId: session.id,
       completedAt: getSessionCompletedAt(session),
       sessionLabel: getSessionModeLabel(session),
-      value: getSessionMetricValue(session, selection),
+      value: getPracticeSessionMetricValue(session, selection),
     })),
   }
 }

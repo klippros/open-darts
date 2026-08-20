@@ -39,16 +39,16 @@ export const getThreeDartAverage = (visits: Visit[]): number | null => {
   return total / visits.length
 }
 
-export const getMaxGameThreeDartAverage = (sessions: GameSession[]): number | null => {
-  const gameAverages = sessions
-    .map((session) => getThreeDartAverage(getPrimaryPlayerVisits(session)))
+export const getMaxThreeDartAverage = (visitGroups: Visit[][]): number | null => {
+  const averages = visitGroups
+    .map((visits) => getThreeDartAverage(visits))
     .filter((average): average is number => average !== null)
 
-  if (gameAverages.length === 0) {
+  if (averages.length === 0) {
     return null
   }
 
-  return Math.max(...gameAverages)
+  return Math.max(...averages)
 }
 
 export const getScoringVisits = (visits: Visit[]): Visit[] =>
