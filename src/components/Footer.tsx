@@ -2,7 +2,7 @@ import { Box, Flex, Link, Text } from '@chakra-ui/react'
 import { ContentContainer } from './ContentContainer'
 
 export const Footer = () => (
-  <Box as="footer" position="sticky" bottom={0} zIndex={2} flexShrink={0} pt={2} pb={6}>
+  <Box as="footer" flexShrink={0} pt={2} pb={6}>
     <ContentContainer>
       <Flex
         align="center"

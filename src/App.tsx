@@ -8,29 +8,25 @@ import { SettingsProvider } from './hooks/SettingsProvider'
 export const App = () => (
   <AccountProvider>
     <SettingsProvider>
-      <Box
-        display="grid"
-        gridTemplateRows="auto 1fr auto"
-        h="100dvh"
-        overflow="hidden"
-        position="relative"
-      >
+      <Box h="100dvh" overflow="hidden" display="flex" flexDirection="column" position="relative">
         <AppHeader />
 
         <Flex
           as="main"
+          flex="1"
           minH={0}
           position="relative"
           zIndex={1}
           overflowY="auto"
           className="hide-scrollbar"
         >
-          <Box w="full" minH="100%">
-            <Outlet />
-          </Box>
+          <Flex direction="column" w="full" minH="100%">
+            <Box flex="1">
+              <Outlet />
+            </Box>
+            <Footer />
+          </Flex>
         </Flex>
-
-        <Footer />
       </Box>
     </SettingsProvider>
   </AccountProvider>
