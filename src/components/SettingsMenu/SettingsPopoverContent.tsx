@@ -1,31 +1,25 @@
-import { Box, Flex, Switch, Text } from '@chakra-ui/react'
+import { Stack } from '@chakra-ui/react'
 import { useSettings } from '../../hooks/settingsContext'
+import { SettingsSwitchRow } from './SettingsSwitchRow'
 
 export const SettingsPopoverContent = () => {
-  const { scoreCallerEnabled, setScoreCallerEnabled } = useSettings()
+  const { scoreCallerEnabled, setScoreCallerEnabled, uiSoundsEnabled, setUiSoundsEnabled } =
+    useSettings()
 
   return (
-    <Flex align="center" justify="space-between" gap={4}>
-      <Box flex="1" minW={0}>
-        <Text fontSize="sm" fontWeight="medium" color="white">
-          Score caller
-        </Text>
-        <Text fontSize="xs" color="whiteAlpha.600" lineHeight="1.4">
-          Speak scores during play
-        </Text>
-      </Box>
-      <Switch.Root
+    <Stack gap={4}>
+      <SettingsSwitchRow
+        label="Score caller"
+        description="Speak scores during play"
         checked={scoreCallerEnabled}
-        colorPalette="orange"
-        onCheckedChange={(details) => {
-          setScoreCallerEnabled(details.checked)
-        }}
-      >
-        <Switch.HiddenInput />
-        <Switch.Control>
-          <Switch.Thumb />
-        </Switch.Control>
-      </Switch.Root>
-    </Flex>
+        onCheckedChange={setScoreCallerEnabled}
+      />
+      <SettingsSwitchRow
+        label="UI sounds"
+        description="Play sound feedback when scoring"
+        checked={uiSoundsEnabled}
+        onCheckedChange={setUiSoundsEnabled}
+      />
+    </Stack>
   )
 }

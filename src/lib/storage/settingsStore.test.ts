@@ -20,7 +20,7 @@ const createMemoryStorage = (): StorageAdapter & { data: Map<string, string> } =
 }
 
 describe('settingsStore', () => {
-  it('defaults score caller to enabled', () => {
+  it('defaults score caller and UI sounds to enabled', () => {
     const storage = createMemoryStorage()
 
     expect(loadSettings(storage)).toEqual(DEFAULT_APP_SETTINGS)
@@ -29,14 +29,37 @@ describe('settingsStore', () => {
   it('saves and loads settings', () => {
     const storage = createMemoryStorage()
 
-    saveSettings({ scoreCallerEnabled: false }, storage)
+    saveSettings({ scoreCallerEnabled: false, uiSoundsEnabled: false }, storage)
 
-    expect(loadSettings(storage)).toEqual({ scoreCallerEnabled: false })
+    expect(loadSettings(storage)).toEqual({
+      scoreCallerEnabled: false,
+      uiSoundsEnabled: false,
+    })
+  })
+
+  it('merges legacy stored settings missing newer fields', () => {
+    const storage = createMemoryStorage()
+    storage.setItem(StorageKey.Settings, '{"scoreCallerEnabled":false}')
+
+    expect(loadSettings(storage)).toEqual({
+      scoreCallerEnabled: false,
+      uiSoundsEnabled: true,
+    })
   })
 
   it('falls back to defaults for invalid stored JSON', () => {
     const storage = createMemoryStorage()
     storage.setItem(StorageKey.Settings, '{"scoreCallerEnabled":"yes"}')
+
+    expect(loadSettings(storage)).toEqual({
+      scoreCallerEnabled: true,
+      uiSoundsEnabled: true,
+    })
+  })
+
+  it('falls back to defaults for non-object JSON', () => {
+    const storage = createMemoryStorage()
+    storage.setItem(StorageKey.Settings, '"nope"')
 
     expect(loadSettings(storage)).toEqual(DEFAULT_APP_SETTINGS)
   })

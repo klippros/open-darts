@@ -1,5 +1,6 @@
 import { Box, Button, Grid, Stack, Text } from '@chakra-ui/react'
 import { VisitDartSlotCard } from '../Scoreboard/VisitDartSlotCard'
+import { useUiSounds } from '../../hooks/useUiSounds'
 import { getAroundTheClockConfig } from '../../lib/aroundTheClock/aroundTheClockConfig'
 import {
   buildDartsForMissAll,
@@ -39,6 +40,7 @@ export const AroundTheClockDartPicker = ({
   onUndo,
   inputDisabled = false,
 }: AroundTheClockDartPickerProps) => {
+  const { playHit, playMiss } = useUiSounds()
   const { aimMode } = getAroundTheClockConfig(config)
   const dartsLeft = getAroundTheClockDartsLeft(pendingDarts)
   const availableOrdinals = new Set(getAroundTheClockAvailableOrdinals(pendingDarts))
@@ -93,6 +95,7 @@ export const AroundTheClockDartPicker = ({
                   disabled={inputDisabled}
                   ariaLabel={`Hit ${currentTargetLabel} on ${ORDINAL_LABELS[ordinal]} dart`}
                   onClick={() => {
+                    playHit()
                     onDarts(
                       buildDartsForOrdinalHit(ordinal, committedTargetIndex, pendingDarts, aimMode),
                     )
@@ -117,6 +120,7 @@ export const AroundTheClockDartPicker = ({
             dartsLeft === 0 || inputDisabled
               ? undefined
               : () => {
+                  playMiss()
                   onDarts(buildDartsForMissAll(dartsLeft))
                 }
           }

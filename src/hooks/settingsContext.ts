@@ -3,6 +3,8 @@ import { createContext, useContext } from 'react'
 export interface SettingsContextValue {
   scoreCallerEnabled: boolean
   setScoreCallerEnabled: (enabled: boolean) => void
+  uiSoundsEnabled: boolean
+  setUiSoundsEnabled: (enabled: boolean) => void
 }
 
 export const SettingsContext = createContext<SettingsContextValue | null>(null)

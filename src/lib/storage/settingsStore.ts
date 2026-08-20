@@ -16,24 +16,33 @@ const parseJson = (value: string | null): unknown => {
   }
 }
 
-const isAppSettings = (value: unknown): value is AppSettings => {
+const readBooleanSetting = (value: unknown, fallback: boolean): boolean =>
+  typeof value === 'boolean' ? value : fallback
+
+const mergeAppSettings = (value: unknown): AppSettings | null => {
   if (typeof value !== 'object' || value === null) {
-    return false
+    return null
   }
 
-  const settings = value as Partial<AppSettings>
+  const stored = value as Partial<AppSettings>
 
-  return typeof settings.scoreCallerEnabled === 'boolean'
+  return {
+    scoreCallerEnabled: readBooleanSetting(
+      stored.scoreCallerEnabled,
+      DEFAULT_APP_SETTINGS.scoreCallerEnabled,
+    ),
+    uiSoundsEnabled: readBooleanSetting(
+      stored.uiSoundsEnabled,
+      DEFAULT_APP_SETTINGS.uiSoundsEnabled,
+    ),
+  }
 }
 
 export const loadSettings = (storage: StorageAdapter = browserLocalStorage): AppSettings => {
   const parsed = parseJson(storage.getItem(StorageKey.Settings))
+  const merged = mergeAppSettings(parsed)
 
-  if (parsed === null || !isAppSettings(parsed)) {
-    return DEFAULT_APP_SETTINGS
-  }
-
-  return parsed
+  return merged ?? DEFAULT_APP_SETTINGS
 }
 
 export const saveSettings = (
