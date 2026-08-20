@@ -114,7 +114,7 @@ export const getMatchSummary = (session: GameSession): MatchSummary => {
 
     let title = 'Session complete'
 
-    if (isChallengeMode(matchProgress)) {
+    if (matchProgress !== undefined && isChallengeMode(matchProgress)) {
       if (matchWinner !== undefined) {
         title = 'Match won!'
       } else if ((matchProgress.legLosses ?? 0) >= matchProgress.legsToWin) {

@@ -7,7 +7,7 @@ import {
   parseOpponentSetup,
   playersMatchLaunchSetup,
 } from './opponentSetup'
-import { createGuestPlayer, createSoloHumanPlayer } from './playerFactory'
+import { createSoloHumanPlayer } from './playerFactory'
 
 describe('opponentSetup', () => {
   it('builds solo, guest, and challenge player lists', () => {

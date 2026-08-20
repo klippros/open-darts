@@ -9,12 +9,14 @@
     "typegen": "chakra typegen src/theme.ts",
     "postinstall": "chakra typegen src/theme.ts",
     "build": "pnpm typegen && tsc -b && vite build",
+    "typecheck": "tsc -b",
     "lint": "oxlint --deny-warnings",
     "test": "vitest run",
     "test:watch": "vitest",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "prepare": "husky"
   },
   "dependencies": {
     "@chakra-ui/react": "^3.36.0",
@@ -33,6 +35,7 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
+    "husky": "^9.1.7",
     "oxlint": "^1.71.0",
     "oxlint-tsgolint": "^0.24.0",
     "prettier": "^3.9.4",

@@ -1,4 +1,4 @@
-- Immediately before commiting run `pnpm format --write`
+- Immediately before committing run `pnpm format --write`, `pnpm typecheck`, and `pnpm test` (the pre-commit hook also runs typecheck and tests and will block the commit if either fails)
 - When creating or amending git commits, follow the `git-commit-messages` skill.
 - Prefer **named exports** over default exports for components, functions, types, and constants.
 - Put **one React component per file**. If a component needs helpers, create a directory named after the main component (e.g. `ExportAssetsModal/`), keep the main component in `<Name>/<Name>.tsx`, and add support components as sibling files in that directory.
