@@ -21,10 +21,9 @@ export const voiceWarn = (...args: unknown[]): void => {
   console.warn(PREFIX, ...args)
 }
 
-export const logVoiceSessionStart = (mode: GameModeId, isolationMs: number): void => {
+export const logVoiceSessionStart = (mode: GameModeId): void => {
   voiceLog('listening started', {
     mode,
-    isolationMs,
     commands: getVoiceCommandHelpLines(mode),
   })
 }

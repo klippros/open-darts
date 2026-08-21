@@ -5,8 +5,6 @@ export interface SettingsContextValue {
   setScoreCallerEnabled: (enabled: boolean) => void
   uiSoundsEnabled: boolean
   setUiSoundsEnabled: (enabled: boolean) => void
-  voiceIsolationMs: number
-  setVoiceIsolationMs: (ms: number) => void
 }
 
 export const SettingsContext = createContext<SettingsContextValue | null>(null)

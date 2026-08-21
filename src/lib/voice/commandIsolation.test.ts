@@ -1,22 +1,18 @@
 import { describe, expect, it } from 'vitest'
 import {
-  clampVoiceIsolationMs,
+  VOICE_COMMAND_ISOLATION_MS,
   commandIsolationOnTimer,
   commandIsolationOnTranscript,
   createCommandIsolationState,
 } from './commandIsolation'
 
+const T = VOICE_COMMAND_ISOLATION_MS
+
 describe('commandIsolation', () => {
-  it('executes immediately when T is 0', () => {
-    const { outcome } = commandIsolationOnTranscript(createCommandIsolationState(), 1000, 0, true)
-
-    expect(outcome).toEqual({ type: 'execute' })
-  })
-
   it('rejects valid command when prior speech is within pre-gap', () => {
     let state = createCommandIsolationState()
-    ;({ state } = commandIsolationOnTranscript(state, 1000, 400, false))
-    const { outcome } = commandIsolationOnTranscript(state, 1200, 400, true)
+    ;({ state } = commandIsolationOnTranscript(state, 1000, false))
+    const { outcome } = commandIsolationOnTranscript(state, 1000 + T - 1, true)
 
     expect(outcome).toEqual({ type: 'reject' })
   })
@@ -24,33 +20,27 @@ describe('commandIsolation', () => {
   it('holds valid command then executes after post-gap', () => {
     let state = createCommandIsolationState()
     let outcome
-    ;({ state, outcome } = commandIsolationOnTranscript(state, 1000, 400, true))
-    expect(outcome).toEqual({ type: 'hold', delayMs: 400 })
+    ;({ state, outcome } = commandIsolationOnTranscript(state, 1000, true))
+    expect(outcome).toEqual({ type: 'hold', delayMs: T })
 
-    ;({ state, outcome } = commandIsolationOnTimer(state, 1400, 400))
+    ;({ state, outcome } = commandIsolationOnTimer(state, 1000 + T))
     expect(outcome).toEqual({ type: 'execute' })
     expect(state.pending).toBe(false)
   })
 
   it('cancels hold when further speech arrives', () => {
     let state = createCommandIsolationState()
-    ;({ state } = commandIsolationOnTranscript(state, 1000, 400, true))
-    const { outcome } = commandIsolationOnTranscript(state, 1100, 400, true)
+    ;({ state } = commandIsolationOnTranscript(state, 1000, true))
+    const { outcome } = commandIsolationOnTranscript(state, 1100, true)
 
     expect(outcome).toEqual({ type: 'cancel-hold' })
   })
 
   it('allows valid command after quiet pre-gap', () => {
     let state = createCommandIsolationState()
-    ;({ state } = commandIsolationOnTranscript(state, 1000, 400, false))
-    const { outcome } = commandIsolationOnTranscript(state, 1500, 400, true)
+    ;({ state } = commandIsolationOnTranscript(state, 1000, false))
+    const { outcome } = commandIsolationOnTranscript(state, 1000 + T, true)
 
-    expect(outcome).toEqual({ type: 'hold', delayMs: 400 })
-  })
-
-  it('clamps isolation ms', () => {
-    expect(clampVoiceIsolationMs(-10)).toBe(0)
-    expect(clampVoiceIsolationMs(2000)).toBe(1500)
-    expect(clampVoiceIsolationMs(Number.NaN)).toBe(400)
+    expect(outcome).toEqual({ type: 'hold', delayMs: T })
   })
 })

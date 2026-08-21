@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react'
 import type { AppGameController } from '../lib/game/createSession'
 import { subscribeCalloutActivity } from '../lib/scoreCaller/speakCallout'
 import {
+  VOICE_CALLER_RESUME_MS,
+  VOICE_COMMAND_ISOLATION_MS,
   commandIsolationOnTimer,
   commandIsolationOnTranscript,
   createCommandIsolationState,
@@ -24,7 +26,6 @@ import {
 import { createVoiceUndoHistory } from '../lib/voice/voiceUndoHistory'
 import { isVoiceInputSupportedForMode } from '../lib/voice/voiceModeSupport'
 import type { GameModeId } from '../types/gameMode'
-import { useSettings } from './settingsContext'
 import { useUiSounds } from './useUiSounds'
 import { useVoiceControl } from './voiceControlContext'
 
@@ -48,7 +49,6 @@ export const useVoiceRecognition = ({
   applyControllerTransaction,
 }: UseVoiceRecognitionOptions): void => {
   const { enabled, setEnabled, setStatus } = useVoiceControl()
-  const { voiceIsolationMs } = useSettings()
   const { playHit, playMiss } = useUiSounds()
   const modeSupportsVoice = isVoiceInputSupportedForMode(mode)
 
@@ -58,7 +58,6 @@ export const useVoiceRecognition = ({
   const holdTimerRef = useRef<number | null>(null)
   const pendingTranscriptRef = useRef<string | null>(null)
   const bestInterimRef = useRef<string | null>(null)
-  const isolationMsRef = useRef(voiceIsolationMs)
   const modeRef = useRef(mode)
   const applyRef = useRef(applyControllerTransaction)
   const playHitRef = useRef(playHit)
@@ -69,7 +68,6 @@ export const useVoiceRecognition = ({
   const undoCommittedFromInterimRef = useRef(false)
   const handleTranscriptRef = useRef<(transcript: string) => void>(() => undefined)
 
-  isolationMsRef.current = voiceIsolationMs
   modeRef.current = mode
   applyRef.current = applyControllerTransaction
   playHitRef.current = playHit
@@ -244,12 +242,7 @@ export const useVoiceRecognition = ({
       return
     }
 
-    const { state, outcome } = commandIsolationOnTranscript(
-      isolationRef.current,
-      now,
-      isolationMsRef.current,
-      isValid,
-    )
+    const { state, outcome } = commandIsolationOnTranscript(isolationRef.current, now, isValid)
     isolationRef.current = state
 
     logVoiceTranscriptPipeline({
@@ -275,7 +268,7 @@ export const useVoiceRecognition = ({
       } else {
         voiceWarn('isolation rejected (pre-gap)', {
           transcript,
-          isolationMs: isolationMsRef.current,
+          isolationMs: VOICE_COMMAND_ISOLATION_MS,
         })
       }
 
@@ -305,11 +298,7 @@ export const useVoiceRecognition = ({
           return
         }
 
-        const timerResult = commandIsolationOnTimer(
-          isolationRef.current,
-          Date.now(),
-          isolationMsRef.current,
-        )
+        const timerResult = commandIsolationOnTimer(isolationRef.current, Date.now())
         isolationRef.current = timerResult.state
 
         voiceLog('isolation timer fired', {
@@ -443,7 +432,7 @@ export const useVoiceRecognition = ({
     })
 
     recognitionRef.current = controller
-    logVoiceSessionStart(modeRef.current, isolationMsRef.current)
+    logVoiceSessionStart(modeRef.current)
     controller.start()
 
     const unsubscribeCallout = subscribeCalloutActivity((active) => {
@@ -462,8 +451,8 @@ export const useVoiceRecognition = ({
         return
       }
 
-      voiceLog('resuming after score caller', { isolationMs: isolationMsRef.current })
-      controller.resume(isolationMsRef.current)
+      voiceLog('resuming after score caller', { isolationMs: VOICE_CALLER_RESUME_MS })
+      controller.resume(VOICE_CALLER_RESUME_MS)
     })
 
     return () => {

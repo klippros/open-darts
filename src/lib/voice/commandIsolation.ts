@@ -10,23 +10,17 @@ export interface CommandIsolationState {
   pendingSince: number | null
 }
 
+/** Silence required before and after a voice command. */
+export const VOICE_COMMAND_ISOLATION_MS = 100
+
+/** Delay after score-caller TTS before listening again. */
+export const VOICE_CALLER_RESUME_MS = 50
+
 export const createCommandIsolationState = (): CommandIsolationState => ({
   lastSpeechAt: null,
   pending: false,
   pendingSince: null,
 })
-
-export const DEFAULT_VOICE_ISOLATION_MS = 400
-export const MIN_VOICE_ISOLATION_MS = 0
-export const MAX_VOICE_ISOLATION_MS = 1500
-
-export const clampVoiceIsolationMs = (value: number): number => {
-  if (!Number.isFinite(value)) {
-    return DEFAULT_VOICE_ISOLATION_MS
-  }
-
-  return Math.min(MAX_VOICE_ISOLATION_MS, Math.max(MIN_VOICE_ISOLATION_MS, Math.round(value)))
-}
 
 /**
  * Pure isolation state machine.
@@ -35,10 +29,9 @@ export const clampVoiceIsolationMs = (value: number): number => {
 export const commandIsolationOnTranscript = (
   state: CommandIsolationState,
   now: number,
-  isolationMs: number,
   isValidCommand: boolean,
 ): { state: CommandIsolationState; outcome: CommandIsolationOutcome } => {
-  const T = clampVoiceIsolationMs(isolationMs)
+  const T = VOICE_COMMAND_ISOLATION_MS
 
   if (state.pending) {
     // Any further speech cancels the hold (valid or not).
@@ -64,7 +57,7 @@ export const commandIsolationOnTranscript = (
     }
   }
 
-  const preGapOk = T === 0 || state.lastSpeechAt === null || now - state.lastSpeechAt >= T
+  const preGapOk = state.lastSpeechAt === null || now - state.lastSpeechAt >= T
 
   if (!preGapOk) {
     return {
@@ -74,17 +67,6 @@ export const commandIsolationOnTranscript = (
         pendingSince: null,
       },
       outcome: { type: 'reject' },
-    }
-  }
-
-  if (T === 0) {
-    return {
-      state: {
-        lastSpeechAt: now,
-        pending: false,
-        pendingSince: null,
-      },
-      outcome: { type: 'execute' },
     }
   }
 
@@ -101,9 +83,8 @@ export const commandIsolationOnTranscript = (
 export const commandIsolationOnTimer = (
   state: CommandIsolationState,
   now: number,
-  isolationMs: number,
 ): { state: CommandIsolationState; outcome: CommandIsolationOutcome } => {
-  const T = clampVoiceIsolationMs(isolationMs)
+  const T = VOICE_COMMAND_ISOLATION_MS
 
   if (!state.pending || state.pendingSince === null) {
     return { state, outcome: { type: 'reject' } }
