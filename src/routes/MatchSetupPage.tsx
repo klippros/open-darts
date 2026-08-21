@@ -59,7 +59,6 @@ export const MatchSetupPage = () => {
   const [setup, setSetup] = useState<OpponentSetup>(() =>
     parseOpponentSetup(searchParams, 2, x01Config.startScore),
   )
-  const [guestNameError, setGuestNameError] = useState<string | null>(null)
 
   const modeLabel = formatX01StartScore(x01Config)
   const minVisits = getMinVisits(x01Config.startScore)
@@ -68,11 +67,6 @@ export const MatchSetupPage = () => {
   const opponentStarterLabel = setup.mode === 'guest' ? setup.guestName.trim() || 'Guest' : 'Guest'
 
   const handleStart = () => {
-    if (setup.mode === 'guest' && setup.guestName.trim() === '') {
-      setGuestNameError('Enter a name for your guest opponent.')
-      return
-    }
-
     const params = appendOpponentSetupParams(
       new URLSearchParams(searchParams),
       setup,
@@ -100,7 +94,6 @@ export const MatchSetupPage = () => {
                 selected={setup.mode === option.value}
                 onSelect={() => {
                   setSetup((current) => ({ ...current, mode: option.value }))
-                  setGuestNameError(null)
                 }}
               />
             ))}
@@ -117,24 +110,16 @@ export const MatchSetupPage = () => {
               px={4}
               py={4}
             >
-              <Stack gap={2}>
-                <Input
-                  value={setup.guestName}
-                  onChange={(event) => {
-                    setSetup((current) => ({ ...current, guestName: event.target.value }))
-                    setGuestNameError(null)
-                  }}
-                  placeholder="Guest name"
-                  bg="whiteAlpha.100"
-                  borderColor="whiteAlpha.300"
-                  color="white"
-                />
-                {guestNameError !== null && (
-                  <Text color="red.300" fontSize="sm">
-                    {guestNameError}
-                  </Text>
-                )}
-              </Stack>
+              <Input
+                value={setup.guestName}
+                onChange={(event) => {
+                  setSetup((current) => ({ ...current, guestName: event.target.value }))
+                }}
+                placeholder="Guest"
+                bg="whiteAlpha.100"
+                borderColor="whiteAlpha.300"
+                color="white"
+              />
             </Box>
           </SetupSection>
         )}
