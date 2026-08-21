@@ -3,6 +3,7 @@ import { useGameChrome } from '../../hooks/gameChromeContext'
 import { toolbarControlSize } from '../../layout'
 import { AppNavbar } from '../AppNavbar/AppNavbar'
 import { ContentContainer } from '../ContentContainer'
+import { GameFullscreenControl } from '../GameFullscreenControl/GameFullscreenControl'
 import { GameHelpControl } from '../GameHelpControl/GameHelpControl'
 import { MobileNavMenu } from '../MobileNavMenu/MobileNavMenu'
 import { SettingsMenu } from '../SettingsMenu/SettingsMenu'
@@ -22,6 +23,7 @@ export const AppHeader = () => {
               {!isActiveMatch && <AppNavbar />}
               {!isActiveMatch && <MobileNavMenu />}
               {isActiveMatch && <GameHelpControl />}
+              {isActiveMatch && <GameFullscreenControl />}
               <Box display={isActiveMatch ? 'block' : { base: 'none', md: 'block' }}>
                 <SettingsMenu />
               </Box>
