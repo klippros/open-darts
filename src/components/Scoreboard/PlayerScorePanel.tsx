@@ -7,7 +7,7 @@ import {
 import { LegStarterIcon } from '../LegStarterIcon/LegStarterIcon'
 import { ChallengeLegDots } from './ChallengeLegDots'
 import { LegWinDots } from './LegWinDots'
-import { ChallengeLegStatus } from '../../types/match'
+import type { ChallengeLegStatus } from '../../types/match'
 
 export type PlayerScorePanelAlign = 'left' | 'right' | 'solo'
 
@@ -59,10 +59,10 @@ const PlayerNameWithLegStarter = ({
   isLegStarter: boolean
   nameFirst: boolean
 }) => (
-  <Flex align="center" gap={1}>
+  <Flex align="center" gap={1} minW={0}>
     {nameFirst ? (
       <>
-        <Text fontSize="sm" color="whiteAlpha.600">
+        <Text fontSize="sm" color="whiteAlpha.600" truncate>
           {name}
         </Text>
         {isLegStarter && <LegStarterIcon direction="left" />}
@@ -70,7 +70,7 @@ const PlayerNameWithLegStarter = ({
     ) : (
       <>
         {isLegStarter && <LegStarterIcon direction="right" />}
-        <Text fontSize="sm" color="whiteAlpha.600">
+        <Text fontSize="sm" color="whiteAlpha.600" truncate>
           {name}
         </Text>
       </>

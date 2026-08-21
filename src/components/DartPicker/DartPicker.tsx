@@ -1,4 +1,4 @@
-import { Box, Stack, Text } from '@chakra-ui/react'
+import { Box, Stack } from '@chakra-ui/react'
 import { useCallback, useState } from 'react'
 import { useDartKeyboard } from '../../hooks/useDartKeyboard'
 import { createDartKeyboardInputState } from '../../lib/dartKeyboardInput'
@@ -86,19 +86,7 @@ export const DartPicker = ({ onDart, onUndo, inputDisabled = false }: DartPicker
   const activeMultiplier = pointerActiveMultiplier
 
   return (
-    <Box
-      position={{ base: 'sticky', md: 'static' }}
-      bottom={0}
-      zIndex={2}
-      mx={{ base: -6, md: 0 }}
-      px={{ base: 6, md: 0 }}
-      pt={{ base: 4, md: 0 }}
-      pb={{ base: 4, md: 0 }}
-      bg={{ base: 'rgba(0, 0, 0, 0.72)', md: 'transparent' }}
-      backdropFilter={{ base: 'blur(10px)', md: 'none' }}
-      borderTopWidth={{ base: '1px', md: 0 }}
-      borderColor="whiteAlpha.200"
-    >
+    <Stack gap={3}>
       <Box
         w="100%"
         borderRadius="8px"
@@ -137,16 +125,6 @@ export const DartPicker = ({ onDart, onUndo, inputDisabled = false }: DartPicker
           />
         </svg>
       </Box>
-
-      <Stack mt={3} gap={1} fontSize="xs" color="whiteAlpha.500">
-        <Text>
-          Keyboard: D/T for double/triple, type the segment number, then Space to confirm. B bull,
-          Tab miss, Backspace undo, Esc clear modifier.
-        </Text>
-        <Text display={{ base: 'none', md: 'block' }}>
-          Tap the board to score. Center arms double/triple; corners are Bull, 25, Undo, and Miss.
-        </Text>
-      </Stack>
-    </Box>
+    </Stack>
   )
 }

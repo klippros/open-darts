@@ -35,20 +35,20 @@ export const GameBoardLayout = ({
     : null
 
   const renderHistoryColumn = (player: Player, align: 'left' | 'right') =>
-    aroundTheClockConfig !== null ? (
-      <AroundTheClockHistoryColumn
+    aroundTheClockConfig === null ? (
+      <VisitHistoryColumn
         player={player}
         visits={visits}
-        config={aroundTheClockConfig}
+        mode={mode}
         currentLeg={currentLeg}
         align={align}
         showPlayerName={showPlayerName}
       />
     ) : (
-      <VisitHistoryColumn
+      <AroundTheClockHistoryColumn
         player={player}
         visits={visits}
-        mode={mode}
+        config={aroundTheClockConfig}
         currentLeg={currentLeg}
         align={align}
         showPlayerName={showPlayerName}

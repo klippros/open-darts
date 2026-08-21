@@ -1,18 +1,12 @@
-import { Box, Button, HStack, Stack } from '@chakra-ui/react'
+import { Box, Flex, Stack, useBreakpointValue } from '@chakra-ui/react'
 import { ContentContainer } from '../components/ContentContainer'
-import { AroundTheClockDartPicker } from '../components/DartPicker/AroundTheClockDartPicker'
-import { Bob27DartPicker } from '../components/DartPicker/Bob27DartPicker'
-import { DartPicker } from '../components/DartPicker/DartPicker'
+import { GameModeDartPicker } from '../components/DartPicker/GameModeDartPicker'
 import { GameBoardLayout } from '../components/GameBoardLayout'
 import { Scoreboard } from '../components/Scoreboard/Scoreboard'
 import { useAccount } from '../hooks/accountContext'
 import { useGamePage } from '../hooks/useGamePage'
-import { isAroundTheClockConfig } from '../lib/game/gameConfigGuards'
 import { showsVisitHistory } from '../lib/game/gameModeDefinitions'
-import { matchHasProgress } from '../lib/game/matchProgress'
-import type { AroundTheClockState } from '../types/aroundTheClock'
-import type { Bob27State } from '../types/bob27'
-import { GameModeId } from '../types/gameMode'
+import { mainContentMaxWidth } from '../layout'
 import { GamePageDialogs } from './GamePageDialogs'
 
 export const GamePage = () => {
@@ -21,52 +15,84 @@ export const GamePage = () => {
     recordDart,
     recordDarts,
     undoDart,
-    finishMatch,
     restart,
     loadState,
     startNewGame,
     abortDialogOpen,
-    requestAbortMatch,
     cancelAbortMatch,
     confirmAbortMatch,
     resumeSavedGame,
+    pickerTargets,
   } = useGamePage()
   const { account, createAccount } = useAccount()
+  const isMobile = useBreakpointValue({ base: true, md: false }, { ssr: false }) ?? true
 
   const inputDisabled = controller.isComplete || loadState.kind === 'conflict'
-  const canFinish = matchHasProgress(controller)
-  const isAroundTheClock = controller.session.mode === GameModeId.AroundTheClock
-  const isBob27 = controller.session.mode === GameModeId.Bob27
-  const aroundTheClockState = isAroundTheClock
-    ? (controller.engineState as AroundTheClockState)
-    : null
-  const bob27State = isBob27 ? (controller.engineState as Bob27State) : null
-  const committedTargetIndex = aroundTheClockState?.players[controller.activePlayerId]?.targetIndex
-  const bob27TargetIndex = bob27State?.players[controller.activePlayerId]?.targetIndex
+
+  const dialogs = (
+    <GamePageDialogs
+      resumeConflictSession={loadState.kind === 'conflict' ? loadState.savedSnapshot.session : null}
+      onResumeSaved={resumeSavedGame}
+      onStartNew={startNewGame}
+      abortDialogOpen={abortDialogOpen}
+      onAbortDialogOpenChange={(open) => {
+        if (!open) {
+          cancelAbortMatch()
+        }
+      }}
+      onConfirmAbortMatch={confirmAbortMatch}
+      showMatchSummary={controller.isComplete}
+      completedSession={controller.isComplete ? controller.session : null}
+      account={account}
+      onPlayAgain={restart}
+      onUndoLastDart={undoDart}
+      onCreateAccount={createAccount}
+    />
+  )
+
+  const scoreboard = (
+    <Scoreboard
+      mode={controller.session.mode}
+      scoreboard={controller.scoreboard}
+      pendingDarts={controller.pendingDarts}
+      visits={controller.session.visits}
+      players={controller.session.players}
+      config={controller.session.config}
+      matchProgress={controller.session.matchProgress}
+    />
+  )
+
+  const picker = (
+    <GameModeDartPicker
+      mode={controller.session.mode}
+      config={controller.session.config}
+      aroundTheClockTargetIndex={pickerTargets.aroundTheClockTargetIndex}
+      bob27TargetIndex={pickerTargets.bob27TargetIndex}
+      pendingDarts={controller.pendingDarts}
+      onDart={recordDart}
+      onDarts={recordDarts}
+      onUndo={undoDart}
+      inputDisabled={inputDisabled}
+    />
+  )
+
+  if (isMobile) {
+    return (
+      <Flex direction="column" h="100%" minH={0} w="full" maxW={mainContentMaxWidth} mx="auto">
+        {dialogs}
+        <Box flex="1" minH={0} overflowY="auto" className="hide-scrollbar" px={6} py={6}>
+          {scoreboard}
+        </Box>
+        <Box flexShrink={0} px={6} pt={4} pb={4}>
+          {picker}
+        </Box>
+      </Flex>
+    )
+  }
 
   return (
     <ContentContainer>
-      <GamePageDialogs
-        resumeConflictSession={
-          loadState.kind === 'conflict' ? loadState.savedSnapshot.session : null
-        }
-        onResumeSaved={resumeSavedGame}
-        onStartNew={startNewGame}
-        abortDialogOpen={abortDialogOpen}
-        onAbortDialogOpenChange={(open) => {
-          if (!open) {
-            cancelAbortMatch()
-          }
-        }}
-        onConfirmAbortMatch={confirmAbortMatch}
-        showMatchSummary={controller.isComplete}
-        completedSession={controller.isComplete ? controller.session : null}
-        account={account}
-        onPlayAgain={restart}
-        onUndoLastDart={undoDart}
-        onCreateAccount={createAccount}
-      />
-
+      {dialogs}
       <Box py={{ base: 6, md: 8 }} pb={10}>
         <GameBoardLayout
           players={controller.session.players}
@@ -77,48 +103,8 @@ export const GamePage = () => {
           showVisitHistory={showsVisitHistory(controller.session.mode)}
         >
           <Stack gap={8}>
-            <Scoreboard
-              mode={controller.session.mode}
-              scoreboard={controller.scoreboard}
-              pendingDarts={controller.pendingDarts}
-              visits={controller.session.visits}
-              players={controller.session.players}
-              config={controller.session.config}
-              matchProgress={controller.session.matchProgress}
-            />
-
-            {isAroundTheClock &&
-            isAroundTheClockConfig(controller.session.mode, controller.session.config) &&
-            committedTargetIndex !== undefined ? (
-              <AroundTheClockDartPicker
-                committedTargetIndex={committedTargetIndex}
-                pendingDarts={controller.pendingDarts}
-                config={controller.session.config}
-                onDarts={recordDarts}
-                onUndo={undoDart}
-                inputDisabled={inputDisabled}
-              />
-            ) : isBob27 && bob27TargetIndex !== undefined ? (
-              <Bob27DartPicker
-                targetIndex={bob27TargetIndex}
-                onDarts={recordDarts}
-                onUndo={undoDart}
-                inputDisabled={inputDisabled}
-              />
-            ) : (
-              <DartPicker onDart={recordDart} onUndo={undoDart} inputDisabled={inputDisabled} />
-            )}
-
-            {!controller.isComplete && loadState.kind !== 'conflict' && (
-              <HStack gap={3} w="full" justify="space-between">
-                <Button variant="cancel" onClick={requestAbortMatch}>
-                  Abort match
-                </Button>
-                <Button variant="emphasis" disabled={!canFinish} onClick={finishMatch}>
-                  Finish
-                </Button>
-              </HStack>
-            )}
+            {scoreboard}
+            {picker}
           </Stack>
         </GameBoardLayout>
       </Box>
