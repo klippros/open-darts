@@ -28,7 +28,7 @@ const readMetadataTargetIndex = (metadata: Visit['metadata']): number | null => 
     return 20
   }
 
-  const match = /^D(\d+)$/.exec(targetLabel)
+  const match = /^D(\d+)$/u.exec(targetLabel)
 
   if (match?.[1] === undefined) {
     return null

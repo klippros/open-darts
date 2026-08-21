@@ -1,4 +1,4 @@
-import { AroundTheClockAimMode } from '../../types/aroundTheClock'
+import type { AroundTheClockAimMode } from '../../types/aroundTheClock'
 import type { DartThrow } from '../../types/dart'
 import type { GameSession } from '../../types/gameSession'
 import type { Visit } from '../../types/visit'
@@ -219,10 +219,9 @@ export const aggregatePerTargetStats = (
 
     const totalDarts = hits.reduce((sum, attempt) => sum + (attempt.dartsToHit ?? 0), 0)
 
-    return {
-      ...target,
-      avgDartsPerHit: totalDarts / hits.length,
-    }
+    target.avgDartsPerHit = totalDarts / hits.length
+
+    return target
   })
 }
 

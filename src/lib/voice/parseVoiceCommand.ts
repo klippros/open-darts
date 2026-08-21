@@ -1,9 +1,7 @@
 import { GameModeId } from '../../types/gameMode'
 import type { Bob27HitCount } from '../bob27/buildBob27Darts'
-import {
-  parseAroundTheClockCommand,
-  type AroundTheClockCommand,
-} from './grammars/aroundTheClockGrammar'
+import { parseAroundTheClockCommand } from './grammars/aroundTheClockGrammar'
+import type { AroundTheClockCommand } from './grammars/aroundTheClockGrammar'
 import { parseBob27Command } from './grammars/bob27Grammar'
 import { normalizeTranscriptLight } from './normalizeTranscriptLight'
 import { isVoiceInputSupportedForMode } from './voiceModeSupport'

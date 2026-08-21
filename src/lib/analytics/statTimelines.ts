@@ -1,4 +1,4 @@
-import { GameModeId } from '../../types/gameMode'
+import type { GameModeId } from '../../types/gameMode'
 import type { GameSession } from '../../types/gameSession'
 import type { AroundTheClockAimMode } from '../../types/aroundTheClock'
 import type { Visit } from '../../types/visit'
@@ -28,8 +28,8 @@ import {
   expandX01SessionLegs,
   getX01LegSlicePointId,
   legFinishedWithCheckout,
-  type X01LegSlice,
 } from './x01LegSlices'
+import type { X01LegSlice } from './x01LegSlices'
 
 export type StatMetricId =
   | 'threeDartAverage'
@@ -333,16 +333,19 @@ const getPracticeSessionMetricValue = (
   session: GameSession,
   selection: StatTimelineSelection,
 ): number | null => {
-  switch (selection.scope.type) {
-    case 'practice-checkout':
-      return getCheckoutPracticeSessionMetric(session, selection.metric)
-    case 'practice-bob27':
-      return getBob27SessionMetric(session, selection.metric)
-    case 'practice-around-the-clock':
-      return getAroundTheClockSessionMetric(session, selection.metric, selection.scope.aimMode)
-    default:
-      return null
+  if (selection.scope.type === 'practice-checkout') {
+    return getCheckoutPracticeSessionMetric(session, selection.metric)
   }
+
+  if (selection.scope.type === 'practice-bob27') {
+    return getBob27SessionMetric(session, selection.metric)
+  }
+
+  if (selection.scope.type === 'practice-around-the-clock') {
+    return getAroundTheClockSessionMetric(session, selection.metric, selection.scope.aimMode)
+  }
+
+  return null
 }
 
 export const buildStatTimeline = (

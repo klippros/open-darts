@@ -1,7 +1,6 @@
 import type { DartThrow } from '../../types/dart'
-import { GameModeId } from '../../types/gameMode'
+import { GameModeId, GameStatus } from '../../types/gameMode'
 import type { GameSession } from '../../types/gameSession'
-import { GameStatus } from '../../types/gameMode'
 import type { Player } from '../../types/player'
 import type { Visit } from '../../types/visit'
 import type { X01State } from '../../types/x01'

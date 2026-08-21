@@ -33,28 +33,25 @@ export const getAroundTheClockTargetAimLabel = (
   }
 
   if (isAroundTheClockBullTarget(targetIndex)) {
-    switch (aimMode) {
-      case AroundTheClockAimMode.Any:
-      case AroundTheClockAimMode.Singles:
-        return '25/Bull'
-      case AroundTheClockAimMode.Doubles:
-      case AroundTheClockAimMode.Trebles:
-        return 'Bull'
+    const bullLabels: Record<AroundTheClockAimMode, string> = {
+      [AroundTheClockAimMode.Any]: '25/Bull',
+      [AroundTheClockAimMode.Singles]: '25/Bull',
+      [AroundTheClockAimMode.Doubles]: 'Bull',
+      [AroundTheClockAimMode.Trebles]: 'Bull',
     }
+
+    return bullLabels[aimMode]
   }
 
   const value = String(targetIndex + 1)
-
-  switch (aimMode) {
-    case AroundTheClockAimMode.Any:
-      return value
-    case AroundTheClockAimMode.Singles:
-      return `S${value}`
-    case AroundTheClockAimMode.Doubles:
-      return `D${value}`
-    case AroundTheClockAimMode.Trebles:
-      return `T${value}`
+  const numberLabels: Record<AroundTheClockAimMode, string> = {
+    [AroundTheClockAimMode.Any]: value,
+    [AroundTheClockAimMode.Singles]: `S${value}`,
+    [AroundTheClockAimMode.Doubles]: `D${value}`,
+    [AroundTheClockAimMode.Trebles]: `T${value}`,
   }
+
+  return numberLabels[aimMode]
 }
 
 const isAroundTheClockBullHit = (dart: DartThrow, aimMode: AroundTheClockAimMode): boolean => {
@@ -67,6 +64,9 @@ const isAroundTheClockBullHit = (dart: DartThrow, aimMode: AroundTheClockAimMode
       return hitsDoubleOnOuterBull(dart) || hitsBull(dart)
     case AroundTheClockAimMode.Trebles:
       return hitsBull(dart)
+    default: {
+      throw new Error(`Unhandled aim mode: ${String(aimMode)}`)
+    }
   }
 }
 
@@ -86,6 +86,9 @@ const isAroundTheClockNumberHit = (
       return hitsDoubleOnNumber(dart, value)
     case AroundTheClockAimMode.Trebles:
       return hitsTripleOnNumber(dart, value)
+    default: {
+      throw new Error(`Unhandled aim mode: ${String(aimMode)}`)
+    }
   }
 }
 

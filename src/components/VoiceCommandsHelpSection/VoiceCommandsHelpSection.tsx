@@ -76,7 +76,7 @@ export const VoiceCommandsHelpSection = ({ section }: VoiceCommandsHelpSectionPr
         >
           <Box role="cell" px={3} py={2.5} borderRightWidth="1px" borderColor="whiteAlpha.300">
             <Text fontSize="sm" fontWeight="semibold" color="orange.200" lineHeight="1.4">
-              "{row.say}"
+              {`"${row.say}"`}
             </Text>
           </Box>
           <Box role="cell" px={3} py={2.5}>

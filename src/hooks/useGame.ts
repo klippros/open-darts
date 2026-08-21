@@ -149,7 +149,10 @@ export const useGame = (launchParams: CreateSessionParams, options: UseGameOptio
       }
 
       setController((current) => {
-        const next = darts.reduce((controller, dart) => controller.recordDart(dart), current)
+        const next = darts.reduce(
+          (currentController, dart) => currentController.recordDart(dart),
+          current,
+        )
         const visitCommitted = next.session.visits.length > current.session.visits.length
 
         if (visitCommitted) {

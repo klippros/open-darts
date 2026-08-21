@@ -1,16 +1,27 @@
 import type { SpeechRecognitionConstructor } from '../../types/speechRecognition'
 
+const isSpeechRecognitionConstructor = (value: unknown): value is SpeechRecognitionConstructor =>
+  typeof value === 'function'
+
+const readGlobalConstructor = (name: string): unknown => Reflect.get(globalThis, name)
+
 export const getSpeechRecognitionConstructor = (): SpeechRecognitionConstructor | null => {
   if (typeof globalThis === 'undefined') {
     return null
   }
 
-  const SpeechRecognition = Reflect.get(globalThis, 'SpeechRecognition') as
-    SpeechRecognitionConstructor | undefined
-  const webkitSpeechRecognition = Reflect.get(globalThis, 'webkitSpeechRecognition') as
-    SpeechRecognitionConstructor | undefined
+  const SpeechRecognition = readGlobalConstructor('SpeechRecognition')
+  const webkitSpeechRecognition = readGlobalConstructor('webkitSpeechRecognition')
 
-  return SpeechRecognition ?? webkitSpeechRecognition ?? null
+  if (isSpeechRecognitionConstructor(SpeechRecognition)) {
+    return SpeechRecognition
+  }
+
+  if (isSpeechRecognitionConstructor(webkitSpeechRecognition)) {
+    return webkitSpeechRecognition
+  }
+
+  return null
 }
 
 export const isSpeechRecognitionSupported = (): boolean =>

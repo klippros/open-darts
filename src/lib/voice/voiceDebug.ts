@@ -1,4 +1,4 @@
-import { GameModeId } from '../../types/gameMode'
+import type { GameModeId } from '../../types/gameMode'
 import { normalizeTranscriptLight } from './normalizeTranscriptLight'
 import type { VoiceIntent } from './parseVoiceCommand'
 import { getVoiceCommandHelpLines } from './voiceCommandHelp'

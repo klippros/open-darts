@@ -1,9 +1,5 @@
-import {
-  ChallengeLegEndMode,
-  ChallengeLegStatus,
-  type ChallengeConfig,
-  type MatchProgress,
-} from '../../types/match'
+import { ChallengeLegEndMode, ChallengeLegStatus } from '../../types/match'
+import type { ChallengeConfig, MatchProgress } from '../../types/match'
 import type { Visit } from '../../types/visit'
 import { getVisitsForLeg } from './matchLegs'
 

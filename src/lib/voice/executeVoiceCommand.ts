@@ -142,7 +142,7 @@ const buildAroundTheClockSequenceDarts = (
     return null
   }
 
-  let simulated = [...pendingDarts]
+  const simulated = [...pendingDarts]
   const toApply: DartThrow[] = []
 
   for (let index = 0; index < outcomes.length; index += 1) {
@@ -155,7 +155,7 @@ const buildAroundTheClockSequenceDarts = (
     if (outcome === 'miss') {
       const miss = buildDartsForMissAll(1)
       toApply.push(...miss)
-      simulated = [...simulated, ...miss]
+      simulated.push(...miss)
     } else {
       const ordinal = toAroundTheClockOrdinal(simulated.length + 1)
 
@@ -170,7 +170,7 @@ const buildAroundTheClockSequenceDarts = (
       }
 
       toApply.push(...chunk)
-      simulated = [...simulated, ...chunk]
+      simulated.push(...chunk)
     }
 
     const resolved = resolveAroundTheClockVisit(committedTargetIndex, simulated, aimMode)

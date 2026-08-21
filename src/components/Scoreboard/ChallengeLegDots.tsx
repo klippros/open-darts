@@ -8,34 +8,31 @@ export interface ChallengeLegDotsProps {
 
 const CHALLENGE_LEG_DOTS_MAX = 9
 
-const getDotStyles = (status: ChallengeLegStatus) => {
-  switch (status) {
-    case ChallengeLegStatus.Won:
-      return {
-        bg: 'orange.300',
-        border: '2px solid',
-        borderColor: 'orange.300',
-      }
-    case ChallengeLegStatus.Lost:
-      return {
-        bg: 'transparent',
-        border: '2px solid',
-        borderColor: 'whiteAlpha.300',
-      }
-    case ChallengeLegStatus.Current:
-      return {
-        bg: 'transparent',
-        border: '2px solid',
-        borderColor: 'orange.300',
-      }
-    case ChallengeLegStatus.Upcoming:
-      return {
-        bg: 'transparent',
-        border: '2px solid',
-        borderColor: 'whiteAlpha.200',
-      }
+const DOT_STYLES: Record<ChallengeLegStatus, { bg: string; border: string; borderColor: string }> =
+  {
+    [ChallengeLegStatus.Won]: {
+      bg: 'orange.300',
+      border: '2px solid',
+      borderColor: 'orange.300',
+    },
+    [ChallengeLegStatus.Lost]: {
+      bg: 'transparent',
+      border: '2px solid',
+      borderColor: 'whiteAlpha.300',
+    },
+    [ChallengeLegStatus.Current]: {
+      bg: 'transparent',
+      border: '2px solid',
+      borderColor: 'orange.300',
+    },
+    [ChallengeLegStatus.Upcoming]: {
+      bg: 'transparent',
+      border: '2px solid',
+      borderColor: 'whiteAlpha.200',
+    },
   }
-}
+
+const getDotStyles = (status: ChallengeLegStatus) => DOT_STYLES[status]
 
 export const ChallengeLegDots = ({ legStatuses }: ChallengeLegDotsProps) => {
   const progressLabel = formatChallengeLegProgressLabel(legStatuses)
@@ -55,7 +52,7 @@ export const ChallengeLegDots = ({ legStatuses }: ChallengeLegDotsProps) => {
     <HStack gap={1.5} aria-label={progressLabel}>
       {legStatuses.map((status, index) => (
         <Box
-          key={index}
+          key={`challenge-leg-${status}-${String(index)}`}
           w="8px"
           h="8px"
           borderRadius="full"

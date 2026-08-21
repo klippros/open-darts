@@ -1,4 +1,5 @@
-import { AroundTheClockAimMode, type AroundTheClockConfig } from '../../types/aroundTheClock'
+import { AroundTheClockAimMode } from '../../types/aroundTheClock'
+import type { AroundTheClockConfig } from '../../types/aroundTheClock'
 
 export const DEFAULT_AROUND_THE_CLOCK_CONFIG: Required<AroundTheClockConfig> = {
   finishOnBull: true,
@@ -12,18 +13,15 @@ export const getAroundTheClockConfig = (
   aimMode: config.aimMode ?? AroundTheClockAimMode.Any,
 })
 
-export const getAroundTheClockAimModeLabel = (aimMode: AroundTheClockAimMode): string => {
-  switch (aimMode) {
-    case AroundTheClockAimMode.Singles:
-      return 'Singles'
-    case AroundTheClockAimMode.Doubles:
-      return 'Doubles'
-    case AroundTheClockAimMode.Trebles:
-      return 'Trebles'
-    case AroundTheClockAimMode.Any:
-      return 'Any'
-  }
+const AIM_MODE_LABELS: Record<AroundTheClockAimMode, string> = {
+  [AroundTheClockAimMode.Singles]: 'Singles',
+  [AroundTheClockAimMode.Doubles]: 'Doubles',
+  [AroundTheClockAimMode.Trebles]: 'Trebles',
+  [AroundTheClockAimMode.Any]: 'Any',
 }
+
+export const getAroundTheClockAimModeLabel = (aimMode: AroundTheClockAimMode): string =>
+  AIM_MODE_LABELS[aimMode]
 
 const AIM_MODE_PARAMS: Record<AroundTheClockAimMode, string> = {
   [AroundTheClockAimMode.Singles]: 'singles',
@@ -32,27 +30,28 @@ const AIM_MODE_PARAMS: Record<AroundTheClockAimMode, string> = {
   [AroundTheClockAimMode.Any]: 'any',
 }
 
-const AIM_MODE_FROM_PARAM = Object.fromEntries(
-  Object.entries(AIM_MODE_PARAMS).map(([mode, param]) => [param, mode]),
-) as Record<string, AroundTheClockAimMode>
-
-export const getAroundTheClockAimModeDescription = (aimMode: AroundTheClockAimMode): string => {
-  switch (aimMode) {
-    case AroundTheClockAimMode.Singles:
-      return 'Hit the single segment on each number'
-    case AroundTheClockAimMode.Doubles:
-      return 'Hit the double on each number'
-    case AroundTheClockAimMode.Trebles:
-      return 'Hit the treble on each number'
-    case AroundTheClockAimMode.Any:
-      return 'Any segment on the number counts'
-  }
+const AIM_MODE_DESCRIPTIONS: Record<AroundTheClockAimMode, string> = {
+  [AroundTheClockAimMode.Singles]: 'Hit the single segment on each number',
+  [AroundTheClockAimMode.Doubles]: 'Hit the double on each number',
+  [AroundTheClockAimMode.Trebles]: 'Hit the treble on each number',
+  [AroundTheClockAimMode.Any]: 'Any segment on the number counts',
 }
 
-export const parseAroundTheClockAimMode = (value: string | null): AroundTheClockAimMode => {
-  const aimMode = value === null ? undefined : AIM_MODE_FROM_PARAM[value]
+export const getAroundTheClockAimModeDescription = (aimMode: AroundTheClockAimMode): string =>
+  AIM_MODE_DESCRIPTIONS[aimMode]
 
-  return aimMode ?? AroundTheClockAimMode.Any
+export const parseAroundTheClockAimMode = (value: string | null): AroundTheClockAimMode => {
+  if (value === null) {
+    return AroundTheClockAimMode.Any
+  }
+
+  for (const aimMode of Object.values(AroundTheClockAimMode)) {
+    if (AIM_MODE_PARAMS[aimMode] === value) {
+      return aimMode
+    }
+  }
+
+  return AroundTheClockAimMode.Any
 }
 
 export const buildAroundTheClockGamePath = (config: AroundTheClockConfig): string => {
@@ -75,7 +74,7 @@ export const parseAroundTheClockConfigFromSearchParams = (
   const finishOnBullParam = params.get('finishOnBull')
 
   return {
-    finishOnBull: finishOnBullParam === 'false' ? false : true,
+    finishOnBull: finishOnBullParam !== 'false',
     aimMode: parseAroundTheClockAimMode(params.get('aim')),
   }
 }

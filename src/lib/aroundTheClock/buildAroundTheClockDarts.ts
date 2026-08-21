@@ -39,6 +39,9 @@ export const createHitDartForTarget = (
       case AroundTheClockAimMode.Doubles:
       case AroundTheClockAimMode.Trebles:
         return createDartThrow({ type: DartSegmentType.Bull }, DartMultiplier.Single)
+      default: {
+        throw new Error(`Unhandled aim mode: ${String(aimMode)}`)
+      }
     }
   }
 
@@ -52,6 +55,9 @@ export const createHitDartForTarget = (
       return createDartThrow({ type: DartSegmentType.Number, value }, DartMultiplier.Double)
     case AroundTheClockAimMode.Trebles:
       return createDartThrow({ type: DartSegmentType.Number, value }, DartMultiplier.Triple)
+    default: {
+      throw new Error(`Unhandled aim mode: ${String(aimMode)}`)
+    }
   }
 }
 
@@ -82,6 +88,9 @@ export const buildDartsForOrdinalHit = (
 export const buildDartsForMissAll = (count: number): DartThrow[] =>
   Array.from({ length: count }, () => createMissDart())
 
+const isAroundTheClockDartOrdinal = (value: number): value is AroundTheClockDartOrdinal =>
+  value === 1 || value === 2 || value === 3
+
 export const getAroundTheClockAvailableOrdinals = (
   pendingDarts: DartThrow[],
   maxDartsPerVisit = AROUND_THE_CLOCK_MAX_DARTS_PER_VISIT,
@@ -90,8 +99,8 @@ export const getAroundTheClockAvailableOrdinals = (
   const ordinals: AroundTheClockDartOrdinal[] = []
 
   for (let ordinal = pendingDarts.length + 1; ordinal <= maxDartsPerVisit; ordinal += 1) {
-    if (ordinal - pendingDarts.length <= dartsLeft) {
-      ordinals.push(ordinal as AroundTheClockDartOrdinal)
+    if (ordinal - pendingDarts.length <= dartsLeft && isAroundTheClockDartOrdinal(ordinal)) {
+      ordinals.push(ordinal)
     }
   }
 

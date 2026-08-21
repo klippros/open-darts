@@ -26,11 +26,13 @@ export const mergeDoubleCheckoutStats = (
 })
 
 const isFinishingCheckoutPath = (path: CheckoutDart[]): boolean => {
-  if (path.length !== 1) {
+  const first = path[0]
+
+  if (path.length !== 1 || first === undefined) {
     return false
   }
 
-  const { label } = path[0]!
+  const { label } = first
 
   return label.startsWith('D') || label === 'Bull'
 }
@@ -129,7 +131,11 @@ export const countDoubleCheckoutStatsForVisit = (
   const stats = emptyDoubleCheckoutStats()
 
   for (let dartIndex = 0; dartIndex < visit.darts.length; dartIndex += 1) {
-    const dart = visit.darts[dartIndex]!
+    const dart = visit.darts[dartIndex]
+
+    if (dart === undefined) {
+      break
+    }
 
     if (remaining <= 0) {
       break
@@ -142,9 +148,9 @@ export const countDoubleCheckoutStatsForVisit = (
       const path = suggestCheckoutPath(remaining, dartsRemaining, rules)
 
       if (path !== null && isFinishingCheckoutPath(path)) {
-        const target = path[0]!
+        const target = path[0]
 
-        if (isDoubleAttemptOnFinish(dart, target)) {
+        if (target !== undefined && isDoubleAttemptOnFinish(dart, target)) {
           stats.attempts += 1
 
           if (scoringDart && isSuccessfulFinish(dart, target, remaining, rules)) {

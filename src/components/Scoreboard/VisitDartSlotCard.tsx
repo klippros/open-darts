@@ -10,34 +10,33 @@ const ArrowMark = () => (
   </Box>
 )
 
-const getVariantStyles = (variant: VisitDartSlotCardVariant) => {
-  switch (variant) {
-    case 'thrown':
-      return {
-        borderColor: 'whiteAlpha.500',
-        bg: 'whiteAlpha.200',
-        opacity: 1,
-      }
-    case 'selectable':
-      return {
-        borderColor: 'whiteAlpha.400',
-        bg: 'whiteAlpha.100',
-        opacity: 1,
-      }
-    case 'used':
-      return {
-        borderColor: 'whiteAlpha.300',
-        bg: 'whiteAlpha.50',
-        opacity: 0.6,
-      }
-    case 'empty':
-      return {
-        borderColor: 'whiteAlpha.200',
-        bg: 'whiteAlpha.50',
-        opacity: 0.35,
-      }
-  }
+const VARIANT_STYLES: Record<
+  VisitDartSlotCardVariant,
+  { borderColor: string; bg: string; opacity: number }
+> = {
+  thrown: {
+    borderColor: 'whiteAlpha.500',
+    bg: 'whiteAlpha.200',
+    opacity: 1,
+  },
+  selectable: {
+    borderColor: 'whiteAlpha.400',
+    bg: 'whiteAlpha.100',
+    opacity: 1,
+  },
+  used: {
+    borderColor: 'whiteAlpha.300',
+    bg: 'whiteAlpha.50',
+    opacity: 0.6,
+  },
+  empty: {
+    borderColor: 'whiteAlpha.200',
+    bg: 'whiteAlpha.50',
+    opacity: 0.35,
+  },
 }
+
+const getVariantStyles = (variant: VisitDartSlotCardVariant) => VARIANT_STYLES[variant]
 
 export interface VisitDartSlotCardProps {
   label: string | null

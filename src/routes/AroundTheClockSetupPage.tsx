@@ -6,7 +6,8 @@ import { SetupPageHeader } from '../components/SetupPageLayout/SetupPageHeader'
 import { SetupPageLayout } from '../components/SetupPageLayout/SetupPageLayout'
 import { SetupOptionCard } from '../components/SetupPageLayout/SetupOptionCard'
 import { SetupSection } from '../components/SetupPageLayout/SetupSection'
-import { AroundTheClockAimMode, type AroundTheClockConfig } from '../types/aroundTheClock'
+import { AroundTheClockAimMode } from '../types/aroundTheClock'
+import type { AroundTheClockConfig } from '../types/aroundTheClock'
 import {
   buildAroundTheClockGamePath,
   getAroundTheClockAimModeDescription,
