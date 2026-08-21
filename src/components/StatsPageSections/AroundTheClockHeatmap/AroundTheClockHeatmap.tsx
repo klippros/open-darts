@@ -24,10 +24,14 @@ import {
   HEATMAP_BASE_SEGMENT_LIGHT,
   HEATMAP_BULL_BASE,
   HEATMAP_BULL_RADIUS,
+  HEATMAP_BULL_STROKE_WIDTH,
+  HEATMAP_HOVER_STROKE_WIDTH,
   HEATMAP_LEGEND_STOPS,
   HEATMAP_SEGMENT_INNER_RADIUS,
   HEATMAP_SEGMENT_STROKE,
+  HEATMAP_SEGMENT_STROKE_WIDTH,
 } from '../../../lib/aroundTheClock/aroundTheClockHeatmapColors'
+import { lightenHex } from '../../../lib/color/lightenHex'
 import { AroundTheClockHeatmapLegend } from './AroundTheClockHeatmapLegend'
 import { AroundTheClockHeatmapTooltip } from './AroundTheClockHeatmapTooltip'
 
@@ -91,6 +95,45 @@ const getCursorPosition = (
   }
 }
 
+const getHoveredRingOverlay = (
+  targets: AroundTheClockPerTargetStats[],
+  hoveredTargetIndex: number | null,
+  overallAverage: number | null,
+): { key: number; path: string; fill: string } | null => {
+  if (hoveredTargetIndex === null) {
+    return null
+  }
+
+  const segmentIndex = DARTBOARD_NUMBERS.findIndex((number) => number - 1 === hoveredTargetIndex)
+
+  if (segmentIndex < 0) {
+    return null
+  }
+
+  const number = DARTBOARD_NUMBERS[segmentIndex]
+  const targetStats = getTargetForSegmentIndex(targets, segmentIndex)
+
+  if (number === undefined || targetStats === undefined) {
+    return null
+  }
+
+  const { start, end } = getSegmentAngles(segmentIndex)
+  const fill = getHeatmapFillColor(targetStats, overallAverage, getBaseSegmentFill(segmentIndex))
+
+  return {
+    key: number,
+    path: describeRingSegment(
+      DARTBOARD_CENTER,
+      DARTBOARD_CENTER,
+      HEATMAP_SEGMENT_INNER_RADIUS,
+      DARTBOARD_OUTER_RADIUS,
+      start,
+      end,
+    ),
+    fill: lightenHex(fill),
+  }
+}
+
 export const AroundTheClockHeatmap = ({ targets }: AroundTheClockHeatmapProps) => {
   const svgRef = useRef<SVGSVGElement>(null)
   const [hoveredTargetIndex, setHoveredTargetIndex] = useState<number | null>(null)
@@ -102,6 +145,12 @@ export const AroundTheClockHeatmap = ({ targets }: AroundTheClockHeatmapProps) =
     hoveredTargetIndex === null
       ? undefined
       : targets.find((target) => target.targetIndex === hoveredTargetIndex)
+  const hoveredRingOverlay = getHoveredRingOverlay(targets, hoveredTargetIndex, overallAverage)
+  const isBullHovered = bullTarget !== undefined && hoveredTargetIndex === bullTarget.targetIndex
+  const bullFill =
+    bullTarget === undefined
+      ? undefined
+      : getHeatmapFillColor(bullTarget, overallAverage, HEATMAP_BULL_BASE)
 
   const handlePointerMove = (event: PointerEvent<SVGSVGElement>) => {
     setCursorPosition(getCursorPosition(svgRef.current, event))
@@ -169,7 +218,7 @@ export const AroundTheClockHeatmap = ({ targets }: AroundTheClockHeatmapProps) =
                     )}
                     fill={fill}
                     stroke={HEATMAP_SEGMENT_STROKE}
-                    strokeWidth={1.5}
+                    strokeWidth={HEATMAP_SEGMENT_STROKE_WIDTH}
                     onPointerEnter={(event) => {
                       if (targetStats === undefined) {
                         return
@@ -181,16 +230,27 @@ export const AroundTheClockHeatmap = ({ targets }: AroundTheClockHeatmapProps) =
                   />
                 )
               })}
+
+              {hoveredRingOverlay !== null && (
+                <path
+                  key={`hover-outline-${hoveredRingOverlay.key}`}
+                  d={hoveredRingOverlay.path}
+                  fill={hoveredRingOverlay.fill}
+                  stroke={HEATMAP_SEGMENT_STROKE}
+                  strokeWidth={HEATMAP_HOVER_STROKE_WIDTH}
+                  pointerEvents="none"
+                />
+              )}
             </g>
 
-            {bullTarget !== undefined && (
+            {bullTarget !== undefined && bullFill !== undefined && (
               <circle
                 cx={DARTBOARD_CENTER}
                 cy={DARTBOARD_CENTER}
                 r={HEATMAP_BULL_RADIUS}
-                fill={getHeatmapFillColor(bullTarget, overallAverage, HEATMAP_BULL_BASE)}
+                fill={isBullHovered ? lightenHex(bullFill) : bullFill}
                 stroke={HEATMAP_SEGMENT_STROKE}
-                strokeWidth={2}
+                strokeWidth={isBullHovered ? HEATMAP_HOVER_STROKE_WIDTH : HEATMAP_BULL_STROKE_WIDTH}
                 onPointerEnter={(event) => {
                   setHoveredTargetIndex(bullTarget.targetIndex)
                   setCursorPosition(getCursorPosition(svgRef.current, event))

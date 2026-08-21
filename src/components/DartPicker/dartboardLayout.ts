@@ -1,3 +1,5 @@
+import { lightenHex } from '../../lib/color/lightenHex'
+
 export const DARTBOARD_VIEWBOX_SIZE = 400
 export const DARTBOARD_CENTER = DARTBOARD_VIEWBOX_SIZE / 2
 export const DARTBOARD_OUTER_RADIUS = 168
@@ -20,15 +22,10 @@ export const SEGMENT_ANGLE = 360 / SEGMENT_COUNT
 export const DARTBOARD_COLORS = {
   segmentDark: '#1a1a1a',
   segmentLight: '#3a3634',
-  segmentHover: '#5a4f4f',
   centerRed: '#4a1f28',
-  centerActive: '#6b2a38',
   cornerBull: '#4a1f28',
-  cornerBullHover: '#6b2a38',
   cornerOuterBull: '#1f3d2a',
-  cornerOuterBullHover: '#2d5a3c',
   cornerAction: '#2a2a2a',
-  cornerActionHover: '#3d3d3d',
   segmentText: '#f5f5f5',
   background: '#151515',
 } as const
@@ -226,13 +223,13 @@ export type CornerZone = 'bull' | 'outerBull' | 'undo' | 'miss'
 export const CORNER_ZONES: CornerZone[] = ['bull', 'outerBull', 'undo', 'miss']
 
 export const getCornerFill = (corner: CornerZone, isHovered: boolean): string => {
+  let base: string = DARTBOARD_COLORS.cornerAction
+
   if (corner === 'bull') {
-    return isHovered ? DARTBOARD_COLORS.cornerBullHover : DARTBOARD_COLORS.cornerBull
+    base = DARTBOARD_COLORS.cornerBull
+  } else if (corner === 'outerBull') {
+    base = DARTBOARD_COLORS.cornerOuterBull
   }
 
-  if (corner === 'outerBull') {
-    return isHovered ? DARTBOARD_COLORS.cornerOuterBullHover : DARTBOARD_COLORS.cornerOuterBull
-  }
-
-  return isHovered ? DARTBOARD_COLORS.cornerActionHover : DARTBOARD_COLORS.cornerAction
+  return isHovered ? lightenHex(base) : base
 }

@@ -1,4 +1,5 @@
 import type { PointerEvent } from 'react'
+import { lightenHex } from '../../lib/color/lightenHex'
 import { DartMultiplier } from '../../types/dart'
 import { getCenterDividerLine, getCornerDividerLines, DARTBOARD_DIVIDER } from './dartboardBorders'
 import {
@@ -48,6 +49,8 @@ const CORNER_LABELS: Record<CornerZone, { text: string; x: number; y: number }> 
 const describeCenterHalf = (sweep: 0 | 1): string =>
   `M ${DARTBOARD_CENTER} ${DARTBOARD_CENTER - DARTBOARD_CENTER_RADIUS} A ${DARTBOARD_CENTER_RADIUS} ${DARTBOARD_CENTER_RADIUS} 0 0 ${sweep} ${DARTBOARD_CENTER} ${DARTBOARD_CENTER + DARTBOARD_CENTER_RADIUS} Z`
 
+const SEGMENT_HOVER_FILL = lightenHex(DARTBOARD_COLORS.segmentLight)
+
 const getCenterHalfFill = (
   zone: CenterZone,
   hoveredCenterZone: CenterZone | null,
@@ -60,7 +63,7 @@ const getCenterHalfFill = (
     (zone === 'double' && activeMultiplier === DartMultiplier.Double) ||
     (zone === 'triple' && activeMultiplier === DartMultiplier.Triple)
 
-  return isHighlighted ? DARTBOARD_COLORS.centerActive : DARTBOARD_COLORS.centerRed
+  return isHighlighted ? lightenHex(DARTBOARD_COLORS.centerRed) : DARTBOARD_COLORS.centerRed
 }
 
 const boardTextProps = {
@@ -189,7 +192,7 @@ export const DartBoardGraphic = ({
               start,
               end,
             )}
-            fill={isHovered ? DARTBOARD_COLORS.segmentHover : fill}
+            fill={isHovered ? SEGMENT_HOVER_FILL : fill}
             style={{ cursor: inputDisabled ? 'default' : 'pointer' }}
             onClick={() => {
               onNumberClick(number)
