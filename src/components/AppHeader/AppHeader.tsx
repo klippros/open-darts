@@ -16,7 +16,7 @@ export const AppHeader = () => {
   return (
     <Box as="header" flexShrink={0} position="relative" zIndex={1}>
       <ContentContainer>
-        <Box py={4}>
+        <Box py={isActiveMatch ? 2 : 4}>
           <Flex align="center" gap={4} minH={toolbarControlSize}>
             <AppHeaderBrand />
             <HStack gap={{ base: 1, md: isActiveMatch ? 1 : 6 }} flexShrink={0} align="center">

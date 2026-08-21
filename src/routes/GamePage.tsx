@@ -2,6 +2,7 @@ import { Box, Flex, Stack, useBreakpointValue } from '@chakra-ui/react'
 import { ContentContainer } from '../components/ContentContainer'
 import { GameModeDartPicker } from '../components/DartPicker/GameModeDartPicker'
 import { GameBoardLayout } from '../components/GameBoardLayout'
+import { MobileVisitHistory } from '../components/Scoreboard/MobileVisitHistory'
 import { Scoreboard } from '../components/Scoreboard/Scoreboard'
 import { useAccount } from '../hooks/accountContext'
 import { useGamePage } from '../hooks/useGamePage'
@@ -77,12 +78,29 @@ export const GamePage = () => {
   )
 
   if (isMobile) {
+    const showMobileVisitHistory = showsVisitHistory(controller.session.mode)
+
     return (
       <Flex direction="column" h="100%" minH={0} w="full" maxW={mainContentMaxWidth} mx="auto">
         {dialogs}
-        <Box flex="1" minH={0} overflowY="auto" className="hide-scrollbar" px={6} py={6}>
+        <Box flexShrink={0} px={6} pt={3} pb={showMobileVisitHistory ? 3 : 4}>
           {scoreboard}
         </Box>
+        {showMobileVisitHistory ? (
+          <Box flex="1" minH={0} overflowY="auto" className="hide-scrollbar" px={6}>
+            <Box py={4}>
+              <MobileVisitHistory
+                players={controller.session.players}
+                visits={controller.session.visits}
+                mode={controller.session.mode}
+                config={controller.session.config}
+                currentLeg={controller.session.matchProgress?.currentLeg}
+              />
+            </Box>
+          </Box>
+        ) : (
+          <Box flex="1" minH={0} />
+        )}
         <Box flexShrink={0} px={6} pt={4} pb={4}>
           {picker}
         </Box>
@@ -93,7 +111,7 @@ export const GamePage = () => {
   return (
     <ContentContainer>
       {dialogs}
-      <Box py={{ base: 6, md: 8 }} pb={10}>
+      <Box pt={{ base: 3, md: 4 }} pb={10}>
         <GameBoardLayout
           players={controller.session.players}
           visits={controller.session.visits}

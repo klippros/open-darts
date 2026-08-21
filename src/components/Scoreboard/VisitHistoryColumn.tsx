@@ -6,6 +6,8 @@ import type { Player } from '../../types/player'
 import type { Visit } from '../../types/visit'
 import { getVisitHistoryEntryDisplay, getVisitHistoryHeadlineColor } from './visitHistoryDisplay'
 
+export type VisitHistoryLayoutVariant = 'sidebar' | 'stack'
+
 export interface VisitHistoryColumnProps {
   player: Player
   visits: Visit[]
@@ -13,6 +15,7 @@ export interface VisitHistoryColumnProps {
   currentLeg?: number
   align?: 'left' | 'right'
   showPlayerName?: boolean
+  variant?: VisitHistoryLayoutVariant
 }
 
 export const VisitHistoryColumn = ({
@@ -22,15 +25,19 @@ export const VisitHistoryColumn = ({
   currentLeg,
   align = 'left',
   showPlayerName = true,
+  variant = 'sidebar',
 }: VisitHistoryColumnProps) => {
   const legVisits = currentLeg === undefined ? visits : getVisitsForLeg(visits, currentLeg)
   const playerVisits = legVisits.filter((visit) => visit.playerId === player.id).toReversed()
+  const isStack = variant === 'stack'
+  const cardAlign = isStack ? 'left' : align
 
   return (
     <Stack
       gap={3}
-      align={align === 'right' ? 'flex-end' : 'flex-start'}
-      display={{ base: 'none', lg: 'flex' }}
+      align={isStack ? 'stretch' : cardAlign === 'right' ? 'flex-end' : 'flex-start'}
+      display={isStack ? 'flex' : { base: 'none', lg: 'flex' }}
+      w={isStack ? 'full' : undefined}
     >
       {showPlayerName && (
         <Text fontSize="xs" color="whiteAlpha.500" textTransform="uppercase" letterSpacing="0.08em">
@@ -51,14 +58,14 @@ export const VisitHistoryColumn = ({
             <Box
               key={visit.visitIndex}
               w="full"
-              maxW="200px"
+              maxW={isStack ? 'full' : '200px'}
               px={3}
               py={2}
               borderRadius="12px"
               borderWidth="1px"
               borderColor="whiteAlpha.200"
               bg="whiteAlpha.50"
-              textAlign={align === 'right' ? 'right' : 'left'}
+              textAlign={cardAlign === 'right' ? 'right' : 'left'}
             >
               {display.sublabel !== undefined && (
                 <Text
