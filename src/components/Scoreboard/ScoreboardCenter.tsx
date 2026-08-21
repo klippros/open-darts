@@ -85,7 +85,7 @@ export const ScoreboardCenter = ({
   matchProgress,
 }: ScoreboardCenterProps) => {
   const checkoutRules = toCheckoutSuggestionRules(mode, config)
-  const showVisitDartSlots = mode !== GameModeId.AroundTheClock
+  const showVisitDartSlots = mode !== GameModeId.AroundTheClock && mode !== GameModeId.Bob27
   const scoreBeforeVisit =
     activePlayer === undefined ? 0 : activePlayer.primaryScore + sumDartPoints(pendingDarts)
   const legStartingPlayerIndex =

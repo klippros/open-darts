@@ -1,4 +1,4 @@
-import { GameStatus } from '../../types/gameMode'
+import { GameModeId, GameStatus } from '../../types/gameMode'
 import type { GameSession } from '../../types/gameSession'
 import type { DartThrow } from '../../types/dart'
 import type { Visit } from '../../types/visit'
@@ -126,8 +126,50 @@ export const undoLastDartChronological = (
   }
 }
 
+export const undoLastVisitChronological = (
+  session: GameSession,
+  turnIndex: number,
+  pendingDarts: DartThrow[],
+): UndoDartState | null => {
+  if (pendingDarts.length > 0) {
+    return {
+      visits: session.visits,
+      pendingDarts: [],
+      turnIndex,
+      matchProgress: session.matchProgress,
+      status: GameStatus.InProgress,
+      completedAt: undefined,
+      finishedEarly: undefined,
+    }
+  }
+
+  const lastVisit = session.visits.at(-1)
+
+  if (lastVisit === undefined) {
+    return null
+  }
+
+  const visits = session.visits.slice(0, -1)
+
+  return {
+    visits,
+    pendingDarts: [],
+    turnIndex: session.players.findIndex((player) => player.id === lastVisit.playerId),
+    matchProgress: applyCheckoutUndoProgress(session.matchProgress, lastVisit, session.visits),
+    status: GameStatus.InProgress,
+    completedAt: undefined,
+    finishedEarly: undefined,
+  }
+}
+
 export const resolveUndoDartState = (
   session: GameSession,
   turnIndex: number,
   pendingDarts: DartThrow[],
-): UndoDartState | null => undoLastDartChronological(session, turnIndex, pendingDarts)
+): UndoDartState | null => {
+  if (session.mode === GameModeId.Bob27) {
+    return undoLastVisitChronological(session, turnIndex, pendingDarts)
+  }
+
+  return undoLastDartChronological(session, turnIndex, pendingDarts)
+}

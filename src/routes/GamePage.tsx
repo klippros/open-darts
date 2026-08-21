@@ -1,6 +1,7 @@
 import { Box, Button, HStack, Stack } from '@chakra-ui/react'
 import { ContentContainer } from '../components/ContentContainer'
 import { AroundTheClockDartPicker } from '../components/DartPicker/AroundTheClockDartPicker'
+import { Bob27DartPicker } from '../components/DartPicker/Bob27DartPicker'
 import { DartPicker } from '../components/DartPicker/DartPicker'
 import { GameBoardLayout } from '../components/GameBoardLayout'
 import { Scoreboard } from '../components/Scoreboard/Scoreboard'
@@ -10,6 +11,7 @@ import { isAroundTheClockConfig } from '../lib/game/gameConfigGuards'
 import { showsVisitHistory } from '../lib/game/gameModeDefinitions'
 import { matchHasProgress } from '../lib/game/matchProgress'
 import type { AroundTheClockState } from '../types/aroundTheClock'
+import type { Bob27State } from '../types/bob27'
 import { GameModeId } from '../types/gameMode'
 import { GamePageDialogs } from './GamePageDialogs'
 
@@ -34,10 +36,13 @@ export const GamePage = () => {
   const inputDisabled = controller.isComplete || loadState.kind === 'conflict'
   const canFinish = matchHasProgress(controller)
   const isAroundTheClock = controller.session.mode === GameModeId.AroundTheClock
+  const isBob27 = controller.session.mode === GameModeId.Bob27
   const aroundTheClockState = isAroundTheClock
     ? (controller.engineState as AroundTheClockState)
     : null
+  const bob27State = isBob27 ? (controller.engineState as Bob27State) : null
   const committedTargetIndex = aroundTheClockState?.players[controller.activePlayerId]?.targetIndex
+  const bob27TargetIndex = bob27State?.players[controller.activePlayerId]?.targetIndex
 
   return (
     <ContentContainer>
@@ -89,6 +94,13 @@ export const GamePage = () => {
                 committedTargetIndex={committedTargetIndex}
                 pendingDarts={controller.pendingDarts}
                 config={controller.session.config}
+                onDarts={recordDarts}
+                onUndo={undoDart}
+                inputDisabled={inputDisabled}
+              />
+            ) : isBob27 && bob27TargetIndex !== undefined ? (
+              <Bob27DartPicker
+                targetIndex={bob27TargetIndex}
                 onDarts={recordDarts}
                 onUndo={undoDart}
                 inputDisabled={inputDisabled}

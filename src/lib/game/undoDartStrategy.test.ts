@@ -95,4 +95,28 @@ describe('undoDartStrategy', () => {
     expect(undone.session.matchProgress?.legLosses).toBe(0)
     expect(undone.session.matchProgress?.currentLeg).toBe(1)
   })
+
+  it('undoes an entire Bob 27 visit', () => {
+    const human = createSoloHumanPlayer()
+    let controller = createGameController({
+      mode: GameModeId.Bob27,
+      players: [human],
+    })
+
+    controller = controller.recordDarts([
+      numberDart(1, DartMultiplier.Double),
+      numberDart(1, DartMultiplier.Double),
+      numberDart(20, DartMultiplier.Miss),
+    ])
+
+    expect(controller.session.visits).toHaveLength(1)
+    expect(controller.scoreboard.players[0]?.primaryScore).toBe(31)
+
+    const undone = controller.undoDart()
+
+    expect(undone.session.visits).toHaveLength(0)
+    expect(undone.pendingDarts).toHaveLength(0)
+    expect(undone.scoreboard.players[0]?.primaryScore).toBe(27)
+    expect(undone.scoreboard.players[0]?.secondaryLabel).toBe('Target D1')
+  })
 })

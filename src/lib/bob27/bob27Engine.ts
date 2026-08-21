@@ -1,7 +1,7 @@
 import type { GameEngine, VisitResult } from '../game/GameEngine'
 import { GameModeId } from '../../types/gameMode'
 import type { Bob27Config, Bob27State } from '../../types/bob27'
-import { getBob27Target, isBob27TargetHit, resolveBob27Visit } from './bob27Rules'
+import { getBob27Target, resolveBob27Visit } from './bob27Rules'
 
 const getPlayerState = (state: Bob27State, playerId: string) => {
   const playerState = state.players[playerId]
@@ -72,7 +72,7 @@ export const bob27Engine: GameEngine<Bob27State, Bob27Config> = {
       visitIndex,
       playerId,
       darts,
-      visitScore: outcome.hit ? target.value : -target.value,
+      visitScore: outcome.visitScore,
       scoreBefore,
       scoreAfter: outcome.scoreAfter,
       bust: false,
@@ -80,6 +80,7 @@ export const bob27Engine: GameEngine<Bob27State, Bob27Config> = {
       metadata: {
         targetLabel: target.label,
         hit: outcome.hit,
+        hitCount: outcome.hitCount,
       },
     }
 
@@ -102,11 +103,7 @@ export const bob27Engine: GameEngine<Bob27State, Bob27Config> = {
     }
   },
 
-  shouldEndVisitEarly: (state, playerId, darts) => {
-    const playerState = getPlayerState(state, playerId)
-
-    return darts.some((dart) => isBob27TargetHit(dart, playerState.targetIndex))
-  },
+  shouldEndVisitEarly: () => false,
 
   isGameComplete: (state) => state.winnerId !== undefined,
 }

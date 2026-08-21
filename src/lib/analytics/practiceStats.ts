@@ -3,6 +3,7 @@ import { GameModeId } from '../../types/gameMode'
 import type { GameSession } from '../../types/gameSession'
 import { gameModeDefinitions } from '../game/gameModeDefinitions'
 import { getAroundTheClockAimModeLabel } from '../aroundTheClock/aroundTheClockConfig'
+import { getBob27VisitHitRate } from '../bob27/bob27VisitStats'
 import { getSessionModeLabel } from '../history/sessionSummary'
 import {
   aggregateAroundTheClockSessionStats,
@@ -30,8 +31,9 @@ export interface Bob27PracticeStats {
   label: string
   gameCount: number
   completedCount: number
-  avgVisits: number | null
   avgFinalScore: number | null
+  bestFinalScore: number | null
+  hitRate: number | null
 }
 
 export interface AroundTheClockPracticeStats {
@@ -113,11 +115,12 @@ const computeBob27Stats = (sessions: GameSession[]): Bob27PracticeStats | null =
     label: getSessionLabel(modeSessions, GameModeId.Bob27),
     gameCount: modeSessions.length,
     completedCount: completedSessions.length,
-    avgVisits: modeSessions.length === 0 ? null : visits.length / modeSessions.length,
     avgFinalScore:
       finalScores.length === 0
         ? null
         : finalScores.reduce((sum, score) => sum + score, 0) / finalScores.length,
+    bestFinalScore: finalScores.length === 0 ? null : Math.max(...finalScores),
+    hitRate: getBob27VisitHitRate(visits),
   }
 }
 

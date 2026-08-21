@@ -43,6 +43,7 @@ export interface VisitDartSlotCardProps {
   label: string | null
   variant: VisitDartSlotCardVariant
   size?: 'default' | 'comfortable'
+  showArrow?: boolean
   onClick?: () => void
   disabled?: boolean
   ariaLabel?: string
@@ -52,6 +53,7 @@ export const VisitDartSlotCard = ({
   label,
   variant,
   size = 'default',
+  showArrow = true,
   onClick,
   disabled = false,
   ariaLabel,
@@ -62,9 +64,9 @@ export const VisitDartSlotCard = ({
 
   const slotContent = (
     <>
-      <ArrowMark />
+      {showArrow ? <ArrowMark /> : null}
       <Text
-        mt={2}
+        mt={showArrow ? 2 : 0}
         color="white"
         fontFamily="Archivo Black, sans-serif"
         fontSize="2xl"

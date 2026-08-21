@@ -68,20 +68,40 @@ describe('practiceStats', () => {
     ])
   })
 
-  it('summarizes bob27 separately from around the clock', () => {
+  it('summarizes bob27 with final scores and hit rate', () => {
     const stats = computePracticeStats([
       sampleSession({
         mode: GameModeId.Bob27,
         config: { startScore: 27 },
-        visits: [sampleVisit({ scoreAfter: 54, visitScore: 27 })],
+        visits: [
+          sampleVisit({
+            scoreAfter: 54,
+            visitScore: 27,
+            metadata: { targetLabel: 'D1', hit: true, hitCount: 1 },
+          }),
+        ],
+      }),
+      sampleSession({
+        id: 'session-2',
+        mode: GameModeId.Bob27,
+        config: { startScore: 27 },
+        visits: [
+          sampleVisit({
+            scoreAfter: -4,
+            visitScore: -8,
+            metadata: { targetLabel: 'D4', hit: false, hitCount: 0 },
+          }),
+        ],
       }),
     ])
 
     expect(stats.other).toEqual([
       expect.objectContaining({
         mode: GameModeId.Bob27,
-        gameCount: 1,
-        avgFinalScore: 54,
+        gameCount: 2,
+        avgFinalScore: 25,
+        bestFinalScore: 54,
+        hitRate: 50,
       }),
     ])
   })

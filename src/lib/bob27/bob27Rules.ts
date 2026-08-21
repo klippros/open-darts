@@ -2,6 +2,7 @@ import type { DartThrow } from '../../types/dart'
 import { hitsBull, hitsDoubleOnNumber } from '../segmentMatching'
 
 export const BOB27_TARGET_COUNT = 21
+export const BOB27_MAX_DARTS_PER_VISIT = 3
 
 export interface Bob27Target {
   label: string
@@ -29,10 +30,15 @@ export const isBob27TargetHit = (dart: DartThrow, targetIndex: number): boolean 
   return hitsDoubleOnNumber(dart, targetIndex + 1)
 }
 
+export const countBob27TargetHits = (darts: DartThrow[], targetIndex: number): number =>
+  darts.filter((dart) => isBob27TargetHit(dart, targetIndex)).length
+
 export interface Bob27VisitOutcome {
   scoreAfter: number
   targetIndexAfter: number
   hit: boolean
+  hitCount: number
+  visitScore: number
   checkout: boolean
 }
 
@@ -42,15 +48,19 @@ export const resolveBob27Visit = (
   darts: DartThrow[],
 ): Bob27VisitOutcome => {
   const target = getBob27Target(targetIndex)
-  const hit = darts.some((dart) => isBob27TargetHit(dart, targetIndex))
-  const scoreAfter = hit ? scoreBefore + target.value : scoreBefore - target.value
-  const targetIndexAfter = hit ? targetIndex + 1 : targetIndex
-  const checkout = hit && targetIndex >= 20
+  const hitCount = countBob27TargetHits(darts, targetIndex)
+  const hit = hitCount > 0
+  const visitScore = hit ? hitCount * target.value : -target.value
+  const scoreAfter = scoreBefore + visitScore
+  const targetIndexAfter = targetIndex + 1
+  const checkout = targetIndex >= 20
 
   return {
     scoreAfter,
     targetIndexAfter,
     hit,
+    hitCount,
+    visitScore,
     checkout,
   }
 }
