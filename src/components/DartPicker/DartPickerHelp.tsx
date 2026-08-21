@@ -5,8 +5,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import type { DartPickerHelpContent } from '../../lib/game/getGameModePickerTargets'
 import { createToolbarIconButton } from '../AppHeader/toolbarButtons'
 import { darkDialogContentProps } from '../darkDialogContentProps'
+import { VoiceCommandsHelpSection } from '../VoiceCommandsHelpSection/VoiceCommandsHelpSection'
 
-export const DartPickerHelp = ({ title, paragraphs }: DartPickerHelpContent) => {
+export const DartPickerHelp = ({ title, paragraphs, voice }: DartPickerHelpContent) => {
   const [open, setOpen] = useState(false)
 
   const openHelp = () => {
@@ -41,10 +42,11 @@ export const DartPickerHelp = ({ title, paragraphs }: DartPickerHelpContent) => 
                 <Dialog.Title color="white">{title}</Dialog.Title>
               </Dialog.Header>
               <Dialog.Body>
-                <Stack gap={3} fontSize="sm" color="whiteAlpha.900" lineHeight="1.55">
+                <Stack gap={4} fontSize="sm" color="whiteAlpha.900" lineHeight="1.55">
                   {paragraphs.map((paragraph) => (
                     <Text key={paragraph}>{paragraph}</Text>
                   ))}
+                  {voice !== undefined ? <VoiceCommandsHelpSection section={voice} /> : null}
                 </Stack>
               </Dialog.Body>
               <Dialog.Footer>

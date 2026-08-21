@@ -5,6 +5,7 @@ import { AppNavbar } from '../AppNavbar/AppNavbar'
 import { ContentContainer } from '../ContentContainer'
 import { GameFullscreenControl } from '../GameFullscreenControl/GameFullscreenControl'
 import { GameHelpControl } from '../GameHelpControl/GameHelpControl'
+import { GameVoiceControl } from '../GameVoiceControl/GameVoiceControl'
 import { MobileNavMenu } from '../MobileNavMenu/MobileNavMenu'
 import { SettingsMenu } from '../SettingsMenu/SettingsMenu'
 import { AppHeaderBrand } from './AppHeaderBrand'
@@ -23,6 +24,7 @@ export const AppHeader = () => {
               {!isActiveMatch && <AppNavbar />}
               {!isActiveMatch && <MobileNavMenu />}
               {isActiveMatch && <GameHelpControl />}
+              {isActiveMatch && <GameVoiceControl />}
               {isActiveMatch && <GameFullscreenControl />}
               <Box display={isActiveMatch ? 'block' : { base: 'none', md: 'block' }}>
                 <SettingsMenu />

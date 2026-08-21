@@ -1,9 +1,12 @@
 import { GameModeId } from '../../types/gameMode'
 import { getBob27Target } from '../bob27/bob27Rules'
+import type { VoiceCommandHelpSection } from '../voice/voiceCommandHelp'
+import { getVoiceCommandHelpSection } from '../voice/voiceCommandHelp'
 
 export interface DartPickerHelpContent {
   title: string
   paragraphs: string[]
+  voice?: VoiceCommandHelpSection
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -49,12 +52,15 @@ export const getDartPickerHelpContent = (
   mode: GameModeId,
   bob27TargetIndex?: number,
 ): DartPickerHelpContent => {
+  const voice = getVoiceCommandHelpSection(mode) ?? undefined
+
   if (mode === GameModeId.AroundTheClock) {
     return {
       title: 'How to score',
       paragraphs: [
         'Press the dart you hit on. "Miss all" records the remaining darts of this visit as misses.',
       ],
+      voice,
     }
   }
 
@@ -67,6 +73,7 @@ export const getDartPickerHelpContent = (
       paragraphs: [
         `Record how many times you hit ${targetLabel}. Each hit adds the double score, zero hits subtract it; then the next target starts.`,
       ],
+      voice,
     }
   }
 
@@ -75,6 +82,7 @@ export const getDartPickerHelpContent = (
     paragraphs: [
       'Keyboard: D/T for double/triple, type the segment number, then Space to confirm. B bull, Tab miss, Backspace undo, Esc clear modifier.',
       'Tap the board to score. Center arms double/triple; corners are Bull, 25, Undo, and Miss.',
+      'Voice scoring is not available in this game mode.',
     ],
   }
 }

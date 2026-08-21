@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
+import { clampVoiceIsolationMs } from '../lib/voice/commandIsolation'
 import { loadSettings, saveSettings } from '../lib/storage/settingsStore'
 import type { AppSettings } from '../types/settings'
 import { SettingsContext } from './settingsContext'
@@ -25,8 +26,17 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
       setUiSoundsEnabled: (enabled: boolean) => {
         patchSettings({ uiSoundsEnabled: enabled })
       },
+      voiceIsolationMs: settings.voiceIsolationMs,
+      setVoiceIsolationMs: (ms: number) => {
+        patchSettings({ voiceIsolationMs: clampVoiceIsolationMs(ms) })
+      },
     }),
-    [settings.scoreCallerEnabled, settings.uiSoundsEnabled, patchSettings],
+    [
+      settings.scoreCallerEnabled,
+      settings.uiSoundsEnabled,
+      settings.voiceIsolationMs,
+      patchSettings,
+    ],
   )
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>
