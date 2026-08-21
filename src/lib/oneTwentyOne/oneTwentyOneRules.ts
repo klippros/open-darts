@@ -1,6 +1,7 @@
 import type { DartThrow } from '../../types/dart'
 import type { OneTwentyOneConfig } from '../../types/oneTwentyOne'
-import { resolveX01Visit } from '../x01/x01Rules'
+import type { X01VisitOutcome } from '../x01/x01Rules'
+import { resolveX01Visit, resolveX01VisitScore } from '../x01/x01Rules'
 import { toOneTwentyOneX01Config } from './oneTwentyOneConfig'
 
 const MIN_ROUND_TARGET = 2
@@ -26,13 +27,12 @@ export interface OneTwentyOneRoundOutcome {
   lifeLost: boolean
 }
 
-export const resolveOneTwentyOneRoundVisit = (
+const applyOneTwentyOneRoundOutcome = (
   context: OneTwentyOneRoundContext,
-  darts: DartThrow[],
+  outcome: X01VisitOutcome,
   config: OneTwentyOneConfig,
 ): OneTwentyOneRoundOutcome => {
-  const { roundTarget, remaining, visitsOnTarget, lives, peakTarget } = context
-  const outcome = resolveX01Visit(remaining, darts, toOneTwentyOneX01Config(config), true)
+  const { roundTarget, visitsOnTarget, lives, peakTarget } = context
   const isFirstVisitOnTarget = visitsOnTarget === 0
 
   if (outcome.checkout) {
@@ -83,4 +83,29 @@ export const resolveOneTwentyOneRoundVisit = (
     lifeGained: false,
     lifeLost: false,
   }
+}
+
+export const resolveOneTwentyOneRoundVisit = (
+  context: OneTwentyOneRoundContext,
+  darts: DartThrow[],
+  config: OneTwentyOneConfig,
+): OneTwentyOneRoundOutcome => {
+  const outcome = resolveX01Visit(context.remaining, darts, toOneTwentyOneX01Config(config), true)
+
+  return applyOneTwentyOneRoundOutcome(context, outcome, config)
+}
+
+export const resolveOneTwentyOneRoundVisitScore = (
+  context: OneTwentyOneRoundContext,
+  claimedScore: number,
+  config: OneTwentyOneConfig,
+): OneTwentyOneRoundOutcome => {
+  const outcome = resolveX01VisitScore(
+    context.remaining,
+    claimedScore,
+    toOneTwentyOneX01Config(config),
+    true,
+  )
+
+  return applyOneTwentyOneRoundOutcome(context, outcome, config)
 }

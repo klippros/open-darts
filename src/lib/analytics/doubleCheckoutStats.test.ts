@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { DartMultiplier } from '../../types/dart'
 import type { Visit } from '../../types/visit'
+import { VisitInputMode } from '../../types/visit'
 import { numberDart } from '../testHelpers'
-import { countDoubleCheckoutStats, countDoubleCheckoutStatsForVisit } from './doubleCheckoutStats'
+import {
+  countDoubleCheckoutStats,
+  countDoubleCheckoutStatsForVisit,
+  countDoubleCheckoutStatsSkippingVisitScoreLegs,
+} from './doubleCheckoutStats'
 
 const doubleOutRules = {
   doubleIn: false,
@@ -145,5 +150,35 @@ describe('countDoubleCheckoutStats', () => {
     )
 
     expect(stats).toEqual({ attempts: 2, successes: 1 })
+  })
+})
+
+describe('countDoubleCheckoutStatsSkippingVisitScoreLegs', () => {
+  it('excludes legs that used visit-score input', () => {
+    const stats = countDoubleCheckoutStatsSkippingVisitScoreLegs(
+      [
+        visit({
+          legIndex: 1,
+          scoreBefore: 40,
+          darts: [],
+          visitScore: 40,
+          scoreAfter: 0,
+          checkout: true,
+          inputMode: VisitInputMode.VisitScore,
+        }),
+        visit({
+          legIndex: 2,
+          visitIndex: 1,
+          scoreBefore: 16,
+          darts: [numberDart(8, DartMultiplier.Double)],
+          visitScore: 16,
+          scoreAfter: 0,
+          checkout: true,
+        }),
+      ],
+      doubleOutRules,
+    )
+
+    expect(stats).toEqual({ attempts: 1, successes: 1 })
   })
 })

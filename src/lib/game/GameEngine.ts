@@ -38,6 +38,13 @@ export interface GameEngine<State, Config> {
     visitIndex: number,
     darts: DartThrow[],
   ) => VisitResult<State>
+  /** Commit a visit from a claimed three-dart total (X01-family modes). */
+  commitVisitScore?: (
+    state: State,
+    playerId: string,
+    visitIndex: number,
+    score: number,
+  ) => VisitResult<State>
   shouldEndVisitEarly: (state: State, playerId: string, darts: DartThrow[]) => boolean
   isGameComplete: (state: State) => boolean
 }

@@ -13,7 +13,10 @@ import {
   getScoringVisits,
   getThreeDartAverage,
 } from './visitStats'
-import { countDoubleCheckoutStats, emptyDoubleCheckoutStats } from './doubleCheckoutStats'
+import {
+  countDoubleCheckoutStatsSkippingVisitScoreLegs,
+  emptyDoubleCheckoutStats,
+} from './doubleCheckoutStats'
 import type { DoubleCheckoutStats } from './doubleCheckoutStats'
 
 export interface PlayerMatchStats {
@@ -38,7 +41,7 @@ export const computePlayerStatsForVisits = (
   thrown180: countThrown180(visits),
   thrown140Plus: countThrown140Plus(visits),
   thrown100Plus: countThrown100Plus(visits),
-  doubleCheckout: countDoubleCheckoutStats(visits, rules, doubleIn),
+  doubleCheckout: countDoubleCheckoutStatsSkippingVisitScoreLegs(visits, rules, doubleIn),
   checkouts100Plus: countCheckouts100Plus(visits),
   highestCheckout: getHighestCheckout(visits),
   highestVisit: getHighestVisit(visits),

@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { loadSettings, saveSettings } from '../lib/storage/settingsStore'
-import type { AppSettings } from '../types/settings'
+import type { AppSettings, X01InputMode } from '../types/settings'
 import { SettingsContext } from './settingsContext'
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
@@ -25,8 +25,12 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
       setUiSoundsEnabled: (enabled: boolean) => {
         patchSettings({ uiSoundsEnabled: enabled })
       },
+      x01InputMode: settings.x01InputMode,
+      setX01InputMode: (mode: X01InputMode) => {
+        patchSettings({ x01InputMode: mode })
+      },
     }),
-    [settings.scoreCallerEnabled, settings.uiSoundsEnabled, patchSettings],
+    [settings.scoreCallerEnabled, settings.uiSoundsEnabled, settings.x01InputMode, patchSettings],
   )
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>

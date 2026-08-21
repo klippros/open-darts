@@ -10,6 +10,7 @@ import { matchHasProgress } from '../lib/game/matchProgress'
 import { isVoiceInputSupportedForMode } from '../lib/voice/voiceModeSupport'
 import { useAccount } from './accountContext'
 import { useSetGameChrome } from './gameChromeContext'
+import { useSettings } from './settingsContext'
 import { useGameFromRoute } from './useGameFromRoute'
 import { useScoreCallerInitialLeg, useVisitScoreCaller } from './useVisitScoreCaller'
 import { useVoiceRecognition } from './useVoiceRecognition'
@@ -17,6 +18,7 @@ import { useVoiceRecognition } from './useVoiceRecognition'
 export const useGamePage = () => {
   const navigate = useNavigate()
   const { account } = useAccount()
+  const { x01InputMode } = useSettings()
   const [searchParams] = useSearchParams()
   const [abortDialogOpen, setAbortDialogOpen] = useState(false)
   const setGameChrome = useSetGameChrome()
@@ -34,12 +36,13 @@ export const useGamePage = () => {
 
   const inputDisabled = game.controller.isComplete || game.loadState.kind === 'conflict'
   const sessionMode = game.controller.session.mode
-  const voiceInputAvailable = isVoiceInputSupportedForMode(sessionMode)
+  const voiceInputAvailable = isVoiceInputSupportedForMode(sessionMode, { x01InputMode })
 
   useVoiceRecognition({
     mode: sessionMode,
     sessionId: game.controller.session.id,
     inputDisabled,
+    x01InputMode,
     applyControllerTransaction: game.applyControllerTransaction,
   })
 
@@ -65,8 +68,8 @@ export const useGamePage = () => {
     game.controller.activePlayerId,
   )
   const help = useMemo(
-    () => getDartPickerHelpContent(sessionMode, pickerTargets.bob27TargetIndex),
-    [sessionMode, pickerTargets.bob27TargetIndex],
+    () => getDartPickerHelpContent(sessionMode, pickerTargets.bob27TargetIndex, x01InputMode),
+    [sessionMode, pickerTargets.bob27TargetIndex, x01InputMode],
   )
 
   useEffect(() => {

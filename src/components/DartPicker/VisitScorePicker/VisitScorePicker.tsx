@@ -1,0 +1,163 @@
+import { useEffect, useState } from 'react'
+import { Button, Grid, Input, Stack } from '@chakra-ui/react'
+import {
+  appendVisitScoreDigit,
+  backspaceVisitScoreInput,
+  parseVisitScoreInput,
+} from './visitScoreInput'
+
+export interface VisitScorePickerProps {
+  onSubmit: (score: number) => void
+  onUndo: () => void
+  inputDisabled?: boolean
+}
+
+const PAD_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'clear', '0', 'back'] as const
+
+export const VisitScorePicker = ({
+  onSubmit,
+  onUndo,
+  inputDisabled = false,
+}: VisitScorePickerProps) => {
+  const [value, setValue] = useState('')
+
+  useEffect(() => {
+    if (inputDisabled) {
+      return undefined
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) {
+        return
+      }
+
+      if (event.key >= '0' && event.key <= '9') {
+        event.preventDefault()
+        setValue((current) => appendVisitScoreDigit(current, event.key))
+        return
+      }
+
+      if (event.key === 'Backspace') {
+        event.preventDefault()
+        setValue((current) => backspaceVisitScoreInput(current))
+        return
+      }
+
+      if (event.key === 'Enter') {
+        event.preventDefault()
+        setValue((current) => {
+          const score = parseVisitScoreInput(current)
+
+          if (score === null) {
+            return current
+          }
+
+          onSubmit(score)
+          return ''
+        })
+        return
+      }
+
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        setValue('')
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [inputDisabled, onSubmit])
+
+  const canSubmit = parseVisitScoreInput(value) !== null && !inputDisabled
+
+  return (
+    <Stack gap={3}>
+      <Input
+        value={value}
+        placeholder="Visit score"
+        textAlign="center"
+        fontSize="2xl"
+        fontWeight="semibold"
+        h="14"
+        readOnly
+        inputMode="numeric"
+        aria-label="Visit score"
+        disabled={inputDisabled}
+      />
+
+      <Grid templateColumns="repeat(3, 1fr)" gap={2}>
+        {PAD_KEYS.map((key) => {
+          if (key === 'clear') {
+            return (
+              <Button
+                key={key}
+                variant="outline"
+                disabled={inputDisabled}
+                onClick={() => {
+                  setValue('')
+                }}
+              >
+                Clear
+              </Button>
+            )
+          }
+
+          if (key === 'back') {
+            return (
+              <Button
+                key={key}
+                variant="outline"
+                disabled={inputDisabled}
+                onClick={() => {
+                  setValue((current) => backspaceVisitScoreInput(current))
+                }}
+              >
+                ⌫
+              </Button>
+            )
+          }
+
+          return (
+            <Button
+              key={key}
+              variant="outline"
+              disabled={inputDisabled}
+              onClick={() => {
+                setValue((current) => appendVisitScoreDigit(current, key))
+              }}
+            >
+              {key}
+            </Button>
+          )
+        })}
+      </Grid>
+
+      <Grid templateColumns="1fr 1fr" gap={2}>
+        <Button variant="outline" disabled={inputDisabled} onClick={onUndo}>
+          Undo
+        </Button>
+        <Button
+          variant="cta"
+          disabled={!canSubmit}
+          onClick={() => {
+            setValue((current) => {
+              const score = parseVisitScoreInput(current)
+
+              if (score === null || inputDisabled) {
+                return current
+              }
+
+              onSubmit(score)
+              return ''
+            })
+          }}
+        >
+          Enter
+        </Button>
+      </Grid>
+    </Stack>
+  )
+}
