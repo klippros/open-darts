@@ -162,7 +162,7 @@ export const getMatchSummary = (session: GameSession): MatchSummary => {
 
     if (!finishedEarly) {
       details.push('Hit every target through bull')
-    } else if (stats?.currentTargetLabel != null) {
+    } else if (stats?.currentTargetLabel !== undefined && stats.currentTargetLabel !== null) {
       details.push(`Stopped on ${stats.currentTargetLabel}`)
     }
 

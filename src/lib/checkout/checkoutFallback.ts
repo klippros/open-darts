@@ -25,9 +25,7 @@ const getFinishPreferenceRank = (dart: CheckoutDart): number => {
   }
 
   const segment = Number(dart.label.slice(1))
-  const index = DOUBLE_FINISH_SEGMENT_PREFERENCE_ORDER.indexOf(
-    segment as (typeof DOUBLE_FINISH_SEGMENT_PREFERENCE_ORDER)[number],
-  )
+  const index = DOUBLE_FINISH_SEGMENT_PREFERENCE_ORDER.findIndex((value) => value === segment)
 
   return index === -1 ? UNKNOWN_FINISH_PREFERENCE_RANK : index + 1
 }

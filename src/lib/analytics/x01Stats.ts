@@ -4,9 +4,9 @@ import { x01PresetConfigs, X01PresetId } from '../x01/x01Presets'
 import {
   countDoubleCheckoutStats,
   mergeDoubleCheckoutStats,
-  type DoubleCheckoutStats,
   emptyDoubleCheckoutStats,
 } from './doubleCheckoutStats'
+import type { DoubleCheckoutStats } from './doubleCheckoutStats'
 import { filterFiveOhOneSessions, filterOtherX01Sessions } from './sessionScope'
 import {
   countCheckouts100Plus,

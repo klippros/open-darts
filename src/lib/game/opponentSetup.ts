@@ -1,5 +1,6 @@
 import type { GameSession } from '../../types/gameSession'
-import { ChallengeLegEndMode, type ChallengeConfig } from '../../types/match'
+import { ChallengeLegEndMode } from '../../types/match'
+import type { ChallengeConfig } from '../../types/match'
 import type { Player } from '../../types/player'
 import {
   clampMaxVisits,

@@ -7,10 +7,12 @@ import {
   getGameModePickerTargets,
 } from '../lib/game/getGameModePickerTargets'
 import { matchHasProgress } from '../lib/game/matchProgress'
+import { isVoiceInputSupportedForMode } from '../lib/voice/voiceModeSupport'
 import { useAccount } from './accountContext'
 import { useSetGameChrome } from './gameChromeContext'
 import { useGameFromRoute } from './useGameFromRoute'
 import { useScoreCallerInitialLeg, useVisitScoreCaller } from './useVisitScoreCaller'
+import { useVoiceRecognition } from './useVoiceRecognition'
 
 export const useGamePage = () => {
   const navigate = useNavigate()
@@ -30,6 +32,17 @@ export const useGamePage = () => {
 
   useScoreCallerInitialLeg(game.controller, game.loadState.kind === 'ready')
 
+  const inputDisabled = game.controller.isComplete || game.loadState.kind === 'conflict'
+  const sessionMode = game.controller.session.mode
+  const voiceInputAvailable = isVoiceInputSupportedForMode(sessionMode)
+
+  useVoiceRecognition({
+    mode: sessionMode,
+    sessionId: game.controller.session.id,
+    inputDisabled,
+    applyControllerTransaction: game.applyControllerTransaction,
+  })
+
   const requestAbortMatch = useCallback(() => {
     setAbortDialogOpen(true)
   }, [])
@@ -47,13 +60,13 @@ export const useGamePage = () => {
   const canFinish = matchHasProgress(game.controller)
   const showMatchActions = !game.controller.isComplete && game.loadState.kind !== 'conflict'
   const pickerTargets = getGameModePickerTargets(
-    game.controller.session.mode,
+    sessionMode,
     game.controller.engineState,
     game.controller.activePlayerId,
   )
   const help = useMemo(
-    () => getDartPickerHelpContent(game.controller.session.mode, pickerTargets.bob27TargetIndex),
-    [game.controller.session.mode, pickerTargets.bob27TargetIndex],
+    () => getDartPickerHelpContent(sessionMode, pickerTargets.bob27TargetIndex),
+    [sessionMode, pickerTargets.bob27TargetIndex],
   )
 
   useEffect(() => {
@@ -67,6 +80,7 @@ export const useGamePage = () => {
     setGameChrome({
       active: true,
       canFinish,
+      voiceInputAvailable,
       onAbort: requestAbortMatch,
       onFinish: game.finishMatch,
       help,
@@ -75,7 +89,15 @@ export const useGamePage = () => {
     return () => {
       setGameChrome(null)
     }
-  }, [showMatchActions, canFinish, requestAbortMatch, game.finishMatch, setGameChrome, help])
+  }, [
+    showMatchActions,
+    canFinish,
+    voiceInputAvailable,
+    requestAbortMatch,
+    game.finishMatch,
+    setGameChrome,
+    help,
+  ])
 
   return {
     ...game,

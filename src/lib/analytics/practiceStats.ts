@@ -5,10 +5,8 @@ import { gameModeDefinitions } from '../game/gameModeDefinitions'
 import { getAroundTheClockAimModeLabel } from '../aroundTheClock/aroundTheClockConfig'
 import { getBob27VisitHitRate } from '../bob27/bob27VisitStats'
 import { getSessionModeLabel } from '../history/sessionSummary'
-import {
-  aggregateAroundTheClockSessionStats,
-  type AroundTheClockPerTargetStats,
-} from './aroundTheClockStats'
+import { aggregateAroundTheClockSessionStats } from './aroundTheClockStats'
+import type { AroundTheClockPerTargetStats } from './aroundTheClockStats'
 import { filterAroundTheClockSessions } from './sessionScope'
 import {
   countCheckoutVisits,

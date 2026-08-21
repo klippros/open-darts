@@ -5,7 +5,7 @@ export const HOVER_LIGHTEN_AMOUNT = 0.22
 const toHex = (value: number): string => value.toString(16).padStart(2, '0')
 
 const parseHexColor = (fill: string): { r: number; g: number; b: number } | null => {
-  const match = /^#([0-9a-f]{6})$/i.exec(fill)
+  const match = /^#([0-9a-f]{6})$/iu.exec(fill)
 
   if (match === null || match[1] === undefined) {
     return null

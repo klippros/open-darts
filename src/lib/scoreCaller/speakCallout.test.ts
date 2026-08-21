@@ -49,7 +49,8 @@ describe('speakCallout', () => {
   })
 
   it('queues phrases and starts speaking on the next tick', async () => {
-    const { enqueueCallout, getCalloutQueueStateForTests } = await import('./speakCallout')
+    const { enqueueCallout, getCalloutQueueStateForTests, CALLOUT_ECHO_HOLD_MS } =
+      await import('./speakCallout')
 
     enqueueCallout('Leg one, game on.')
 
@@ -58,7 +59,19 @@ describe('speakCallout', () => {
     vi.advanceTimersByTime(0)
 
     expect(speak).toHaveBeenCalledTimes(1)
-    expect(getCalloutQueueStateForTests()).toEqual({ speaking: false, queued: 0 })
+    expect(getCalloutQueueStateForTests()).toEqual({
+      speaking: false,
+      queued: 0,
+      echoHolding: true,
+    })
+
+    vi.advanceTimersByTime(CALLOUT_ECHO_HOLD_MS)
+
+    expect(getCalloutQueueStateForTests()).toEqual({
+      speaking: false,
+      queued: 0,
+      echoHolding: false,
+    })
   })
 
   it('recovers when synthesis is idle but the local speaking flag was stuck', async () => {
@@ -71,7 +84,11 @@ describe('speakCallout', () => {
     enqueueCallout('First phrase.')
     vi.advanceTimersByTime(0)
 
-    expect(getCalloutQueueStateForTests()).toEqual({ speaking: true, queued: 0 })
+    expect(getCalloutQueueStateForTests()).toEqual({
+      speaking: true,
+      queued: 0,
+      echoHolding: false,
+    })
 
     speak.mockImplementation((utterance: { onend: (() => void) | null }) => {
       utterance.onend?.()
@@ -97,11 +114,19 @@ describe('speakCallout', () => {
     enqueueCallout('Leg one, game on.')
     vi.advanceTimersByTime(0)
 
-    expect(getCalloutQueueStateForTests()).toEqual({ speaking: true, queued: 0 })
+    expect(getCalloutQueueStateForTests()).toEqual({
+      speaking: true,
+      queued: 0,
+      echoHolding: false,
+    })
 
     cancelCallouts()
 
     expect(cancel).toHaveBeenCalledTimes(1)
-    expect(getCalloutQueueStateForTests()).toEqual({ speaking: false, queued: 0 })
+    expect(getCalloutQueueStateForTests()).toEqual({
+      speaking: false,
+      queued: 0,
+      echoHolding: false,
+    })
   })
 })

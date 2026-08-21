@@ -139,16 +139,17 @@ export const x01LegStatsToPlayerMatchStats = (stats: X01LegStats): PlayerMatchSt
 })
 
 export const formatStatsPageRowValue = (rowId: MatchStatRowId, stats: X01LegStats): string => {
-  switch (rowId) {
-    case MatchStatRowId.BestLegAverage:
-      return formatAverage(stats.bestLegAverage)
-    case MatchStatRowId.AvgDarts:
-      return formatInteger(stats.avgDarts)
-    default:
-      return (
-        sharedMatchStatRows
-          .find((row) => row.id === rowId)
-          ?.formatValue(x01LegStatsToPlayerMatchStats(stats)) ?? '—'
-      )
+  if (rowId === MatchStatRowId.BestLegAverage) {
+    return formatAverage(stats.bestLegAverage)
   }
+
+  if (rowId === MatchStatRowId.AvgDarts) {
+    return formatInteger(stats.avgDarts)
+  }
+
+  return (
+    sharedMatchStatRows
+      .find((row) => row.id === rowId)
+      ?.formatValue(x01LegStatsToPlayerMatchStats(stats)) ?? '—'
+  )
 }

@@ -15,7 +15,8 @@ import {
   getVisitsForLeg,
 } from '../../lib/game/matchLegs'
 import { StatsTable } from '../StatsTable/StatsTable'
-import { MatchStatsScopeSelector, type MatchStatsScope } from './MatchStatsScopeSelector'
+import { MatchStatsScopeSelector } from './MatchStatsScopeSelector'
+import type { MatchStatsScope } from './MatchStatsScopeSelector'
 
 export interface MatchStatsPanelProps {
   session: GameSession
@@ -73,11 +74,8 @@ export const MatchStatsPanel = ({ session }: MatchStatsPanelProps) => {
       return []
     }
 
-    return buildLegVisitRows(
-      getVisitsForLeg(session.visits, legScopeForVisits),
-      session.players.map((player) => player.id),
-    )
-  }, [legScopeForVisits, session.visits])
+    return buildLegVisitRows(getVisitsForLeg(session.visits, legScopeForVisits), playerIds)
+  }, [legScopeForVisits, playerIds, session.visits])
 
   const highlightedPlayerId = useMemo(() => {
     if (selectedScope === 'match') {

@@ -25,14 +25,27 @@
     "eslint/no-underscore-dangle": "off",
     "eslint/sort-keys": "off",
     "eslint/no-ternary": "off",
+    "eslint/no-nested-ternary": "off",
+    "eslint/no-negated-condition": "off",
     "eslint/func-style": "off",
+    "eslint/max-lines": "off",
     "eslint/max-lines-per-function": "off",
     "eslint/max-statements": "off",
     "eslint/max-params": "off",
+    "eslint/max-depth": "off",
+    "eslint/max-classes-per-file": "off",
+    "import/max-dependencies": "off",
     "eslint/sort-imports": "off",
     "eslint/id-length": "off",
     "eslint/no-continue": "off",
     "eslint/no-await-in-loop": "off",
+    "eslint/prefer-destructuring": "off",
+    "eslint/prefer-named-capture-group": "off",
+    "eslint/capitalized-comments": "off",
+    "eslint/init-declarations": "off",
+    "react/jsx-props-no-spreading": "off",
+    "react/no-object-type-as-default-prop": "off",
+    "jsx-a11y/prefer-tag-over-role": "off",
     "oxc/no-async-await": "off",
     "oxc/no-rest-spread-properties": "off",
     "oxc/no-optional-chaining": "off",
@@ -47,5 +60,20 @@
     "eslint/no-duplicate-imports": "off",
     "promise/avoid-new": "off",
     "react/iframe-missing-sandbox": "off"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["**/*.test.ts", "**/*.test.tsx"],
+      "rules": {
+        "typescript/strict-void-return": "off",
+        "typescript/parameter-properties": "off",
+        "typescript/no-extraneous-class": "off",
+        "eslint/no-constructor-return": "off",
+        "eslint/require-await": "off",
+        "typescript/require-await": "off",
+        "typescript/no-unsafe-type-assertion": "off",
+        "typescript/no-unnecessary-type-assertion": "off"
+      }
+    }
+  ]
 }

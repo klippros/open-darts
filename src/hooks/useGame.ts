@@ -149,7 +149,10 @@ export const useGame = (launchParams: CreateSessionParams, options: UseGameOptio
       }
 
       setController((current) => {
-        const next = darts.reduce((controller, dart) => controller.recordDart(dart), current)
+        const next = darts.reduce(
+          (currentController, dart) => currentController.recordDart(dart),
+          current,
+        )
         const visitCommitted = next.session.visits.length > current.session.visits.length
 
         if (visitCommitted) {
@@ -214,6 +217,57 @@ export const useGame = (launchParams: CreateSessionParams, options: UseGameOptio
     setController(restoreGameController(snapshot))
   }, [])
 
+  const applyControllerTransaction = useCallback(
+    (
+      updater: (current: AppGameController) => {
+        next: AppGameController
+        scoreCallerBase?: AppGameController
+        didUndo?: boolean
+      } | null,
+    ): void => {
+      let effectsFor: AppGameController | null = null
+
+      setController((current) => {
+        const result = updater(current)
+
+        if (result === null || result.next === current) {
+          return current
+        }
+
+        // Strict Mode may run this updater twice with the same `next` reference.
+        if (effectsFor !== result.next) {
+          effectsFor = result.next
+
+          if (result.didUndo === true) {
+            onUndo?.(current.session.id)
+          }
+
+          const scoreCallerBase = result.scoreCallerBase ?? current
+          const visitCommitted =
+            result.next.session.visits.length > scoreCallerBase.session.visits.length
+
+          if (visitCommitted) {
+            const visit = result.next.session.visits.at(-1)
+
+            if (visit !== undefined) {
+              notifyAfterVisitCommit(
+                scoreCallerBase,
+                result.next,
+                visit,
+                scoreCallerCallbacksRef.current,
+              )
+            }
+          }
+
+          persist(result.next)
+        }
+
+        return result.next
+      })
+    },
+    [persist, onUndo],
+  )
+
   return {
     controller,
     recordDart,
@@ -223,5 +277,6 @@ export const useGame = (launchParams: CreateSessionParams, options: UseGameOptio
     restart,
     discardSavedGame,
     restoreFromSnapshot,
+    applyControllerTransaction,
   }
 }

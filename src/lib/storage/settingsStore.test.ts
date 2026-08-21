@@ -20,7 +20,7 @@ const createMemoryStorage = (): StorageAdapter & { data: Map<string, string> } =
 }
 
 describe('settingsStore', () => {
-  it('defaults score caller and UI sounds to enabled', () => {
+  it('defaults score caller and UI sounds', () => {
     const storage = createMemoryStorage()
 
     expect(loadSettings(storage)).toEqual(DEFAULT_APP_SETTINGS)
@@ -43,6 +43,23 @@ describe('settingsStore', () => {
 
     expect(loadSettings(storage)).toEqual({
       scoreCallerEnabled: false,
+      uiSoundsEnabled: true,
+    })
+  })
+
+  it('ignores legacy voiceIsolationMs when loading', () => {
+    const storage = createMemoryStorage()
+    storage.setItem(
+      StorageKey.Settings,
+      JSON.stringify({
+        scoreCallerEnabled: true,
+        uiSoundsEnabled: true,
+        voiceIsolationMs: 9999,
+      }),
+    )
+
+    expect(loadSettings(storage)).toEqual({
+      scoreCallerEnabled: true,
       uiSoundsEnabled: true,
     })
   })

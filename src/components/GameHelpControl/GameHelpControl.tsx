@@ -9,5 +9,5 @@ export const GameHelpControl = () => {
     return null
   }
 
-  return <DartPickerHelp title={gameChrome.help.title} paragraphs={gameChrome.help.paragraphs} />
+  return <DartPickerHelp {...gameChrome.help} />
 }

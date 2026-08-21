@@ -13,11 +13,8 @@ import {
   getScoringVisits,
   getThreeDartAverage,
 } from './visitStats'
-import {
-  countDoubleCheckoutStats,
-  type DoubleCheckoutStats,
-  emptyDoubleCheckoutStats,
-} from './doubleCheckoutStats'
+import { countDoubleCheckoutStats, emptyDoubleCheckoutStats } from './doubleCheckoutStats'
+import type { DoubleCheckoutStats } from './doubleCheckoutStats'
 
 export interface PlayerMatchStats {
   threeDartAverage: number | null

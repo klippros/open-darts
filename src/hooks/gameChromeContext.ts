@@ -4,6 +4,8 @@ import type { DartPickerHelpContent } from '../lib/game/getGameModePickerTargets
 export interface GameChromeState {
   active: boolean
   canFinish: boolean
+  /** False when voice scoring is not supported for the active mode. */
+  voiceInputAvailable: boolean
   onAbort: () => void
   onFinish: () => void
   help: DartPickerHelpContent

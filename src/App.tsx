@@ -5,6 +5,7 @@ import { Footer } from './components/Footer'
 import { AccountProvider } from './hooks/AccountProvider'
 import { GameChromeProvider } from './hooks/GameChromeProvider'
 import { SettingsProvider } from './hooks/SettingsProvider'
+import { VoiceControlProvider } from './hooks/VoiceControlProvider'
 
 export const App = () => {
   const { pathname } = useLocation()
@@ -13,40 +14,42 @@ export const App = () => {
   return (
     <AccountProvider>
       <SettingsProvider>
-        <GameChromeProvider>
-          <Box
-            h="100dvh"
-            overflow="hidden"
-            display="flex"
-            flexDirection="column"
-            position="relative"
-          >
-            <AppHeader />
-
-            <Flex
-              as="main"
-              flex="1"
-              minH={0}
+        <VoiceControlProvider>
+          <GameChromeProvider>
+            <Box
+              h="100dvh"
+              overflow="hidden"
+              display="flex"
+              flexDirection="column"
               position="relative"
-              zIndex={1}
-              overflowY={isGameRoute ? 'hidden' : 'auto'}
-              className="hide-scrollbar"
             >
-              <Flex direction="column" w="full" minH="100%" h={isGameRoute ? '100%' : undefined}>
-                <Box
-                  flex="1"
-                  minH={isGameRoute ? 0 : undefined}
-                  h={isGameRoute ? '100%' : undefined}
-                  display={isGameRoute ? 'flex' : undefined}
-                  flexDirection={isGameRoute ? 'column' : undefined}
-                >
-                  <Outlet />
-                </Box>
-                {!isGameRoute && <Footer />}
+              <AppHeader />
+
+              <Flex
+                as="main"
+                flex="1"
+                minH={0}
+                position="relative"
+                zIndex={1}
+                overflowY={isGameRoute ? 'hidden' : 'auto'}
+                className="hide-scrollbar"
+              >
+                <Flex direction="column" w="full" minH="100%" h={isGameRoute ? '100%' : undefined}>
+                  <Box
+                    flex="1"
+                    minH={isGameRoute ? 0 : undefined}
+                    h={isGameRoute ? '100%' : undefined}
+                    display={isGameRoute ? 'flex' : undefined}
+                    flexDirection={isGameRoute ? 'column' : undefined}
+                  >
+                    <Outlet />
+                  </Box>
+                  {!isGameRoute && <Footer />}
+                </Flex>
               </Flex>
-            </Flex>
-          </Box>
-        </GameChromeProvider>
+            </Box>
+          </GameChromeProvider>
+        </VoiceControlProvider>
       </SettingsProvider>
     </AccountProvider>
   )

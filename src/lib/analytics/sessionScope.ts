@@ -1,4 +1,4 @@
-import { AroundTheClockAimMode } from '../../types/aroundTheClock'
+import type { AroundTheClockAimMode } from '../../types/aroundTheClock'
 import { GameModeId } from '../../types/gameMode'
 import type { GameSession } from '../../types/gameSession'
 import { getAroundTheClockConfig } from '../aroundTheClock/aroundTheClockConfig'
