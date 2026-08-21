@@ -109,7 +109,15 @@ export const GamePage = () => {
   }
 
   return (
-    <ContentContainer h="100%" minH={0} display="flex" flexDirection="column" flex="1">
+    <ContentContainer
+      h="100%"
+      minH={0}
+      display="flex"
+      flexDirection="column"
+      flex="1"
+      overflowY="auto"
+      className="hide-scrollbar"
+    >
       {dialogs}
       <Flex direction="column" h="100%" minH={0} flex="1" pt={{ base: 3, md: 4 }} pb={10}>
         <GameBoardLayout

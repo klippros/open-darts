@@ -87,8 +87,6 @@ export const GameBoardLayout = ({
         justifySelf="center"
         minH={0}
         h="100%"
-        overflowY="auto"
-        className="hide-scrollbar"
         display="flex"
         flexDirection="column"
       >
