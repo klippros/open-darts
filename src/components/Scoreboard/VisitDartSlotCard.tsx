@@ -88,7 +88,7 @@ export const VisitDartSlotCard = ({
     opacity: styles.opacity,
     textAlign: 'center' as const,
     w: 'full',
-    h: 'full',
+    h: 'auto',
     display: 'flex' as const,
     flexDirection: 'column' as const,
     alignItems: 'center' as const,
