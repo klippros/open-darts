@@ -34,26 +34,35 @@ export const GameBoardLayout = ({
     ? getAroundTheClockConfig(config)
     : null
 
-  const renderHistoryColumn = (player: Player, align: 'left' | 'right') =>
-    aroundTheClockConfig === null ? (
-      <VisitHistoryColumn
-        player={player}
-        visits={visits}
-        mode={mode}
-        currentLeg={currentLeg}
-        align={align}
-        showPlayerName={showPlayerName}
-      />
-    ) : (
-      <AroundTheClockHistoryColumn
-        player={player}
-        visits={visits}
-        config={aroundTheClockConfig}
-        currentLeg={currentLeg}
-        align={align}
-        showPlayerName={showPlayerName}
-      />
-    )
+  const renderHistoryColumn = (player: Player, align: 'left' | 'right') => (
+    <Box
+      display={{ base: 'none', lg: 'block' }}
+      minH={0}
+      h="100%"
+      overflowY="auto"
+      className="hide-scrollbar"
+    >
+      {aroundTheClockConfig === null ? (
+        <VisitHistoryColumn
+          player={player}
+          visits={visits}
+          mode={mode}
+          currentLeg={currentLeg}
+          align={align}
+          showPlayerName={showPlayerName}
+        />
+      ) : (
+        <AroundTheClockHistoryColumn
+          player={player}
+          visits={visits}
+          config={aroundTheClockConfig}
+          currentLeg={currentLeg}
+          align={align}
+          showPlayerName={showPlayerName}
+        />
+      )}
+    </Box>
+  )
 
   return (
     <Grid
@@ -62,14 +71,27 @@ export const GameBoardLayout = ({
         lg: showVisitHistory ? 'minmax(160px, 200px) minmax(0, 1fr) minmax(160px, 200px)' : '1fr',
       }}
       gap={{ base: 6, lg: 6 }}
-      alignItems="start"
+      alignItems="stretch"
       justifyContent="center"
       mx="auto"
       w="full"
+      minH={0}
+      h="100%"
+      flex="1"
     >
       {showVisitHistory && leftPlayer !== undefined && renderHistoryColumn(leftPlayer, 'left')}
 
-      <Box w="full" maxW={gameMainMaxWidth} justifySelf="center">
+      <Box
+        w="full"
+        maxW={gameMainMaxWidth}
+        justifySelf="center"
+        minH={0}
+        h="100%"
+        overflowY="auto"
+        className="hide-scrollbar"
+        display="flex"
+        flexDirection="column"
+      >
         {children}
       </Box>
 

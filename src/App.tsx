@@ -29,21 +29,16 @@ export const App = () => {
               minH={0}
               position="relative"
               zIndex={1}
-              overflowY={isGameRoute ? { base: 'hidden', md: 'auto' } : 'auto'}
+              overflowY={isGameRoute ? 'hidden' : 'auto'}
               className="hide-scrollbar"
             >
-              <Flex
-                direction="column"
-                w="full"
-                minH="100%"
-                h={isGameRoute ? { base: '100%', md: 'auto' } : undefined}
-              >
+              <Flex direction="column" w="full" minH="100%" h={isGameRoute ? '100%' : undefined}>
                 <Box
                   flex="1"
-                  minH={isGameRoute ? { base: 0, md: undefined } : undefined}
-                  h={isGameRoute ? { base: '100%', md: 'auto' } : undefined}
-                  display={isGameRoute ? { base: 'flex', md: 'block' } : undefined}
-                  flexDirection={isGameRoute ? { base: 'column', md: undefined } : undefined}
+                  minH={isGameRoute ? 0 : undefined}
+                  h={isGameRoute ? '100%' : undefined}
+                  display={isGameRoute ? 'flex' : undefined}
+                  flexDirection={isGameRoute ? 'column' : undefined}
                 >
                   <Outlet />
                 </Box>

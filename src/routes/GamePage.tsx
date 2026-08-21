@@ -1,4 +1,4 @@
-import { Box, Flex, Stack, useBreakpointValue } from '@chakra-ui/react'
+import { Box, Flex, useBreakpointValue } from '@chakra-ui/react'
 import { ContentContainer } from '../components/ContentContainer'
 import { GameModeDartPicker } from '../components/DartPicker/GameModeDartPicker'
 import { GameBoardLayout } from '../components/GameBoardLayout'
@@ -109,9 +109,9 @@ export const GamePage = () => {
   }
 
   return (
-    <ContentContainer>
+    <ContentContainer h="100%" minH={0} display="flex" flexDirection="column" flex="1">
       {dialogs}
-      <Box pt={{ base: 3, md: 4 }} pb={10}>
+      <Flex direction="column" h="100%" minH={0} flex="1" pt={{ base: 3, md: 4 }} pb={10}>
         <GameBoardLayout
           players={controller.session.players}
           visits={controller.session.visits}
@@ -120,12 +120,12 @@ export const GamePage = () => {
           currentLeg={controller.session.matchProgress?.currentLeg}
           showVisitHistory={showsVisitHistory(controller.session.mode)}
         >
-          <Stack gap={8}>
+          <Flex direction="column" justify="space-between" gap={8} flex="1" minH="100%">
             {scoreboard}
             {picker}
-          </Stack>
+          </Flex>
         </GameBoardLayout>
-      </Box>
+      </Flex>
     </ContentContainer>
   )
 }
