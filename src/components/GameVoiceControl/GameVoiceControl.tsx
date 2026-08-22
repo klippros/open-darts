@@ -5,8 +5,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useGameChrome } from '../../hooks/gameChromeContext'
 import { useVoiceControl } from '../../hooks/voiceControlContext'
 import { createToolbarIconButton } from '../AppHeader/toolbarButtons'
-import { useMicrophoneLevel } from './useMicrophoneLevel'
-import { VoiceLevelMeter } from './VoiceLevelMeter'
 
 const resolveAriaLabel = (enabled: boolean, isError: boolean): string => {
   if (isError) {
@@ -24,7 +22,6 @@ const resolveAriaLabel = (enabled: boolean, isError: boolean): string => {
 export const GameVoiceControl = () => {
   const gameChrome = useGameChrome()
   const { supported, enabled, status, toggle } = useVoiceControl()
-  const level = useMicrophoneLevel(enabled && status === 'listening')
 
   if (gameChrome?.active !== true || !gameChrome.voiceInputAvailable || !supported) {
     return null
@@ -41,7 +38,6 @@ export const GameVoiceControl = () => {
           resolveAriaLabel(enabled, isError),
           <HStack gap={1} justify="center">
             <FontAwesomeIcon icon={showLiveMic ? faMicrophone : faMicrophoneSlash} />
-            {showLiveMic ? <VoiceLevelMeter active={status === 'listening'} level={level} /> : null}
           </HStack>,
         ),
         {

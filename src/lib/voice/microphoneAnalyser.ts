@@ -12,6 +12,10 @@ type WindowWithWebkitAudio = Window & {
  * Failure must not block speech recognition.
  */
 export const createMicrophoneAnalyser = async (): Promise<MicrophoneAnalyser | null> => {
+  if (typeof window !== 'undefined' && !window.isSecureContext) {
+    return null
+  }
+
   if (typeof navigator === 'undefined' || navigator.mediaDevices?.getUserMedia === undefined) {
     return null
   }
