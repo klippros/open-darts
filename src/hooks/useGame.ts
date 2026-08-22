@@ -7,6 +7,7 @@ import { getResumableSnapshot, persistControllerState } from '../lib/storage/vis
 import type { ActiveGameSnapshot } from '../types/activeGameSnapshot'
 import type { DartThrow } from '../types/dart'
 import type { Visit } from '../types/visit'
+import { useUiSounds } from './useUiSounds'
 import type { ScoreCallerCallbacks } from './useVisitScoreCaller'
 
 export interface UseGameOptions extends ScoreCallerCallbacks {
@@ -50,6 +51,10 @@ export const useGame = (launchParams: CreateSessionParams, options: UseGameOptio
     onLegStarted,
     onUndo,
   } = options
+
+  const { playUndo } = useUiSounds()
+  const playUndoRef = useRef(playUndo)
+  playUndoRef.current = playUndo
 
   const scoreCallerCallbacksRef = useRef<ScoreCallerCallbacks>({
     onVisitCommitted,
@@ -170,6 +175,27 @@ export const useGame = (launchParams: CreateSessionParams, options: UseGameOptio
     [persist],
   )
 
+  const recordVisitScore = useCallback(
+    (score: number) => {
+      setController((current) => {
+        const next = current.recordVisitScore(score)
+        const visitCommitted = next.session.visits.length > current.session.visits.length
+
+        if (visitCommitted) {
+          const visit = next.session.visits.at(-1)
+
+          if (visit !== undefined) {
+            notifyAfterVisitCommit(current, next, visit, scoreCallerCallbacksRef.current)
+          }
+        }
+
+        persist(next)
+        return next
+      })
+    },
+    [persist],
+  )
+
   const undoDart = useCallback(() => {
     setController((current) => {
       const next = current.undoDart()
@@ -178,6 +204,7 @@ export const useGame = (launchParams: CreateSessionParams, options: UseGameOptio
         return current
       }
 
+      playUndoRef.current()
       onUndo?.(current.session.id)
 
       persist(next)
@@ -272,6 +299,7 @@ export const useGame = (launchParams: CreateSessionParams, options: UseGameOptio
     controller,
     recordDart,
     recordDarts,
+    recordVisitScore,
     undoDart,
     finishMatch,
     restart,

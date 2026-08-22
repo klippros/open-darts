@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { GameModeId } from '../../types/gameMode'
+import { X01InputMode } from '../../types/settings'
 import { parseVoiceCommand, VoiceIntentKind } from './parseVoiceCommand'
 
 describe('parseVoiceCommand', () => {
@@ -12,6 +13,10 @@ describe('parseVoiceCommand', () => {
       expect(parseVoiceCommand(GameModeId.Bob27, 'undo last')).toBeNull()
       expect(parseVoiceCommand(GameModeId.Bob27, 'undo dart')).toBeNull()
       expect(parseVoiceCommand(GameModeId.Bob27, 'undo visit')).toBeNull()
+    })
+
+    it('rejects stuttered undo noise', () => {
+      expect(parseVoiceCommand(GameModeId.Bob27, 'undo undo undo undo')).toBeNull()
     })
 
     it('parses fix with gameplay body and rejects fix synonyms', () => {
@@ -28,11 +33,47 @@ describe('parseVoiceCommand', () => {
 
   describe('unsupported modes', () => {
     it.each([GameModeId.X01, GameModeId.OneTwentyOne, GameModeId.TenUpOneDown])(
-      'returns null for all phrases in %s',
+      'returns null for all phrases in %s without visit-score input',
       (mode) => {
         expect(parseVoiceCommand(mode, 'undo')).toBeNull()
         expect(parseVoiceCommand(mode, 'one hit')).toBeNull()
         expect(parseVoiceCommand(mode, 'hit miss hit')).toBeNull()
+        expect(parseVoiceCommand(mode, 'sixty')).toBeNull()
+      },
+    )
+  })
+
+  describe('visit score', () => {
+    const options = { x01InputMode: X01InputMode.VisitScore }
+
+    it.each([GameModeId.X01, GameModeId.OneTwentyOne, GameModeId.TenUpOneDown])(
+      'parses visit totals for %s',
+      (mode) => {
+        expect(parseVoiceCommand(mode, 'sixty', options)).toEqual({
+          kind: VoiceIntentKind.VisitScore,
+          score: 60,
+        })
+        expect(parseVoiceCommand(mode, 'one eighty', options)).toEqual({
+          kind: VoiceIntentKind.VisitScore,
+          score: 180,
+        })
+        expect(parseVoiceCommand(mode, '26', options)).toEqual({
+          kind: VoiceIntentKind.VisitScore,
+          score: 26,
+        })
+        expect(parseVoiceCommand(mode, 'no score', options)).toEqual({
+          kind: VoiceIntentKind.VisitScore,
+          score: 0,
+        })
+        expect(parseVoiceCommand(mode, '0', options)).toEqual({
+          kind: VoiceIntentKind.VisitScore,
+          score: 0,
+        })
+        expect(parseVoiceCommand(mode, 'undo', options)).toEqual({ kind: VoiceIntentKind.Undo })
+        expect(parseVoiceCommand(mode, 'fix sixty', options)).toEqual({
+          kind: VoiceIntentKind.Fix,
+          inner: { kind: VoiceIntentKind.VisitScore, score: 60 },
+        })
       },
     )
   })
@@ -77,13 +118,24 @@ describe('parseVoiceCommand', () => {
         kind: VoiceIntentKind.Bob27HitCount,
         hitCount: 0,
       })
+      expect(parseVoiceCommand(GameModeId.Bob27, 'miss all')).toEqual({
+        kind: VoiceIntentKind.Bob27HitCount,
+        hitCount: 0,
+      })
+      expect(parseVoiceCommand(GameModeId.Bob27, 'zero hits')).toEqual({
+        kind: VoiceIntentKind.Bob27HitCount,
+        hitCount: 0,
+      })
+      expect(parseVoiceCommand(GameModeId.Bob27, 'no hits')).toEqual({
+        kind: VoiceIntentKind.Bob27HitCount,
+        hitCount: 0,
+      })
     })
 
     it('rejects near-miss bob27 phrases', () => {
       expect(parseVoiceCommand(GameModeId.Bob27, 'hit 0')).toBeNull()
       expect(parseVoiceCommand(GameModeId.Bob27, 'hit')).toBeNull()
       expect(parseVoiceCommand(GameModeId.Bob27, 'miss')).toBeNull()
-      expect(parseVoiceCommand(GameModeId.Bob27, 'miss all')).toBeNull()
       expect(parseVoiceCommand(GameModeId.Bob27, 'missed')).toBeNull()
       expect(parseVoiceCommand(GameModeId.Bob27, 'double 20')).toBeNull()
       expect(parseVoiceCommand(GameModeId.Bob27, '1')).toBeNull()
@@ -108,6 +160,10 @@ describe('parseVoiceCommand', () => {
         kind: VoiceIntentKind.AroundTheClock,
         command: { type: 'missed-all' },
       })
+      expect(parseVoiceCommand(GameModeId.AroundTheClock, 'miss all')).toEqual({
+        kind: VoiceIntentKind.AroundTheClock,
+        command: { type: 'missed-all' },
+      })
     })
 
     it('rejects hit counts and dart phrases', () => {
@@ -116,7 +172,6 @@ describe('parseVoiceCommand', () => {
       expect(parseVoiceCommand(GameModeId.AroundTheClock, 'one hit')).toBeNull()
       expect(parseVoiceCommand(GameModeId.AroundTheClock, 'hit 1')).toBeNull()
       expect(parseVoiceCommand(GameModeId.AroundTheClock, 'hit 1st')).toBeNull()
-      expect(parseVoiceCommand(GameModeId.AroundTheClock, 'miss all')).toBeNull()
       expect(parseVoiceCommand(GameModeId.AroundTheClock, 'missed')).toBeNull()
       expect(parseVoiceCommand(GameModeId.AroundTheClock, 'double 20')).toBeNull()
       expect(parseVoiceCommand(GameModeId.AroundTheClock, 'hit hit hit hit')).toBeNull()
