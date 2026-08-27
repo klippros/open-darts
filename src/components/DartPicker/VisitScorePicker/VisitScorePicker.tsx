@@ -14,6 +14,20 @@ export interface VisitScorePickerProps {
 
 const PAD_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'clear', '0', 'back'] as const
 
+type PadKey = (typeof PAD_KEYS)[number]
+
+const padKeyLabel = (key: PadKey): string => {
+  if (key === 'clear') {
+    return 'Clear'
+  }
+
+  if (key === 'back') {
+    return '⌫'
+  }
+
+  return key
+}
+
 export const VisitScorePicker = ({
   onSubmit,
   onUndo,
@@ -81,6 +95,20 @@ export const VisitScorePicker = ({
 
   const canSubmit = parseVisitScoreInput(value) !== null && !inputDisabled
 
+  const onPadKey = (key: PadKey) => {
+    if (key === 'clear') {
+      setValue('')
+      return
+    }
+
+    if (key === 'back') {
+      setValue((current) => backspaceVisitScoreInput(current))
+      return
+    }
+
+    setValue((current) => appendVisitScoreDigit(current, key))
+  }
+
   return (
     <Stack gap={3}>
       <Input
@@ -97,54 +125,22 @@ export const VisitScorePicker = ({
       />
 
       <Grid templateColumns="repeat(3, 1fr)" gap={2}>
-        {PAD_KEYS.map((key) => {
-          if (key === 'clear') {
-            return (
-              <Button
-                key={key}
-                variant="outline"
-                disabled={inputDisabled}
-                onClick={() => {
-                  setValue('')
-                }}
-              >
-                Clear
-              </Button>
-            )
-          }
-
-          if (key === 'back') {
-            return (
-              <Button
-                key={key}
-                variant="outline"
-                disabled={inputDisabled}
-                onClick={() => {
-                  setValue((current) => backspaceVisitScoreInput(current))
-                }}
-              >
-                ⌫
-              </Button>
-            )
-          }
-
-          return (
-            <Button
-              key={key}
-              variant="outline"
-              disabled={inputDisabled}
-              onClick={() => {
-                setValue((current) => appendVisitScoreDigit(current, key))
-              }}
-            >
-              {key}
-            </Button>
-          )
-        })}
+        {PAD_KEYS.map((key) => (
+          <Button
+            key={key}
+            variant="cta"
+            disabled={inputDisabled}
+            onClick={() => {
+              onPadKey(key)
+            }}
+          >
+            {padKeyLabel(key)}
+          </Button>
+        ))}
       </Grid>
 
       <Grid templateColumns="1fr 1fr" gap={2}>
-        <Button variant="outline" disabled={inputDisabled} onClick={onUndo}>
+        <Button variant="cta" disabled={inputDisabled} onClick={onUndo}>
           Undo
         </Button>
         <Button variant="cta" disabled={!canSubmit} onClick={submitCurrentValue}>
