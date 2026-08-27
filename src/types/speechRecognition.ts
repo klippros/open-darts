@@ -21,50 +21,29 @@ interface SpeechRecognitionErrorEventLike extends Event {
   readonly message: string
 }
 
-interface SpeechRecognitionPhraseLike {
-  readonly phrase: string
-  readonly boost: number
-}
-
-type SpeechRecognitionPhraseConstructor = new (
-  phrase: string,
-  boost?: number,
-) => SpeechRecognitionPhraseLike
-
 interface SpeechRecognitionLike extends EventTarget {
   lang: string
   continuous: boolean
   interimResults: boolean
   maxAlternatives: number
   processLocally?: boolean
-  unspokenPunctuation?: boolean
-  phrases?: SpeechRecognitionPhraseLike[]
   onresult: ((event: SpeechRecognitionEventLike) => void) | null
   onerror: ((event: SpeechRecognitionErrorEventLike) => void) | null
   onend: ((event: Event) => void) | null
   onstart: ((event: Event) => void) | null
-  onsoundstart: ((event: Event) => void) | null
-  onspeechstart: ((event: Event) => void) | null
   start: () => void
   stop: () => void
   abort: () => void
 }
 
-interface SpeechRecognitionInstallOptions {
-  langs: string[]
-  processLocally?: boolean
-}
-
 interface SpeechRecognitionConstructor {
   new (): SpeechRecognitionLike
-  available?: (options: SpeechRecognitionInstallOptions) => Promise<string>
-  install?: (options: SpeechRecognitionInstallOptions) => Promise<boolean>
+  available?: (options: { langs: string[]; processLocally?: boolean }) => Promise<string>
 }
 
 interface WindowWithSpeechRecognition {
   SpeechRecognition?: SpeechRecognitionConstructor
   webkitSpeechRecognition?: SpeechRecognitionConstructor
-  SpeechRecognitionPhrase?: SpeechRecognitionPhraseConstructor
 }
 
 export type {
@@ -72,8 +51,5 @@ export type {
   SpeechRecognitionConstructor,
   SpeechRecognitionEventLike,
   SpeechRecognitionErrorEventLike,
-  SpeechRecognitionPhraseLike,
-  SpeechRecognitionPhraseConstructor,
-  SpeechRecognitionInstallOptions,
   WindowWithSpeechRecognition,
 }

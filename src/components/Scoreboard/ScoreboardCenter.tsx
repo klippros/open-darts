@@ -38,7 +38,6 @@ export interface ScoreboardCenterProps {
   visits: Visit[]
   config: GameConfig
   matchProgress?: MatchProgress
-  hideVisitDartSlots?: boolean
 }
 
 const buildChallengeSecondaryLabel = (
@@ -84,11 +83,9 @@ export const ScoreboardCenter = ({
   visits,
   config,
   matchProgress,
-  hideVisitDartSlots = false,
 }: ScoreboardCenterProps) => {
   const checkoutRules = toCheckoutSuggestionRules(mode, config)
-  const showVisitDartSlots =
-    !hideVisitDartSlots && mode !== GameModeId.AroundTheClock && mode !== GameModeId.Bob27
+  const showVisitDartSlots = mode !== GameModeId.AroundTheClock && mode !== GameModeId.Bob27
   const scoreBeforeVisit =
     activePlayer === undefined ? 0 : activePlayer.primaryScore + sumDartPoints(pendingDarts)
   const legStartingPlayerIndex =

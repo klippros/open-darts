@@ -1,13 +1,7 @@
 import type { GameEngine, VisitResult } from '../game/GameEngine'
 import { GameModeId } from '../../types/gameMode'
-import { VisitInputMode } from '../../types/visit'
 import type { X01Config, X01State } from '../../types/x01'
-import {
-  previewX01Remaining,
-  resolveX01Visit,
-  resolveX01VisitScore,
-  getX01VisitScore,
-} from './x01Rules'
+import { previewX01Remaining, resolveX01Visit, getX01VisitScore } from './x01Rules'
 
 const getPlayerState = (state: X01State, playerId: string) => {
   const playerState = state.players[playerId]
@@ -80,42 +74,6 @@ export const x01Engine: GameEngine<X01State, X01Config> = {
       scoreAfter: outcome.scoreAfter,
       bust: outcome.bust,
       checkout: outcome.checkout,
-    }
-
-    const nextState: X01State = {
-      ...state,
-      players: {
-        ...state.players,
-        [playerId]: {
-          remaining: outcome.scoreAfter,
-          hasOpened: outcome.opened,
-        },
-      },
-      winnerId: outcome.checkout ? playerId : state.winnerId,
-    }
-
-    return {
-      state: nextState,
-      visit,
-      advanceTurn: !outcome.checkout,
-    }
-  },
-
-  commitVisitScore: (state, playerId, visitIndex, score): VisitResult<X01State> => {
-    const playerState = getPlayerState(state, playerId)
-    const scoreBefore = playerState.remaining
-    const outcome = resolveX01VisitScore(scoreBefore, score, state.config, playerState.hasOpened)
-
-    const visit: VisitResult<X01State>['visit'] = {
-      visitIndex,
-      playerId,
-      darts: [],
-      visitScore: outcome.bust ? 0 : score,
-      scoreBefore,
-      scoreAfter: outcome.scoreAfter,
-      bust: outcome.bust,
-      checkout: outcome.checkout,
-      inputMode: VisitInputMode.VisitScore,
     }
 
     const nextState: X01State = {

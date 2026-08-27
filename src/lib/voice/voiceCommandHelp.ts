@@ -1,6 +1,5 @@
 import { GameModeId } from '../../types/gameMode'
-import type { X01InputMode } from '../../types/settings'
-import { isVisitScoreVoiceMode, isVoiceInputSupportedForMode } from './voiceModeSupport'
+import { isVoiceInputSupportedForMode } from './voiceModeSupport'
 
 export const VOICE_COMMANDS_SECTION_TITLE = 'Voice commands'
 
@@ -21,19 +20,12 @@ export interface VoiceCommandHelpSection {
   rows: VoiceCommandHelpRow[]
 }
 
-export interface VoiceCommandHelpOptions {
-  x01InputMode?: X01InputMode
-}
-
 /**
  * User-facing voice command table for match help dialogs.
  * Returns null when voice input is not available for the mode.
  */
-export const getVoiceCommandHelpSection = (
-  mode: GameModeId,
-  options: VoiceCommandHelpOptions = {},
-): VoiceCommandHelpSection | null => {
-  if (!isVoiceInputSupportedForMode(mode, options)) {
+export const getVoiceCommandHelpSection = (mode: GameModeId): VoiceCommandHelpSection | null => {
+  if (!isVoiceInputSupportedForMode(mode)) {
     return null
   }
 
@@ -41,12 +33,12 @@ export const getVoiceCommandHelpSection = (
     return {
       title: VOICE_COMMANDS_SECTION_TITLE,
       intro: VOICE_COMMANDS_SECTION_INTRO,
-      note: 'Also accepted: "zero hits", "miss all", "hit one", "hit 1", and so on.',
+      note: 'Also accepted: "hit one", "hit 1", "hit two", and so on.',
       rows: [
         { say: 'One hit', means: 'Score 1 hit on the current target' },
         { say: 'Two hits', means: 'Score 2 hits' },
         { say: 'Three hits', means: 'Score 3 hits' },
-        { say: 'No hits', means: 'Score 0 hits' },
+        { say: 'Missed all', means: 'Score 0 hits' },
         { say: 'Undo', means: 'Remove the last voice entry' },
         { say: 'Fix two hits', means: 'Replace the last voice entry' },
       ],
@@ -57,29 +49,13 @@ export const getVoiceCommandHelpSection = (
     return {
       title: VOICE_COMMANDS_SECTION_TITLE,
       intro: VOICE_COMMANDS_SECTION_INTRO,
-      note: 'Say each dart in order (Hit or Miss), then pause. Wipe the rest of the visit with "No hits". Do not say hit counts like "two hits".',
+      note: 'Speak three hit/miss results for each visit (e.g. Hit miss hit), or Missed all. Do not say hit counts like "two hits".',
       rows: [
         { say: 'Hit hit miss', means: 'Example full visit (hit, hit, miss)' },
         { say: 'Miss miss miss', means: 'Three misses' },
-        { say: 'No hits', means: 'Miss every dart in this visit' },
+        { say: 'Missed all', means: 'Miss every dart in this visit' },
         { say: 'Undo', means: 'Remove the last voice entry' },
         { say: 'Fix hit miss miss', means: 'Replace the last voice entry' },
-      ],
-    }
-  }
-
-  if (isVisitScoreVoiceMode(mode)) {
-    return {
-      title: VOICE_COMMANDS_SECTION_TITLE,
-      intro: VOICE_COMMANDS_SECTION_INTRO,
-      note: 'Say the visit total from 1 to 180, or "no score" for a blank visit. Scores above remaining bust automatically.',
-      rows: [
-        { say: 'Sixty', means: 'Score 60 for the visit' },
-        { say: 'One eighty', means: 'Score 180' },
-        { say: 'Twenty six', means: 'Score 26' },
-        { say: 'No score', means: 'Record a visit with no points' },
-        { say: 'Undo', means: 'Remove the last voice entry' },
-        { say: 'Fix sixty', means: 'Replace the last voice entry' },
       ],
     }
   }
@@ -88,11 +64,8 @@ export const getVoiceCommandHelpSection = (
 }
 
 /** Compact cheat-sheet lines for DEV logging. */
-export const getVoiceCommandHelpLines = (
-  mode: GameModeId,
-  options: VoiceCommandHelpOptions = {},
-): string[] => {
-  const section = getVoiceCommandHelpSection(mode, options)
+export const getVoiceCommandHelpLines = (mode: GameModeId): string[] => {
+  const section = getVoiceCommandHelpSection(mode)
 
   if (section === null) {
     return ['(voice scoring unavailable for this mode)']

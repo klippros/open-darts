@@ -1,5 +1,4 @@
 import { GameModeId } from '../../types/gameMode'
-import { X01InputMode } from '../../types/settings'
 import { getBob27Target } from '../bob27/bob27Rules'
 import type { VoiceCommandHelpSection } from '../voice/voiceCommandHelp'
 import { getVoiceCommandHelpSection } from '../voice/voiceCommandHelp'
@@ -52,15 +51,14 @@ export const getGameModePickerTargets = (
 export const getDartPickerHelpContent = (
   mode: GameModeId,
   bob27TargetIndex?: number,
-  x01InputMode: X01InputMode = X01InputMode.Board,
 ): DartPickerHelpContent => {
-  const voice = getVoiceCommandHelpSection(mode, { x01InputMode }) ?? undefined
+  const voice = getVoiceCommandHelpSection(mode) ?? undefined
 
   if (mode === GameModeId.AroundTheClock) {
     return {
       title: 'How to score',
       paragraphs: [
-        'Press the dart you hit on. "No hits" records the remaining darts of this visit as misses.',
+        'Press the dart you hit on. "Miss all" records the remaining darts of this visit as misses.',
       ],
       voice,
     }
@@ -74,18 +72,6 @@ export const getDartPickerHelpContent = (
       title: 'How to score',
       paragraphs: [
         `Record how many times you hit ${targetLabel}. Each hit adds the double score, zero hits subtract it; then the next target starts.`,
-      ],
-      voice,
-    }
-  }
-
-  if (x01InputMode === X01InputMode.VisitScore) {
-    return {
-      title: 'How to score',
-      paragraphs: [
-        'Enter the total for your visit (0–180) with the number pad or keyboard, then Enter. Scores above the remaining total bust automatically.',
-        'Backspace edits the number, Escape clears it, and Undo removes the last visit.',
-        'Switch back to board scoring in Settings if you want to enter each dart.',
       ],
       voice,
     }

@@ -3,7 +3,6 @@ const withBaseUrl = (path: string): string =>
 
 const HIT_SOUND_URL = withBaseUrl('sounds/hit-chime.mp3')
 const MISS_SOUND_URL = withBaseUrl('sounds/miss-swoosh.mp3')
-const UNDO_SOUND_URL = withBaseUrl('sounds/undo-chime.mp3')
 const PLAYBACK_VOLUME = 0.7
 
 const playSoundUrl = async (url: string): Promise<void> => {
@@ -27,8 +26,4 @@ export const playHitChime = (): void => {
 
 export const playMissSwoosh = (): void => {
   void playSoundUrl(MISS_SOUND_URL)
-}
-
-export const playUndoChime = (): void => {
-  void playSoundUrl(UNDO_SOUND_URL)
 }

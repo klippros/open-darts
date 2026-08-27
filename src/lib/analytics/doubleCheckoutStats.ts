@@ -2,7 +2,6 @@ import type { CheckoutRules } from '../../types/checkout'
 import { DartMultiplier, DartSegmentType } from '../../types/dart'
 import type { DartThrow } from '../../types/dart'
 import type { Visit } from '../../types/visit'
-import { visitsIncludeVisitScoreInput } from '../../types/visit'
 import { isDoubleDart } from '../dartScoring'
 import { formatDart } from '../formatDart'
 import type { CheckoutDart } from '../checkout/checkoutSuggestions'
@@ -211,35 +210,4 @@ export const countDoubleCheckoutStats = (
     const { stats } = countDoubleCheckoutStatsForVisit(visit, rules, doubleIn, hasOpenedBefore)
 
     return mergeDoubleCheckoutStats(totals, stats)
-  }, emptyDoubleCheckoutStats())
-
-const groupVisitsByLeg = (visits: Visit[]): Visit[][] => {
-  const groups = new Map<number | 'none', Visit[]>()
-
-  for (const visit of visits) {
-    const key = visit.legIndex ?? 'none'
-    const existing = groups.get(key)
-
-    if (existing === undefined) {
-      groups.set(key, [visit])
-    } else {
-      existing.push(visit)
-    }
-  }
-
-  return [...groups.values()]
-}
-
-/** Legs that used visit-score input are excluded — double attempts cannot be inferred. */
-export const countDoubleCheckoutStatsSkippingVisitScoreLegs = (
-  visits: Visit[],
-  rules: CheckoutRules,
-  doubleIn = false,
-): DoubleCheckoutStats =>
-  groupVisitsByLeg(visits).reduce<DoubleCheckoutStats>((totals, legVisits) => {
-    if (visitsIncludeVisitScoreInput(legVisits)) {
-      return totals
-    }
-
-    return mergeDoubleCheckoutStats(totals, countDoubleCheckoutStats(legVisits, rules, doubleIn))
   }, emptyDoubleCheckoutStats())

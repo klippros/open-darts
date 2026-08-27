@@ -109,38 +109,4 @@ describe('x01Engine', () => {
     expect(result.visit.checkout).toBe(true)
     expect(result.state.players[player.id]?.remaining).toBe(0)
   })
-
-  it('commits a visit from a claimed score total', () => {
-    const state = x01Engine.createInitialState([player], config)
-    const result = x01Engine.commitVisitScore?.(state, player.id, 0, 100)
-
-    expect(result?.visit).toMatchObject({
-      darts: [],
-      visitScore: 100,
-      scoreBefore: 501,
-      scoreAfter: 401,
-      bust: false,
-      checkout: false,
-      inputMode: 'visit-score',
-    })
-    expect(result?.state.players[player.id]?.remaining).toBe(401)
-  })
-
-  it('auto-busts visit scores above remaining', () => {
-    const state = x01Engine.createInitialState([player], { ...config, startScore: 40 })
-    const result = x01Engine.commitVisitScore?.(state, player.id, 0, 60)
-
-    expect(result?.visit.bust).toBe(true)
-    expect(result?.visit.visitScore).toBe(0)
-    expect(result?.state.players[player.id]?.remaining).toBe(40)
-  })
-
-  it('checkouts from a visit score equal to remaining', () => {
-    const state = x01Engine.createInitialState([player], { ...config, startScore: 40 })
-    const result = x01Engine.commitVisitScore?.(state, player.id, 0, 40)
-
-    expect(result?.visit.checkout).toBe(true)
-    expect(result?.state.winnerId).toBe(player.id)
-    expect(result?.advanceTurn).toBe(false)
-  })
 })

@@ -5,11 +5,9 @@ import { GameBoardLayout } from '../components/GameBoardLayout'
 import { MobileVisitHistory } from '../components/Scoreboard/MobileVisitHistory'
 import { Scoreboard } from '../components/Scoreboard/Scoreboard'
 import { useAccount } from '../hooks/accountContext'
-import { useSettings } from '../hooks/settingsContext'
 import { useGamePage } from '../hooks/useGamePage'
 import { showsVisitHistory } from '../lib/game/gameModeDefinitions'
 import { mainContentMaxWidth } from '../layout'
-import { X01InputMode } from '../types/settings'
 import { GamePageDialogs } from './GamePageDialogs'
 
 export const GamePage = () => {
@@ -17,7 +15,6 @@ export const GamePage = () => {
     controller,
     recordDart,
     recordDarts,
-    recordVisitScore,
     undoDart,
     restart,
     loadState,
@@ -29,7 +26,6 @@ export const GamePage = () => {
     pickerTargets,
   } = useGamePage()
   const { account, createAccount } = useAccount()
-  const { x01InputMode } = useSettings()
   const isMobile = useBreakpointValue({ base: true, md: false }, { ssr: false }) ?? true
 
   const inputDisabled = controller.isComplete || loadState.kind === 'conflict'
@@ -64,9 +60,6 @@ export const GamePage = () => {
       players={controller.session.players}
       config={controller.session.config}
       matchProgress={controller.session.matchProgress}
-      hideVisitDartSlots={
-        x01InputMode === X01InputMode.VisitScore && controller.pendingDarts.length === 0
-      }
     />
   )
 
@@ -77,10 +70,8 @@ export const GamePage = () => {
       aroundTheClockTargetIndex={pickerTargets.aroundTheClockTargetIndex}
       bob27TargetIndex={pickerTargets.bob27TargetIndex}
       pendingDarts={controller.pendingDarts}
-      x01InputMode={x01InputMode}
       onDart={recordDart}
       onDarts={recordDarts}
-      onVisitScore={recordVisitScore}
       onUndo={undoDart}
       inputDisabled={inputDisabled}
     />

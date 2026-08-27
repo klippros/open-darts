@@ -37,7 +37,7 @@ export const Bob27DartPicker = ({
             disabled={inputDisabled}
             ariaLabel={
               hitCount === 0
-                ? `No hits on ${target.label}`
+                ? `Miss all darts on ${target.label}`
                 : `Hit ${target.label} ${hitCount} time${hitCount === 1 ? '' : 's'}`
             }
             onClick={

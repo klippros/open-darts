@@ -1,6 +1,5 @@
 import type { GameSession } from '../../types/gameSession'
 import type { Visit } from '../../types/visit'
-import { getVisitDartCount } from '../../types/visit'
 import { getPlayedLegNumbers, getVisitsForLeg } from '../game/matchLegs'
 import { getPrimaryPlayerVisits } from './visitStats'
 
@@ -29,7 +28,7 @@ export const legFinishedWithCheckout = (visits: Visit[]): boolean =>
   visits.some((visit) => visit.checkout)
 
 export const countDartsInVisits = (visits: Visit[]): number =>
-  visits.reduce((sum, visit) => sum + getVisitDartCount(visit), 0)
+  visits.reduce((sum, visit) => sum + visit.darts.length, 0)
 
 export const getX01LegSlicePointId = (slice: X01LegSlice): string =>
   `${slice.session.id}:leg:${slice.legNumber}`

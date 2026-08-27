@@ -80,11 +80,9 @@ export const VisitHistoryColumn = ({
               <Text color={headlineColor} fontWeight="bold" fontSize="lg">
                 {display.headline}
               </Text>
-              {visit.darts.length > 0 && (
-                <Text mt={1} color="whiteAlpha.700" fontSize="sm" lineHeight="short">
-                  {visit.darts.map((dart) => formatDart(dart)).join(' · ')}
-                </Text>
-              )}
+              <Text mt={1} color="whiteAlpha.700" fontSize="sm" lineHeight="short">
+                {visit.darts.map((dart) => formatDart(dart)).join(' · ')}
+              </Text>
             </Box>
           )
         })

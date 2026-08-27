@@ -1,5 +1,4 @@
 import type { GameSession } from '../../types/gameSession'
-import { VisitInputMode } from '../../types/visit'
 import type { GameEngine } from './GameEngine'
 import { getVisitsForLeg } from './matchLegs'
 
@@ -16,24 +15,6 @@ export const rebuildEngineStateFromSession = <State, Config>(
   let state = engine.createInitialState(session.players, session.config as Config)
 
   for (const visit of legVisits) {
-    if (visit.inputMode === VisitInputMode.VisitScore) {
-      const commitVisitScore = engine.commitVisitScore
-
-      if (commitVisitScore === undefined) {
-        throw new Error(`Engine for mode ${engine.mode} does not support visit-score input`)
-      }
-
-      const scoreToReplay = visit.bust ? visit.scoreBefore + 1 : visit.visitScore
-      const { state: nextState } = commitVisitScore(
-        state,
-        visit.playerId,
-        visit.visitIndex,
-        scoreToReplay,
-      )
-      state = nextState
-      continue
-    }
-
     const { state: nextState } = engine.commitVisit(
       state,
       visit.playerId,

@@ -1,5 +1,5 @@
 import type { AppSettings } from '../../types/settings'
-import { DEFAULT_APP_SETTINGS, X01InputMode } from '../../types/settings'
+import { DEFAULT_APP_SETTINGS } from '../../types/settings'
 import type { StorageAdapter } from './localStorageAdapter'
 import { browserLocalStorage } from './localStorageAdapter'
 import { StorageKey } from './storageKeys'
@@ -19,14 +19,6 @@ const parseJson = (value: string | null): unknown => {
 const readBooleanSetting = (value: unknown, fallback: boolean): boolean =>
   typeof value === 'boolean' ? value : fallback
 
-const readX01InputMode = (value: unknown): X01InputMode => {
-  if (value === X01InputMode.Board || value === X01InputMode.VisitScore) {
-    return value
-  }
-
-  return DEFAULT_APP_SETTINGS.x01InputMode
-}
-
 const mergeAppSettings = (value: unknown): AppSettings | null => {
   if (typeof value !== 'object' || value === null) {
     return null
@@ -43,7 +35,6 @@ const mergeAppSettings = (value: unknown): AppSettings | null => {
       stored.uiSoundsEnabled,
       DEFAULT_APP_SETTINGS.uiSoundsEnabled,
     ),
-    x01InputMode: readX01InputMode(stored.x01InputMode),
   }
 }
 

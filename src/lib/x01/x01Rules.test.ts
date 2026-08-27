@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { DartMultiplier } from '../../types/dart'
-import { resolveX01Visit, resolveX01VisitScore, previewX01Remaining } from './x01Rules'
+import { resolveX01Visit, previewX01Remaining } from './x01Rules'
 import { bullDart, defaultX01Config, missDart, numberDart } from '../testHelpers'
 
 describe('resolveX01Visit', () => {
@@ -116,55 +116,6 @@ describe('resolveX01Visit', () => {
 
     expect(outcome.bust).toBe(true)
     expect(outcome.scoreAfter).toBe(60)
-  })
-})
-
-describe('resolveX01VisitScore', () => {
-  const config = defaultX01Config()
-
-  it('subtracts a normal visit total', () => {
-    expect(resolveX01VisitScore(501, 180, config, true)).toEqual({
-      scoreAfter: 321,
-      bust: false,
-      checkout: false,
-      opened: true,
-    })
-  })
-
-  it('busts when the claimed score exceeds remaining', () => {
-    expect(resolveX01VisitScore(50, 60, config, true)).toEqual({
-      scoreAfter: 50,
-      bust: true,
-      checkout: false,
-      opened: true,
-    })
-  })
-
-  it('busts when double-out would leave one', () => {
-    expect(resolveX01VisitScore(21, 20, config, true)).toEqual({
-      scoreAfter: 21,
-      bust: true,
-      checkout: false,
-      opened: true,
-    })
-  })
-
-  it('checkouts when the claimed score equals remaining', () => {
-    expect(resolveX01VisitScore(40, 40, config, true)).toEqual({
-      scoreAfter: 0,
-      bust: false,
-      checkout: true,
-      opened: true,
-    })
-  })
-
-  it('allows a zero visit', () => {
-    expect(resolveX01VisitScore(501, 0, config, true)).toEqual({
-      scoreAfter: 501,
-      bust: false,
-      checkout: false,
-      opened: true,
-    })
   })
 })
 

@@ -2,18 +2,12 @@ import type { DartThrow } from '../../types/dart'
 import type { X01Config } from '../../types/x01'
 import { isDoubleDart, sumDartPoints } from '../dartScoring'
 
-export const MIN_VISIT_SCORE = 0
-export const MAX_VISIT_SCORE = 180
-
 export interface X01VisitOutcome {
   scoreAfter: number
   bust: boolean
   checkout: boolean
   opened: boolean
 }
-
-export const isValidVisitScore = (score: number): boolean =>
-  Number.isInteger(score) && score >= MIN_VISIT_SCORE && score <= MAX_VISIT_SCORE
 
 const countsTowardScore = (dart: DartThrow, config: X01Config, hasOpened: boolean): boolean => {
   if (dart.points === 0) {
@@ -89,50 +83,3 @@ export const previewX01Remaining = (
 ): number => resolveX01Visit(scoreBefore, darts, config, hasOpened).scoreAfter
 
 export const getX01VisitScore = (darts: DartThrow[]): number => sumDartPoints(darts)
-
-/**
- * Resolve a visit from a claimed three-dart total.
- * Trusts the caller that the score obeyed game rules (e.g. double-out finish).
- */
-export const resolveX01VisitScore = (
-  scoreBefore: number,
-  claimedScore: number,
-  config: X01Config,
-  hasOpened: boolean,
-): X01VisitOutcome => {
-  if (claimedScore > scoreBefore) {
-    return {
-      scoreAfter: scoreBefore,
-      bust: true,
-      checkout: false,
-      opened: hasOpened,
-    }
-  }
-
-  const nextRemaining = scoreBefore - claimedScore
-
-  if (nextRemaining === 1 && config.doubleOut) {
-    return {
-      scoreAfter: scoreBefore,
-      bust: true,
-      checkout: false,
-      opened: hasOpened,
-    }
-  }
-
-  if (nextRemaining === 0) {
-    return {
-      scoreAfter: 0,
-      bust: false,
-      checkout: true,
-      opened: hasOpened || claimedScore > 0,
-    }
-  }
-
-  return {
-    scoreAfter: nextRemaining,
-    bust: false,
-    checkout: false,
-    opened: hasOpened || claimedScore > 0,
-  }
-}

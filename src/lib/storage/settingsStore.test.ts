@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { loadSettings, saveSettings } from './settingsStore'
 import type { StorageAdapter } from './localStorageAdapter'
 import { StorageKey } from './storageKeys'
-import { DEFAULT_APP_SETTINGS, X01InputMode } from '../../types/settings'
+import { DEFAULT_APP_SETTINGS } from '../../types/settings'
 
 const createMemoryStorage = (): StorageAdapter & { data: Map<string, string> } => {
   const data = new Map<string, string>()
@@ -20,7 +20,7 @@ const createMemoryStorage = (): StorageAdapter & { data: Map<string, string> } =
 }
 
 describe('settingsStore', () => {
-  it('defaults score caller, UI sounds, and board input', () => {
+  it('defaults score caller and UI sounds', () => {
     const storage = createMemoryStorage()
 
     expect(loadSettings(storage)).toEqual(DEFAULT_APP_SETTINGS)
@@ -29,19 +29,11 @@ describe('settingsStore', () => {
   it('saves and loads settings', () => {
     const storage = createMemoryStorage()
 
-    saveSettings(
-      {
-        scoreCallerEnabled: false,
-        uiSoundsEnabled: false,
-        x01InputMode: X01InputMode.VisitScore,
-      },
-      storage,
-    )
+    saveSettings({ scoreCallerEnabled: false, uiSoundsEnabled: false }, storage)
 
     expect(loadSettings(storage)).toEqual({
       scoreCallerEnabled: false,
       uiSoundsEnabled: false,
-      x01InputMode: X01InputMode.VisitScore,
     })
   })
 
@@ -52,7 +44,6 @@ describe('settingsStore', () => {
     expect(loadSettings(storage)).toEqual({
       scoreCallerEnabled: false,
       uiSoundsEnabled: true,
-      x01InputMode: X01InputMode.Board,
     })
   })
 
@@ -70,7 +61,6 @@ describe('settingsStore', () => {
     expect(loadSettings(storage)).toEqual({
       scoreCallerEnabled: true,
       uiSoundsEnabled: true,
-      x01InputMode: X01InputMode.Board,
     })
   })
 
@@ -81,7 +71,6 @@ describe('settingsStore', () => {
     expect(loadSettings(storage)).toEqual({
       scoreCallerEnabled: true,
       uiSoundsEnabled: true,
-      x01InputMode: X01InputMode.Board,
     })
   })
 

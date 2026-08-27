@@ -1,7 +1,7 @@
 import type { GameModeId } from '../../types/gameMode'
 import { normalizeTranscriptLight } from './normalizeTranscriptLight'
 import { parseVoiceCommand, VoiceIntentKind } from './parseVoiceCommand'
-import type { ParseVoiceCommandOptions, VoiceIntent } from './parseVoiceCommand'
+import type { VoiceIntent } from './parseVoiceCommand'
 
 const intentFingerprint = (intent: VoiceIntent): string => {
   switch (intent.kind) {
@@ -15,8 +15,6 @@ const intentFingerprint = (intent: VoiceIntent): string => {
       return intent.command.type === 'missed-all'
         ? 'atc:missed-all'
         : `atc:${intent.command.outcomes.join(',')}`
-    case VoiceIntentKind.VisitScore:
-      return `visit-score:${intent.score}`
     default: {
       const _exhaustive: never = intent
       return _exhaustive
@@ -50,7 +48,6 @@ export const chooseSpeechTranscript = (
   mode: GameModeId,
   finalTranscript: string,
   interimTranscript: string | null | undefined,
-  options: ParseVoiceCommandOptions = {},
 ): string => {
   const finalText = finalTranscript.trim()
   const interimText = interimTranscript?.trim() ?? ''
@@ -59,8 +56,8 @@ export const chooseSpeechTranscript = (
     return finalText
   }
 
-  const finalIntent = parseVoiceCommand(mode, finalText, options)
-  const interimIntent = parseVoiceCommand(mode, interimText, options)
+  const finalIntent = parseVoiceCommand(mode, finalText)
+  const interimIntent = parseVoiceCommand(mode, interimText)
 
   // Meta commands from the final hypothesis always win.
   if (finalIntent?.kind === VoiceIntentKind.Undo || finalIntent?.kind === VoiceIntentKind.Fix) {

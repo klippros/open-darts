@@ -96,11 +96,11 @@ export const AroundTheClockDartPicker = ({
       </Grid>
 
       <VisitDartSlotCard
-        label={dartsLeft === 1 ? 'Miss' : 'No hits'}
+        label={dartsLeft === 1 ? 'Miss' : `Miss ${dartsLeft} darts`}
         variant={dartsLeft === 0 || inputDisabled ? 'empty' : 'selectable'}
         size="comfortable"
         disabled={inputDisabled || dartsLeft === 0}
-        ariaLabel={dartsLeft === 1 ? 'Miss' : `No hits — miss ${dartsLeft} darts`}
+        ariaLabel={dartsLeft === 1 ? 'Miss' : `Miss ${dartsLeft} darts`}
         onClick={
           dartsLeft === 0 || inputDisabled
             ? undefined

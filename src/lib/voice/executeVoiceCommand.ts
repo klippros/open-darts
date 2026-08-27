@@ -210,10 +210,6 @@ const buildGameplayDarts = (
     }
   }
 
-  if (intent.kind === VoiceIntentKind.VisitScore) {
-    return null
-  }
-
   if (controller.session.mode !== GameModeId.AroundTheClock) {
     return null
   }
@@ -271,27 +267,6 @@ const applyGameplay = (
   after: VoiceFingerprint
   playback: VoicePlayback
 } | null => {
-  if (intent.kind === VoiceIntentKind.VisitScore) {
-    if (controller.pendingDarts.length > 0) {
-      return null
-    }
-
-    const before = fingerprintOf(controller)
-    const next = controller.recordVisitScore(intent.score)
-
-    if (next === controller || next.session.visits.length <= controller.session.visits.length) {
-      return null
-    }
-
-    return {
-      next,
-      undoSteps: 1,
-      before,
-      after: fingerprintOf(next),
-      playback: intent.score === 0 ? 'miss' : 'hit',
-    }
-  }
-
   const built = buildGameplayDarts(controller, intent)
 
   if (built === null) {

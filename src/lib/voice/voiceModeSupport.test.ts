@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import { GameModeId } from '../../types/gameMode'
-import { X01InputMode } from '../../types/settings'
 import { isVoiceInputSupportedForMode } from './voiceModeSupport'
 
 describe('isVoiceInputSupportedForMode', () => {
@@ -9,25 +8,9 @@ describe('isVoiceInputSupportedForMode', () => {
     expect(isVoiceInputSupportedForMode(GameModeId.AroundTheClock)).toBe(true)
   })
 
-  it('disables X01-family modes on board input', () => {
+  it('disables X01, 121, and 10-up-1-down', () => {
     expect(isVoiceInputSupportedForMode(GameModeId.X01)).toBe(false)
     expect(isVoiceInputSupportedForMode(GameModeId.OneTwentyOne)).toBe(false)
     expect(isVoiceInputSupportedForMode(GameModeId.TenUpOneDown)).toBe(false)
-  })
-
-  it('enables X01-family modes when visit-score input is selected', () => {
-    expect(
-      isVoiceInputSupportedForMode(GameModeId.X01, { x01InputMode: X01InputMode.VisitScore }),
-    ).toBe(true)
-    expect(
-      isVoiceInputSupportedForMode(GameModeId.OneTwentyOne, {
-        x01InputMode: X01InputMode.VisitScore,
-      }),
-    ).toBe(true)
-    expect(
-      isVoiceInputSupportedForMode(GameModeId.TenUpOneDown, {
-        x01InputMode: X01InputMode.VisitScore,
-      }),
-    ).toBe(true)
   })
 })

@@ -2,7 +2,7 @@ import type { GameSession } from '../../types/gameSession'
 import { isX01Config } from '../game/gameConfigGuards'
 import { x01PresetConfigs, X01PresetId } from '../x01/x01Presets'
 import {
-  countDoubleCheckoutStatsSkippingVisitScoreLegs,
+  countDoubleCheckoutStats,
   mergeDoubleCheckoutStats,
   emptyDoubleCheckoutStats,
 } from './doubleCheckoutStats'
@@ -76,7 +76,7 @@ const computeX01LegStats = (sessions: GameSession[]): X01LegStats => {
       return totals
     }
 
-    const sessionStats = countDoubleCheckoutStatsSkippingVisitScoreLegs(
+    const sessionStats = countDoubleCheckoutStats(
       leg.visits,
       {
         doubleIn: leg.session.config.doubleIn,

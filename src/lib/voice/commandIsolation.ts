@@ -11,10 +11,10 @@ export interface CommandIsolationState {
 }
 
 /** Silence required before and after a voice command. */
-export const VOICE_COMMAND_ISOLATION_MS = 400
+export const VOICE_COMMAND_ISOLATION_MS = 100
 
 /** Delay after score-caller TTS before listening again. */
-export const VOICE_CALLER_RESUME_MS = 500
+export const VOICE_CALLER_RESUME_MS = 50
 
 export const createCommandIsolationState = (): CommandIsolationState => ({
   lastSpeechAt: null,

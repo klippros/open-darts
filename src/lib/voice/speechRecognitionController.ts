@@ -1,9 +1,4 @@
-import {
-  getSpeechRecognitionConstructor,
-  getSpeechRecognitionPhraseConstructor,
-} from './speechRecognitionSupport'
-import type { VoicePhraseHint } from './speechRecognitionPhrases'
-import { sanitizeVoiceTranscript } from './sanitizeVoiceTranscript'
+import { getSpeechRecognitionConstructor } from './speechRecognitionSupport'
 import { voiceLog, voiceWarn } from './voiceDebug'
 import type {
   SpeechRecognitionConstructor,
@@ -24,12 +19,7 @@ export interface SpeechRecognitionControllerOptions {
    */
   onSpeechEnded?: (args: { hadFinal: boolean }) => void
   onStatus: (status: SpeechRecognitionStatus) => void
-  /** BCP 47 language tag. Defaults to en-US for on-device English models. */
   lang?: string
-  /** Prefer on-device recognition (required for contextual phrase biasing in Chrome). */
-  processLocally?: boolean
-  /** Contextual biasing phrases for the active vocabulary. */
-  phrases?: VoicePhraseHint[]
   /** Minimum gap before restarting after a normal end. */
   restartDelayMs?: number
   hardFailureLimit?: number
@@ -39,39 +29,11 @@ export interface SpeechRecognitionControllerOptions {
 
 const HARD_FAILURE_LIMIT = 5
 const MIN_RESTART_MS = 150
-/** After silence (no-speech), wait longer before listening again — fast restart loops feed ghosts. */
-const QUIET_RESTART_MS = 1600
-const DEFAULT_LANG = 'en-US'
-
-const applyRecognitionPhrases = (
-  instance: SpeechRecognitionLike,
-  phrases: VoicePhraseHint[],
-): number => {
-  if (phrases.length === 0 || !('phrases' in instance)) {
-    return 0
-  }
-
-  const Phrase = getSpeechRecognitionPhraseConstructor()
-
-  if (Phrase === null) {
-    return 0
-  }
-
-  try {
-    instance.phrases = phrases.map((hint) => new Phrase(hint.phrase, hint.boost))
-    return phrases.length
-  } catch (error) {
-    voiceWarn('failed to apply recognition phrases', error)
-    return 0
-  }
-}
 
 export const createSpeechRecognitionController = (options: SpeechRecognitionControllerOptions) => {
   const Recognition =
     options.Recognition !== undefined ? options.Recognition : getSpeechRecognitionConstructor()
-  const lang = options.lang ?? DEFAULT_LANG
-  const processLocally = options.processLocally ?? true
-  const phraseHints = options.phrases ?? []
+  const lang = options.lang ?? 'en-GB'
   const restartDelayMs = options.restartDelayMs ?? MIN_RESTART_MS
   const hardFailureLimit = options.hardFailureLimit ?? HARD_FAILURE_LIMIT
 
@@ -85,31 +47,10 @@ export const createSpeechRecognitionController = (options: SpeechRecognitionCont
   let restartTimer: number | null = null
   let status: SpeechRecognitionStatus = 'idle'
   let utteranceHadFinal = false
-  let phrasesEnabled = phraseHints.length > 0
-  let localModelInstallStarted = false
-  let noiseResetScheduled = false
-  /** True after a no-speech error until the session ends — slows the next restart. */
-  let endedQuietly = false
-  /**
-   * Once the browser has fired soundstart/speechstart at least once, require it
-   * before accepting results (filters silence→phrase hallucinations).
-   */
-  let soundGateArmed = false
-  let heardSoundThisSession = false
 
   const setStatus = (next: SpeechRecognitionStatus): void => {
     status = next
     options.onStatus(next)
-  }
-
-  const requestNoiseReset = (): void => {
-    if (noiseResetScheduled || !enabled || paused || stopping) {
-      return
-    }
-
-    noiseResetScheduled = true
-    voiceLog('resetting recognition after noisy hypothesis')
-    scheduleRestart(MIN_RESTART_MS)
   }
 
   const clearRestartTimer = (): void => {
@@ -145,8 +86,6 @@ export const createSpeechRecognitionController = (options: SpeechRecognitionCont
     recognition.onerror = null
     recognition.onend = null
     recognition.onstart = null
-    recognition.onsoundstart = null
-    recognition.onspeechstart = null
 
     try {
       recognition.abort()
@@ -157,61 +96,7 @@ export const createSpeechRecognitionController = (options: SpeechRecognitionCont
     recognition = null
   }
 
-  const ensureLocalModel = (): void => {
-    if (!processLocally || localModelInstallStarted || Recognition === null) {
-      return
-    }
-
-    localModelInstallStarted = true
-    const install = Recognition.install
-
-    if (typeof install !== 'function') {
-      return
-    }
-
-    void (async () => {
-      try {
-        const installed = await install.call(Recognition, { langs: [lang], processLocally: true })
-        voiceLog('local speech model install', { lang, installed })
-      } catch (error) {
-        voiceWarn('local speech model install failed', error)
-      }
-    })()
-  }
-
   const attachHandlers = (instance: SpeechRecognitionLike, instanceGeneration: number): void => {
-    const markHeardSound = (): void => {
-      if (instanceGeneration !== generation) {
-        return
-      }
-
-      soundGateArmed = true
-      heardSoundThisSession = true
-    }
-
-    const shouldAcceptHypothesis = (): boolean => {
-      if (!soundGateArmed) {
-        return true
-      }
-
-      if (!heardSoundThisSession) {
-        voiceLog('ignored hypothesis without sound/speech start')
-        return false
-      }
-
-      return true
-    }
-
-    instance.onsoundstart = () => {
-      markHeardSound()
-      voiceLog('soundstart')
-    }
-
-    instance.onspeechstart = () => {
-      markHeardSound()
-      voiceLog('speechstart')
-    }
-
     instance.onresult = (event: SpeechRecognitionEventLike) => {
       if (instanceGeneration !== generation) {
         return
@@ -229,32 +114,11 @@ export const createSpeechRecognitionController = (options: SpeechRecognitionCont
         if (!result.isFinal) {
           const interim = result[0]?.transcript?.trim()
 
-          if (!interim) {
-            continue
+          if (interim) {
+            voiceLog('interim', interim)
+            options.onInterimTranscript?.(interim)
           }
 
-          if (!shouldAcceptHypothesis()) {
-            continue
-          }
-
-          const { transcript: sanitized, resetSession } = sanitizeVoiceTranscript(interim)
-
-          if (resetSession) {
-            requestNoiseReset()
-          }
-
-          if (sanitized === null) {
-            voiceLog('ignored noisy interim', interim.slice(0, 120))
-            continue
-          }
-
-          if (resetSession) {
-            voiceLog('salvaged interim', { from: interim.slice(0, 80), to: sanitized })
-          } else {
-            voiceLog('interim', sanitized)
-          }
-
-          options.onInterimTranscript?.(sanitized)
           continue
         }
 
@@ -266,31 +130,14 @@ export const createSpeechRecognitionController = (options: SpeechRecognitionCont
 
         const transcript = alternative.transcript.trim()
 
-        if (transcript.length === 0) {
-          continue
+        if (transcript.length > 0) {
+          utteranceHadFinal = true
+          voiceLog('final transcript from browser', {
+            transcript,
+            confidence: alternative.confidence,
+          })
+          options.onTranscript(transcript)
         }
-
-        if (!shouldAcceptHypothesis()) {
-          continue
-        }
-
-        const { transcript: sanitized, resetSession } = sanitizeVoiceTranscript(transcript)
-
-        if (resetSession) {
-          requestNoiseReset()
-        }
-
-        if (sanitized === null) {
-          voiceLog('ignored noisy final', transcript.slice(0, 120))
-          continue
-        }
-
-        utteranceHadFinal = true
-        voiceLog('final transcript from browser', {
-          transcript: sanitized,
-          confidence: alternative.confidence,
-        })
-        options.onTranscript(sanitized)
       }
     }
 
@@ -307,15 +154,6 @@ export const createSpeechRecognitionController = (options: SpeechRecognitionCont
       }
 
       if (error === 'no-speech') {
-        endedQuietly = true
-        voiceLog('no-speech (silence / too short for recognizer)')
-        return
-      }
-
-      if (error === 'phrases-not-supported') {
-        voiceWarn('recognition phrases not supported — retrying without phrase bias')
-        phrasesEnabled = false
-        scheduleRestart(restartDelayMs)
         return
       }
 
@@ -344,8 +182,6 @@ export const createSpeechRecognitionController = (options: SpeechRecognitionCont
       }
 
       const hadFinal = utteranceHadFinal
-      const wasQuiet = endedQuietly
-      endedQuietly = false
 
       if (!enabled || stopping) {
         if (!enabled && status !== 'denied' && status !== 'failed') {
@@ -362,11 +198,8 @@ export const createSpeechRecognitionController = (options: SpeechRecognitionCont
 
       options.onSpeechEnded?.({ hadFinal })
 
-      const backoff = wasQuiet
-        ? QUIET_RESTART_MS
-        : hardFailures > 0
-          ? Math.min(2000, 250 * 2 ** Math.max(0, hardFailures - 1))
-          : restartDelayMs
+      const backoff =
+        hardFailures > 0 ? Math.min(2000, 250 * 2 ** Math.max(0, hardFailures - 1)) : restartDelayMs
 
       scheduleRestart(backoff)
     }
@@ -379,39 +212,19 @@ export const createSpeechRecognitionController = (options: SpeechRecognitionCont
 
     const instance = new Recognition()
     instance.lang = lang
-    // Continuous + interims helps short commands surface as interim/final results.
-    instance.continuous = true
+    instance.continuous = false
+    // Interims are required: finals often truncate a clearer interim phrase.
     instance.interimResults = true
-    // Keep alternatives low for on-device performance.
     instance.maxAlternatives = 1
 
-    if ('unspokenPunctuation' in instance) {
-      try {
-        instance.unspokenPunctuation = false
-      } catch {
-        // ignore
-      }
-    }
-
     if ('processLocally' in instance) {
+      // Best-effort on-device; ignore failures — cloud may still work.
       try {
-        instance.processLocally = processLocally
+        instance.processLocally = true
       } catch {
         // ignore
       }
     }
-
-    const appliedPhraseCount =
-      phrasesEnabled && processLocally ? applyRecognitionPhrases(instance, phraseHints) : 0
-
-    voiceLog('recognition instance configured', {
-      lang,
-      processLocally,
-      continuous: true,
-      interimResults: true,
-      maxAlternatives: 1,
-      phrases: appliedPhraseCount,
-    })
 
     attachHandlers(instance, instanceGeneration)
     return instance
@@ -430,9 +243,6 @@ export const createSpeechRecognitionController = (options: SpeechRecognitionCont
     generation += 1
     const instanceGeneration = generation
     utteranceHadFinal = false
-    noiseResetScheduled = false
-    heardSoundThisSession = false
-    endedQuietly = false
     abortCurrent()
 
     recognition = createInstance(instanceGeneration)
@@ -462,14 +272,7 @@ export const createSpeechRecognitionController = (options: SpeechRecognitionCont
     paused = false
     stopping = false
     hardFailures = 0
-    phrasesEnabled = phraseHints.length > 0
-    ensureLocalModel()
-    voiceLog('controller start', {
-      lang,
-      processLocally,
-      phraseHints: phraseHints.length,
-      supported: true,
-    })
+    voiceLog('controller start', { lang, supported: true })
     startInternal()
   }
 
