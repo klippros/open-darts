@@ -2,7 +2,7 @@ import { Box, Flex } from '@chakra-ui/react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { AppHeader } from './components/AppHeader/AppHeader'
 import { Footer } from './components/Footer'
-import { AccountProvider } from './hooks/AccountProvider'
+import { AuthProvider } from './hooks/AuthProvider'
 import { GameChromeProvider } from './hooks/GameChromeProvider'
 import { SettingsProvider } from './hooks/SettingsProvider'
 import { VoiceControlProvider } from './hooks/VoiceControlProvider'
@@ -12,7 +12,7 @@ export const App = () => {
   const isGameRoute = pathname === '/game'
 
   return (
-    <AccountProvider>
+    <AuthProvider>
       <SettingsProvider>
         <VoiceControlProvider>
           <GameChromeProvider>
@@ -51,6 +51,6 @@ export const App = () => {
           </GameChromeProvider>
         </VoiceControlProvider>
       </SettingsProvider>
-    </AccountProvider>
+    </AuthProvider>
   )
 }

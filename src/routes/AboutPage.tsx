@@ -20,8 +20,8 @@ export const AboutPage = () => (
             over time.
           </Text>
           <Text color="whiteAlpha.800" fontSize="md" lineHeight="1.65">
-            You can start playing without an account. When your first game is over, you can decide
-            to create an account and save your progress.
+            You can play without an account. Sign in optionally to back up completed games and use
+            your progress across devices.
           </Text>
         </Stack>
 
@@ -30,8 +30,8 @@ export const AboutPage = () => (
             Privacy
           </Heading>
           <Text color="whiteAlpha.700" fontSize="sm" lineHeight="1.65">
-            All game data stays on your device until you choose to save it. No account required to
-            play. In the first version there is no backend. Everything runs in your browser.
+            In-progress games stay on your device. Completed games are saved locally and sync to
+            your private account only when you sign in. No account is required to play.
           </Text>
         </Stack>
       </Stack>

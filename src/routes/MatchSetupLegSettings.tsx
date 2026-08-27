@@ -3,7 +3,7 @@ import { getChallengeMaxLegs } from '../lib/game/challenge'
 import { clampLegsToWin, getMaxPossibleLegs } from '../lib/game/matchLegs'
 import type { OpponentSetup } from '../lib/game/opponentSetup'
 import { resolveHumanPlayerName } from '../lib/game/playerFactory'
-import { useAccount } from '../hooks/accountContext'
+import { useAuth } from '../hooks/authContext'
 import { DEFAULT_LEGS_TO_WIN, LEGS_TO_WIN_MAX, LEGS_TO_WIN_MIN } from '../types/match'
 import { SetupOptionCard } from '../components/SetupPageLayout/SetupOptionCard'
 
@@ -24,8 +24,8 @@ export const MatchSetupLegSettings = ({
   opponentStarterLabel,
   onSetupChange,
 }: MatchSetupLegSettingsProps) => {
-  const { account } = useAccount()
-  const primaryPlayerLabel = resolveHumanPlayerName(account?.displayName)
+  const { profile } = useAuth()
+  const primaryPlayerLabel = resolveHumanPlayerName(profile?.displayName)
   const legCount = clampLegsToWin(setup.legsToWin ?? DEFAULT_LEGS_TO_WIN)
   const isSolo = setup.mode === 'solo'
   const isChallenge = setup.mode === 'challenge'

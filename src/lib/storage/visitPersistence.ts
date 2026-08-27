@@ -2,8 +2,10 @@ import type { ActiveGameSnapshot } from '../../types/activeGameSnapshot'
 import { GameStatus } from '../../types/gameMode'
 import type { AppGameController } from '../game/createSession'
 import { matchHasProgress } from '../game/matchProgress'
+import { queueCompletedSessionSync, queueSessionDeletionSync } from '../sync/sessionSync'
 import {
   clearActiveSnapshot,
+  loadStoredSessions,
   loadActiveSnapshot,
   removeStoredSession,
   saveActiveSnapshot,
@@ -23,6 +25,7 @@ export const saveControllerSnapshot = (controller: AppGameController): void => {
 
 export const finalizeCompletedSession = (controller: AppGameController): void => {
   saveStoredSession(controller.session)
+  queueCompletedSessionSync(controller.session)
   clearActiveSnapshot()
 }
 
@@ -45,7 +48,12 @@ export const persistControllerState = (
     return
   }
 
+  const wasStored = loadStoredSessions().some((session) => session.id === controller.session.id)
   removeStoredSession(controller.session.id)
+
+  if (wasStored) {
+    queueSessionDeletionSync(controller.session.id)
+  }
 
   if (matchHasProgress(controller)) {
     saveControllerSnapshot(controller)

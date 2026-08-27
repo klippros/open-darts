@@ -1,5 +1,5 @@
 import { Box, Heading, Stack, Text } from '@chakra-ui/react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { BetaBanner } from '../components/BetaBanner/BetaBanner'
 import { ContentContainer } from '../components/ContentContainer'
 import { StatTimelineDialog } from '../components/StatTimelineDialog/StatTimelineDialog'
@@ -15,6 +15,8 @@ import { filterSessions } from '../lib/analytics/sessionFilters'
 import { buildStatTimeline } from '../lib/analytics/statTimelines'
 import type { StatTimeline, StatTimelineSelection } from '../lib/analytics/statTimelines'
 import { loadStoredSessions } from '../lib/storage/gameStore'
+import { useAuth } from '../hooks/authContext'
+import { AuthStatus, SyncStatus } from '../types/auth'
 
 const DATE_RANGE_OPTIONS: { value: DateRangePreset; label: string }[] = [
   { value: 'all', label: 'All time' },
@@ -36,10 +38,22 @@ const isDateRangePreset = (value: string): value is DateRangePreset =>
   value === 'all' || value === '7d' || value === '30d'
 
 export const StatsPage = () => {
+  const { authStatus, syncStatus } = useAuth()
   const [dateRange, setDateRange] = useState<DateRangePreset>('all')
   const [timelineSelection, setTimelineSelection] = useState<StatTimelineSelection | null>(null)
+  const [storedSessions, setStoredSessions] = useState(() => loadStoredSessions())
 
-  const storedSessions = useMemo(() => loadStoredSessions(), [])
+  useEffect(() => {
+    if (authStatus === AuthStatus.Anonymous || authStatus === AuthStatus.Authenticated) {
+      setStoredSessions(loadStoredSessions())
+    }
+  }, [authStatus])
+
+  useEffect(() => {
+    if (syncStatus === SyncStatus.Synced) {
+      setStoredSessions(loadStoredSessions())
+    }
+  }, [syncStatus])
 
   const filteredSessions = useMemo(
     () => filterSessions(storedSessions, { dateRange }),
@@ -87,7 +101,7 @@ export const StatsPage = () => {
               Stats
             </Heading>
             <Text color="whiteAlpha.800" fontSize="md" lineHeight="1.65">
-              Progress from your saved games on this device, grouped by game type.
+              Progress from your completed games, grouped by game type.
             </Text>
           </Stack>
 

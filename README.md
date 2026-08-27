@@ -20,6 +20,11 @@ pnpm preview
 
 See [AGENTS.md](AGENTS.md) for project conventions.
 
+## Self-hosting
+
+The app works without a backend. To enable optional accounts and cross-device
+progress, follow the [Supabase and deployment setup](docs/self-hosting.md).
+
 ---
 
 © 2026 Klippros Studios AB · [GitHub](https://github.com/klippros/open-darts)

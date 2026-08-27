@@ -1,7 +1,6 @@
 import { AbortMatchDialog } from '../components/AbortMatchDialog/AbortMatchDialog'
 import { MatchSummaryDialog } from '../components/MatchSummaryDialog/MatchSummaryDialog'
 import { ResumeGameDialog } from '../components/ResumeGameDialog/ResumeGameDialog'
-import type { Account, CreateAccountInput } from '../types/account'
 import type { GameSession } from '../types/gameSession'
 
 export interface GamePageDialogsProps {
@@ -13,10 +12,8 @@ export interface GamePageDialogsProps {
   onConfirmAbortMatch: () => void
   showMatchSummary: boolean
   completedSession: GameSession | null
-  account: Account | null
   onPlayAgain: () => void
   onUndoLastDart: () => void
-  onCreateAccount: (input: CreateAccountInput) => string | null
 }
 
 export const GamePageDialogs = ({
@@ -28,10 +25,8 @@ export const GamePageDialogs = ({
   onConfirmAbortMatch,
   showMatchSummary,
   completedSession,
-  account,
   onPlayAgain,
   onUndoLastDart,
-  onCreateAccount,
 }: GamePageDialogsProps) => (
   <>
     {resumeConflictSession !== null && (
@@ -53,10 +48,8 @@ export const GamePageDialogs = ({
       <MatchSummaryDialog
         open={showMatchSummary}
         session={completedSession}
-        account={account}
         onPlayAgain={onPlayAgain}
         onUndoLastDart={onUndoLastDart}
-        onCreateAccount={onCreateAccount}
       />
     )}
   </>

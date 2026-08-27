@@ -4,7 +4,6 @@ import { GameModeDartPicker } from '../components/DartPicker/GameModeDartPicker'
 import { GameBoardLayout } from '../components/GameBoardLayout'
 import { MobileVisitHistory } from '../components/Scoreboard/MobileVisitHistory'
 import { Scoreboard } from '../components/Scoreboard/Scoreboard'
-import { useAccount } from '../hooks/accountContext'
 import { useSettings } from '../hooks/settingsContext'
 import { useGamePage } from '../hooks/useGamePage'
 import { showsVisitHistory } from '../lib/game/gameModeDefinitions'
@@ -28,7 +27,6 @@ export const GamePage = () => {
     resumeSavedGame,
     pickerTargets,
   } = useGamePage()
-  const { account, createAccount } = useAccount()
   const { x01InputMode } = useSettings()
   const isMobile = useBreakpointValue({ base: true, md: false }, { ssr: false }) ?? true
 
@@ -48,10 +46,8 @@ export const GamePage = () => {
       onConfirmAbortMatch={confirmAbortMatch}
       showMatchSummary={controller.isComplete}
       completedSession={controller.isComplete ? controller.session : null}
-      account={account}
       onPlayAgain={restart}
       onUndoLastDart={undoDart}
-      onCreateAccount={createAccount}
     />
   )
 

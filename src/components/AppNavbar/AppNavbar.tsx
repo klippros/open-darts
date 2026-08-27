@@ -1,12 +1,14 @@
-import { HStack, Text } from '@chakra-ui/react'
-import { useAccount } from '../../hooks/accountContext'
-import { getPlayerDisplayName } from '../../lib/account/getPlayerDisplayName'
+import { Button, HStack } from '@chakra-ui/react'
+import { useState } from 'react'
+import { useAuth } from '../../hooks/authContext'
+import { SignInDialog } from '../SignInDialog/SignInDialog'
+import { UserAccountMenu } from '../UserAccountMenu/UserAccountMenu'
 import { NAV_ITEMS } from './navItems'
 import { NavItem } from './NavItem'
 
 export const AppNavbar = () => {
-  const { account } = useAccount()
-  const playerName = getPlayerDisplayName(account)
+  const { user, isConfigured } = useAuth()
+  const [signInDialogOpen, setSignInDialogOpen] = useState(false)
 
   return (
     <HStack
@@ -19,11 +21,19 @@ export const AppNavbar = () => {
       {NAV_ITEMS.map((item) => (
         <NavItem key={item.to} to={item.to} label={item.label} beta={item.beta} />
       ))}
-      {playerName !== null && (
-        <Text fontSize="sm" color="whiteAlpha.600">
-          {playerName}
-        </Text>
+      {user !== null && <UserAccountMenu />}
+      {isConfigured && user === null && (
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => {
+            setSignInDialogOpen(true)
+          }}
+        >
+          Sign in
+        </Button>
       )}
+      <SignInDialog open={signInDialogOpen} onOpenChange={setSignInDialogOpen} />
     </HStack>
   )
 }

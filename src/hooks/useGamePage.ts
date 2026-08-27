@@ -8,7 +8,7 @@ import {
 } from '../lib/game/getGameModePickerTargets'
 import { matchHasProgress } from '../lib/game/matchProgress'
 import { isVoiceInputSupportedForMode } from '../lib/voice/voiceModeSupport'
-import { useAccount } from './accountContext'
+import { useAuth } from './authContext'
 import { useSetGameChrome } from './gameChromeContext'
 import { useSettings } from './settingsContext'
 import { useGameFromRoute } from './useGameFromRoute'
@@ -17,18 +17,18 @@ import { useVoiceRecognition } from './useVoiceRecognition'
 
 export const useGamePage = () => {
   const navigate = useNavigate()
-  const { account } = useAccount()
+  const { profile } = useAuth()
   const { x01InputMode } = useSettings()
   const [searchParams] = useSearchParams()
   const [abortDialogOpen, setAbortDialogOpen] = useState(false)
   const setGameChrome = useSetGameChrome()
   const mode = useMemo(
-    () => parseGameLaunchParams(searchParams, account?.displayName).mode,
-    [searchParams, account?.displayName],
+    () => parseGameLaunchParams(searchParams, profile?.displayName).mode,
+    [searchParams, profile?.displayName],
   )
   const scoreCallerCallbacks = useVisitScoreCaller(mode)
   const game = useGameFromRoute({
-    autoSaveCompletedSessions: account !== null,
+    autoSaveCompletedSessions: true,
     ...scoreCallerCallbacks,
   })
 

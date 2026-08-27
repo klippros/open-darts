@@ -29,8 +29,8 @@ export const ResetStatsDialog = ({ open, onOpenChange, onConfirm }: ResetStatsDi
         </Dialog.Header>
         <Dialog.Body>
           <Text fontSize="sm" color="whiteAlpha.900" lineHeight="1.55">
-            Delete all saved games on this device? Your game history and stats will be permanently
-            removed. This cannot be undone.
+            Delete all completed games on this device? If you are signed in, they will also be
+            deleted from your account. This cannot be undone.
           </Text>
         </Dialog.Body>
         <Dialog.Footer>
