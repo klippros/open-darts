@@ -24,7 +24,7 @@ describe('getVoiceRecognitionPhrases', () => {
     expect(byPhrase.hundred).toBeUndefined()
     expect(byPhrase['a hundred']).toBeUndefined()
     expect(byPhrase['one hundred']).toBeUndefined()
-    expect(byPhrase.undo).toBeLessThanOrEqual(3)
+    expect(byPhrase.undo).toBeLessThanOrEqual(6)
   })
 
   it('boosts bob27 hit vocabulary', () => {

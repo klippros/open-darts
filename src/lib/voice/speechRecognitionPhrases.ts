@@ -9,7 +9,7 @@ export interface VoicePhraseHint {
 
 const META_PHRASES: VoicePhraseHint[] = [
   // Keep meta boosts modest — high undo bias makes ambient noise become "undo undo…".
-  { phrase: 'undo', boost: 2 },
+  { phrase: 'undo', boost: 5 },
 ]
 
 const BOB27_PHRASES: VoicePhraseHint[] = [
