@@ -187,6 +187,7 @@ export const ScoreboardCenter = ({
         legWins={matchProgress?.legWins}
         challengeLegStatuses={challengeLegStatuses}
         legStartingPlayerIndex={legStartingPlayerIndex}
+        checkoutRules={checkoutRules}
       />
 
       {activePlayer !== undefined && showVisitDartSlots && (

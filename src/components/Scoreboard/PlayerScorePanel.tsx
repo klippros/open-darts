@@ -1,13 +1,12 @@
 import { Box, Flex, Grid, Heading, Text } from '@chakra-ui/react'
+import { getCheckoutPathLabel } from '../../lib/checkout/checkoutSuggestions'
 import type { ScoreboardPlayerEntry } from '../../lib/game/GameEngine'
-import {
-  formatOneTwentyOneLives,
-  formatOneTwentyOneLivesAriaLabel,
-} from '../../lib/oneTwentyOne/formatOneTwentyOneLives'
+import type { CheckoutRules } from '../../types/checkout'
+import type { ChallengeLegStatus } from '../../types/match'
 import { LegStarterIcon } from '../LegStarterIcon/LegStarterIcon'
 import { ChallengeLegDots } from './ChallengeLegDots'
 import { LegWinDots } from './LegWinDots'
-import type { ChallengeLegStatus } from '../../types/match'
+import { OneTwentyOneLives } from './OneTwentyOneLives'
 
 export type PlayerScorePanelAlign = 'left' | 'right' | 'solo'
 
@@ -30,6 +29,7 @@ export interface PlayerScorePanelProps {
   legsWon?: number
   challengeLegStatuses?: ChallengeLegStatus[]
   isLegStarter?: boolean
+  checkoutRules?: CheckoutRules | null
 }
 
 const formatLegAverage = (average: number | null): string =>
@@ -99,13 +99,7 @@ const PlayerScorePanelHeader = ({
       return (
         <Grid templateColumns="1fr auto 1fr" alignItems="center" mb={1} minH="5">
           <Box />
-          <Text
-            fontSize="md"
-            lineHeight="1"
-            aria-label={formatOneTwentyOneLivesAriaLabel(player.lives ?? 0)}
-          >
-            {formatOneTwentyOneLives(player.lives ?? 0)}
-          </Text>
+          <OneTwentyOneLives lives={player.lives ?? 0} />
           <Box />
         </Grid>
       )
@@ -178,38 +172,57 @@ export const PlayerScorePanel = ({
   legsWon,
   challengeLegStatuses,
   isLegStarter = false,
-}: PlayerScorePanelProps) => (
-  <Box
-    px={5}
-    py={4}
-    borderRadius="16px"
-    borderWidth="1px"
-    borderColor={player.isActive ? 'whiteAlpha.500' : 'whiteAlpha.200'}
-    bg={player.isActive ? 'whiteAlpha.100' : 'whiteAlpha.50'}
-    gridColumn={isSolo ? '1 / -1' : undefined}
-  >
-    <PlayerScorePanelHeader
-      player={player}
-      panelAlign={panelAlign}
-      legsToWin={legsToWin}
-      legsWon={legsWon}
-      challengeLegStatuses={challengeLegStatuses}
-      isLegStarter={isLegStarter}
-    />
-    <Heading
-      size="5xl"
-      color="white"
-      fontFamily="Archivo Black, sans-serif"
-      lineHeight="1"
-      textAlign="center"
+  checkoutRules = null,
+}: PlayerScorePanelProps) => {
+  const checkoutPathLabel =
+    checkoutRules === null ? null : getCheckoutPathLabel(player.primaryScore, checkoutRules)
+
+  return (
+    <Box
+      px={5}
+      py={4}
+      borderRadius="16px"
+      borderWidth="1px"
+      borderColor={player.isActive ? 'whiteAlpha.500' : 'whiteAlpha.200'}
+      bg={player.isActive ? 'whiteAlpha.100' : 'whiteAlpha.50'}
+      gridColumn={isSolo ? '1 / -1' : undefined}
     >
-      {player.primaryDisplay ?? player.primaryScore}
-    </Heading>
-    <Text mt={2} fontSize="sm" color="whiteAlpha.600" textAlign="center">
-      {player.secondaryLabel ?? formatAveragesDisplay(legAverage, matchAverage, currentLeg)}
-    </Text>
-  </Box>
-)
+      <PlayerScorePanelHeader
+        player={player}
+        panelAlign={panelAlign}
+        legsToWin={legsToWin}
+        legsWon={legsWon}
+        challengeLegStatuses={challengeLegStatuses}
+        isLegStarter={isLegStarter}
+      />
+      <Heading
+        size="5xl"
+        color="white"
+        fontFamily="Archivo Black, sans-serif"
+        lineHeight="1"
+        textAlign="center"
+      >
+        {player.primaryDisplay ?? player.primaryScore}
+      </Heading>
+      <Text mt={2} fontSize="sm" color="whiteAlpha.600" textAlign="center">
+        {player.secondaryLabel ?? formatAveragesDisplay(legAverage, matchAverage, currentLeg)}
+      </Text>
+      {checkoutPathLabel !== null && (
+        <Text
+          mt={2}
+          color="whiteAlpha.800"
+          fontFamily="Archivo Black, sans-serif"
+          fontSize="lg"
+          lineHeight="1"
+          textAlign="center"
+          aria-label={`Checkout ${checkoutPathLabel}`}
+        >
+          {checkoutPathLabel}
+        </Text>
+      )}
+    </Box>
+  )
+}
 
 export interface PlayerScorePanelsProps {
   players: ScoreboardPlayerEntry[]
@@ -220,6 +233,7 @@ export interface PlayerScorePanelsProps {
   legLosses?: number
   challengeLegStatuses?: ChallengeLegStatus[]
   legStartingPlayerIndex?: number
+  checkoutRules?: CheckoutRules | null
 }
 
 export const PlayerScorePanels = ({
@@ -230,6 +244,7 @@ export const PlayerScorePanels = ({
   legWins,
   challengeLegStatuses,
   legStartingPlayerIndex,
+  checkoutRules = null,
 }: PlayerScorePanelsProps) => {
   const isSolo = players.length === 1
   const showLegDots =
@@ -253,6 +268,7 @@ export const PlayerScorePanels = ({
             legsWon={showLegDots ? (legWins[player.playerId] ?? 0) : undefined}
             challengeLegStatuses={challengeLegStatuses}
             isLegStarter={!isSolo && legStartingPlayerIndex === index}
+            checkoutRules={checkoutRules}
           />
         )
       })}
