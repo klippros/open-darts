@@ -17,6 +17,7 @@ import type {
   SpeechRecognitionController,
   SpeechRecognitionStatus,
 } from '../lib/voice/speechRecognitionController'
+import { getVoiceRecognitionPhrases } from '../lib/voice/speechRecognitionPhrases'
 import {
   logVoiceSessionStart,
   logVoiceTranscriptPipeline,
@@ -25,7 +26,9 @@ import {
 } from '../lib/voice/voiceDebug'
 import { createVoiceUndoHistory } from '../lib/voice/voiceUndoHistory'
 import { isVoiceInputSupportedForMode } from '../lib/voice/voiceModeSupport'
+import { shouldSupersedePendingVisitScore } from '../lib/voice/shouldSupersedePendingVisitScore'
 import type { GameModeId } from '../types/gameMode'
+import type { X01InputMode } from '../types/settings'
 import { useUiSounds } from './useUiSounds'
 import { useVoiceControl } from './voiceControlContext'
 
@@ -33,6 +36,7 @@ export interface UseVoiceRecognitionOptions {
   mode: GameModeId
   sessionId: string
   inputDisabled: boolean
+  x01InputMode?: X01InputMode
   applyControllerTransaction: (
     updater: (current: AppGameController) => {
       next: AppGameController
@@ -46,11 +50,12 @@ export const useVoiceRecognition = ({
   mode,
   sessionId,
   inputDisabled,
+  x01InputMode,
   applyControllerTransaction,
 }: UseVoiceRecognitionOptions): void => {
   const { enabled, setEnabled, setStatus } = useVoiceControl()
-  const { playHit, playMiss } = useUiSounds()
-  const modeSupportsVoice = isVoiceInputSupportedForMode(mode)
+  const { playUndo, playSequence } = useUiSounds()
+  const modeSupportsVoice = isVoiceInputSupportedForMode(mode, { x01InputMode })
 
   const historyRef = useRef(createVoiceUndoHistory())
   const isolationRef = useRef<CommandIsolationState>(createCommandIsolationState())
@@ -59,19 +64,21 @@ export const useVoiceRecognition = ({
   const pendingTranscriptRef = useRef<string | null>(null)
   const bestInterimRef = useRef<string | null>(null)
   const modeRef = useRef(mode)
+  const x01InputModeRef = useRef(x01InputMode)
   const applyRef = useRef(applyControllerTransaction)
-  const playHitRef = useRef(playHit)
-  const playMissRef = useRef(playMiss)
+  const playUndoRef = useRef(playUndo)
+  const playSequenceRef = useRef(playSequence)
   const inputDisabledRef = useRef(inputDisabled)
   const calloutActiveRef = useRef(false)
-  const interimUndoTimerRef = useRef<number | null>(null)
-  const undoCommittedFromInterimRef = useRef(false)
+  const interimCommitTimerRef = useRef<number | null>(null)
+  const interimCommittedRef = useRef(false)
   const handleTranscriptRef = useRef<(transcript: string) => void>(() => undefined)
 
   modeRef.current = mode
+  x01InputModeRef.current = x01InputMode
   applyRef.current = applyControllerTransaction
-  playHitRef.current = playHit
-  playMissRef.current = playMiss
+  playUndoRef.current = playUndo
+  playSequenceRef.current = playSequence
   inputDisabledRef.current = inputDisabled
 
   const clearHoldTimer = (): void => {
@@ -83,44 +90,148 @@ export const useVoiceRecognition = ({
     pendingTranscriptRef.current = null
   }
 
-  const clearInterimUndoTimer = (): void => {
-    if (interimUndoTimerRef.current !== null) {
-      globalThis.clearTimeout(interimUndoTimerRef.current)
-      interimUndoTimerRef.current = null
+  const clearInterimCommitTimer = (): void => {
+    if (interimCommitTimerRef.current !== null) {
+      globalThis.clearTimeout(interimCommitTimerRef.current)
+      interimCommitTimerRef.current = null
     }
   }
 
-  /** Chrome often never finalizes short "undo" — commit from a stable interim. */
-  const INTERIM_UNDO_DEBOUNCE_MS = 280
+  /**
+   * Chrome often never finalizes short commands ("six", "two hits", "no hits").
+   * Commit stable gameplay interims — not undo (noise easily looks like undo).
+   * Around the Clock wipe phrases can interim-commit; hit/miss sequences wait for
+   * speech-ended so an early wrong 3-dart guess is not locked in mid-utterance.
+   */
+  const INTERIM_COMMIT_DEBOUNCE_MS = 450
+  /** Short digit scores often grow ("4" → "411") — wait longer before locking in. */
+  const VISIT_SCORE_GROWING_DEBOUNCE_MS = 800
 
-  const tryCommitUndoFromInterim = (transcript: string, reason: string): boolean => {
-    if (undoCommittedFromInterimRef.current || calloutActiveRef.current) {
+  const isInterimCommitEligible = (
+    intent: ReturnType<typeof parseVoiceCommand>,
+  ): intent is NonNullable<ReturnType<typeof parseVoiceCommand>> => {
+    if (intent === null) {
       return false
     }
 
-    const intent = parseVoiceCommand(modeRef.current, transcript)
+    if (
+      intent.kind === VoiceIntentKind.VisitScore ||
+      intent.kind === VoiceIntentKind.Bob27HitCount
+    ) {
+      return true
+    }
 
-    if (intent?.kind !== VoiceIntentKind.Undo) {
+    // Wipe only — sequence orders must settle via speech-ended / final.
+    return intent.kind === VoiceIntentKind.AroundTheClock && intent.command.type === 'missed-all'
+  }
+
+  const isAroundTheClockSequenceCommitEligible = (
+    intent: ReturnType<typeof parseVoiceCommand>,
+  ): boolean =>
+    intent?.kind === VoiceIntentKind.AroundTheClock &&
+    intent.command.type === 'sequence' &&
+    intent.command.outcomes.length >= 1 &&
+    intent.command.outcomes.length <= 3
+
+  const visitScoreInterimDelayMs = (transcript: string): number => {
+    const compact = transcript.replace(/\s+/gu, '')
+
+    if (/^\d{1,2}$/u.test(compact)) {
+      return VISIT_SCORE_GROWING_DEBOUNCE_MS
+    }
+
+    return INTERIM_COMMIT_DEBOUNCE_MS
+  }
+
+  const armIsolationHold = (transcript: string, delayMs: number): void => {
+    clearHoldTimer()
+    const now = Date.now()
+    isolationRef.current = {
+      lastSpeechAt: now,
+      pending: true,
+      pendingSince: now,
+    }
+    pendingTranscriptRef.current = transcript
+    holdTimerRef.current = globalThis.setTimeout(() => {
+      holdTimerRef.current = null
+      const pending = pendingTranscriptRef.current
+      pendingTranscriptRef.current = null
+
+      if (pending === null) {
+        return
+      }
+
+      const timerResult = commandIsolationOnTimer(isolationRef.current, Date.now())
+      isolationRef.current = timerResult.state
+
+      voiceLog('isolation timer fired', {
+        pending,
+        outcome: timerResult.outcome.type,
+      })
+
+      if (timerResult.outcome.type === 'execute') {
+        commitTranscript(pending)
+      }
+    }, delayMs)
+  }
+
+  const trySupersedePendingVisitScore = (transcript: string): boolean => {
+    const pending = pendingTranscriptRef.current
+
+    if (pending === null || !shouldSupersedePendingVisitScore(pending, transcript)) {
       return false
     }
 
-    undoCommittedFromInterimRef.current = true
-    clearInterimUndoTimer()
-    voiceLog('committing undo from interim', { transcript, reason })
+    const intent = parseVoiceCommand(modeRef.current, transcript, {
+      x01InputMode: x01InputModeRef.current,
+    })
+
+    if (intent?.kind !== VoiceIntentKind.VisitScore) {
+      return false
+    }
+
+    voiceLog('isolation hold superseded by longer visit score', { from: pending, to: transcript })
+    armIsolationHold(transcript, VOICE_COMMAND_ISOLATION_MS)
+    return true
+  }
+
+  const tryCommitFromInterim = (transcript: string, reason: string): boolean => {
+    if (interimCommittedRef.current || calloutActiveRef.current) {
+      return false
+    }
+
+    const intent = parseVoiceCommand(modeRef.current, transcript, {
+      x01InputMode: x01InputModeRef.current,
+    })
+
+    const eligible =
+      isInterimCommitEligible(intent) ||
+      (reason === 'speech-ended' && isAroundTheClockSequenceCommitEligible(intent))
+
+    if (!eligible) {
+      return false
+    }
+
+    interimCommittedRef.current = true
+    clearInterimCommitTimer()
+    voiceLog('committing from interim', { transcript, reason, intent })
     handleTranscriptRef.current(transcript)
     return true
   }
 
-  const scheduleInterimUndoCommit = (transcript: string): void => {
-    clearInterimUndoTimer()
-    interimUndoTimerRef.current = globalThis.setTimeout(() => {
-      interimUndoTimerRef.current = null
-      tryCommitUndoFromInterim(transcript, 'debounce')
-    }, INTERIM_UNDO_DEBOUNCE_MS)
+  const scheduleInterimCommit = (transcript: string): void => {
+    clearInterimCommitTimer()
+    const delayMs = visitScoreInterimDelayMs(transcript)
+    interimCommitTimerRef.current = globalThis.setTimeout(() => {
+      interimCommitTimerRef.current = null
+      tryCommitFromInterim(transcript, 'debounce')
+    }, delayMs)
   }
 
   const commitTranscript = (transcript: string): void => {
-    const intent = parseVoiceCommand(modeRef.current, transcript)
+    const intent = parseVoiceCommand(modeRef.current, transcript, {
+      x01InputMode: x01InputModeRef.current,
+    })
 
     if (intent === null) {
       voiceWarn('commit skipped — parse returned null', { transcript })
@@ -134,7 +245,7 @@ export const useVoiceRecognition = ({
           next: AppGameController
           scoreCallerBase: AppGameController
           didUndo: boolean
-          playback: 'hit' | 'miss' | null
+          playback: ('hit' | 'miss')[] | null
           commitHistory: (history: ReturnType<typeof createVoiceUndoHistory>) => void
         }
       | null
@@ -184,10 +295,10 @@ export const useVoiceRecognition = ({
 
         computed.commitHistory(historyRef.current)
 
-        if (computed.playback === 'hit') {
-          playHitRef.current()
-        } else if (computed.playback === 'miss') {
-          playMissRef.current()
+        if (computed.didUndo && computed.playback === null) {
+          playUndoRef.current()
+        } else if (computed.playback !== null && computed.playback.length > 0) {
+          playSequenceRef.current(computed.playback)
         }
       }
 
@@ -210,7 +321,9 @@ export const useVoiceRecognition = ({
       return
     }
 
-    const intent = parseVoiceCommand(modeRef.current, transcript)
+    const intent = parseVoiceCommand(modeRef.current, transcript, {
+      x01InputMode: x01InputModeRef.current,
+    })
 
     // After the match ends, only voice undo remains (same as keyboard undo).
     if (inputDisabledRef.current && intent?.kind !== VoiceIntentKind.Undo) {
@@ -221,7 +334,7 @@ export const useVoiceRecognition = ({
     const isValid = intent !== null
     const now = Date.now()
 
-    // undo/fix: cancel any pending isolation hold and apply immediately.
+    // Meta commands: cancel any pending isolation hold and apply immediately.
     if (isMetaIntent(intent)) {
       clearHoldTimer()
       isolationRef.current = {
@@ -287,29 +400,7 @@ export const useVoiceRecognition = ({
         transcript,
         delayMs: outcome.delayMs,
       })
-      clearHoldTimer()
-      pendingTranscriptRef.current = transcript
-      holdTimerRef.current = globalThis.setTimeout(() => {
-        holdTimerRef.current = null
-        const pending = pendingTranscriptRef.current
-        pendingTranscriptRef.current = null
-
-        if (pending === null) {
-          return
-        }
-
-        const timerResult = commandIsolationOnTimer(isolationRef.current, Date.now())
-        isolationRef.current = timerResult.state
-
-        voiceLog('isolation timer fired', {
-          pending,
-          outcome: timerResult.outcome.type,
-        })
-
-        if (timerResult.outcome.type === 'execute') {
-          commitTranscript(pending)
-        }
-      }, outcome.delayMs)
+      armIsolationHold(transcript, outcome.delayMs)
     }
   }
 
@@ -319,9 +410,9 @@ export const useVoiceRecognition = ({
     historyRef.current.clear()
     isolationRef.current = createCommandIsolationState()
     clearHoldTimer()
-    clearInterimUndoTimer()
+    clearInterimCommitTimer()
     bestInterimRef.current = null
-    undoCommittedFromInterimRef.current = false
+    interimCommittedRef.current = false
     setEnabled(false)
   }, [sessionId, setEnabled])
 
@@ -336,10 +427,10 @@ export const useVoiceRecognition = ({
       recognitionRef.current?.stop()
       recognitionRef.current = null
       clearHoldTimer()
-      clearInterimUndoTimer()
+      clearInterimCommitTimer()
       isolationRef.current = createCommandIsolationState()
       calloutActiveRef.current = false
-      undoCommittedFromInterimRef.current = false
+      interimCommittedRef.current = false
       setStatus('idle')
       return undefined
     }
@@ -347,26 +438,39 @@ export const useVoiceRecognition = ({
     let cancelled = false
 
     const controller = createSpeechRecognitionController({
+      lang: 'en-US',
+      processLocally: true,
+      phrases: getVoiceRecognitionPhrases(modeRef.current),
       onInterimTranscript: (transcript) => {
         bestInterimRef.current = transcript
 
-        if (calloutActiveRef.current || undoCommittedFromInterimRef.current) {
+        if (calloutActiveRef.current) {
           return
         }
 
-        const intent = parseVoiceCommand(modeRef.current, transcript)
-
-        if (intent?.kind === VoiceIntentKind.Undo) {
-          scheduleInterimUndoCommit(transcript)
+        // ASR often streams "4" then "411" — replace a pending short score before it executes.
+        if (trySupersedePendingVisitScore(transcript)) {
           return
         }
 
-        clearInterimUndoTimer()
+        if (interimCommittedRef.current) {
+          return
+        }
+
+        const intent = parseVoiceCommand(modeRef.current, transcript, {
+          x01InputMode: x01InputModeRef.current,
+        })
+
+        if (isInterimCommitEligible(intent)) {
+          scheduleInterimCommit(transcript)
+        }
+        // Do not clear a pending interim commit on unrelated/noisy interims —
+        // recognition reset after salvage often emits junk that would cancel it.
       },
       onSpeechEnded: ({ hadFinal }) => {
-        if (cancelled || hadFinal || undoCommittedFromInterimRef.current) {
+        if (cancelled || hadFinal || interimCommittedRef.current) {
           if (hadFinal) {
-            undoCommittedFromInterimRef.current = false
+            interimCommittedRef.current = false
           }
 
           return
@@ -375,11 +479,11 @@ export const useVoiceRecognition = ({
         const interim = bestInterimRef.current
 
         if (interim !== null) {
-          tryCommitUndoFromInterim(interim, 'speech-ended')
+          tryCommitFromInterim(interim, 'speech-ended')
         }
       },
       onTranscript: (finalTranscript) => {
-        clearInterimUndoTimer()
+        clearInterimCommitTimer()
 
         const interimTranscript = bestInterimRef.current
         bestInterimRef.current = null
@@ -388,6 +492,7 @@ export const useVoiceRecognition = ({
           modeRef.current,
           finalTranscript,
           interimTranscript,
+          { x01InputMode: x01InputModeRef.current },
         )
 
         if (transcript !== finalTranscript) {
@@ -398,18 +503,21 @@ export const useVoiceRecognition = ({
           })
         }
 
-        if (undoCommittedFromInterimRef.current) {
-          const intent = parseVoiceCommand(modeRef.current, transcript)
+        if (interimCommittedRef.current) {
+          const intent = parseVoiceCommand(modeRef.current, transcript, {
+            x01InputMode: x01InputModeRef.current,
+          })
 
-          if (intent?.kind === VoiceIntentKind.Undo) {
-            voiceLog('skipping final undo — already committed from interim', {
+          if (isInterimCommitEligible(intent)) {
+            voiceLog('skipping final — already committed from interim', {
               transcript,
+              intent,
             })
-            undoCommittedFromInterimRef.current = false
+            interimCommittedRef.current = false
             return
           }
 
-          undoCommittedFromInterimRef.current = false
+          interimCommittedRef.current = false
         }
 
         handleTranscriptRef.current(transcript)
@@ -420,7 +528,7 @@ export const useVoiceRecognition = ({
         }
 
         if (status === 'listening') {
-          undoCommittedFromInterimRef.current = false
+          interimCommittedRef.current = false
         }
 
         setStatus(status)
@@ -445,7 +553,7 @@ export const useVoiceRecognition = ({
       if (active) {
         bestInterimRef.current = null
         clearHoldTimer()
-        clearInterimUndoTimer()
+        clearInterimCommitTimer()
         voiceLog('pausing for score caller TTS')
         controller.pause()
         return
@@ -460,9 +568,9 @@ export const useVoiceRecognition = ({
       voiceLog('listening stopped')
       unsubscribeCallout()
       clearHoldTimer()
-      clearInterimUndoTimer()
+      clearInterimCommitTimer()
       bestInterimRef.current = null
-      undoCommittedFromInterimRef.current = false
+      interimCommittedRef.current = false
       calloutActiveRef.current = false
       controller.stop()
       recognitionRef.current = null

@@ -2,11 +2,12 @@ import type { GameEngine, VisitResult } from '../game/GameEngine'
 import { GameModeId } from '../../types/gameMode'
 import type { CheckoutRules } from '../../types/checkout'
 import type { TenUpOneDownConfig, TenUpOneDownState } from '../../types/tenUpOneDown'
+import { VisitInputMode } from '../../types/visit'
 import type { X01Config } from '../../types/x01'
 import { sumDartPoints } from '../dartScoring'
 import { normalizeCheckoutTarget } from '../checkout/checkoutSuggestions'
 import { previewX01Remaining } from '../x01/x01Rules'
-import { resolveTenUpOneDownVisit } from './tenUpOneDownRules'
+import { resolveTenUpOneDownVisit, resolveTenUpOneDownVisitScore } from './tenUpOneDownRules'
 
 const toX01Config = (config: TenUpOneDownConfig): X01Config => ({
   startScore: config.startScore,
@@ -27,6 +28,50 @@ const getPlayerState = (state: TenUpOneDownState, playerId: string) => {
   }
 
   return playerState
+}
+
+const buildVisitResult = (
+  state: TenUpOneDownState,
+  playerId: string,
+  visitIndex: number,
+  scoreBefore: number,
+  outcome: ReturnType<typeof resolveTenUpOneDownVisit>,
+  darts: VisitResult<TenUpOneDownState>['visit']['darts'],
+  visitScore: number,
+  inputMode?: VisitInputMode,
+): VisitResult<TenUpOneDownState> => {
+  const visit: VisitResult<TenUpOneDownState>['visit'] = {
+    visitIndex,
+    playerId,
+    darts,
+    visitScore: outcome.bust ? 0 : visitScore,
+    scoreBefore,
+    scoreAfter: outcome.targetScoreAfter,
+    bust: outcome.bust,
+    checkout: outcome.checkout,
+    ...(inputMode === undefined ? {} : { inputMode }),
+    metadata: {
+      targetScore: scoreBefore,
+      nextTargetScore: outcome.targetScoreAfter,
+    },
+  }
+
+  const nextState: TenUpOneDownState = {
+    ...state,
+    players: {
+      ...state.players,
+      [playerId]: {
+        targetScore: outcome.targetScoreAfter,
+      },
+    },
+    winnerId: state.winnerId,
+  }
+
+  return {
+    state: nextState,
+    visit,
+    advanceTurn: false,
+  }
 }
 
 export const tenUpOneDownEngine: GameEngine<TenUpOneDownState, TenUpOneDownConfig> = {
@@ -86,37 +131,32 @@ export const tenUpOneDownEngine: GameEngine<TenUpOneDownState, TenUpOneDownConfi
     const scoreBefore = playerState.targetScore
     const outcome = resolveTenUpOneDownVisit(scoreBefore, darts, state.config)
 
-    const visit: VisitResult<TenUpOneDownState>['visit'] = {
-      visitIndex,
+    return buildVisitResult(
+      state,
       playerId,
-      darts,
-      visitScore: outcome.bust ? 0 : sumDartPoints(darts),
+      visitIndex,
       scoreBefore,
-      scoreAfter: outcome.targetScoreAfter,
-      bust: outcome.bust,
-      checkout: outcome.checkout,
-      metadata: {
-        targetScore: scoreBefore,
-        nextTargetScore: outcome.targetScoreAfter,
-      },
-    }
+      outcome,
+      darts,
+      sumDartPoints(darts),
+    )
+  },
 
-    const nextState: TenUpOneDownState = {
-      ...state,
-      players: {
-        ...state.players,
-        [playerId]: {
-          targetScore: outcome.targetScoreAfter,
-        },
-      },
-      winnerId: state.winnerId,
-    }
+  commitVisitScore: (state, playerId, visitIndex, score): VisitResult<TenUpOneDownState> => {
+    const playerState = getPlayerState(state, playerId)
+    const scoreBefore = playerState.targetScore
+    const outcome = resolveTenUpOneDownVisitScore(scoreBefore, score, state.config)
 
-    return {
-      state: nextState,
-      visit,
-      advanceTurn: false,
-    }
+    return buildVisitResult(
+      state,
+      playerId,
+      visitIndex,
+      scoreBefore,
+      outcome,
+      [],
+      score,
+      VisitInputMode.VisitScore,
+    )
   },
 
   shouldEndVisitEarly: (state, playerId, darts) => {

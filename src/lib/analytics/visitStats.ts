@@ -1,6 +1,7 @@
 import type { Player } from '../../types/player'
 import type { GameSession } from '../../types/gameSession'
 import type { Visit } from '../../types/visit'
+import { getVisitDartCount } from '../../types/visit'
 import { MAX_CHECKOUT_SCORE } from '../checkout/checkoutSuggestions'
 import { getVisitsForLeg } from '../game/matchLegs'
 
@@ -24,7 +25,7 @@ export const getSessionFinalScore = (session: GameSession): number | null => {
 }
 
 export const countDartsInSession = (session: GameSession): number =>
-  getPrimaryPlayerVisits(session).reduce((sum, visit) => sum + visit.darts.length, 0)
+  getPrimaryPlayerVisits(session).reduce((sum, visit) => sum + getVisitDartCount(visit), 0)
 
 export const countTotalDartsThrown = (sessions: GameSession[]): number =>
   sessions.reduce((total, session) => total + countDartsInSession(session), 0)

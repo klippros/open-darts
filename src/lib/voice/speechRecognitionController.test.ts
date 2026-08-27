@@ -9,10 +9,15 @@ class MockRecognition {
   continuous = false
   interimResults = false
   maxAlternatives = 1
+  processLocally = false
+  unspokenPunctuation = true
+  phrases: unknown[] = []
   onresult: Handler = null
   onerror: Handler = null
   onend: Handler = null
   onstart: Handler = null
+  onsoundstart: Handler = null
+  onspeechstart: Handler = null
   startCount = 0
   abortCount = 0
 
@@ -143,7 +148,11 @@ describe('createSpeechRecognitionController', () => {
     const controller = create({ onInterimTranscript })
 
     controller.start()
+    expect(latest?.continuous).toBe(true)
     expect(latest?.interimResults).toBe(true)
+    expect(latest?.maxAlternatives).toBe(1)
+    expect(latest?.processLocally).toBe(true)
+    expect(latest?.lang).toBe('en-US')
 
     latest?.onresult?.({
       resultIndex: 0,
@@ -156,7 +165,34 @@ describe('createSpeechRecognitionController', () => {
       ],
     })
 
-    expect(onInterimTranscript).toHaveBeenCalledWith('Miss one double')
+    expect(onInterimTranscript).toHaveBeenCalledWith('miss one double')
+  })
+
+  it('applies contextual biasing phrases when Phrase ctor is available', () => {
+    class MockPhrase {
+      phrase: string
+      boost: number
+
+      constructor(phrase: string, boost = 1) {
+        this.phrase = phrase
+        this.boost = boost
+      }
+    }
+
+    Reflect.set(globalThis, 'SpeechRecognitionPhrase', MockPhrase)
+
+    const controller = create({
+      phrases: [
+        { phrase: 'undo', boost: 10 },
+        { phrase: 'sixty', boost: 6 },
+      ],
+    })
+
+    controller.start()
+    expect(latest?.phrases).toHaveLength(2)
+    expect(latest?.phrases[0]).toMatchObject({ phrase: 'undo', boost: 10 })
+
+    Reflect.deleteProperty(globalThis, 'SpeechRecognitionPhrase')
   })
 
   it('reports speech ended without a final', () => {
@@ -193,5 +229,40 @@ describe('createSpeechRecognitionController', () => {
     const beforeResumeStart = latest
     vi.advanceTimersByTime(2)
     expect(latest).not.toBe(beforeResumeStart)
+  })
+
+  it('ignores transcripts until soundstart after the gate arms', () => {
+    const onTranscript = vi.fn()
+    const controller = create({ onTranscript })
+
+    controller.start()
+    latest?.onsoundstart?.(new Event('soundstart'))
+    latest?.emitResult('sixty')
+    expect(onTranscript).toHaveBeenCalledWith('sixty')
+    onTranscript.mockClear()
+
+    latest?.emitEnd()
+    vi.advanceTimersByTime(200)
+
+    // New session: gate is armed from prior soundstart, but this session heard none.
+    latest?.emitResult('a hundred')
+    expect(onTranscript).not.toHaveBeenCalled()
+
+    latest?.onsoundstart?.(new Event('soundstart'))
+    latest?.emitResult('a hundred')
+    expect(onTranscript).toHaveBeenCalledWith('a hundred')
+  })
+
+  it('restarts slowly after no-speech', () => {
+    const controller = create()
+
+    controller.start()
+    const first = latest
+    first?.emitError('no-speech')
+    first?.emitEnd()
+    vi.advanceTimersByTime(1500)
+    expect(latest).toBe(first)
+    vi.advanceTimersByTime(200)
+    expect(latest).not.toBe(first)
   })
 })
