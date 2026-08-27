@@ -7,5 +7,6 @@ describe('normalizeTranscriptLight', () => {
     expect(normalizeTranscriptLight('for')).toEqual(['four'])
     expect(normalizeTranscriptLight('ate')).toEqual(['eight'])
     expect(normalizeTranscriptLight('won')).toEqual(['one'])
+    expect(normalizeTranscriptLight('fix')).toEqual(['six'])
   })
 })

@@ -10,7 +10,6 @@ export interface VoicePhraseHint {
 const META_PHRASES: VoicePhraseHint[] = [
   // Keep meta boosts modest — high undo bias makes ambient noise become "undo undo…".
   { phrase: 'undo', boost: 2 },
-  { phrase: 'fix', boost: 2 },
 ]
 
 const BOB27_PHRASES: VoicePhraseHint[] = [
@@ -68,7 +67,7 @@ const SINGLE_DIGIT_CHARS: VoicePhraseHint[] = [
   '7',
   '8',
   '9',
-].map((phrase) => ({ phrase, boost: 4 }))
+].map((phrase) => ({ phrase, boost: 6 }))
 
 const SMALL_SCORE_WORDS: VoicePhraseHint[] = [
   'ten',

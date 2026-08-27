@@ -85,13 +85,9 @@ export const parseVoiceCommand = (
     return null
   }
 
-  if (lightTokens.length === 1 && lightTokens[0] === 'undo') {
-    return { kind: VoiceIntentKind.Undo }
-  }
-
-  if (lightTokens[0] === 'fix') {
-    if (lightTokens.length < 2) {
-      return null
+  if (lightTokens[0] === 'undo') {
+    if (lightTokens.length === 1) {
+      return { kind: VoiceIntentKind.Undo }
     }
 
     const inner = parseGameplayTokens(mode, lightTokens.slice(1))

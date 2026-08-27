@@ -48,7 +48,7 @@ export const getVoiceCommandHelpSection = (
         { say: 'Three hits', means: 'Score 3 hits' },
         { say: 'No hits', means: 'Score 0 hits' },
         { say: 'Undo', means: 'Remove the last voice entry' },
-        { say: 'Fix two hits', means: 'Replace the last voice entry' },
+        { say: 'Undo two hits', means: 'Replace the last voice entry' },
       ],
     }
   }
@@ -63,7 +63,7 @@ export const getVoiceCommandHelpSection = (
         { say: 'Miss miss miss', means: 'Three misses' },
         { say: 'No hits', means: 'Miss every dart in this visit' },
         { say: 'Undo', means: 'Remove the last voice entry' },
-        { say: 'Fix hit miss miss', means: 'Replace the last voice entry' },
+        { say: 'Undo hit miss miss', means: 'Replace the last voice entry' },
       ],
     }
   }
@@ -79,7 +79,7 @@ export const getVoiceCommandHelpSection = (
         { say: 'Twenty six', means: 'Score 26' },
         { say: 'No score', means: 'Record a visit with no points' },
         { say: 'Undo', means: 'Remove the last voice entry' },
-        { say: 'Fix sixty', means: 'Replace the last voice entry' },
+        { say: 'Undo sixty', means: 'Replace the last voice entry' },
       ],
     }
   }

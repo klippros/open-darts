@@ -43,7 +43,7 @@ describe('voiceUndoHistory + executeVoiceCommand', () => {
     expect(executeVoiceCommand(controller, { kind: VoiceIntentKind.Undo }, history)).toBeNull()
   })
 
-  it('applies fix atomically and makes undo reverse the replacement', () => {
+  it('applies undo+correction atomically and makes undo reverse the replacement', () => {
     const history = createVoiceUndoHistory()
     let controller = createGameController({ mode: GameModeId.Bob27, players: [solo] })
 
@@ -51,9 +51,13 @@ describe('voiceUndoHistory + executeVoiceCommand', () => {
     first.commitHistory(history)
     controller = first.next
 
-    const fixed = executeVoiceCommand(controller, parse(GameModeId.Bob27, 'fix hit 2')!, history)!
-    fixed.commitHistory(history)
-    controller = fixed.next
+    const replaced = executeVoiceCommand(
+      controller,
+      parse(GameModeId.Bob27, 'undo hit 2')!,
+      history,
+    )!
+    replaced.commitHistory(history)
+    controller = replaced.next
     expect(controller.session.visits).toHaveLength(1)
     expect(history.size()).toBe(1)
 
@@ -63,13 +67,13 @@ describe('voiceUndoHistory + executeVoiceCommand', () => {
     expect(controller.session.visits).toHaveLength(0)
   })
 
-  it('returns null for ineligible fix when no voice history', () => {
+  it('returns null for ineligible undo+correction when no voice history', () => {
     const history = createVoiceUndoHistory()
     const controller = createGameController({ mode: GameModeId.Bob27, players: [solo] })
     const withManual = controller.recordDart(numberDart(20, DartMultiplier.Double))
 
     expect(
-      executeVoiceCommand(withManual, parse(GameModeId.Bob27, 'fix hit 2')!, history),
+      executeVoiceCommand(withManual, parse(GameModeId.Bob27, 'undo hit 2')!, history),
     ).toBeNull()
     expect(history.size()).toBe(0)
   })

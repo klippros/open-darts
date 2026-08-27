@@ -64,7 +64,7 @@ export const isPathologicalVoiceHypothesis = (tokens: string[]): boolean => {
 
   if (allSame) {
     // Exact ATC sequences like "miss miss miss" are length 3 — keep those.
-    if (first === 'undo' || first === 'fix') {
+    if (first === 'undo') {
       return tokens.length >= 2
     }
 

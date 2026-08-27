@@ -5,6 +5,10 @@ import { normalizeTranscriptLight } from './normalizeTranscriptLight'
 describe('sanitizeVoiceTranscript', () => {
   it('keeps real short commands', () => {
     expect(sanitizeVoiceTranscript('undo')).toEqual({ transcript: 'undo', resetSession: false })
+    expect(sanitizeVoiceTranscript('undo two hits')).toEqual({
+      transcript: 'undo two hits',
+      resetSession: false,
+    })
     expect(sanitizeVoiceTranscript('sixty')).toEqual({ transcript: 'sixty', resetSession: false })
     expect(sanitizeVoiceTranscript('one eighty')).toEqual({
       transcript: 'one eighty',

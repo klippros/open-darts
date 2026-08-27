@@ -30,6 +30,7 @@ const ASR_TOKEN_FIXUPS: Record<string, string> = {
   won: 'one',
   sex: 'six',
   sick: 'six',
+  fix: 'six',
   tin: 'ten',
   tent: 'ten',
   mist: 'miss',

@@ -99,7 +99,7 @@ export const useVoiceRecognition = ({
 
   /**
    * Chrome often never finalizes short commands ("six", "two hits", "no hits").
-   * Commit stable gameplay interims — not undo/fix (noise easily looks like undo).
+   * Commit stable gameplay interims — not undo (noise easily looks like undo).
    * Around the Clock wipe phrases can interim-commit; hit/miss sequences wait for
    * speech-ended so an early wrong 3-dart guess is not locked in mid-utterance.
    */
@@ -334,7 +334,7 @@ export const useVoiceRecognition = ({
     const isValid = intent !== null
     const now = Date.now()
 
-    // undo/fix: cancel any pending isolation hold and apply immediately.
+    // Meta commands: cancel any pending isolation hold and apply immediately.
     if (isMetaIntent(intent)) {
       clearHoldTimer()
       isolationRef.current = {

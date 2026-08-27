@@ -19,15 +19,19 @@ describe('parseVoiceCommand', () => {
       expect(parseVoiceCommand(GameModeId.Bob27, 'undo undo undo undo')).toBeNull()
     })
 
-    it('parses fix with gameplay body and rejects fix synonyms', () => {
-      expect(parseVoiceCommand(GameModeId.Bob27, 'fix hit 2')).toEqual({
+    it('parses undo with gameplay body as a replacement and rejects fix', () => {
+      expect(parseVoiceCommand(GameModeId.Bob27, 'undo hit 2')).toEqual({
+        kind: VoiceIntentKind.Fix,
+        inner: { kind: VoiceIntentKind.Bob27HitCount, hitCount: 2 },
+      })
+      expect(parseVoiceCommand(GameModeId.Bob27, 'undo two hits')).toEqual({
         kind: VoiceIntentKind.Fix,
         inner: { kind: VoiceIntentKind.Bob27HitCount, hitCount: 2 },
       })
       expect(parseVoiceCommand(GameModeId.Bob27, 'correct hit 2')).toBeNull()
-      expect(parseVoiceCommand(GameModeId.Bob27, 'fix')).toBeNull()
-      expect(parseVoiceCommand(GameModeId.Bob27, 'fix undo')).toBeNull()
-      expect(parseVoiceCommand(GameModeId.Bob27, 'fix fix hit 2')).toBeNull()
+      expect(parseVoiceCommand(GameModeId.Bob27, 'fix hit 2')).toBeNull()
+      expect(parseVoiceCommand(GameModeId.Bob27, 'undo undo')).toBeNull()
+      expect(parseVoiceCommand(GameModeId.Bob27, 'undo undo hit 2')).toBeNull()
     })
   })
 
@@ -70,7 +74,7 @@ describe('parseVoiceCommand', () => {
           score: 0,
         })
         expect(parseVoiceCommand(mode, 'undo', options)).toEqual({ kind: VoiceIntentKind.Undo })
-        expect(parseVoiceCommand(mode, 'fix sixty', options)).toEqual({
+        expect(parseVoiceCommand(mode, 'undo sixty', options)).toEqual({
           kind: VoiceIntentKind.Fix,
           inner: { kind: VoiceIntentKind.VisitScore, score: 60 },
         })
@@ -175,6 +179,16 @@ describe('parseVoiceCommand', () => {
       expect(parseVoiceCommand(GameModeId.AroundTheClock, 'missed')).toBeNull()
       expect(parseVoiceCommand(GameModeId.AroundTheClock, 'double 20')).toBeNull()
       expect(parseVoiceCommand(GameModeId.AroundTheClock, 'hit hit hit hit')).toBeNull()
+    })
+
+    it('parses undo with a visit sequence as a replacement', () => {
+      expect(parseVoiceCommand(GameModeId.AroundTheClock, 'undo hit miss miss')).toEqual({
+        kind: VoiceIntentKind.Fix,
+        inner: {
+          kind: VoiceIntentKind.AroundTheClock,
+          command: { type: 'sequence', outcomes: ['hit', 'miss', 'miss'] },
+        },
+      })
     })
   })
 })

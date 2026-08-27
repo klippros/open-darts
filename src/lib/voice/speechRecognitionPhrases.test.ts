@@ -7,7 +7,7 @@ describe('getVoiceRecognitionPhrases', () => {
     for (const mode of [GameModeId.Bob27, GameModeId.AroundTheClock, GameModeId.X01]) {
       const phrases = getVoiceRecognitionPhrases(mode)
       expect(phrases.some((hint) => hint.phrase === 'undo')).toBe(true)
-      expect(phrases.some((hint) => hint.phrase === 'fix')).toBe(true)
+      expect(phrases.some((hint) => hint.phrase === 'fix')).toBe(false)
     }
   })
 

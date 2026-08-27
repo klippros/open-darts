@@ -36,4 +36,8 @@ describe('chooseSpeechTranscript', () => {
   it('always prefers final undo over a stale interim command', () => {
     expect(choose('undo', 'hit 2')).toBe('undo')
   })
+
+  it('prefers richer undo-correction interim when final truncates to undo', () => {
+    expect(choose('undo', 'undo two hits')).toBe('undo two hits')
+  })
 })

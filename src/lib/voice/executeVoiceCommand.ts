@@ -36,7 +36,7 @@ export interface VoiceExecuteResult {
   scoreCallerBase: AppGameController
   /** History mutations to apply after a successful live commit. */
   commitHistory: (history: VoiceUndoHistory) => void
-  /** Whether onUndo should run (undo or fix). */
+  /** Whether onUndo should run. */
   didUndo: boolean
   playback: VoicePlayback
 }

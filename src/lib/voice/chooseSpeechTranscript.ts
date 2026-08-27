@@ -62,8 +62,18 @@ export const chooseSpeechTranscript = (
   const finalIntent = parseVoiceCommand(mode, finalText, options)
   const interimIntent = parseVoiceCommand(mode, interimText, options)
 
-  // Meta commands from the final hypothesis always win.
-  if (finalIntent?.kind === VoiceIntentKind.Undo || finalIntent?.kind === VoiceIntentKind.Fix) {
+  if (finalIntent?.kind === VoiceIntentKind.Undo) {
+    if (
+      looksLikeTruncatedFinal(interimText, finalText) &&
+      interimIntent?.kind === VoiceIntentKind.Fix
+    ) {
+      return interimText
+    }
+
+    return finalText
+  }
+
+  if (finalIntent?.kind === VoiceIntentKind.Fix) {
     return finalText
   }
 

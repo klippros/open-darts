@@ -53,7 +53,7 @@ export const createVoiceUndoHistory = () => {
 
   const pop = (): VoiceHistoryEntry | undefined => stack.pop()
 
-  /** Replace the top entry after a successful fix (pop old, push replacement). */
+  /** Replace the top entry (pop old, push replacement). */
   const replaceTop = (entry: VoiceHistoryEntry): void => {
     if (stack.length > 0) {
       stack.pop()
