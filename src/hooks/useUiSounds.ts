@@ -1,4 +1,4 @@
-import { playHitChime, playMissSwoosh } from '../lib/uiSounds/playUiSounds'
+import { playHitChime, playMissSwoosh, playUndoChime } from '../lib/uiSounds/playUiSounds'
 import { useSettings } from './settingsContext'
 
 export const useUiSounds = () => {
@@ -13,6 +13,11 @@ export const useUiSounds = () => {
     playMiss: () => {
       if (uiSoundsEnabled) {
         playMissSwoosh()
+      }
+    },
+    playUndo: () => {
+      if (uiSoundsEnabled) {
+        playUndoChime()
       }
     },
   }

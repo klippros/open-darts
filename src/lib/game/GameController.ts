@@ -4,6 +4,7 @@ import type { GameSession } from '../../types/gameSession'
 import type { Player } from '../../types/player'
 import type { Visit } from '../../types/visit'
 import type { X01State } from '../../types/x01'
+import { isValidVisitScore } from '../x01/x01Rules'
 import type { GameEngine, ScoreboardSnapshot } from './GameEngine'
 import { countPlayerVisitsInLeg, isChallengeMode, resolveChallengeLegOutcome } from './challenge'
 import { ChallengeLegStatus } from '../../types/match'
@@ -88,6 +89,28 @@ export class GameController<State, Config> {
     )
   }
 
+  recordVisitScore(score: number): GameController<State, Config> {
+    if (this.isComplete || this.pendingDarts.length > 0) {
+      return this
+    }
+
+    const commitVisitScore = this.engine.commitVisitScore
+
+    if (commitVisitScore === undefined || !isValidVisitScore(score)) {
+      return this
+    }
+
+    const visitIndex = this.session.visits.length
+    const { state, visit, advanceTurn } = commitVisitScore(
+      this.engineState,
+      this.activePlayerId,
+      visitIndex,
+      score,
+    )
+
+    return this.applyCommittedVisit(state, visit, advanceTurn)
+  }
+
   undoDart(): GameController<State, Config> {
     const undoState = resolveUndoDartState(this.session, this.turnIndex, this.pendingDarts)
 
@@ -156,6 +179,22 @@ export class GameController<State, Config> {
       pendingDarts,
     )
 
+    return this.applyCommittedVisit(state, visit, advanceTurn)
+  }
+
+  withSession(
+    session: GameSession,
+    engineState: State,
+    turnIndex: number,
+  ): GameController<State, Config> {
+    return new GameController(session, this.engine, engineState, [], turnIndex)
+  }
+
+  private applyCommittedVisit(
+    state: State,
+    visit: Visit,
+    advanceTurn: boolean,
+  ): GameController<State, Config> {
     const legIndex = this.session.matchProgress?.currentLeg
     const visitWithLeg: Visit =
       legIndex === undefined
@@ -235,14 +274,6 @@ export class GameController<State, Config> {
       : this.turnIndex
 
     return new GameController(session, this.engine, state, [], nextTurnIndex)
-  }
-
-  withSession(
-    session: GameSession,
-    engineState: State,
-    turnIndex: number,
-  ): GameController<State, Config> {
-    return new GameController(session, this.engine, engineState, [], turnIndex)
   }
 
   private finishChallengeLegTransition({

@@ -17,6 +17,7 @@ export interface ScoreboardProps {
   players: Player[]
   config: GameConfig
   matchProgress?: GameSession['matchProgress']
+  hideVisitDartSlots?: boolean
 }
 
 export const Scoreboard = ({
@@ -27,6 +28,7 @@ export const Scoreboard = ({
   players,
   config,
   matchProgress,
+  hideVisitDartSlots = false,
 }: ScoreboardProps) => {
   const legAndMatchAverages = useMemo(
     () =>
@@ -47,6 +49,7 @@ export const Scoreboard = ({
       visits={visits}
       config={config}
       matchProgress={matchProgress}
+      hideVisitDartSlots={hideVisitDartSlots}
     />
   )
 }

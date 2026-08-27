@@ -3,6 +3,7 @@ import { GameModeId, GameStatus } from '../../types/gameMode'
 import type { GameSession } from '../../types/gameSession'
 import { PlayerKind } from '../../types/player'
 import { DartMultiplier } from '../../types/dart'
+import { VisitInputMode } from '../../types/visit'
 import { numberDart } from '../testHelpers'
 import { computeX01Stats, FIVE_OH_ONE_START_SCORE } from './x01Stats'
 
@@ -246,5 +247,35 @@ describe('x01Stats', () => {
     expect(stats.fiveOhOne.bestLegAverage).toBe(100)
     // Leg 1: 2+1+2 = 5 darts; leg 2: 2+1 = 3 darts → avg 4
     expect(stats.fiveOhOne.avgDarts).toBe(4)
+  })
+
+  it('excludes visit-score legs from double checkout but keeps averages and dart counts', () => {
+    const stats = computeX01Stats([
+      sampleSession({
+        visits: [
+          sampleVisit({
+            visitScore: 100,
+            scoreBefore: 501,
+            scoreAfter: 401,
+            darts: [],
+            inputMode: VisitInputMode.VisitScore,
+          }),
+          sampleVisit({
+            visitIndex: 1,
+            visitScore: 401,
+            scoreBefore: 401,
+            scoreAfter: 0,
+            checkout: true,
+            darts: [],
+            inputMode: VisitInputMode.VisitScore,
+          }),
+        ],
+      }),
+    ])
+
+    expect(stats.fiveOhOne.threeDartAverage).toBe(250.5)
+    expect(stats.fiveOhOne.avgDarts).toBe(6)
+    expect(stats.fiveOhOne.doubleCheckout).toEqual({ attempts: 0, successes: 0 })
+    expect(stats.fiveOhOne.checkoutLegCount).toBe(1)
   })
 })

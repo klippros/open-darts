@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { DartMultiplier } from '../../types/dart'
 import { GameModeId } from '../../types/gameMode'
 import { PlayerKind } from '../../types/player'
+import { X01InputMode } from '../../types/settings'
 import { createGameController } from '../game/createSession'
 import { createPlayer } from '../game/playerFactory'
 import { numberDart } from '../testHelpers'
@@ -150,5 +151,32 @@ describe('voiceUndoHistory + executeVoiceCommand', () => {
     expect(
       executeVoiceCommand(controller, parse(GameModeId.AroundTheClock, 'hit miss miss')!, history),
     ).toBeNull()
+  })
+
+  it('applies and undoes X01 visit-score voice commands', () => {
+    const history = createVoiceUndoHistory()
+    let controller = createGameController({ mode: GameModeId.X01, players: [solo] })
+    const options = { x01InputMode: X01InputMode.VisitScore }
+
+    const applied = executeVoiceCommand(
+      controller,
+      parseVoiceCommand(GameModeId.X01, 'one hundred', options)!,
+      history,
+    )!
+    expect(applied.playback).toBe('hit')
+    applied.commitHistory(history)
+    controller = applied.next
+    expect(controller.session.visits).toHaveLength(1)
+    expect(controller.session.visits[0]).toMatchObject({
+      visitScore: 100,
+      inputMode: 'visit-score',
+    })
+    expect(controller.scoreboard.players[0]?.primaryScore).toBe(401)
+
+    const undone = executeVoiceCommand(controller, { kind: VoiceIntentKind.Undo }, history)!
+    undone.commitHistory(history)
+    controller = undone.next
+    expect(controller.session.visits).toHaveLength(0)
+    expect(controller.scoreboard.players[0]?.primaryScore).toBe(501)
   })
 })

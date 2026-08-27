@@ -1,3 +1,5 @@
+import { isMissedAllPhrase } from './missedAllPhrase'
+
 export type AroundTheClockOutcome = 'hit' | 'miss'
 
 export type AroundTheClockCommand =
@@ -6,12 +8,12 @@ export type AroundTheClockCommand =
 /**
  * Around the Clock grammar:
  * - `hit` / `miss` sequences naming each dart in order (must fill the visit)
- * - `missed all` for the rest of the visit
+ * - `no hits` (and aliases) for the rest of the visit
  *
  * Hit counts ("two hits") are rejected — they do not say which darts scored.
  */
 export const parseAroundTheClockCommand = (tokens: string[]): AroundTheClockCommand | null => {
-  if (tokens.length === 2 && tokens[0] === 'missed' && tokens[1] === 'all') {
+  if (isMissedAllPhrase(tokens)) {
     return { type: 'missed-all' }
   }
 
