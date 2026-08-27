@@ -1,15 +1,12 @@
 import { Box, Flex, Grid, Heading, Text } from '@chakra-ui/react'
 import { getCheckoutPathLabel } from '../../lib/checkout/checkoutSuggestions'
 import type { ScoreboardPlayerEntry } from '../../lib/game/GameEngine'
-import {
-  formatOneTwentyOneLives,
-  formatOneTwentyOneLivesAriaLabel,
-} from '../../lib/oneTwentyOne/formatOneTwentyOneLives'
 import type { CheckoutRules } from '../../types/checkout'
 import type { ChallengeLegStatus } from '../../types/match'
 import { LegStarterIcon } from '../LegStarterIcon/LegStarterIcon'
 import { ChallengeLegDots } from './ChallengeLegDots'
 import { LegWinDots } from './LegWinDots'
+import { OneTwentyOneLives } from './OneTwentyOneLives'
 
 export type PlayerScorePanelAlign = 'left' | 'right' | 'solo'
 
@@ -102,13 +99,7 @@ const PlayerScorePanelHeader = ({
       return (
         <Grid templateColumns="1fr auto 1fr" alignItems="center" mb={1} minH="5">
           <Box />
-          <Text
-            fontSize="md"
-            lineHeight="1"
-            aria-label={formatOneTwentyOneLivesAriaLabel(player.lives ?? 0)}
-          >
-            {formatOneTwentyOneLives(player.lives ?? 0)}
-          </Text>
+          <OneTwentyOneLives lives={player.lives ?? 0} />
           <Box />
         </Grid>
       )
