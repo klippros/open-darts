@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  getCheckoutPathLabel,
   getVisitDartSlots,
   isBogeyCheckoutScore,
   isInCheckoutRange,
@@ -50,6 +51,32 @@ describe('checkoutSuggestions', () => {
     expect(slots[2]).toMatchObject({ kind: 'empty', label: null })
   })
 
+  it('still suggests checkout darts when the finish needs more throws than remain', () => {
+    const oneDartLeft = getVisitDartSlots(
+      100,
+      [numberDart(20, DartMultiplier.Single), numberDart(20, DartMultiplier.Single)],
+      doubleOutRules,
+    )
+
+    expect(oneDartLeft).toEqual([
+      { kind: 'thrown', label: '20' },
+      { kind: 'thrown', label: '20' },
+      { kind: 'suggested', label: '20' },
+    ])
+
+    const twoDartsLeft = getVisitDartSlots(
+      170,
+      [numberDart(20, DartMultiplier.Single)],
+      doubleOutRules,
+    )
+
+    expect(twoDartsLeft).toEqual([
+      { kind: 'thrown', label: '20' },
+      { kind: 'suggested', label: 'T20' },
+      { kind: 'suggested', label: 'T18' },
+    ])
+  })
+
   it('suggests the PDC three-dart finish for 170', () => {
     const path = suggestCheckoutPath(170, 3, doubleOutRules)
 
@@ -58,6 +85,13 @@ describe('checkoutSuggestions', () => {
       { label: 'T20', points: 60 },
       { label: 'Bull', points: 50 },
     ])
+  })
+
+  it('formats a checkout path label for score cards', () => {
+    expect(getCheckoutPathLabel(170, doubleOutRules)).toBe('T20 · T20 · Bull')
+    expect(getCheckoutPathLabel(40, doubleOutRules)).toBe('D20')
+    expect(getCheckoutPathLabel(169, doubleOutRules)).toBeNull()
+    expect(getCheckoutPathLabel(201, doubleOutRules)).toBeNull()
   })
 
   it('identifies bogey checkout scores', () => {

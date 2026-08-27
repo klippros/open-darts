@@ -153,6 +153,16 @@ export const suggestCheckoutPath = (
   return findBestFallbackCheckoutPath(remaining, dartsRemaining, rules)
 }
 
+export const getCheckoutPathLabel = (remaining: number, rules: CheckoutRules): string | null => {
+  const path = suggestCheckoutPath(remaining, 3, rules)
+
+  if (path === null || path.length === 0) {
+    return null
+  }
+
+  return path.map((dart) => dart.label).join(' · ')
+}
+
 export interface VisitDartSlotView {
   kind: 'thrown' | 'suggested' | 'empty'
   label: string | null
@@ -165,8 +175,8 @@ export const getVisitDartSlots = (
 ): VisitDartSlotView[] => {
   const thrownPoints = pendingDarts.reduce((total, dart) => total + dart.points, 0)
   const remaining = scoreBeforeVisit - thrownPoints
-  const dartsRemaining = 3 - pendingDarts.length
-  const checkoutPath = suggestCheckoutPath(remaining, dartsRemaining, rules) ?? []
+  // Suggest as a full visit so remaining slots show setup darts past this visit.
+  const checkoutPath = suggestCheckoutPath(remaining, 3, rules) ?? []
   const slots: VisitDartSlotView[] = []
   let suggestionIndex = 0
 
