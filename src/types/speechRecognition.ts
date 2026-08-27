@@ -50,14 +50,22 @@ interface SpeechRecognitionLike extends EventTarget {
   abort: () => void
 }
 
+/** Result of `SpeechRecognition.available()` for a language pack. */
+type SpeechRecognitionAvailabilityStatus =
+  'available' | 'downloadable' | 'downloading' | 'unavailable'
+
 interface SpeechRecognitionInstallOptions {
   langs: string[]
   processLocally?: boolean
+  /** Approximate use case; defaults to `command` (short isolated phrases). */
+  quality?: 'command' | 'dictation' | 'conversation'
 }
 
 interface SpeechRecognitionConstructor {
   new (): SpeechRecognitionLike
-  available?: (options: SpeechRecognitionInstallOptions) => Promise<string>
+  available?: (
+    options: SpeechRecognitionInstallOptions,
+  ) => Promise<SpeechRecognitionAvailabilityStatus>
   install?: (options: SpeechRecognitionInstallOptions) => Promise<boolean>
 }
 
@@ -75,5 +83,6 @@ export type {
   SpeechRecognitionPhraseLike,
   SpeechRecognitionPhraseConstructor,
   SpeechRecognitionInstallOptions,
+  SpeechRecognitionAvailabilityStatus,
   WindowWithSpeechRecognition,
 }

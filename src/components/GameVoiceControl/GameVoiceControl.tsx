@@ -18,7 +18,7 @@ const resolveAriaLabel = (enabled: boolean, isError: boolean): string => {
   return 'Enable voice input'
 }
 
-/** Microphone toggle available only while a match is active and recognition is supported. */
+/** Microphone toggle while a match is active and on-device English recognition is usable. */
 export const GameVoiceControl = () => {
   const gameChrome = useGameChrome()
   const { supported, enabled, status, toggle } = useVoiceControl()
