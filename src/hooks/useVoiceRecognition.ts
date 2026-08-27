@@ -54,7 +54,7 @@ export const useVoiceRecognition = ({
   applyControllerTransaction,
 }: UseVoiceRecognitionOptions): void => {
   const { enabled, setEnabled, setStatus } = useVoiceControl()
-  const { playHit, playMiss, playUndo } = useUiSounds()
+  const { playUndo, playSequence } = useUiSounds()
   const modeSupportsVoice = isVoiceInputSupportedForMode(mode, { x01InputMode })
 
   const historyRef = useRef(createVoiceUndoHistory())
@@ -66,9 +66,8 @@ export const useVoiceRecognition = ({
   const modeRef = useRef(mode)
   const x01InputModeRef = useRef(x01InputMode)
   const applyRef = useRef(applyControllerTransaction)
-  const playHitRef = useRef(playHit)
-  const playMissRef = useRef(playMiss)
   const playUndoRef = useRef(playUndo)
+  const playSequenceRef = useRef(playSequence)
   const inputDisabledRef = useRef(inputDisabled)
   const calloutActiveRef = useRef(false)
   const interimCommitTimerRef = useRef<number | null>(null)
@@ -78,9 +77,8 @@ export const useVoiceRecognition = ({
   modeRef.current = mode
   x01InputModeRef.current = x01InputMode
   applyRef.current = applyControllerTransaction
-  playHitRef.current = playHit
-  playMissRef.current = playMiss
   playUndoRef.current = playUndo
+  playSequenceRef.current = playSequence
   inputDisabledRef.current = inputDisabled
 
   const clearHoldTimer = (): void => {
@@ -247,7 +245,7 @@ export const useVoiceRecognition = ({
           next: AppGameController
           scoreCallerBase: AppGameController
           didUndo: boolean
-          playback: 'hit' | 'miss' | null
+          playback: ('hit' | 'miss')[] | null
           commitHistory: (history: ReturnType<typeof createVoiceUndoHistory>) => void
         }
       | null
@@ -299,10 +297,8 @@ export const useVoiceRecognition = ({
 
         if (computed.didUndo && computed.playback === null) {
           playUndoRef.current()
-        } else if (computed.playback === 'hit') {
-          playHitRef.current()
-        } else if (computed.playback === 'miss') {
-          playMissRef.current()
+        } else if (computed.playback !== null && computed.playback.length > 0) {
+          playSequenceRef.current(computed.playback)
         }
       }
 

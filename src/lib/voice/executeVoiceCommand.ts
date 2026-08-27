@@ -26,7 +26,9 @@ const toAroundTheClockOrdinal = (value: number): AroundTheClockDartOrdinal | nul
   return null
 }
 
-export type VoicePlayback = 'hit' | 'miss' | null
+export type VoicePlaybackSound = 'hit' | 'miss'
+/** Ordered UI sounds for a committed voice command; null means undo-only (no hit/miss). */
+export type VoicePlayback = VoicePlaybackSound[] | null
 
 export interface VoiceExecuteResult {
   next: AppGameController
@@ -206,7 +208,7 @@ const buildGameplayDarts = (
 
     return {
       darts: buildBob27DartsForHitCount(intent.hitCount, targetIndex),
-      playback: intent.hitCount === 0 ? 'miss' : 'hit',
+      playback: [intent.hitCount === 0 ? 'miss' : 'hit'],
     }
   }
 
@@ -241,7 +243,7 @@ const buildGameplayDarts = (
   if (intent.command.type === 'missed-all') {
     return {
       darts: buildDartsForMissAll(dartsLeft),
-      playback: 'miss',
+      playback: ['miss'],
     }
   }
 
@@ -256,9 +258,7 @@ const buildGameplayDarts = (
     return null
   }
 
-  const playback: VoicePlayback = intent.command.outcomes.includes('hit') ? 'hit' : 'miss'
-
-  return { darts, playback }
+  return { darts, playback: [...intent.command.outcomes] }
 }
 
 const applyGameplay = (
@@ -288,7 +288,7 @@ const applyGameplay = (
       undoSteps: 1,
       before,
       after: fingerprintOf(next),
-      playback: intent.score === 0 ? 'miss' : 'hit',
+      playback: [intent.score === 0 ? 'miss' : 'hit'],
     }
   }
 

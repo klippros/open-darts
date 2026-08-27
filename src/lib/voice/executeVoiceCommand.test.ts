@@ -20,7 +20,7 @@ describe('voiceUndoHistory + executeVoiceCommand', () => {
     let controller = createGameController({ mode: GameModeId.Bob27, players: [solo] })
 
     const applied = executeVoiceCommand(controller, parse(GameModeId.Bob27, 'hit 1')!, history)!
-    expect(applied.playback).toBe('hit')
+    expect(applied.playback).toEqual(['hit'])
     applied.commitHistory(history)
     controller = applied.next
     expect(controller.session.visits).toHaveLength(1)
@@ -86,7 +86,7 @@ describe('voiceUndoHistory + executeVoiceCommand', () => {
       parse(GameModeId.AroundTheClock, 'hit hit miss')!,
       history,
     )!
-    expect(visit.playback).toBe('hit')
+    expect(visit.playback).toEqual(['hit', 'hit', 'miss'])
     visit.commitHistory(history)
     controller = visit.next
     expect(controller.pendingDarts).toHaveLength(0)
@@ -103,6 +103,7 @@ describe('voiceUndoHistory + executeVoiceCommand', () => {
       parse(GameModeId.AroundTheClock, 'missed all')!,
       history,
     )!
+    expect(missedAll.playback).toEqual(['miss'])
     missedAll.commitHistory(history)
     controller = missedAll.next
     expect(controller.pendingDarts).toHaveLength(0)
@@ -163,7 +164,7 @@ describe('voiceUndoHistory + executeVoiceCommand', () => {
       parseVoiceCommand(GameModeId.X01, 'one hundred', options)!,
       history,
     )!
-    expect(applied.playback).toBe('hit')
+    expect(applied.playback).toEqual(['hit'])
     applied.commitHistory(history)
     controller = applied.next
     expect(controller.session.visits).toHaveLength(1)

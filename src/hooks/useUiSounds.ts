@@ -1,4 +1,11 @@
-import { playHitChime, playMissSwoosh, playUndoChime } from '../lib/uiSounds/playUiSounds'
+import {
+  cancelUiSoundSequence,
+  playHitChime,
+  playMissSwoosh,
+  playUiSoundSequence,
+  playUndoChime,
+} from '../lib/uiSounds/playUiSounds'
+import type { UiSoundKind } from '../lib/uiSounds/playUiSounds'
 import { useSettings } from './settingsContext'
 
 export const useUiSounds = () => {
@@ -17,7 +24,13 @@ export const useUiSounds = () => {
     },
     playUndo: () => {
       if (uiSoundsEnabled) {
+        cancelUiSoundSequence()
         playUndoChime()
+      }
+    },
+    playSequence: (sounds: readonly UiSoundKind[]) => {
+      if (uiSoundsEnabled) {
+        playUiSoundSequence(sounds)
       }
     },
   }
