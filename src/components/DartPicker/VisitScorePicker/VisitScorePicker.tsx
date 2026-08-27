@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button, Grid, Input, Stack } from '@chakra-ui/react'
 import {
   appendVisitScoreDigit,
@@ -20,6 +20,23 @@ export const VisitScorePicker = ({
   inputDisabled = false,
 }: VisitScorePickerProps) => {
   const [value, setValue] = useState('')
+  const valueRef = useRef(value)
+  valueRef.current = value
+
+  const submitCurrentValue = useCallback(() => {
+    if (inputDisabled) {
+      return
+    }
+
+    const score = parseVisitScoreInput(valueRef.current)
+
+    if (score === null) {
+      return
+    }
+
+    setValue('')
+    onSubmit(score)
+  }, [inputDisabled, onSubmit])
 
   useEffect(() => {
     if (inputDisabled) {
@@ -45,16 +62,7 @@ export const VisitScorePicker = ({
 
       if (event.key === 'Enter') {
         event.preventDefault()
-        setValue((current) => {
-          const score = parseVisitScoreInput(current)
-
-          if (score === null) {
-            return current
-          }
-
-          onSubmit(score)
-          return ''
-        })
+        submitCurrentValue()
         return
       }
 
@@ -69,7 +77,7 @@ export const VisitScorePicker = ({
     return () => {
       window.removeEventListener('keydown', onKeyDown)
     }
-  }, [inputDisabled, onSubmit])
+  }, [inputDisabled, submitCurrentValue])
 
   const canSubmit = parseVisitScoreInput(value) !== null && !inputDisabled
 
@@ -139,22 +147,7 @@ export const VisitScorePicker = ({
         <Button variant="outline" disabled={inputDisabled} onClick={onUndo}>
           Undo
         </Button>
-        <Button
-          variant="cta"
-          disabled={!canSubmit}
-          onClick={() => {
-            setValue((current) => {
-              const score = parseVisitScoreInput(current)
-
-              if (score === null || inputDisabled) {
-                return current
-              }
-
-              onSubmit(score)
-              return ''
-            })
-          }}
-        >
+        <Button variant="cta" disabled={!canSubmit} onClick={submitCurrentValue}>
           Enter
         </Button>
       </Grid>
