@@ -15,13 +15,9 @@ export const AboutPage = () => (
             you are practicing alone or playing with friends, there is a mode for it.
           </Text>
           <Text color="whiteAlpha.800" fontSize="md" lineHeight="1.65">
-            Every dart you throw is recorded. That gives you the data to see how you are improving:
-            averages, checkout rates, trends across games, and how each practice session adds up
-            over time.
-          </Text>
-          <Text color="whiteAlpha.800" fontSize="md" lineHeight="1.65">
-            You can start playing without an account. When your first game is over, you can decide
-            to create an account and save your progress.
+            Sign up to track your progress between devices, or keep playing locally. Open darts
+            stores every dart you track, giving you the data to see how you are improving: averages,
+            checkout rates, trends across games, and how each practice session adds up over time.
           </Text>
         </Stack>
 
@@ -30,8 +26,8 @@ export const AboutPage = () => (
             Privacy
           </Heading>
           <Text color="whiteAlpha.700" fontSize="sm" lineHeight="1.65">
-            All game data stays on your device until you choose to save it. No account required to
-            play. In the first version there is no backend. Everything runs in your browser.
+            In-progress games stay on your device. Completed games are saved locally and sync to
+            your private account only when you sign in. No account is required to play.
           </Text>
         </Stack>
       </Stack>

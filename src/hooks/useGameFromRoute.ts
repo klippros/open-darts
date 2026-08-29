@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { useAccount } from './accountContext'
+import { useAuth } from './authContext'
 import { parseGameLaunchParams } from '../lib/game/gameRoute'
 import { isExplicitGameLaunch } from '../lib/routing/gameNavigation'
 import { resolveGameLoadStrategy } from '../lib/routing/gameLoadStrategy'
@@ -28,13 +28,13 @@ export const useGameFromRoute = (options: UseGameFromRouteOptions = {}) => {
   } = options
   const navigate = useNavigate()
   const location = useLocation()
-  const { account } = useAccount()
+  const { profile } = useAuth()
   const [searchParams] = useSearchParams()
   const initialExplicitLaunch = useRef(isExplicitGameLaunch(location.state))
   const explicitLaunch = initialExplicitLaunch.current
   const launchParams = useMemo(
-    () => parseGameLaunchParams(searchParams, account?.displayName),
-    [searchParams, account?.displayName],
+    () => parseGameLaunchParams(searchParams, profile?.displayName),
+    [searchParams, profile?.displayName],
   )
   const [startFresh, setStartFresh] = useState(false)
 

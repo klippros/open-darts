@@ -16,7 +16,7 @@ const parseJson = (value: string | null): unknown => {
   }
 }
 
-const isGameSession = (value: unknown): value is GameSession => {
+export const isGameSession = (value: unknown): value is GameSession => {
   if (typeof value !== 'object' || value === null) {
     return false
   }
@@ -68,6 +68,13 @@ export const saveStoredSession = (
   const nextSessions = [...sessions.filter((entry) => entry.id !== session.id), session]
 
   storage.setItem(StorageKey.Sessions, JSON.stringify(nextSessions))
+}
+
+export const replaceStoredSessions = (
+  sessions: GameSession[],
+  storage: StorageAdapter = browserLocalStorage,
+): void => {
+  storage.setItem(StorageKey.Sessions, JSON.stringify(sessions))
 }
 
 export const removeStoredSession = (

@@ -80,6 +80,27 @@ describe('visitPersistence', () => {
     expect(loadActiveSnapshot()).toBeNull()
   })
 
+  it('auto-saves a completed session without an account', () => {
+    let controller = createGameController({
+      mode: GameModeId.X01,
+      config: { startScore: 501, doubleIn: false, doubleOut: true },
+      players: [{ id: 'player-1', name: 'You', kind: PlayerKind.Human }],
+    })
+    controller = controller.withSession(
+      {
+        ...controller.session,
+        status: GameStatus.Completed,
+        completedAt: '2026-01-01T00:00:00.000Z',
+      },
+      controller.engineState,
+      controller.turnIndex,
+    )
+
+    persistControllerState(controller)
+
+    expect(loadStoredSessions()).toEqual([controller.session])
+  })
+
   it('removes archived sessions when a completed game is undone', () => {
     let controller = createGameController({
       mode: GameModeId.X01,

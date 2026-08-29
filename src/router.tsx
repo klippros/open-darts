@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom'
 import { App } from './App'
 import { AboutPage } from './routes/AboutPage'
 import { AroundTheClockSetupPage } from './routes/AroundTheClockSetupPage'
+import { AuthCallbackPage } from './routes/AuthCallbackPage'
 import { GamePage } from './routes/GamePage'
 import { HistoryPage } from './routes/HistoryPage'
 import { HomePage } from './routes/HomePage'
@@ -19,6 +20,7 @@ export const router = createBrowserRouter(
         { path: 'game/match-setup', element: <MatchSetupPage /> },
         { path: 'game/setup', element: <X01SetupPage /> },
         { path: 'game/around-the-clock/setup', element: <AroundTheClockSetupPage /> },
+        { path: 'auth/callback', element: <AuthCallbackPage /> },
         { path: 'history', element: <HistoryPage /> },
         { path: 'stats', element: <StatsPage /> },
         { path: 'about', element: <AboutPage /> },

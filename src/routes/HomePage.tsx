@@ -111,21 +111,6 @@ export const HomePage = () => (
   <ContentContainer>
     <Box py={{ base: 6, md: 10 }} pb={10}>
       <Stack gap={8}>
-        <Stack gap={3} maxW="720px">
-          <Heading as="h1" size="2xl" color="white" fontFamily="Archivo Black, sans-serif">
-            Open source darts scoring
-          </Heading>
-          <Text color="whiteAlpha.800" fontSize="md" lineHeight="1.65">
-            The easiest way to get started. Pick a game mode and play right away. No account, no
-            setup. Open Darts tracks every dart you throw so you can analyze your progress over
-            time.
-          </Text>
-          <Text color="whiteAlpha.700" fontSize="md" lineHeight="1.65">
-            Play x01 matches solo, with a guest, or in challenge mode. Practice modes stay focused
-            on solo training for now.
-          </Text>
-        </Stack>
-
         <ResumeGameBanner />
 
         <Stack gap={4}>

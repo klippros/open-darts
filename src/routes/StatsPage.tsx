@@ -1,6 +1,5 @@
 import { Box, Heading, Stack, Text } from '@chakra-ui/react'
-import { useCallback, useMemo, useState } from 'react'
-import { BetaBanner } from '../components/BetaBanner/BetaBanner'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ContentContainer } from '../components/ContentContainer'
 import { StatTimelineDialog } from '../components/StatTimelineDialog/StatTimelineDialog'
 import {
@@ -15,6 +14,8 @@ import { filterSessions } from '../lib/analytics/sessionFilters'
 import { buildStatTimeline } from '../lib/analytics/statTimelines'
 import type { StatTimeline, StatTimelineSelection } from '../lib/analytics/statTimelines'
 import { loadStoredSessions } from '../lib/storage/gameStore'
+import { useAuth } from '../hooks/authContext'
+import { AuthStatus, SyncStatus } from '../types/auth'
 
 const DATE_RANGE_OPTIONS: { value: DateRangePreset; label: string }[] = [
   { value: 'all', label: 'All time' },
@@ -36,10 +37,22 @@ const isDateRangePreset = (value: string): value is DateRangePreset =>
   value === 'all' || value === '7d' || value === '30d'
 
 export const StatsPage = () => {
+  const { authStatus, syncStatus } = useAuth()
   const [dateRange, setDateRange] = useState<DateRangePreset>('all')
   const [timelineSelection, setTimelineSelection] = useState<StatTimelineSelection | null>(null)
+  const [storedSessions, setStoredSessions] = useState(() => loadStoredSessions())
 
-  const storedSessions = useMemo(() => loadStoredSessions(), [])
+  useEffect(() => {
+    if (authStatus === AuthStatus.Anonymous || authStatus === AuthStatus.Authenticated) {
+      setStoredSessions(loadStoredSessions())
+    }
+  }, [authStatus])
+
+  useEffect(() => {
+    if (syncStatus === SyncStatus.Synced) {
+      setStoredSessions(loadStoredSessions())
+    }
+  }, [syncStatus])
 
   const filteredSessions = useMemo(
     () => filterSessions(storedSessions, { dateRange }),
@@ -77,17 +90,12 @@ export const StatsPage = () => {
     <ContentContainer>
       <Box py={{ base: 6, md: 10 }} pb={10} maxW="720px" w="full" mx="auto">
         <Stack gap={8}>
-          <BetaBanner title="Stats are in beta">
-            Analytics and charts are a first draft. Metrics and layouts will evolve as we learn what
-            is most useful.
-          </BetaBanner>
-
           <Stack gap={3}>
             <Heading as="h1" size="2xl" color="white" fontFamily="Archivo Black, sans-serif">
               Stats
             </Heading>
             <Text color="whiteAlpha.800" fontSize="md" lineHeight="1.65">
-              Progress from your saved games on this device, grouped by game type.
+              Progress from your completed games, grouped by game type.
             </Text>
           </Stack>
 
