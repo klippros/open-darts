@@ -196,8 +196,8 @@ describe('flushPendingSessionSync', () => {
 
 describe('Supabase ownership boundary', () => {
   it('does not send a client-provided user id when upserting', async () => {
-    const rpc = vi.fn(async (_name: string, _arguments: Record<string, unknown>) => ({
-      data: null,
+    const rpc = vi.fn(async (_name: string, arguments_: Record<string, unknown>) => ({
+      data: arguments_.session_id,
       error: null,
     }))
     const client = { rpc } as unknown as SupabaseClient
@@ -209,5 +209,20 @@ describe('Supabase ownership boundary', () => {
     expect(rpc).toHaveBeenCalledOnce()
     expect(rpc.mock.calls[0]?.[0]).toBe('upsert_game_session')
     expect(rpc.mock.calls[0]?.[1]).not.toHaveProperty('user_id')
+  })
+
+  it('rejects an upload when the database does not confirm the write', async () => {
+    const client = {
+      rpc: vi.fn(async () => ({
+        data: null,
+        error: null,
+      })),
+    } as unknown as SupabaseClient
+    const gateway = createSupabaseSessionGateway(client)
+    const completed = session()
+
+    await expect(gateway.upsertSessions([completed])).rejects.toThrow(
+      `Database did not confirm session upload: ${completed.id}`,
+    )
   })
 })

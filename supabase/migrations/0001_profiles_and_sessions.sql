@@ -6,7 +6,7 @@ create table public.profiles (
 );
 
 create table public.game_sessions (
-  id uuid primary key,
+  id uuid not null,
   user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
   mode text not null,
   status text not null check (status = 'completed'),
@@ -15,6 +15,7 @@ create table public.game_sessions (
   updated_at timestamptz not null default now(),
   client_updated_at timestamptz not null,
   payload jsonb not null,
+  primary key (user_id, id),
   constraint game_sessions_payload_matches_row check (
     payload ->> 'id' = id::text
     and payload ->> 'mode' = mode
@@ -112,7 +113,7 @@ create or replace function public.upsert_game_session(
   session_client_updated_at timestamptz,
   session_payload jsonb
 )
-returns void
+returns uuid
 language sql
 set search_path = ''
 as $$
@@ -134,7 +135,7 @@ as $$
     session_client_updated_at,
     session_payload
   )
-  on conflict (id) do update
+  on conflict (user_id, id) do update
   set
     mode = excluded.mode,
     status = excluded.status,
@@ -142,7 +143,7 @@ as $$
     completed_at = excluded.completed_at,
     client_updated_at = excluded.client_updated_at,
     payload = excluded.payload
-  where public.game_sessions.user_id = (select auth.uid());
+  returning id;
 $$;
 
 revoke all on function public.upsert_game_session(

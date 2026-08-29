@@ -101,9 +101,9 @@ export const createSupabaseSessionGateway = (client: SupabaseClient): SessionSyn
       return
     }
 
-    const results = await Promise.all(
-      sessions.map((session) =>
-        client.rpc('upsert_game_session', {
+    await Promise.all(
+      sessions.map(async (session) => {
+        const result = await client.rpc('upsert_game_session', {
           session_id: session.id,
           session_mode: session.mode,
           session_status: session.status,
@@ -111,14 +111,17 @@ export const createSupabaseSessionGateway = (client: SupabaseClient): SessionSyn
           session_completed_at: session.completedAt ?? session.startedAt,
           session_client_updated_at: session.completedAt ?? session.startedAt,
           session_payload: session,
-        }),
-      ),
-    )
-    const failedResult = results.find((result) => result.error !== null)
+        })
 
-    if (failedResult?.error !== null && failedResult?.error !== undefined) {
-      throw failedResult.error
-    }
+        if (result.error !== null) {
+          throw result.error
+        }
+
+        if (result.data !== session.id) {
+          throw new Error(`Database did not confirm session upload: ${session.id}`)
+        }
+      }),
+    )
   },
   deleteSessions: async (sessionIds) => {
     if (sessionIds.length === 0) {
