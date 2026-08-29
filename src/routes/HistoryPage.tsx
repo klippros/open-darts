@@ -1,6 +1,5 @@
 import { Box, Button, Heading, Stack, Text } from '@chakra-ui/react'
 import { useCallback, useEffect, useState } from 'react'
-import { BetaBanner } from '../components/BetaBanner/BetaBanner'
 import { ContentContainer } from '../components/ContentContainer'
 import { HistoryList } from '../components/HistoryList/HistoryList'
 import { ResetStatsDialog } from '../components/ResetStatsDialog/ResetStatsDialog'
@@ -50,11 +49,6 @@ export const HistoryPage = () => {
     <ContentContainer>
       <Box py={{ base: 6, md: 10 }} pb={10} maxW="720px" w="full" mx="auto">
         <Stack gap={8}>
-          <BetaBanner title="History is in beta">
-            Game history and cross-device sync are still early. In-progress games remain on this
-            device.
-          </BetaBanner>
-
           <Stack gap={3}>
             <Heading as="h1" size="2xl" color="white" fontFamily="Archivo Black, sans-serif">
               History

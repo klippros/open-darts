@@ -1,6 +1,5 @@
 import { Box, Heading, Stack, Text } from '@chakra-ui/react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { BetaBanner } from '../components/BetaBanner/BetaBanner'
 import { ContentContainer } from '../components/ContentContainer'
 import { StatTimelineDialog } from '../components/StatTimelineDialog/StatTimelineDialog'
 import {
@@ -91,11 +90,6 @@ export const StatsPage = () => {
     <ContentContainer>
       <Box py={{ base: 6, md: 10 }} pb={10} maxW="720px" w="full" mx="auto">
         <Stack gap={8}>
-          <BetaBanner title="Stats are in beta">
-            Analytics and charts are a first draft. Metrics and layouts will evolve as we learn what
-            is most useful.
-          </BetaBanner>
-
           <Stack gap={3}>
             <Heading as="h1" size="2xl" color="white" fontFamily="Archivo Black, sans-serif">
               Stats

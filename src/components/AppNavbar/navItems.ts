@@ -6,7 +6,7 @@ export interface NavItemConfig {
 
 export const NAV_ITEMS: readonly NavItemConfig[] = [
   { to: '/', label: 'Play' },
-  { to: '/history', label: 'History', beta: true },
-  { to: '/stats', label: 'Stats', beta: true },
+  { to: '/history', label: 'History' },
+  { to: '/stats', label: 'Stats' },
   { to: '/about', label: 'About' },
 ]
