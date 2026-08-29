@@ -80,7 +80,7 @@ export const HistoryPage = () => {
                     Playing anonymously
                   </Text>
                   <Text fontSize="sm" color="whiteAlpha.700">
-                    Your completed games are stored locally on this device.
+                    Your completed games are stored locally in the browser.
                   </Text>
                 </Stack>
                 <Stack direction={{ base: 'column', sm: 'row' }} gap={2} flexShrink={0}>
@@ -162,6 +162,7 @@ export const HistoryPage = () => {
         onConfirm={() => {
           void handleResetConfirm()
         }}
+        isSignedIn={isSignedIn}
       />
       <SignInDialog open={signInDialogOpen} onOpenChange={setSignInDialogOpen} />
     </ContentContainer>

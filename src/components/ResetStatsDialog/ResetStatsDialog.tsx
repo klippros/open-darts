@@ -5,9 +5,15 @@ export interface ResetStatsDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onConfirm: () => void
+  isSignedIn: boolean
 }
 
-export const ResetStatsDialog = ({ open, onOpenChange, onConfirm }: ResetStatsDialogProps) => (
+export const ResetStatsDialog = ({
+  open,
+  onOpenChange,
+  onConfirm,
+  isSignedIn,
+}: ResetStatsDialogProps) => (
   <Dialog.Root
     open={open}
     placement="center"
@@ -29,8 +35,8 @@ export const ResetStatsDialog = ({ open, onOpenChange, onConfirm }: ResetStatsDi
         </Dialog.Header>
         <Dialog.Body>
           <Text fontSize="sm" color="whiteAlpha.900" lineHeight="1.55">
-            Delete all completed games on this device? If you are signed in, they will also be
-            deleted from your account. This cannot be undone.
+            Delete all completed games {isSignedIn ? 'from your account' : 'on this device'}? This
+            cannot be undone.
           </Text>
         </Dialog.Body>
         <Dialog.Footer>

@@ -15,13 +15,9 @@ export const AboutPage = () => (
             you are practicing alone or playing with friends, there is a mode for it.
           </Text>
           <Text color="whiteAlpha.800" fontSize="md" lineHeight="1.65">
-            Every dart you throw is recorded. That gives you the data to see how you are improving:
-            averages, checkout rates, trends across games, and how each practice session adds up
-            over time.
-          </Text>
-          <Text color="whiteAlpha.800" fontSize="md" lineHeight="1.65">
-            You can play without an account. Sign in optionally to back up completed games and use
-            your progress across devices.
+            Sign up to track your progress between devices, or keep playing locally. Open darts
+            stores every dart you track, giving you the data to see how you are improving: averages,
+            checkout rates, trends across games, and how each practice session adds up over time.
           </Text>
         </Stack>
 
