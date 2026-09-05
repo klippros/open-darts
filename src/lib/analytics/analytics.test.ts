@@ -92,7 +92,8 @@ describe('computeAnalytics', () => {
     )
 
     expect(result.x01.fiveOhOne.legCount).toBe(1)
-    expect(result.x01.other.legCount).toBe(0)
+    expect(result.x01.all.legCount).toBe(1)
+    expect(result.x01.threeOhOne.legCount).toBe(0)
     expect(result.practice.checkout).toHaveLength(1)
     expect(result.practice.other).toHaveLength(0)
   })

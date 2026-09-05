@@ -8,7 +8,12 @@ import {
 } from './doubleCheckoutStats'
 import type { DoubleCheckoutStats } from './doubleCheckoutStats'
 import { getLatestSessionStartedAt } from './pickLastPlayedVariant'
-import { filterFiveOhOneSessions, filterOtherX01Sessions } from './sessionScope'
+import {
+  filterAllX01Sessions,
+  filterFiveOhOneSessions,
+  filterFourOhOneSessions,
+  filterThreeOhOneSessions,
+} from './sessionScope'
 import {
   countCheckouts100Plus,
   countThrown100Plus,
@@ -23,6 +28,13 @@ import {
 import { countDartsInVisits, expandX01SessionsLegs, legFinishedWithCheckout } from './x01LegSlices'
 
 export const FIVE_OH_ONE_START_SCORE = x01PresetConfigs[X01PresetId.FiveOhOne].startScore
+
+export enum X01StatsFilterId {
+  FiveOhOne = '501',
+  FourOhOne = '401',
+  ThreeOhOne = '301',
+  All = 'all',
+}
 
 export interface X01LegStats {
   legCount: number
@@ -43,7 +55,9 @@ export interface X01LegStats {
 
 export interface X01Stats {
   fiveOhOne: X01LegStats
-  other: X01LegStats
+  fourOhOne: X01LegStats
+  threeOhOne: X01LegStats
+  all: X01LegStats
 }
 
 const emptyLegStats = (): X01LegStats => ({
@@ -115,5 +129,7 @@ const computeX01LegStats = (sessions: GameSession[]): X01LegStats => {
 
 export const computeX01Stats = (sessions: GameSession[]): X01Stats => ({
   fiveOhOne: computeX01LegStats(filterFiveOhOneSessions(sessions)),
-  other: computeX01LegStats(filterOtherX01Sessions(sessions)),
+  fourOhOne: computeX01LegStats(filterFourOhOneSessions(sessions)),
+  threeOhOne: computeX01LegStats(filterThreeOhOneSessions(sessions)),
+  all: computeX01LegStats(filterAllX01Sessions(sessions)),
 })

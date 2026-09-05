@@ -1,4 +1,5 @@
 import { Stack, Text } from '@chakra-ui/react'
+import { useState } from 'react'
 import type {
   CheckoutPracticeStats,
   OtherPracticeStats,
@@ -16,6 +17,7 @@ import {
   isAroundTheClockPracticeStats,
   isBob27PracticeStats,
 } from '../../lib/analytics/practiceStats'
+import { X01StatsFilterId } from '../../lib/analytics/x01Stats'
 import { StatsTable } from '../StatsTable/StatsTable'
 import {
   AroundTheClockPracticeCard,
@@ -25,7 +27,6 @@ import {
 import { PracticeModeCard } from './PracticeModeCard'
 import { EmptySection, SectionHeading } from './StatCard'
 import { StatsVariantToggle } from './StatsVariantToggle'
-import { useLastPlayedVariantSelection } from './useLastPlayedVariantSelection'
 
 export type StatTimelineSelectHandler = (selection: StatTimelineSelection) => void
 
@@ -80,44 +81,58 @@ const timelineRowConfig: Record<MatchStatRowId, { metric: StatMetricId; metricLa
   },
 }
 
-type X01VariantId = '501' | 'other'
-
 interface X01Variant {
-  id: X01VariantId
+  id: X01StatsFilterId
   label: string
   emptyMessage: string
   stats: X01LegStats
   scope: StatTimelineSelection['scope']
-  lastPlayedAt: string | null
 }
 
-const getX01VariantKey = (variant: X01Variant): string => variant.id
-const getX01LastPlayedAt = (variant: X01Variant): string | null => variant.lastPlayedAt
+const buildX01Variants = (x01: X01Stats): X01Variant[] => [
+  {
+    id: X01StatsFilterId.FiveOhOne,
+    label: '501',
+    emptyMessage: 'No saved 501 games in this period yet.',
+    stats: x01.fiveOhOne,
+    scope: { type: 'x01-501' },
+  },
+  {
+    id: X01StatsFilterId.FourOhOne,
+    label: '401',
+    emptyMessage: 'No saved 401 games in this period yet.',
+    stats: x01.fourOhOne,
+    scope: { type: 'x01-401' },
+  },
+  {
+    id: X01StatsFilterId.ThreeOhOne,
+    label: '301',
+    emptyMessage: 'No saved 301 games in this period yet.',
+    stats: x01.threeOhOne,
+    scope: { type: 'x01-301' },
+  },
+  {
+    id: X01StatsFilterId.All,
+    label: 'All',
+    emptyMessage: 'No saved x01 games in this period yet.',
+    stats: x01.all,
+    scope: { type: 'x01-all' },
+  },
+]
 
-const buildX01Variants = (x01: X01Stats): X01Variant[] => {
-  const variants: X01Variant[] = [
-    {
-      id: '501',
-      label: '501',
-      emptyMessage: 'No saved 501 games in this period yet.',
-      stats: x01.fiveOhOne,
-      scope: { type: 'x01-501' },
-      lastPlayedAt: x01.fiveOhOne.lastPlayedAt,
-    },
-  ]
-
-  if (x01.other.legCount > 0) {
-    variants.push({
-      id: 'other',
-      label: 'Other',
-      emptyMessage: 'No saved other x01 games in this period yet.',
-      stats: x01.other,
-      scope: { type: 'x01-other' },
-      lastPlayedAt: x01.other.lastPlayedAt,
-    })
+const parseX01StatsFilterId = (value: string): X01StatsFilterId | null => {
+  switch (value) {
+    case '501':
+      return X01StatsFilterId.FiveOhOne
+    case '401':
+      return X01StatsFilterId.FourOhOne
+    case '301':
+      return X01StatsFilterId.ThreeOhOne
+    case 'all':
+      return X01StatsFilterId.All
+    default:
+      return null
   }
-
-  return variants
 }
 
 export interface X01LegSectionProps {
@@ -127,11 +142,10 @@ export interface X01LegSectionProps {
 
 export const X01LegSection = ({ x01, onStatSelect }: X01LegSectionProps) => {
   const variants = buildX01Variants(x01)
-  const { selectedKey, setSelectedKey, selected } = useLastPlayedVariantSelection(
-    variants,
-    getX01VariantKey,
-    getX01LastPlayedAt,
-  )
+  const [selectedKey, setSelectedKey] = useState(X01StatsFilterId.FiveOhOne)
+  const selected =
+    variants.find((variant) => variant.id === selectedKey) ??
+    variants.find((variant) => variant.id === X01StatsFilterId.FiveOhOne)
 
   if (selected === undefined) {
     return null
@@ -145,8 +159,14 @@ export const X01LegSection = ({ x01, onStatSelect }: X01LegSectionProps) => {
         label: variant.label,
         count: variant.stats.legCount,
       }))}
-      value={selectedKey}
-      onChange={setSelectedKey}
+      value={selected.id}
+      onChange={(value) => {
+        const nextFilter = parseX01StatsFilterId(value)
+
+        if (nextFilter !== null) {
+          setSelectedKey(nextFilter)
+        }
+      }}
       countUnit="Leg"
     />
   )

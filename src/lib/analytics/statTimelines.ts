@@ -9,11 +9,13 @@ import { isAroundTheClockConfig, isX01Config } from '../game/gameConfigGuards'
 import { getDoubleCheckoutRate } from './formatAnalytics'
 import { computePlayerStatsForVisits } from './matchPlayerStats'
 import {
+  filterAllX01Sessions,
   filterAroundTheClockSessions,
   filterBob27Sessions,
   filterCheckoutPracticeSessions,
   filterFiveOhOneSessions,
-  filterOtherX01Sessions,
+  filterFourOhOneSessions,
+  filterThreeOhOneSessions,
 } from './sessionScope'
 import {
   countDartsInSession,
@@ -53,7 +55,9 @@ export type StatMetricId =
 
 export type StatTimelineScope =
   | { type: 'x01-501' }
-  | { type: 'x01-other' }
+  | { type: 'x01-401' }
+  | { type: 'x01-301' }
+  | { type: 'x01-all' }
   | { type: 'practice-checkout'; mode: GameModeId.OneTwentyOne | GameModeId.TenUpOneDown }
   | { type: 'practice-bob27' }
   | { type: 'practice-around-the-clock'; aimMode?: AroundTheClockAimMode }
@@ -286,8 +290,12 @@ const filterSessionsForScope = (
   switch (scope.type) {
     case 'x01-501':
       return filterFiveOhOneSessions(sessions)
-    case 'x01-other':
-      return filterOtherX01Sessions(sessions)
+    case 'x01-401':
+      return filterFourOhOneSessions(sessions)
+    case 'x01-301':
+      return filterThreeOhOneSessions(sessions)
+    case 'x01-all':
+      return filterAllX01Sessions(sessions)
     case 'practice-checkout':
       return filterCheckoutPracticeSessions(sessions, scope.mode)
     case 'practice-bob27':
@@ -300,7 +308,10 @@ const filterSessionsForScope = (
 }
 
 const isX01TimelineScope = (scope: StatTimelineScope): boolean =>
-  scope.type === 'x01-501' || scope.type === 'x01-other'
+  scope.type === 'x01-501' ||
+  scope.type === 'x01-401' ||
+  scope.type === 'x01-301' ||
+  scope.type === 'x01-all'
 
 const buildX01TimelinePoints = (
   sessions: GameSession[],

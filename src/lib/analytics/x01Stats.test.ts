@@ -74,10 +74,12 @@ describe('x01Stats', () => {
     expect(stats.fiveOhOne.threeDartAverageUntil170).toBe(90)
     expect(stats.fiveOhOne.bestLegAverage).toBe(85)
     expect(stats.fiveOhOne.checkoutLegCount).toBe(1)
-    expect(stats.other.legCount).toBe(0)
+    expect(stats.threeOhOne.legCount).toBe(0)
+    expect(stats.fourOhOne.legCount).toBe(0)
+    expect(stats.all.legCount).toBe(1)
   })
 
-  it('keeps 501 and other x01 stats separate', () => {
+  it('keeps 501, 401, and 301 x01 stats separate', () => {
     const stats = computeX01Stats([
       sampleSession({
         config: { startScore: FIVE_OH_ONE_START_SCORE, doubleIn: false, doubleOut: true },
@@ -116,11 +118,14 @@ describe('x01Stats', () => {
     expect(stats.fiveOhOne.avgDarts).toBe(3)
     expect(stats.fiveOhOne.lastPlayedAt).toBe('2026-01-01T10:00:00.000Z')
 
-    expect(stats.other.legCount).toBe(1)
-    expect(stats.other.threeDartAverage).toBe(30)
-    expect(stats.other.bestLegAverage).toBe(30)
-    expect(stats.other.avgDarts).toBe(2)
-    expect(stats.other.lastPlayedAt).toBe('2026-01-01T10:00:00.000Z')
+    expect(stats.threeOhOne.legCount).toBe(1)
+    expect(stats.threeOhOne.threeDartAverage).toBe(30)
+    expect(stats.threeOhOne.bestLegAverage).toBe(30)
+    expect(stats.threeOhOne.avgDarts).toBe(2)
+    expect(stats.threeOhOne.lastPlayedAt).toBe('2026-01-01T10:00:00.000Z')
+
+    expect(stats.fourOhOne.legCount).toBe(0)
+    expect(stats.all.legCount).toBe(2)
   })
 
   it('tracks the best single-leg 3-dart average', () => {

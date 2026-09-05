@@ -81,8 +81,7 @@ export const StatsPage = () => {
   }, [])
 
   const hasAnyData =
-    analytics.x01.fiveOhOne.legCount > 0 ||
-    analytics.x01.other.legCount > 0 ||
+    analytics.x01.all.legCount > 0 ||
     analytics.practice.checkout.length > 0 ||
     analytics.practice.other.length > 0
 
