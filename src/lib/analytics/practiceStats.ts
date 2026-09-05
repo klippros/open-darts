@@ -3,7 +3,7 @@ import { GameModeId } from '../../types/gameMode'
 import type { GameSession } from '../../types/gameSession'
 import { gameModeDefinitions } from '../game/gameModeDefinitions'
 import { getAroundTheClockAimModeLabel } from '../aroundTheClock/aroundTheClockConfig'
-import { getBob27VisitHitRate } from '../bob27/bob27VisitStats'
+import { getBob27SessionDoublesHit, getBob27VisitHitRate } from '../bob27/bob27VisitStats'
 import { getSessionModeLabel } from '../history/sessionSummary'
 import { aggregateAroundTheClockSessionStats } from './aroundTheClockStats'
 import type { AroundTheClockPerTargetStats } from './aroundTheClockStats'
@@ -32,6 +32,7 @@ export interface Bob27PracticeStats {
   avgFinalScore: number | null
   bestFinalScore: number | null
   hitRate: number | null
+  avgDoublesPerGame: number | null
 }
 
 export interface AroundTheClockPracticeStats {
@@ -107,6 +108,7 @@ const computeBob27Stats = (sessions: GameSession[]): Bob27PracticeStats | null =
   const finalScores = modeSessions
     .map((session) => getSessionFinalScore(session))
     .filter((score): score is number => score !== null)
+  const doublesPerGame = completedSessions.map((session) => getBob27SessionDoublesHit(session))
 
   return {
     mode: GameModeId.Bob27,
@@ -119,6 +121,10 @@ const computeBob27Stats = (sessions: GameSession[]): Bob27PracticeStats | null =
         : finalScores.reduce((sum, score) => sum + score, 0) / finalScores.length,
     bestFinalScore: finalScores.length === 0 ? null : Math.max(...finalScores),
     hitRate: getBob27VisitHitRate(visits),
+    avgDoublesPerGame:
+      doublesPerGame.length === 0
+        ? null
+        : doublesPerGame.reduce((sum, count) => sum + count, 0) / doublesPerGame.length,
   }
 }
 

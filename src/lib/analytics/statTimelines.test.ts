@@ -179,4 +179,46 @@ describe('statTimelines', () => {
     expect(timeline.points[0]?.sessionLabel).toBe('501 · Leg 1')
     expect(timeline.points[1]?.sessionLabel).toBe('501 · Leg 2')
   })
+
+  it('builds bob27 doubles-per-game timeline points', () => {
+    const timeline = buildStatTimeline(
+      [
+        sampleSession({
+          id: 'bob-low',
+          mode: GameModeId.Bob27,
+          config: { startScore: 27 },
+          completedAt: '2026-01-01T10:00:00.000Z',
+          visits: [
+            sampleVisit({ metadata: { targetLabel: 'D1', hit: true, hitCount: 1 } }),
+            sampleVisit({
+              visitIndex: 1,
+              metadata: { targetLabel: 'D2', hit: false, hitCount: 0 },
+            }),
+          ],
+        }),
+        sampleSession({
+          id: 'bob-high',
+          mode: GameModeId.Bob27,
+          config: { startScore: 27 },
+          completedAt: '2026-01-02T10:00:00.000Z',
+          visits: [
+            sampleVisit({ metadata: { targetLabel: 'D1', hit: true, hitCount: 3 } }),
+            sampleVisit({
+              visitIndex: 1,
+              metadata: { targetLabel: 'Bull', hit: true, hitCount: 2 },
+            }),
+          ],
+        }),
+      ],
+      {
+        scope: { type: 'practice-bob27' },
+        metric: 'avgDoublesPerGame',
+        metricLabel: 'Doubles / game',
+        scopeLabel: "Bob's 27",
+      },
+    )
+
+    expect(timeline.format).toBe('average')
+    expect(timeline.points.map((point) => point.value)).toEqual([1, 5])
+  })
 })

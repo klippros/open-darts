@@ -3,7 +3,7 @@ import type { GameSession } from '../../types/gameSession'
 import type { AroundTheClockAimMode } from '../../types/aroundTheClock'
 import type { Visit } from '../../types/visit'
 import { getAroundTheClockConfig } from '../aroundTheClock/aroundTheClockConfig'
-import { getBob27VisitHitRate } from '../bob27/bob27VisitStats'
+import { getBob27SessionDoublesHit, getBob27VisitHitRate } from '../bob27/bob27VisitStats'
 import { getSessionCompletedAt, getSessionModeLabel } from '../history/sessionSummary'
 import { isAroundTheClockConfig, isX01Config } from '../game/gameConfigGuards'
 import { getDoubleCheckoutRate } from './formatAnalytics'
@@ -47,6 +47,7 @@ export type StatMetricId =
   | 'avgFinalScore'
   | 'bestFinalScore'
   | 'hitRate'
+  | 'avgDoublesPerGame'
   | 'bestDarts'
   | 'completionRate'
 
@@ -126,6 +127,7 @@ const getX01LegMetric = (slice: X01LegSlice, metric: StatMetricId): number | nul
     case 'avgFinalScore':
     case 'bestFinalScore':
     case 'hitRate':
+    case 'avgDoublesPerGame':
     case 'bestDarts':
     case 'completionRate':
       return null
@@ -166,6 +168,7 @@ const getCheckoutPracticeSessionMetric = (
     case 'avgFinalScore':
     case 'bestFinalScore':
     case 'hitRate':
+    case 'avgDoublesPerGame':
     case 'bestDarts':
     case 'completionRate':
       return null
@@ -181,6 +184,8 @@ const getBob27SessionMetric = (session: GameSession, metric: StatMetricId): numb
     case 'avgFinalScore':
     case 'bestFinalScore':
       return getSessionFinalScore(session)
+    case 'avgDoublesPerGame':
+      return getBob27SessionDoublesHit(session)
     case 'threeDartAverage':
     case 'threeDartAverageUntil170':
     case 'bestLegAverage':
@@ -239,6 +244,7 @@ const getAroundTheClockSessionMetric = (
     case 'avgFinalScore':
     case 'bestFinalScore':
     case 'hitRate':
+    case 'avgDoublesPerGame':
       return null
   }
 
@@ -266,6 +272,7 @@ export const getStatTimelineFormat = (metric: StatMetricId): StatTimelineFormat 
     case 'threeDartAverage':
     case 'threeDartAverageUntil170':
     case 'bestLegAverage':
+    case 'avgDoublesPerGame':
       return 'average'
   }
 

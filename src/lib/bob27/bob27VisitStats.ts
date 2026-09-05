@@ -1,4 +1,6 @@
+import type { GameSession } from '../../types/gameSession'
 import type { Visit } from '../../types/visit'
+import { getPrimaryPlayerVisits } from '../analytics/visitStats'
 import { countBob27TargetHits } from './bob27Rules'
 
 const readMetadataHitCount = (metadata: Visit['metadata']): number | null => {
@@ -69,3 +71,7 @@ export const getBob27VisitHitRate = (visits: Visit[]): number | null => {
 
   return (hitVisits / visits.length) * 100
 }
+
+/** Total target hits (doubles + bull) recorded for the primary player in a Bob's 27 session. */
+export const getBob27SessionDoublesHit = (session: GameSession): number =>
+  getPrimaryPlayerVisits(session).reduce((sum, visit) => sum + getBob27VisitHitCount(visit), 0)

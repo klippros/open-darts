@@ -93,7 +93,7 @@ export const OtherPracticeCard = ({
       {stats.gameCount} session{stats.gameCount === 1 ? '' : 's'} · {stats.completedCount} completed
     </Text>
     {isBob27PracticeStats(stats) && (
-      <SimpleGrid columns={{ base: 1, sm: 3 }} gap={3}>
+      <SimpleGrid columns={{ base: 1, sm: 2 }} gap={3}>
         <StatCard
           label="Hit rate"
           value={formatPercent(stats.hitRate)}
@@ -106,6 +106,20 @@ export const OtherPracticeCard = ({
             })
           }}
         />
+        {stats.avgDoublesPerGame !== null && (
+          <StatCard
+            label="Avg doubles / game"
+            value={formatAverage(stats.avgDoublesPerGame)}
+            onClick={() => {
+              onStatSelect({
+                scope: { type: 'practice-bob27' },
+                metric: 'avgDoublesPerGame',
+                metricLabel: 'Doubles / game',
+                scopeLabel: stats.label,
+              })
+            }}
+          />
+        )}
         {stats.avgFinalScore !== null && (
           <StatCard
             label="Avg final score"

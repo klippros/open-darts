@@ -1,8 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { DartMultiplier } from '../../types/dart'
+import { GameModeId, GameStatus } from '../../types/gameMode'
+import type { GameSession } from '../../types/gameSession'
+import { PlayerKind } from '../../types/player'
 import type { Visit } from '../../types/visit'
 import { numberDart } from '../testHelpers'
-import { getBob27VisitHitCount, getBob27VisitHitRate } from './bob27VisitStats'
+import {
+  getBob27SessionDoublesHit,
+  getBob27VisitHitCount,
+  getBob27VisitHitRate,
+} from './bob27VisitStats'
 
 const visit = (overrides: Partial<Visit>): Visit => ({
   visitIndex: 0,
@@ -14,6 +21,17 @@ const visit = (overrides: Partial<Visit>): Visit => ({
   bust: false,
   checkout: false,
   ...overrides,
+})
+
+const session = (visits: Visit[]): GameSession => ({
+  id: 'session-1',
+  mode: GameModeId.Bob27,
+  config: { startScore: 27 },
+  players: [{ id: 'p1', name: 'You', kind: PlayerKind.Human }],
+  visits,
+  status: GameStatus.Completed,
+  startedAt: '2026-01-01T10:00:00.000Z',
+  completedAt: '2026-01-01T10:30:00.000Z',
 })
 
 describe('bob27VisitStats', () => {
@@ -55,5 +73,23 @@ describe('bob27VisitStats', () => {
         visit({ metadata: { hit: true, hitCount: 3 } }),
       ]),
     ).toBeCloseTo((2 / 3) * 100)
+  })
+
+  it('sums doubles hit across a session', () => {
+    expect(
+      getBob27SessionDoublesHit(
+        session([
+          visit({ metadata: { targetLabel: 'D1', hit: true, hitCount: 2 } }),
+          visit({
+            visitIndex: 1,
+            metadata: { targetLabel: 'D2', hit: false, hitCount: 0 },
+          }),
+          visit({
+            visitIndex: 2,
+            metadata: { targetLabel: 'Bull', hit: true, hitCount: 1 },
+          }),
+        ]),
+      ),
+    ).toBe(3)
   })
 })
