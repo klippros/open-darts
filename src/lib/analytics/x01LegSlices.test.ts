@@ -4,7 +4,13 @@ import type { GameSession } from '../../types/gameSession'
 import { PlayerKind } from '../../types/player'
 import { DartMultiplier } from '../../types/dart'
 import { numberDart } from '../testHelpers'
-import { countDartsInVisits, expandX01SessionLegs, legFinishedWithCheckout } from './x01LegSlices'
+import {
+  countDartsInVisits,
+  expandX01SessionLegs,
+  getSessionIdFromTimelinePointId,
+  getX01LegSlicePointId,
+  legFinishedWithCheckout,
+} from './x01LegSlices'
 
 const sampleVisit = (
   overrides: Partial<GameSession['visits'][number]> = {},
@@ -66,5 +72,13 @@ describe('x01LegSlices', () => {
 
     expect(slices).toHaveLength(1)
     expect(slices[0]?.legNumber).toBe(1)
+  })
+
+  it('resolves timeline point ids back to session ids', () => {
+    const session = sampleSession({ id: 'best-of-three' })
+    const legPointId = getX01LegSlicePointId({ session, legNumber: 2, visits: [] })
+
+    expect(getSessionIdFromTimelinePointId(legPointId)).toBe('best-of-three')
+    expect(getSessionIdFromTimelinePointId('practice-session')).toBe('practice-session')
   })
 })
