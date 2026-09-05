@@ -1,4 +1,4 @@
-import type { GameModeId } from '../../types/gameMode'
+import { GameModeId } from '../../types/gameMode'
 import type { GameSession } from '../../types/gameSession'
 import type { AroundTheClockAimMode } from '../../types/aroundTheClock'
 import type { Visit } from '../../types/visit'
@@ -8,6 +8,10 @@ import {
   getBob27SessionDoublesHit,
   getBob27VisitHitRate,
 } from '../bob27/bob27VisitStats'
+import {
+  getSessionCheckoutCount,
+  getHighestOneTwentyOneCheckoutTarget,
+} from '../oneTwentyOne/oneTwentyOneVisitStats'
 import { getSessionCompletedAt, getSessionModeLabel } from '../history/sessionSummary'
 import { isAroundTheClockConfig, isX01Config } from '../game/gameConfigGuards'
 import { getDoubleCheckoutRate } from './formatAnalytics'
@@ -23,6 +27,7 @@ import {
 } from './sessionScope'
 import {
   countDartsInSession,
+  getHighestCheckout,
   getPrimaryPlayerVisits,
   getScoringVisits,
   getSessionCheckoutRate,
@@ -49,6 +54,8 @@ export type StatMetricId =
   | 'checkouts100Plus'
   | 'highestCheckout'
   | 'checkoutRate'
+  | 'avgCheckoutsPerGame'
+  | 'bestCheckoutsPerGame'
   | 'avgDarts'
   | 'avgFinalScore'
   | 'bestFinalScore'
@@ -134,6 +141,8 @@ const getX01LegMetric = (slice: X01LegSlice, metric: StatMetricId): number | nul
     case 'avgDarts':
       return legFinishedWithCheckout(visits) ? countDartsInVisits(visits) : null
     case 'checkoutRate':
+    case 'avgCheckoutsPerGame':
+    case 'bestCheckoutsPerGame':
     case 'avgFinalScore':
     case 'bestFinalScore':
     case 'hitRate':
@@ -167,6 +176,13 @@ const getCheckoutPracticeSessionMetric = (
       return getSessionCheckoutRate(session)
     case 'threeDartAverage':
       return getThreeDartAverage(getPrimaryPlayerVisits(session))
+    case 'avgCheckoutsPerGame':
+    case 'bestCheckoutsPerGame':
+      return getSessionCheckoutCount(session)
+    case 'highestCheckout':
+      return session.mode === GameModeId.OneTwentyOne
+        ? getHighestOneTwentyOneCheckoutTarget(getPrimaryPlayerVisits(session))
+        : getHighestCheckout(getPrimaryPlayerVisits(session))
     case 'threeDartAverageUntil170':
     case 'bestLegAverage':
     case 'thrown180':
@@ -175,7 +191,6 @@ const getCheckoutPracticeSessionMetric = (
     case 'highestVisit':
     case 'doubleCheckoutRate':
     case 'checkouts100Plus':
-    case 'highestCheckout':
     case 'avgDarts':
     case 'avgFinalScore':
     case 'bestFinalScore':
@@ -218,6 +233,8 @@ const getBob27SessionMetric = (session: GameSession, metric: StatMetricId): numb
     case 'bestDarts':
     case 'completionRate':
     case 'checkoutRate':
+    case 'avgCheckoutsPerGame':
+    case 'bestCheckoutsPerGame':
       return null
   }
 
@@ -258,6 +275,8 @@ const getAroundTheClockSessionMetric = (
     case 'checkouts100Plus':
     case 'highestCheckout':
     case 'checkoutRate':
+    case 'avgCheckoutsPerGame':
+    case 'bestCheckoutsPerGame':
     case 'avgFinalScore':
     case 'bestFinalScore':
     case 'hitRate':
@@ -282,6 +301,7 @@ export const getStatTimelineFormat = (metric: StatMetricId): StatTimelineFormat 
     case 'bestFinalScore':
     case 'bestDarts':
     case 'bestDoublesPerGame':
+    case 'bestCheckoutsPerGame':
     case 'thrown180':
     case 'thrown140Plus':
     case 'thrown100Plus':
@@ -293,6 +313,7 @@ export const getStatTimelineFormat = (metric: StatMetricId): StatTimelineFormat 
     case 'threeDartAverageUntil170':
     case 'bestLegAverage':
     case 'avgDoublesPerGame':
+    case 'avgCheckoutsPerGame':
     case 'avgHitsPerVisit':
       return 'average'
   }

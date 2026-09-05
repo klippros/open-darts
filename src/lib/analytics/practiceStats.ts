@@ -9,12 +9,17 @@ import {
   getBob27VisitHitRate,
 } from '../bob27/bob27VisitStats'
 import { getSessionModeLabel } from '../history/sessionSummary'
+import {
+  getHighestOneTwentyOneCheckoutTarget,
+  getSessionCheckoutCount,
+} from '../oneTwentyOne/oneTwentyOneVisitStats'
 import { aggregateAroundTheClockSessionStats } from './aroundTheClockStats'
 import type { AroundTheClockPerTargetStats } from './aroundTheClockStats'
 import { getLatestSessionStartedAt } from './pickLastPlayedVariant'
 import { filterAroundTheClockSessions } from './sessionScope'
 import {
   countCheckoutVisits,
+  getHighestCheckout,
   getPrimaryPlayerVisits,
   getSessionFinalScore,
   getThreeDartAverage,
@@ -27,6 +32,9 @@ export interface CheckoutPracticeStats {
   visitCount: number
   checkoutRate: number | null
   threeDartAverage: number | null
+  avgCheckoutsPerGame: number | null
+  bestCheckoutsPerGame: number | null
+  highestCheckout: number | null
   lastPlayedAt: string
 }
 
@@ -94,6 +102,7 @@ const computeCheckoutPracticeStats = (
 
   const visits = modeSessions.flatMap((session) => getPrimaryPlayerVisits(session))
   const checkoutVisits = countCheckoutVisits(visits)
+  const checkoutsPerGame = modeSessions.map((session) => getSessionCheckoutCount(session))
 
   const lastPlayedAt = getLatestSessionStartedAt(modeSessions)
 
@@ -108,6 +117,15 @@ const computeCheckoutPracticeStats = (
     visitCount: visits.length,
     checkoutRate: visits.length === 0 ? null : (checkoutVisits / visits.length) * 100,
     threeDartAverage: getThreeDartAverage(visits),
+    avgCheckoutsPerGame:
+      checkoutsPerGame.length === 0
+        ? null
+        : checkoutsPerGame.reduce((sum, count) => sum + count, 0) / checkoutsPerGame.length,
+    bestCheckoutsPerGame: checkoutsPerGame.length === 0 ? null : Math.max(...checkoutsPerGame),
+    highestCheckout:
+      mode === GameModeId.OneTwentyOne
+        ? getHighestOneTwentyOneCheckoutTarget(visits)
+        : getHighestCheckout(visits),
     lastPlayedAt,
   }
 }

@@ -156,7 +156,7 @@ export const getMatchSummary = (session: GameSession): MatchSummary => {
       }
 
       if (stats.avgDartsPerField !== null) {
-        details.push(`${stats.dartsThrown} darts (${stats.avgDartsPerField.toFixed(1)} per field)`)
+        details.push(`${stats.dartsThrown} darts (${stats.avgDartsPerField.toFixed(2)} per field)`)
       }
     }
 
@@ -177,7 +177,7 @@ export const getMatchSummary = (session: GameSession): MatchSummary => {
     const details = [`${visitCount} visit${visitCount === 1 ? '' : 's'}`]
 
     if (average !== null) {
-      details.push(`${average.toFixed(1)} 3-dart average`)
+      details.push(`${average.toFixed(2)} 3-dart average`)
     }
 
     if (peakTarget !== undefined) {

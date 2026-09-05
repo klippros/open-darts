@@ -33,6 +33,7 @@ export const CheckoutPracticeCard = ({
   onStatSelect: (selection: StatTimelineSelection) => void
 }) => {
   const scope = { type: 'practice-checkout' as const, mode: stats.mode }
+  const isOneTwentyOne = stats.mode === GameModeId.OneTwentyOne
 
   return (
     <PracticeModeCard title={stats.label} trailing={<StatsCountLabel count={stats.gameCount} />}>
@@ -61,6 +62,48 @@ export const CheckoutPracticeCard = ({
             })
           }}
         />
+        {isOneTwentyOne && stats.avgCheckoutsPerGame !== null && (
+          <StatCard
+            label="Avg checkouts / game"
+            value={formatAverage(stats.avgCheckoutsPerGame)}
+            onClick={() => {
+              onStatSelect({
+                scope,
+                metric: 'avgCheckoutsPerGame',
+                metricLabel: 'Checkouts / game',
+                scopeLabel: stats.label,
+              })
+            }}
+          />
+        )}
+        {isOneTwentyOne && stats.bestCheckoutsPerGame !== null && (
+          <StatCard
+            label="Best checkouts / game"
+            value={formatInteger(stats.bestCheckoutsPerGame)}
+            onClick={() => {
+              onStatSelect({
+                scope,
+                metric: 'bestCheckoutsPerGame',
+                metricLabel: 'Checkouts / game',
+                scopeLabel: stats.label,
+              })
+            }}
+          />
+        )}
+        {isOneTwentyOne && stats.highestCheckout !== null && (
+          <StatCard
+            label="Highest target"
+            value={formatInteger(stats.highestCheckout)}
+            onClick={() => {
+              onStatSelect({
+                scope,
+                metric: 'highestCheckout',
+                metricLabel: 'Highest target',
+                scopeLabel: stats.label,
+              })
+            }}
+          />
+        )}
       </SimpleGrid>
     </PracticeModeCard>
   )
@@ -77,7 +120,7 @@ export const Bob27PracticeCard = ({
     <SimpleGrid columns={{ base: 1, sm: 2 }} gap={3}>
       <StatCard
         label="Hit rate"
-        value={formatPercent(stats.hitRate, 2)}
+        value={formatPercent(stats.hitRate)}
         onClick={() => {
           onStatSelect({
             scope: { type: 'practice-bob27' },
@@ -90,7 +133,7 @@ export const Bob27PracticeCard = ({
       {stats.avgHitsPerVisit !== null && (
         <StatCard
           label="Avg / visit"
-          value={formatAverage(stats.avgHitsPerVisit, 2)}
+          value={formatAverage(stats.avgHitsPerVisit)}
           onClick={() => {
             onStatSelect({
               scope: { type: 'practice-bob27' },

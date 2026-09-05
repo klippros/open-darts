@@ -221,4 +221,57 @@ describe('statTimelines', () => {
     expect(timeline.format).toBe('average')
     expect(timeline.points.map((point) => point.value)).toEqual([1, 5])
   })
+
+  it('builds 121 checkouts-per-game timeline points', () => {
+    const timeline = buildStatTimeline(
+      [
+        sampleSession({
+          id: '121-low',
+          mode: GameModeId.OneTwentyOne,
+          config: {
+            startScore: 121,
+            increment: 1,
+            startingLives: 3,
+            maxVisitsPerTarget: 3,
+            doubleOut: true,
+          },
+          completedAt: '2026-01-01T10:00:00.000Z',
+          visits: [
+            sampleVisit({ checkout: true, scoreBefore: 121, scoreAfter: 122, visitScore: 121 }),
+          ],
+        }),
+        sampleSession({
+          id: '121-high',
+          mode: GameModeId.OneTwentyOne,
+          config: {
+            startScore: 121,
+            increment: 1,
+            startingLives: 3,
+            maxVisitsPerTarget: 3,
+            doubleOut: true,
+          },
+          completedAt: '2026-01-02T10:00:00.000Z',
+          visits: [
+            sampleVisit({ checkout: true, scoreBefore: 121, scoreAfter: 122, visitScore: 121 }),
+            sampleVisit({
+              visitIndex: 1,
+              checkout: true,
+              scoreBefore: 140,
+              scoreAfter: 141,
+              visitScore: 140,
+            }),
+          ],
+        }),
+      ],
+      {
+        scope: { type: 'practice-checkout', mode: GameModeId.OneTwentyOne },
+        metric: 'bestCheckoutsPerGame',
+        metricLabel: 'Checkouts / game',
+        scopeLabel: '121',
+      },
+    )
+
+    expect(timeline.format).toBe('integer')
+    expect(timeline.points.map((point) => point.value)).toEqual([1, 2])
+  })
 })

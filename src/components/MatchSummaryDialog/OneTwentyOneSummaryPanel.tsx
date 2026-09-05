@@ -1,16 +1,16 @@
 import { SimpleGrid, Stack, Text } from '@chakra-ui/react'
-import { formatAverage, formatInteger, formatPercent } from '../../lib/analytics/formatAnalytics'
-import { computeBob27SingleSessionStats } from '../../lib/bob27/bob27VisitStats'
+import { formatAverage, formatInteger } from '../../lib/analytics/formatAnalytics'
 import { getSessionModeLabel } from '../../lib/history/sessionSummary'
+import { computeOneTwentyOneSingleSessionStats } from '../../lib/oneTwentyOne/oneTwentyOneVisitStats'
 import type { GameSession } from '../../types/gameSession'
 import { StatCard } from '../StatsPageSections/StatCard'
 
-export interface Bob27SummaryPanelProps {
+export interface OneTwentyOneSummaryPanelProps {
   session: GameSession
 }
 
-export const Bob27SummaryPanel = ({ session }: Bob27SummaryPanelProps) => {
-  const stats = computeBob27SingleSessionStats(session)
+export const OneTwentyOneSummaryPanel = ({ session }: OneTwentyOneSummaryPanelProps) => {
+  const stats = computeOneTwentyOneSingleSessionStats(session)
 
   if (stats === null) {
     return null
@@ -26,14 +26,13 @@ export const Bob27SummaryPanel = ({ session }: Bob27SummaryPanelProps) => {
 
       <SimpleGrid columns={{ base: 1, sm: 2 }} gap={3}>
         <StatCard
-          label="Doubles hit"
-          value={formatInteger(stats.doublesHit)}
+          label="Checkouts"
+          value={formatInteger(stats.checkouts)}
           detail={`${stats.visitCount} visit${stats.visitCount === 1 ? '' : 's'}`}
         />
-        <StatCard label="Avg / visit" value={formatAverage(stats.avgHitsPerVisit)} />
-        <StatCard label="Hit rate" value={formatPercent(stats.hitRate)} />
-        {stats.finalScore !== null && (
-          <StatCard label="Final score" value={formatInteger(stats.finalScore)} />
+        <StatCard label="3-dart average" value={formatAverage(stats.threeDartAverage)} />
+        {stats.peakTarget !== null && (
+          <StatCard label="Peak" value={formatInteger(stats.peakTarget)} />
         )}
       </SimpleGrid>
     </Stack>
