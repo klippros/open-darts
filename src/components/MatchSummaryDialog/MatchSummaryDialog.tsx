@@ -1,17 +1,13 @@
-import { Button, Dialog, Flex, Stack, Text } from '@chakra-ui/react'
-import { faTrophy } from '@fortawesome/free-solid-svg-icons'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Button, Dialog, Stack } from '@chakra-ui/react'
 import { useState } from 'react'
 import { Link as RouterLink } from 'react-router-dom'
 import { useAuth } from '../../hooks/authContext'
-import { GameModeId } from '../../types/gameMode'
 import type { GameSession } from '../../types/gameSession'
-import { getMatchSummary, getSessionModeLabel } from '../../lib/history/sessionSummary'
+import { getMatchSummary } from '../../lib/history/sessionSummary'
 import { darkDialogContentProps } from '../darkDialogContentProps'
 import { SignInDialog } from '../SignInDialog/SignInDialog'
-import { MatchLegScore } from './MatchLegScore'
-import { AroundTheClockSummaryPanel } from './AroundTheClockSummaryPanel'
-import { MatchStatsPanel } from './MatchStatsPanel'
+import { MatchSummaryBody } from './MatchSummaryBody'
+import { MatchSummaryTitle } from './MatchSummaryTitle'
 
 export interface MatchSummaryDialogProps {
   open: boolean
@@ -19,9 +15,6 @@ export interface MatchSummaryDialogProps {
   onPlayAgain: () => void
   onUndoLastDart: () => void
 }
-
-const showWinnerTrophy = (title: string): boolean =>
-  title.endsWith(' wins') || title === 'Match won!' || title === 'Game shot!'
 
 export const MatchSummaryDialog = ({
   open,
@@ -32,7 +25,6 @@ export const MatchSummaryDialog = ({
   const { user, isConfigured } = useAuth()
   const [signInDialogOpen, setSignInDialogOpen] = useState(false)
   const summary = getMatchSummary(session)
-  const modeLabel = getSessionModeLabel(session)
   const showSignIn = isConfigured && user === null
 
   return (
@@ -55,46 +47,11 @@ export const MatchSummaryDialog = ({
         >
           <Dialog.Header>
             <Dialog.Title color="white">
-              <Flex align="center" gap={2}>
-                {showWinnerTrophy(summary.title) && <FontAwesomeIcon icon={faTrophy} aria-hidden />}
-                {summary.title}
-              </Flex>
+              <MatchSummaryTitle title={summary.title} />
             </Dialog.Title>
           </Dialog.Header>
           <Dialog.Body>
-            <Stack gap={5}>
-              {session.mode === GameModeId.AroundTheClock && (
-                <AroundTheClockSummaryPanel session={session} />
-              )}
-
-              {session.mode !== GameModeId.X01 && session.mode !== GameModeId.AroundTheClock && (
-                <>
-                  <Text
-                    fontSize="sm"
-                    color="whiteAlpha.700"
-                    textTransform="uppercase"
-                    letterSpacing="0.08em"
-                  >
-                    {modeLabel}
-                  </Text>
-
-                  <Stack gap={1}>
-                    {summary.details.map((detail) => (
-                      <Text key={detail} fontSize="sm" color="whiteAlpha.900" lineHeight="1.55">
-                        {detail}
-                      </Text>
-                    ))}
-                  </Stack>
-                </>
-              )}
-
-              {session.mode === GameModeId.X01 && (
-                <>
-                  <MatchLegScore session={session} />
-                  <MatchStatsPanel session={session} />
-                </>
-              )}
-            </Stack>
+            <MatchSummaryBody session={session} />
           </Dialog.Body>
           <Dialog.Footer>
             <Stack gap={3} w="full">

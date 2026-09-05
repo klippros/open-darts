@@ -3,13 +3,23 @@ import { GameModeId } from '../../types/gameMode'
 import type { GameSession } from '../../types/gameSession'
 import { gameModeDefinitions } from '../game/gameModeDefinitions'
 import { getAroundTheClockAimModeLabel } from '../aroundTheClock/aroundTheClockConfig'
-import { getBob27VisitHitRate } from '../bob27/bob27VisitStats'
+import {
+  getBob27AvgHitsPerVisit,
+  getBob27SessionDoublesHit,
+  getBob27VisitHitRate,
+} from '../bob27/bob27VisitStats'
 import { getSessionModeLabel } from '../history/sessionSummary'
+import {
+  getHighestOneTwentyOneCheckoutTarget,
+  getSessionCheckoutCount,
+} from '../oneTwentyOne/oneTwentyOneVisitStats'
 import { aggregateAroundTheClockSessionStats } from './aroundTheClockStats'
 import type { AroundTheClockPerTargetStats } from './aroundTheClockStats'
+import { getLatestSessionStartedAt } from './pickLastPlayedVariant'
 import { filterAroundTheClockSessions } from './sessionScope'
 import {
   countCheckoutVisits,
+  getHighestCheckout,
   getPrimaryPlayerVisits,
   getSessionFinalScore,
   getThreeDartAverage,
@@ -22,6 +32,10 @@ export interface CheckoutPracticeStats {
   visitCount: number
   checkoutRate: number | null
   threeDartAverage: number | null
+  avgCheckoutsPerGame: number | null
+  bestCheckoutsPerGame: number | null
+  highestCheckout: number | null
+  lastPlayedAt: string
 }
 
 export interface Bob27PracticeStats {
@@ -32,6 +46,9 @@ export interface Bob27PracticeStats {
   avgFinalScore: number | null
   bestFinalScore: number | null
   hitRate: number | null
+  avgHitsPerVisit: number | null
+  avgDoublesPerGame: number | null
+  bestDoublesPerGame: number | null
 }
 
 export interface AroundTheClockPracticeStats {
@@ -46,6 +63,7 @@ export interface AroundTheClockPracticeStats {
   avgDartsPerField: number | null
   bestDartsPerField: number | null
   targets: AroundTheClockPerTargetStats[]
+  lastPlayedAt: string
 }
 
 export type OtherPracticeStats = Bob27PracticeStats | AroundTheClockPracticeStats
@@ -84,6 +102,13 @@ const computeCheckoutPracticeStats = (
 
   const visits = modeSessions.flatMap((session) => getPrimaryPlayerVisits(session))
   const checkoutVisits = countCheckoutVisits(visits)
+  const checkoutsPerGame = modeSessions.map((session) => getSessionCheckoutCount(session))
+
+  const lastPlayedAt = getLatestSessionStartedAt(modeSessions)
+
+  if (lastPlayedAt === null) {
+    return null
+  }
 
   return {
     mode,
@@ -92,6 +117,16 @@ const computeCheckoutPracticeStats = (
     visitCount: visits.length,
     checkoutRate: visits.length === 0 ? null : (checkoutVisits / visits.length) * 100,
     threeDartAverage: getThreeDartAverage(visits),
+    avgCheckoutsPerGame:
+      checkoutsPerGame.length === 0
+        ? null
+        : checkoutsPerGame.reduce((sum, count) => sum + count, 0) / checkoutsPerGame.length,
+    bestCheckoutsPerGame: checkoutsPerGame.length === 0 ? null : Math.max(...checkoutsPerGame),
+    highestCheckout:
+      mode === GameModeId.OneTwentyOne
+        ? getHighestOneTwentyOneCheckoutTarget(visits)
+        : getHighestCheckout(visits),
+    lastPlayedAt,
   }
 }
 
@@ -107,6 +142,7 @@ const computeBob27Stats = (sessions: GameSession[]): Bob27PracticeStats | null =
   const finalScores = modeSessions
     .map((session) => getSessionFinalScore(session))
     .filter((score): score is number => score !== null)
+  const doublesPerGame = completedSessions.map((session) => getBob27SessionDoublesHit(session))
 
   return {
     mode: GameModeId.Bob27,
@@ -119,6 +155,12 @@ const computeBob27Stats = (sessions: GameSession[]): Bob27PracticeStats | null =
         : finalScores.reduce((sum, score) => sum + score, 0) / finalScores.length,
     bestFinalScore: finalScores.length === 0 ? null : Math.max(...finalScores),
     hitRate: getBob27VisitHitRate(visits),
+    avgHitsPerVisit: getBob27AvgHitsPerVisit(visits),
+    avgDoublesPerGame:
+      doublesPerGame.length === 0
+        ? null
+        : doublesPerGame.reduce((sum, count) => sum + count, 0) / doublesPerGame.length,
+    bestDoublesPerGame: doublesPerGame.length === 0 ? null : Math.max(...doublesPerGame),
   }
 }
 
@@ -134,6 +176,11 @@ const computeAroundTheClockStatsForAimMode = (
 
   const aggregated = aggregateAroundTheClockSessionStats(aimModeSessions, aimMode)
   const completedSessions = aimModeSessions.filter((session) => session.finishedEarly !== true)
+  const lastPlayedAt = getLatestSessionStartedAt(aimModeSessions)
+
+  if (lastPlayedAt === null) {
+    return null
+  }
 
   return {
     mode: GameModeId.AroundTheClock,
@@ -147,6 +194,7 @@ const computeAroundTheClockStatsForAimMode = (
     avgDartsPerField: aggregated.avgDartsPerField,
     bestDartsPerField: aggregated.bestDartsPerField,
     targets: aggregated.targets,
+    lastPlayedAt,
   }
 }
 

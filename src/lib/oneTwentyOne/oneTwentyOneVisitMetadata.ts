@@ -9,6 +9,11 @@ const readMetadataNumber = (visit: Visit | undefined, key: string): number | und
 export const getOneTwentyOnePeakTargetFromVisit = (visit: Visit | undefined): number | undefined =>
   readMetadataNumber(visit, 'peakTargetAfter')
 
+/** Round target in play for this visit (the score being checked out). */
+export const getOneTwentyOneAttemptedTargetFromVisit = (
+  visit: Visit | undefined,
+): number | undefined => readMetadataNumber(visit, 'roundTarget')
+
 export const getOneTwentyOneRoundTargetFromVisit = (visit: Visit | undefined): number | undefined =>
   readMetadataNumber(visit, 'roundTargetAfter')
 

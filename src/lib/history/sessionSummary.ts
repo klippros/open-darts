@@ -149,6 +149,7 @@ export const getMatchSummary = (session: GameSession): MatchSummary => {
   if (session.mode === GameModeId.AroundTheClock) {
     const stats = computeAroundTheClockSingleSessionStats(session)
     const details = [`${visitCount} visit${visitCount === 1 ? '' : 's'}`]
+    const modeLabel = getSessionModeLabel(session)
 
     if (stats !== null) {
       if (stats.fieldsCompleted > 0) {
@@ -156,7 +157,7 @@ export const getMatchSummary = (session: GameSession): MatchSummary => {
       }
 
       if (stats.avgDartsPerField !== null) {
-        details.push(`${stats.dartsThrown} darts (${stats.avgDartsPerField.toFixed(1)} per field)`)
+        details.push(`${stats.dartsThrown} darts (${stats.avgDartsPerField.toFixed(2)} per field)`)
       }
     }
 
@@ -167,7 +168,7 @@ export const getMatchSummary = (session: GameSession): MatchSummary => {
     }
 
     return {
-      title: finishedEarly ? 'Around the Clock session ended' : 'Around the Clock complete',
+      title: finishedEarly ? `${modeLabel} session ended` : `${modeLabel} complete`,
       details,
     }
   }
@@ -177,7 +178,7 @@ export const getMatchSummary = (session: GameSession): MatchSummary => {
     const details = [`${visitCount} visit${visitCount === 1 ? '' : 's'}`]
 
     if (average !== null) {
-      details.push(`${average.toFixed(1)} 3-dart average`)
+      details.push(`${average.toFixed(2)} 3-dart average`)
     }
 
     if (peakTarget !== undefined) {

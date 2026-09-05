@@ -1,6 +1,7 @@
 import { Box, Heading, Stack, Text } from '@chakra-ui/react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ContentContainer } from '../components/ContentContainer'
+import { SessionSummaryDialog } from '../components/MatchSummaryDialog/SessionSummaryDialog'
 import { StatTimelineDialog } from '../components/StatTimelineDialog/StatTimelineDialog'
 import {
   EmptySection,
@@ -12,10 +13,16 @@ import { computeAnalytics } from '../lib/analytics/computeAnalytics'
 import type { DateRangePreset } from '../lib/analytics/sessionFilters'
 import { filterSessions } from '../lib/analytics/sessionFilters'
 import { buildStatTimeline } from '../lib/analytics/statTimelines'
-import type { StatTimeline, StatTimelineSelection } from '../lib/analytics/statTimelines'
+import type {
+  StatTimeline,
+  StatTimelinePoint,
+  StatTimelineSelection,
+} from '../lib/analytics/statTimelines'
+import { getSessionIdFromTimelinePointId } from '../lib/analytics/x01LegSlices'
 import { loadStoredSessions } from '../lib/storage/gameStore'
 import { useAuth } from '../hooks/authContext'
 import { AuthStatus, SyncStatus } from '../types/auth'
+import type { GameSession } from '../types/gameSession'
 
 const DATE_RANGE_OPTIONS: { value: DateRangePreset; label: string }[] = [
   { value: 'all', label: 'All time' },
@@ -40,6 +47,7 @@ export const StatsPage = () => {
   const { authStatus, syncStatus } = useAuth()
   const [dateRange, setDateRange] = useState<DateRangePreset>('all')
   const [timelineSelection, setTimelineSelection] = useState<StatTimelineSelection | null>(null)
+  const [selectedSession, setSelectedSession] = useState<GameSession | null>(null)
   const [storedSessions, setStoredSessions] = useState(() => loadStoredSessions())
 
   useEffect(() => {
@@ -80,9 +88,23 @@ export const StatsPage = () => {
     setTimelineSelection(null)
   }, [])
 
+  const handleTimelinePointClick = useCallback(
+    (point: StatTimelinePoint) => {
+      const sessionId = getSessionIdFromTimelinePointId(point.sessionId)
+      const session =
+        filteredSessions.find((candidate) => candidate.id === sessionId) ??
+        storedSessions.find((candidate) => candidate.id === sessionId) ??
+        null
+
+      if (session !== null) {
+        setSelectedSession(session)
+      }
+    },
+    [filteredSessions, storedSessions],
+  )
+
   const hasAnyData =
-    analytics.x01.fiveOhOne.legCount > 0 ||
-    analytics.x01.other.legCount > 0 ||
+    analytics.x01.all.legCount > 0 ||
     analytics.practice.checkout.length > 0 ||
     analytics.practice.other.length > 0
 
@@ -125,24 +147,7 @@ export const StatsPage = () => {
           {hasAnyData ? (
             <>
               <TotalDartsHero sessions={filteredSessions} />
-              <X01LegSection
-                title="501"
-                subtitle="Scoring and checkout stats from your saved 501 legs."
-                emptyMessage="No saved 501 games in this period yet."
-                stats={analytics.x01.fiveOhOne}
-                scope={{ type: 'x01-501' }}
-                onStatSelect={handleStatSelect}
-              />
-              {analytics.x01.other.legCount > 0 && (
-                <X01LegSection
-                  title="Other x01"
-                  subtitle="301, 401, and custom x01 legs kept separate from 501."
-                  emptyMessage="No saved other x01 games in this period yet."
-                  stats={analytics.x01.other}
-                  scope={{ type: 'x01-other' }}
-                  onStatSelect={handleStatSelect}
-                />
-              )}
+              <X01LegSection x01={analytics.x01} onStatSelect={handleStatSelect} />
               <PracticeSection
                 checkout={analytics.practice.checkout}
                 other={analytics.practice.other}
@@ -158,6 +163,14 @@ export const StatsPage = () => {
         open={timelineSelection !== null}
         timeline={activeTimeline}
         onClose={handleTimelineClose}
+        onPointClick={handleTimelinePointClick}
+      />
+      <SessionSummaryDialog
+        open={selectedSession !== null}
+        session={selectedSession}
+        onClose={() => {
+          setSelectedSession(null)
+        }}
       />
     </ContentContainer>
   )

@@ -45,12 +45,20 @@ describe('practiceStats', () => {
           maxVisitsPerTarget: 3,
           doubleOut: true,
         },
+        startedAt: '2026-01-05T10:00:00.000Z',
         visits: [
-          sampleVisit({ checkout: true, scoreAfter: 122, visitScore: 121 }),
+          sampleVisit({
+            checkout: true,
+            scoreBefore: 121,
+            scoreAfter: 122,
+            visitScore: 121,
+            metadata: { roundTarget: 121 },
+          }),
           sampleVisit({
             visitIndex: 1,
             checkout: false,
-            scoreAfter: 121,
+            scoreBefore: 122,
+            scoreAfter: 122,
             visitScore: 0,
             bust: true,
           }),
@@ -64,6 +72,75 @@ describe('practiceStats', () => {
         checkoutRate: 50,
         gameCount: 1,
         visitCount: 2,
+        avgCheckoutsPerGame: 1,
+        bestCheckoutsPerGame: 1,
+        highestCheckout: 121,
+        lastPlayedAt: '2026-01-05T10:00:00.000Z',
+      }),
+    ])
+  })
+
+  it('tracks best checkouts and highest completed target across 121 sessions', () => {
+    const stats = computePracticeStats([
+      sampleSession({
+        mode: GameModeId.OneTwentyOne,
+        config: {
+          startScore: 121,
+          increment: 1,
+          startingLives: 3,
+          maxVisitsPerTarget: 3,
+          doubleOut: true,
+        },
+        startedAt: '2026-01-05T10:00:00.000Z',
+        visits: [
+          sampleVisit({
+            checkout: true,
+            scoreBefore: 121,
+            scoreAfter: 122,
+            visitScore: 121,
+            metadata: { roundTarget: 121 },
+          }),
+          sampleVisit({
+            visitIndex: 1,
+            checkout: true,
+            scoreBefore: 40,
+            scoreAfter: 131,
+            visitScore: 40,
+            metadata: { roundTarget: 130 },
+          }),
+        ],
+      }),
+      sampleSession({
+        id: 'session-2',
+        mode: GameModeId.OneTwentyOne,
+        config: {
+          startScore: 121,
+          increment: 1,
+          startingLives: 3,
+          maxVisitsPerTarget: 3,
+          doubleOut: true,
+        },
+        startedAt: '2026-01-06T10:00:00.000Z',
+        visits: [
+          sampleVisit({
+            checkout: true,
+            scoreBefore: 40,
+            scoreAfter: 141,
+            visitScore: 40,
+            metadata: { roundTarget: 140 },
+          }),
+        ],
+      }),
+    ])
+
+    expect(stats.checkout).toEqual([
+      expect.objectContaining({
+        mode: GameModeId.OneTwentyOne,
+        gameCount: 2,
+        avgCheckoutsPerGame: 1.5,
+        bestCheckoutsPerGame: 2,
+        highestCheckout: 140,
+        lastPlayedAt: '2026-01-06T10:00:00.000Z',
       }),
     ])
   })
@@ -102,6 +179,9 @@ describe('practiceStats', () => {
         avgFinalScore: 25,
         bestFinalScore: 54,
         hitRate: 50,
+        avgHitsPerVisit: 0.5,
+        avgDoublesPerGame: 0.5,
+        bestDoublesPerGame: 1,
       }),
     ])
   })
@@ -111,6 +191,7 @@ describe('practiceStats', () => {
       sampleSession({
         mode: GameModeId.AroundTheClock,
         config: { finishOnBull: true, aimMode: AroundTheClockAimMode.Any },
+        startedAt: '2026-01-01T10:00:00.000Z',
         visits: [
           sampleVisit({
             scoreBefore: 0,
@@ -134,6 +215,7 @@ describe('practiceStats', () => {
         id: 'early',
         mode: GameModeId.AroundTheClock,
         config: { finishOnBull: true, aimMode: AroundTheClockAimMode.Any },
+        startedAt: '2026-01-03T10:00:00.000Z',
         finishedEarly: true,
         visits: [
           sampleVisit({
@@ -145,6 +227,7 @@ describe('practiceStats', () => {
         id: 'doubles',
         mode: GameModeId.AroundTheClock,
         config: { finishOnBull: true, aimMode: AroundTheClockAimMode.Doubles },
+        startedAt: '2026-01-10T10:00:00.000Z',
         finishedEarly: true,
         visits: [
           sampleVisit({
@@ -178,6 +261,7 @@ describe('practiceStats', () => {
         completionRate: 50,
         avgDartsFullRun: 4,
         bestDartsFullRun: 4,
+        lastPlayedAt: '2026-01-03T10:00:00.000Z',
       }),
     )
     expect(anyStats && 'targets' in anyStats && anyStats.targets[0]).toMatchObject({
@@ -192,6 +276,7 @@ describe('practiceStats', () => {
         gameCount: 1,
         completedCount: 0,
         completionRate: 0,
+        lastPlayedAt: '2026-01-10T10:00:00.000Z',
       }),
     )
   })

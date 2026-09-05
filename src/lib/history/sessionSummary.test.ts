@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { AroundTheClockAimMode } from '../../types/aroundTheClock'
 import { GameModeId, GameStatus } from '../../types/gameMode'
 import type { GameSession } from '../../types/gameSession'
 import { PlayerKind } from '../../types/player'
@@ -54,6 +55,14 @@ describe('sessionSummary', () => {
         }),
       ),
     ).toBe("Bob's 27")
+    expect(
+      getSessionModeLabel(
+        sampleSession({
+          mode: GameModeId.AroundTheClock,
+          config: { finishOnBull: true, aimMode: AroundTheClockAimMode.Singles },
+        }),
+      ),
+    ).toBe('Around the Clock · Singles')
   })
 
   it('summarizes x01 sessions without visit stats in the text summary', () => {
@@ -65,6 +74,18 @@ describe('sessionSummary', () => {
       title: 'Session complete',
       details: [],
     })
+  })
+
+  it('puts Around the Clock aim mode in the match summary title', () => {
+    expect(
+      getMatchSummary(
+        sampleSession({
+          mode: GameModeId.AroundTheClock,
+          config: { finishOnBull: true, aimMode: AroundTheClockAimMode.Doubles },
+          visits: [],
+        }),
+      ).title,
+    ).toBe('Around the Clock · Doubles complete')
   })
 
   it('uses the checkout visit score before the winning visit', () => {
