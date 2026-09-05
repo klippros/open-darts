@@ -114,11 +114,13 @@ describe('x01Stats', () => {
     expect(stats.fiveOhOne.threeDartAverage).toBe(75)
     expect(stats.fiveOhOne.bestLegAverage).toBe(75)
     expect(stats.fiveOhOne.avgDarts).toBe(3)
+    expect(stats.fiveOhOne.lastPlayedAt).toBe('2026-01-01T10:00:00.000Z')
 
     expect(stats.other.legCount).toBe(1)
     expect(stats.other.threeDartAverage).toBe(30)
     expect(stats.other.bestLegAverage).toBe(30)
     expect(stats.other.avgDarts).toBe(2)
+    expect(stats.other.lastPlayedAt).toBe('2026-01-01T10:00:00.000Z')
   })
 
   it('tracks the best single-leg 3-dart average', () => {

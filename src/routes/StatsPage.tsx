@@ -125,24 +125,7 @@ export const StatsPage = () => {
           {hasAnyData ? (
             <>
               <TotalDartsHero sessions={filteredSessions} />
-              <X01LegSection
-                title="501"
-                subtitle="Scoring and checkout stats from your saved 501 legs."
-                emptyMessage="No saved 501 games in this period yet."
-                stats={analytics.x01.fiveOhOne}
-                scope={{ type: 'x01-501' }}
-                onStatSelect={handleStatSelect}
-              />
-              {analytics.x01.other.legCount > 0 && (
-                <X01LegSection
-                  title="Other x01"
-                  subtitle="301, 401, and custom x01 legs kept separate from 501."
-                  emptyMessage="No saved other x01 games in this period yet."
-                  stats={analytics.x01.other}
-                  scope={{ type: 'x01-other' }}
-                  onStatSelect={handleStatSelect}
-                />
-              )}
+              <X01LegSection x01={analytics.x01} onStatSelect={handleStatSelect} />
               <PracticeSection
                 checkout={analytics.practice.checkout}
                 other={analytics.practice.other}

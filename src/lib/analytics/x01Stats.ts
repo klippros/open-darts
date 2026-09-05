@@ -7,6 +7,7 @@ import {
   emptyDoubleCheckoutStats,
 } from './doubleCheckoutStats'
 import type { DoubleCheckoutStats } from './doubleCheckoutStats'
+import { getLatestSessionStartedAt } from './pickLastPlayedVariant'
 import { filterFiveOhOneSessions, filterOtherX01Sessions } from './sessionScope'
 import {
   countCheckouts100Plus,
@@ -37,6 +38,7 @@ export interface X01LegStats {
   checkouts100Plus: number
   highestCheckout: number | null
   highestVisit: number | null
+  lastPlayedAt: string | null
 }
 
 export interface X01Stats {
@@ -58,6 +60,7 @@ const emptyLegStats = (): X01LegStats => ({
   checkouts100Plus: 0,
   highestCheckout: null,
   highestVisit: null,
+  lastPlayedAt: null,
 })
 
 const computeX01LegStats = (sessions: GameSession[]): X01LegStats => {
@@ -106,6 +109,7 @@ const computeX01LegStats = (sessions: GameSession[]): X01LegStats => {
     checkouts100Plus: countCheckouts100Plus(allVisits),
     highestCheckout: getHighestCheckout(allVisits),
     highestVisit: getHighestVisit(allVisits),
+    lastPlayedAt: getLatestSessionStartedAt(sessions),
   }
 }
 

@@ -1,13 +1,9 @@
-import type { ReactNode } from 'react'
-import { Box, SimpleGrid, Stack, Text } from '@chakra-ui/react'
+import { SimpleGrid, Stack } from '@chakra-ui/react'
 import type {
+  AroundTheClockPracticeStats,
+  Bob27PracticeStats,
   CheckoutPracticeStats,
-  OtherPracticeStats,
 } from '../../lib/analytics/computeAnalytics'
-import {
-  isAroundTheClockPracticeStats,
-  isBob27PracticeStats,
-} from '../../lib/analytics/practiceStats'
 import type { StatTimelineSelection } from '../../lib/analytics/statTimelines'
 import {
   formatAverage,
@@ -15,26 +11,19 @@ import {
   formatInteger,
   formatPercent,
 } from '../../lib/analytics/formatAnalytics'
-import { StatCard } from './StatCard'
+import { getAroundTheClockAimModeLabel } from '../../lib/aroundTheClock/aroundTheClockConfig'
+import { gameModeDefinitions } from '../../lib/game/gameModeDefinitions'
+import { GameModeId } from '../../types/gameMode'
 import { AroundTheClockHeatmap } from './AroundTheClockHeatmap/AroundTheClockHeatmap'
+import { PracticeModeCard } from './PracticeModeCard'
+import { StatCard } from './StatCard'
+import { StatsCountLabel } from './StatsCountLabel'
+import { StatsVariantToggle } from './StatsVariantToggle'
+import { useLastPlayedVariantSelection } from './useLastPlayedVariantSelection'
 
-const PracticeModeCard = ({ title, children }: { title: string; children: ReactNode }) => (
-  <Box
-    borderWidth="1px"
-    borderColor="whiteAlpha.200"
-    borderRadius="lg"
-    bg="whiteAlpha.50"
-    px={5}
-    py={4}
-  >
-    <Stack gap={3}>
-      <Text fontWeight="semibold" color="white">
-        {title}
-      </Text>
-      {children}
-    </Stack>
-  </Box>
-)
+const getAroundTheClockVariantKey = (stats: AroundTheClockPracticeStats): string => stats.aimMode
+const getAroundTheClockLastPlayedAt = (stats: AroundTheClockPracticeStats): string =>
+  stats.lastPlayedAt
 
 export const CheckoutPracticeCard = ({
   stats,
@@ -46,11 +35,7 @@ export const CheckoutPracticeCard = ({
   const scope = { type: 'practice-checkout' as const, mode: stats.mode }
 
   return (
-    <PracticeModeCard title={stats.label}>
-      <Text fontSize="sm" color="whiteAlpha.700">
-        {stats.gameCount} session{stats.gameCount === 1 ? '' : 's'} · {stats.visitCount} checkout
-        attempt{stats.visitCount === 1 ? '' : 's'}
-      </Text>
+    <PracticeModeCard title={stats.label} trailing={<StatsCountLabel count={stats.gameCount} />}>
       <SimpleGrid columns={{ base: 1, sm: 2 }} gap={3}>
         <StatCard
           label="Checkout rate"
@@ -81,127 +66,158 @@ export const CheckoutPracticeCard = ({
   )
 }
 
-export const OtherPracticeCard = ({
+export const Bob27PracticeCard = ({
   stats,
   onStatSelect,
 }: {
-  stats: OtherPracticeStats
+  stats: Bob27PracticeStats
   onStatSelect: (selection: StatTimelineSelection) => void
 }) => (
-  <PracticeModeCard title={stats.label}>
-    <Text fontSize="sm" color="whiteAlpha.700">
-      {stats.gameCount} session{stats.gameCount === 1 ? '' : 's'} · {stats.completedCount} completed
-    </Text>
-    {isBob27PracticeStats(stats) && (
-      <SimpleGrid columns={{ base: 1, sm: 2 }} gap={3}>
+  <PracticeModeCard title={stats.label} trailing={<StatsCountLabel count={stats.gameCount} />}>
+    <SimpleGrid columns={{ base: 1, sm: 2 }} gap={3}>
+      <StatCard
+        label="Hit rate"
+        value={formatPercent(stats.hitRate)}
+        onClick={() => {
+          onStatSelect({
+            scope: { type: 'practice-bob27' },
+            metric: 'hitRate',
+            metricLabel: 'Hit rate',
+            scopeLabel: stats.label,
+          })
+        }}
+      />
+      {stats.avgDoublesPerGame !== null && (
         <StatCard
-          label="Hit rate"
-          value={formatPercent(stats.hitRate)}
+          label="Avg doubles / game"
+          value={formatAverage(stats.avgDoublesPerGame)}
           onClick={() => {
             onStatSelect({
               scope: { type: 'practice-bob27' },
-              metric: 'hitRate',
-              metricLabel: 'Hit rate',
+              metric: 'avgDoublesPerGame',
+              metricLabel: 'Doubles / game',
               scopeLabel: stats.label,
             })
           }}
         />
-        {stats.avgDoublesPerGame !== null && (
-          <StatCard
-            label="Avg doubles / game"
-            value={formatAverage(stats.avgDoublesPerGame)}
-            onClick={() => {
-              onStatSelect({
-                scope: { type: 'practice-bob27' },
-                metric: 'avgDoublesPerGame',
-                metricLabel: 'Doubles / game',
-                scopeLabel: stats.label,
-              })
-            }}
-          />
-        )}
-        {stats.avgFinalScore !== null && (
-          <StatCard
-            label="Avg final score"
-            value={formatInteger(stats.avgFinalScore)}
-            onClick={() => {
-              onStatSelect({
-                scope: { type: 'practice-bob27' },
-                metric: 'avgFinalScore',
-                metricLabel: 'Final score',
-                scopeLabel: stats.label,
-              })
-            }}
-          />
-        )}
-        {stats.bestFinalScore !== null && (
-          <StatCard
-            label="Best final score"
-            value={formatInteger(stats.bestFinalScore)}
-            onClick={() => {
-              onStatSelect({
-                scope: { type: 'practice-bob27' },
-                metric: 'bestFinalScore',
-                metricLabel: 'Final score',
-                scopeLabel: stats.label,
-              })
-            }}
-          />
-        )}
-      </SimpleGrid>
-    )}
-    {isAroundTheClockPracticeStats(stats) && (
+      )}
+      {stats.avgFinalScore !== null && (
+        <StatCard
+          label="Avg final score"
+          value={formatInteger(stats.avgFinalScore)}
+          onClick={() => {
+            onStatSelect({
+              scope: { type: 'practice-bob27' },
+              metric: 'avgFinalScore',
+              metricLabel: 'Final score',
+              scopeLabel: stats.label,
+            })
+          }}
+        />
+      )}
+      {stats.bestFinalScore !== null && (
+        <StatCard
+          label="Best final score"
+          value={formatInteger(stats.bestFinalScore)}
+          onClick={() => {
+            onStatSelect({
+              scope: { type: 'practice-bob27' },
+              metric: 'bestFinalScore',
+              metricLabel: 'Final score',
+              scopeLabel: stats.label,
+            })
+          }}
+        />
+      )}
+    </SimpleGrid>
+  </PracticeModeCard>
+)
+
+export const AroundTheClockPracticeCard = ({
+  variants,
+  onStatSelect,
+}: {
+  variants: AroundTheClockPracticeStats[]
+  onStatSelect: (selection: StatTimelineSelection) => void
+}) => {
+  const { selectedKey, setSelectedKey, selected } = useLastPlayedVariantSelection(
+    variants,
+    getAroundTheClockVariantKey,
+    getAroundTheClockLastPlayedAt,
+  )
+
+  if (selected === undefined) {
+    return null
+  }
+
+  const scopeLabel = `${gameModeDefinitions[GameModeId.AroundTheClock].label} · ${getAroundTheClockAimModeLabel(selected.aimMode)}`
+
+  return (
+    <PracticeModeCard
+      title={gameModeDefinitions[GameModeId.AroundTheClock].label}
+      trailing={
+        <StatsVariantToggle
+          items={variants.map((stats) => ({
+            value: stats.aimMode,
+            label: getAroundTheClockAimModeLabel(stats.aimMode),
+            count: stats.gameCount,
+          }))}
+          value={selectedKey}
+          onChange={setSelectedKey}
+        />
+      }
+    >
       <Stack gap={3}>
         <SimpleGrid columns={{ base: 1, sm: 3 }} gap={3}>
           <StatCard
             label="Completion rate"
-            value={formatPercent(stats.completionRate)}
+            value={formatPercent(selected.completionRate)}
             onClick={() => {
               onStatSelect({
-                scope: { type: 'practice-around-the-clock', aimMode: stats.aimMode },
+                scope: { type: 'practice-around-the-clock', aimMode: selected.aimMode },
                 metric: 'completionRate',
                 metricLabel: 'Completion rate',
-                scopeLabel: stats.label,
+                scopeLabel,
               })
             }}
           />
           <StatCard
             label="Avg darts"
-            value={formatCount(stats.avgDartsFullRun)}
+            value={formatCount(selected.avgDartsFullRun)}
             detail={
-              stats.avgDartsPerField === null
+              selected.avgDartsPerField === null
                 ? undefined
-                : `${formatCount(stats.avgDartsPerField)} per field`
+                : `${formatCount(selected.avgDartsPerField)} per field`
             }
             onClick={() => {
               onStatSelect({
-                scope: { type: 'practice-around-the-clock', aimMode: stats.aimMode },
+                scope: { type: 'practice-around-the-clock', aimMode: selected.aimMode },
                 metric: 'avgDarts',
                 metricLabel: 'Darts',
-                scopeLabel: stats.label,
+                scopeLabel,
               })
             }}
           />
           <StatCard
             label="Best darts"
-            value={formatInteger(stats.bestDartsFullRun)}
+            value={formatInteger(selected.bestDartsFullRun)}
             detail={
-              stats.bestDartsPerField === null
+              selected.bestDartsPerField === null
                 ? undefined
-                : `${formatCount(stats.bestDartsPerField)} per field`
+                : `${formatCount(selected.bestDartsPerField)} per field`
             }
             onClick={() => {
               onStatSelect({
-                scope: { type: 'practice-around-the-clock', aimMode: stats.aimMode },
+                scope: { type: 'practice-around-the-clock', aimMode: selected.aimMode },
                 metric: 'bestDarts',
                 metricLabel: 'Darts',
-                scopeLabel: stats.label,
+                scopeLabel,
               })
             }}
           />
         </SimpleGrid>
-        <AroundTheClockHeatmap targets={stats.targets} />
+        <AroundTheClockHeatmap targets={selected.targets} />
       </Stack>
-    )}
-  </PracticeModeCard>
-)
+    </PracticeModeCard>
+  )
+}

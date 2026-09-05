@@ -1,8 +1,9 @@
-import { Stack } from '@chakra-ui/react'
+import { Stack, Text } from '@chakra-ui/react'
 import type {
   CheckoutPracticeStats,
   OtherPracticeStats,
   X01LegStats,
+  X01Stats,
 } from '../../lib/analytics/computeAnalytics'
 import type { StatMetricId, StatTimelineSelection } from '../../lib/analytics/statTimelines'
 import {
@@ -11,9 +12,20 @@ import {
   getVisibleStatsPageRows,
   x01LegStatsToPlayerMatchStats,
 } from '../../lib/analytics/matchStatRows'
+import {
+  isAroundTheClockPracticeStats,
+  isBob27PracticeStats,
+} from '../../lib/analytics/practiceStats'
 import { StatsTable } from '../StatsTable/StatsTable'
-import { CheckoutPracticeCard, OtherPracticeCard } from './PracticeStatCards'
+import {
+  AroundTheClockPracticeCard,
+  Bob27PracticeCard,
+  CheckoutPracticeCard,
+} from './PracticeStatCards'
+import { PracticeModeCard } from './PracticeModeCard'
 import { EmptySection, SectionHeading } from './StatCard'
+import { StatsVariantToggle } from './StatsVariantToggle'
+import { useLastPlayedVariantSelection } from './useLastPlayedVariantSelection'
 
 export type StatTimelineSelectHandler = (selection: StatTimelineSelection) => void
 
@@ -68,29 +80,84 @@ const timelineRowConfig: Record<MatchStatRowId, { metric: StatMetricId; metricLa
   },
 }
 
-export interface X01LegSectionProps {
-  title: string
-  subtitle: string
+type X01VariantId = '501' | 'other'
+
+interface X01Variant {
+  id: X01VariantId
+  label: string
   emptyMessage: string
   stats: X01LegStats
   scope: StatTimelineSelection['scope']
+  lastPlayedAt: string | null
+}
+
+const getX01VariantKey = (variant: X01Variant): string => variant.id
+const getX01LastPlayedAt = (variant: X01Variant): string | null => variant.lastPlayedAt
+
+const buildX01Variants = (x01: X01Stats): X01Variant[] => {
+  const variants: X01Variant[] = [
+    {
+      id: '501',
+      label: '501',
+      emptyMessage: 'No saved 501 games in this period yet.',
+      stats: x01.fiveOhOne,
+      scope: { type: 'x01-501' },
+      lastPlayedAt: x01.fiveOhOne.lastPlayedAt,
+    },
+  ]
+
+  if (x01.other.legCount > 0) {
+    variants.push({
+      id: 'other',
+      label: 'Other',
+      emptyMessage: 'No saved other x01 games in this period yet.',
+      stats: x01.other,
+      scope: { type: 'x01-other' },
+      lastPlayedAt: x01.other.lastPlayedAt,
+    })
+  }
+
+  return variants
+}
+
+export interface X01LegSectionProps {
+  x01: X01Stats
   onStatSelect: StatTimelineSelectHandler
 }
 
-export const X01LegSection = ({
-  title,
-  subtitle,
-  emptyMessage,
-  stats,
-  scope,
-  onStatSelect,
-}: X01LegSectionProps) => {
+export const X01LegSection = ({ x01, onStatSelect }: X01LegSectionProps) => {
+  const variants = buildX01Variants(x01)
+  const { selectedKey, setSelectedKey, selected } = useLastPlayedVariantSelection(
+    variants,
+    getX01VariantKey,
+    getX01LastPlayedAt,
+  )
+
+  if (selected === undefined) {
+    return null
+  }
+
+  const { stats, scope, label, emptyMessage } = selected
+  const trailing = (
+    <StatsVariantToggle
+      items={variants.map((variant) => ({
+        value: variant.id,
+        label: variant.label,
+        count: variant.stats.legCount,
+      }))}
+      value={selectedKey}
+      onChange={setSelectedKey}
+      countUnit="Leg"
+    />
+  )
+
   if (stats.legCount === 0) {
     return (
-      <Stack gap={4}>
-        <SectionHeading title={title} subtitle={subtitle} />
-        <EmptySection message={emptyMessage} />
-      </Stack>
+      <PracticeModeCard title="x01" trailing={trailing}>
+        <Text color="whiteAlpha.700" fontSize="sm" lineHeight="1.55">
+          {emptyMessage}
+        </Text>
+      </PracticeModeCard>
     )
   }
 
@@ -99,11 +166,7 @@ export const X01LegSection = ({
   const rows = getVisibleStatsPageRows(statsByPlayer, [STATS_PAGE_PLAYER_ID])
 
   return (
-    <Stack gap={4}>
-      <SectionHeading
-        title={title}
-        subtitle={`${stats.legCount} saved leg${stats.legCount === 1 ? '' : 's'} · ${stats.checkoutLegCount} checked out`}
-      />
+    <PracticeModeCard title="x01" trailing={trailing}>
       <StatsTable
         players={[{ id: STATS_PAGE_PLAYER_ID, name: '' }]}
         statsByPlayer={statsByPlayer}
@@ -117,11 +180,11 @@ export const X01LegSection = ({
             scope,
             metric: config.metric,
             metricLabel: config.metricLabel,
-            scopeLabel: title,
+            scopeLabel: label,
           })
         }}
       />
-    </Stack>
+    </PracticeModeCard>
   )
 }
 
@@ -141,6 +204,9 @@ export const PracticeSection = ({ checkout, other, onStatSelect }: PracticeSecti
     )
   }
 
+  const bob27 = other.find(isBob27PracticeStats)
+  const aroundTheClock = other.filter(isAroundTheClockPracticeStats)
+
   return (
     <Stack gap={4}>
       <SectionHeading title="Practice" subtitle="Checkout and training mode stats." />
@@ -148,13 +214,10 @@ export const PracticeSection = ({ checkout, other, onStatSelect }: PracticeSecti
         {checkout.map((stats) => (
           <CheckoutPracticeCard key={stats.mode} stats={stats} onStatSelect={onStatSelect} />
         ))}
-        {other.map((stats) => (
-          <OtherPracticeCard
-            key={'aimMode' in stats ? `${stats.mode}-${stats.aimMode}` : stats.mode}
-            stats={stats}
-            onStatSelect={onStatSelect}
-          />
-        ))}
+        {bob27 !== undefined && <Bob27PracticeCard stats={bob27} onStatSelect={onStatSelect} />}
+        {aroundTheClock.length > 0 && (
+          <AroundTheClockPracticeCard variants={aroundTheClock} onStatSelect={onStatSelect} />
+        )}
       </Stack>
     </Stack>
   )

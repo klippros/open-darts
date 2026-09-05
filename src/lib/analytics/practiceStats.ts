@@ -7,6 +7,7 @@ import { getBob27SessionDoublesHit, getBob27VisitHitRate } from '../bob27/bob27V
 import { getSessionModeLabel } from '../history/sessionSummary'
 import { aggregateAroundTheClockSessionStats } from './aroundTheClockStats'
 import type { AroundTheClockPerTargetStats } from './aroundTheClockStats'
+import { getLatestSessionStartedAt } from './pickLastPlayedVariant'
 import { filterAroundTheClockSessions } from './sessionScope'
 import {
   countCheckoutVisits,
@@ -22,6 +23,7 @@ export interface CheckoutPracticeStats {
   visitCount: number
   checkoutRate: number | null
   threeDartAverage: number | null
+  lastPlayedAt: string
 }
 
 export interface Bob27PracticeStats {
@@ -47,6 +49,7 @@ export interface AroundTheClockPracticeStats {
   avgDartsPerField: number | null
   bestDartsPerField: number | null
   targets: AroundTheClockPerTargetStats[]
+  lastPlayedAt: string
 }
 
 export type OtherPracticeStats = Bob27PracticeStats | AroundTheClockPracticeStats
@@ -86,6 +89,12 @@ const computeCheckoutPracticeStats = (
   const visits = modeSessions.flatMap((session) => getPrimaryPlayerVisits(session))
   const checkoutVisits = countCheckoutVisits(visits)
 
+  const lastPlayedAt = getLatestSessionStartedAt(modeSessions)
+
+  if (lastPlayedAt === null) {
+    return null
+  }
+
   return {
     mode,
     label: getSessionLabel(modeSessions, mode),
@@ -93,6 +102,7 @@ const computeCheckoutPracticeStats = (
     visitCount: visits.length,
     checkoutRate: visits.length === 0 ? null : (checkoutVisits / visits.length) * 100,
     threeDartAverage: getThreeDartAverage(visits),
+    lastPlayedAt,
   }
 }
 
@@ -140,6 +150,11 @@ const computeAroundTheClockStatsForAimMode = (
 
   const aggregated = aggregateAroundTheClockSessionStats(aimModeSessions, aimMode)
   const completedSessions = aimModeSessions.filter((session) => session.finishedEarly !== true)
+  const lastPlayedAt = getLatestSessionStartedAt(aimModeSessions)
+
+  if (lastPlayedAt === null) {
+    return null
+  }
 
   return {
     mode: GameModeId.AroundTheClock,
@@ -153,6 +168,7 @@ const computeAroundTheClockStatsForAimMode = (
     avgDartsPerField: aggregated.avgDartsPerField,
     bestDartsPerField: aggregated.bestDartsPerField,
     targets: aggregated.targets,
+    lastPlayedAt,
   }
 }
 
