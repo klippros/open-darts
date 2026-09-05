@@ -78,8 +78,8 @@ export const VisitDartSlotCard = ({
 
   const slotStyles = {
     px: 3,
-    py: isComfortable ? 7 : 4,
-    minH: isComfortable ? '6.5rem' : undefined,
+    py: isComfortable ? { base: 14, md: 7 } : 4,
+    minH: isComfortable ? { base: '13rem', md: '6.5rem' } : undefined,
     borderRadius: '14px',
     borderWidth: '1px',
     borderColor: styles.borderColor,
