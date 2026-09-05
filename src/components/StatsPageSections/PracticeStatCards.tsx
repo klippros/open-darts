@@ -77,7 +77,7 @@ export const Bob27PracticeCard = ({
     <SimpleGrid columns={{ base: 1, sm: 2 }} gap={3}>
       <StatCard
         label="Hit rate"
-        value={formatPercent(stats.hitRate)}
+        value={formatPercent(stats.hitRate, 2)}
         onClick={() => {
           onStatSelect({
             scope: { type: 'practice-bob27' },
@@ -87,6 +87,20 @@ export const Bob27PracticeCard = ({
           })
         }}
       />
+      {stats.avgHitsPerVisit !== null && (
+        <StatCard
+          label="Avg / visit"
+          value={formatAverage(stats.avgHitsPerVisit, 2)}
+          onClick={() => {
+            onStatSelect({
+              scope: { type: 'practice-bob27' },
+              metric: 'avgHitsPerVisit',
+              metricLabel: 'Avg / visit',
+              scopeLabel: stats.label,
+            })
+          }}
+        />
+      )}
       {stats.avgDoublesPerGame !== null && (
         <StatCard
           label="Avg doubles / game"
@@ -95,6 +109,20 @@ export const Bob27PracticeCard = ({
             onStatSelect({
               scope: { type: 'practice-bob27' },
               metric: 'avgDoublesPerGame',
+              metricLabel: 'Doubles / game',
+              scopeLabel: stats.label,
+            })
+          }}
+        />
+      )}
+      {stats.bestDoublesPerGame !== null && (
+        <StatCard
+          label="Best doubles / game"
+          value={formatInteger(stats.bestDoublesPerGame)}
+          onClick={() => {
+            onStatSelect({
+              scope: { type: 'practice-bob27' },
+              metric: 'bestDoublesPerGame',
               metricLabel: 'Doubles / game',
               scopeLabel: stats.label,
             })

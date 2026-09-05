@@ -6,6 +6,7 @@ import { PlayerKind } from '../../types/player'
 import type { Visit } from '../../types/visit'
 import { numberDart } from '../testHelpers'
 import {
+  computeBob27SingleSessionStats,
   getBob27SessionDoublesHit,
   getBob27VisitHitCount,
   getBob27VisitHitRate,
@@ -65,14 +66,35 @@ describe('bob27VisitStats', () => {
     ).toBe(2)
   })
 
-  it('computes hit rate across visits', () => {
+  it('computes hit rate per dart across visits', () => {
     expect(
       getBob27VisitHitRate([
-        visit({ metadata: { hit: true, hitCount: 1 } }),
-        visit({ metadata: { hit: false, hitCount: 0 } }),
-        visit({ metadata: { hit: true, hitCount: 3 } }),
+        visit({
+          metadata: { hit: true, hitCount: 1 },
+          darts: [
+            numberDart(1, DartMultiplier.Double),
+            numberDart(1, DartMultiplier.Single),
+            numberDart(1, DartMultiplier.Single),
+          ],
+        }),
+        visit({
+          metadata: { hit: false, hitCount: 0 },
+          darts: [
+            numberDart(2, DartMultiplier.Single),
+            numberDart(2, DartMultiplier.Single),
+            numberDart(2, DartMultiplier.Single),
+          ],
+        }),
+        visit({
+          metadata: { hit: true, hitCount: 3 },
+          darts: [
+            numberDart(3, DartMultiplier.Double),
+            numberDart(3, DartMultiplier.Double),
+            numberDart(3, DartMultiplier.Double),
+          ],
+        }),
       ]),
-    ).toBeCloseTo((2 / 3) * 100)
+    ).toBeCloseTo((4 / 9) * 100)
   })
 
   it('sums doubles hit across a session', () => {
@@ -91,5 +113,58 @@ describe('bob27VisitStats', () => {
         ]),
       ),
     ).toBe(3)
+  })
+
+  it('computes single-session summary stats', () => {
+    const stats = computeBob27SingleSessionStats(
+      session([
+        visit({
+          metadata: { targetLabel: 'D1', hit: true, hitCount: 2 },
+          darts: [
+            numberDart(1, DartMultiplier.Double),
+            numberDart(1, DartMultiplier.Double),
+            numberDart(1, DartMultiplier.Single),
+          ],
+          scoreAfter: 31,
+        }),
+        visit({
+          visitIndex: 1,
+          metadata: { targetLabel: 'D2', hit: false, hitCount: 0 },
+          darts: [
+            numberDart(2, DartMultiplier.Single),
+            numberDart(2, DartMultiplier.Single),
+            numberDart(2, DartMultiplier.Single),
+          ],
+          scoreAfter: 21,
+        }),
+        visit({
+          visitIndex: 2,
+          metadata: { targetLabel: 'Bull', hit: true, hitCount: 1 },
+          darts: [
+            numberDart(25, DartMultiplier.Single),
+            numberDart(25, DartMultiplier.Single),
+            numberDart(20, DartMultiplier.Single),
+          ],
+          scoreAfter: 71,
+        }),
+      ]),
+    )
+
+    expect(stats).not.toBeNull()
+    expect(stats?.doublesHit).toBe(3)
+    expect(stats?.avgHitsPerVisit).toBe(1)
+    expect(stats?.hitRate).toBeCloseTo((3 / 9) * 100)
+    expect(stats?.finalScore).toBe(71)
+    expect(stats?.visitCount).toBe(3)
+  })
+
+  it('returns null for non-Bob27 sessions', () => {
+    expect(
+      computeBob27SingleSessionStats({
+        ...session([]),
+        mode: GameModeId.X01,
+        config: { startScore: 501, doubleIn: false, doubleOut: true },
+      }),
+    ).toBeNull()
   })
 })

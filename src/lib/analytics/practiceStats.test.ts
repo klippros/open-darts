@@ -104,7 +104,9 @@ describe('practiceStats', () => {
         avgFinalScore: 25,
         bestFinalScore: 54,
         hitRate: 50,
+        avgHitsPerVisit: 0.5,
         avgDoublesPerGame: 0.5,
+        bestDoublesPerGame: 1,
       }),
     ])
   })
