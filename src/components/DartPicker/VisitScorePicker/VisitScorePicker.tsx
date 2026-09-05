@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button, Grid, Input, Stack } from '@chakra-ui/react'
+import { scoreInputButtonHeight } from '../../../layout'
 import {
   appendVisitScoreDigit,
   backspaceVisitScoreInput,
@@ -12,7 +13,7 @@ export interface VisitScorePickerProps {
   inputDisabled?: boolean
 }
 
-const PAD_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'clear', '0', 'back'] as const
+const PAD_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'clear', '0', 'enter'] as const
 
 type PadKey = (typeof PAD_KEYS)[number]
 
@@ -21,11 +22,30 @@ const padKeyLabel = (key: PadKey): string => {
     return 'Clear'
   }
 
-  if (key === 'back') {
-    return '⌫'
+  if (key === 'enter') {
+    return 'Enter'
   }
 
   return key
+}
+
+const outlinePadKeyProps = (color: 'red' | 'green') => ({
+  borderColor: `${color}.400`,
+  color: `${color}.200`,
+  _hover: { borderColor: `${color}.300`, bg: 'transparent', transform: 'scale(1.03)' },
+  _active: { bg: 'transparent', transform: 'scale(0.98)' },
+})
+
+const padKeyProps = (key: PadKey) => {
+  if (key === 'clear') {
+    return outlinePadKeyProps('red')
+  }
+
+  if (key === 'enter') {
+    return outlinePadKeyProps('green')
+  }
+
+  return {}
 }
 
 export const VisitScorePicker = ({
@@ -101,8 +121,8 @@ export const VisitScorePicker = ({
       return
     }
 
-    if (key === 'back') {
-      setValue((current) => backspaceVisitScoreInput(current))
+    if (key === 'enter') {
+      submitCurrentValue()
       return
     }
 
@@ -129,24 +149,21 @@ export const VisitScorePicker = ({
           <Button
             key={key}
             variant="cta"
-            disabled={inputDisabled}
+            h={scoreInputButtonHeight}
+            disabled={key === 'enter' ? !canSubmit : inputDisabled}
             onClick={() => {
               onPadKey(key)
             }}
+            {...padKeyProps(key)}
           >
             {padKeyLabel(key)}
           </Button>
         ))}
       </Grid>
 
-      <Grid templateColumns="1fr 1fr" gap={2}>
-        <Button variant="cta" disabled={inputDisabled} onClick={onUndo}>
-          Undo
-        </Button>
-        <Button variant="cta" disabled={!canSubmit} onClick={submitCurrentValue}>
-          Enter
-        </Button>
-      </Grid>
+      <Button variant="cta" disabled={inputDisabled} onClick={onUndo}>
+        Undo
+      </Button>
     </Stack>
   )
 }
