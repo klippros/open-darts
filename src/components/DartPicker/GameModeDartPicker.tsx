@@ -1,23 +1,25 @@
 import { AroundTheClockDartPicker } from './AroundTheClockDartPicker'
 import { Bob27DartPicker } from './Bob27DartPicker'
 import { DartPicker } from './DartPicker'
+import { ScoringInputCard } from './ScoringInputCard/ScoringInputCard'
+import { TenUpOneDownDartPicker } from './TenUpOneDownDartPicker'
 import { VisitScorePicker } from './VisitScorePicker/VisitScorePicker'
 import { isAroundTheClockConfig } from '../../lib/game/gameConfigGuards'
+import { supportsVisitScoreInput } from '../../lib/game/gameModeDefinitions'
 import type { DartThrow } from '../../types/dart'
 import type { GameConfig } from '../../types/gameMode'
 import { GameModeId } from '../../types/gameMode'
-import { X01InputMode } from '../../types/settings'
-
-const supportsVisitScoreInput = (mode: GameModeId): boolean =>
-  mode === GameModeId.X01 || mode === GameModeId.OneTwentyOne || mode === GameModeId.TenUpOneDown
+import { VisitInputMode } from '../../types/visit'
 
 export interface GameModeDartPickerProps {
   mode: GameModeId
   config: GameConfig
   aroundTheClockTargetIndex?: number
   bob27TargetIndex?: number
+  checkoutTarget?: number
   pendingDarts: DartThrow[]
-  x01InputMode: X01InputMode
+  visitEntryMode: VisitInputMode
+  onVisitEntryModeChange: (mode: VisitInputMode) => void
   onDart: (dart: DartThrow) => void
   onDarts: (darts: DartThrow[]) => void
   onVisitScore: (score: number) => void
@@ -30,8 +32,10 @@ export const GameModeDartPicker = ({
   config,
   aroundTheClockTargetIndex,
   bob27TargetIndex,
+  checkoutTarget,
   pendingDarts,
-  x01InputMode,
+  visitEntryMode,
+  onVisitEntryModeChange,
   onDart,
   onDarts,
   onVisitScore,
@@ -66,16 +70,33 @@ export const GameModeDartPicker = ({
     )
   }
 
-  const useVisitScorePicker =
-    supportsVisitScoreInput(mode) &&
-    x01InputMode === X01InputMode.VisitScore &&
-    pendingDarts.length === 0
-
-  if (useVisitScorePicker) {
-    return (
-      <VisitScorePicker onSubmit={onVisitScore} onUndo={onUndo} inputDisabled={inputDisabled} />
-    )
+  if (!supportsVisitScoreInput(mode)) {
+    return <DartPicker onDart={onDart} onUndo={onUndo} inputDisabled={inputDisabled} />
   }
 
-  return <DartPicker onDart={onDart} onUndo={onUndo} inputDisabled={inputDisabled} />
+  const hasPendingDarts = pendingDarts.length > 0
+  const showVisitScorePicker = visitEntryMode === VisitInputMode.VisitScore && !hasPendingDarts
+
+  return (
+    <ScoringInputCard
+      entryMode={visitEntryMode}
+      visitTabDisabled={hasPendingDarts}
+      onEntryModeChange={onVisitEntryModeChange}
+    >
+      {showVisitScorePicker ? (
+        mode === GameModeId.TenUpOneDown && checkoutTarget !== undefined ? (
+          <TenUpOneDownDartPicker
+            checkoutTarget={checkoutTarget}
+            onVisitScore={onVisitScore}
+            onUndo={onUndo}
+            inputDisabled={inputDisabled}
+          />
+        ) : (
+          <VisitScorePicker onSubmit={onVisitScore} onUndo={onUndo} inputDisabled={inputDisabled} />
+        )
+      ) : (
+        <DartPicker onDart={onDart} onUndo={onUndo} inputDisabled={inputDisabled} />
+      )}
+    </ScoringInputCard>
+  )
 }

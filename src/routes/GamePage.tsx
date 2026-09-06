@@ -4,11 +4,10 @@ import { GameModeDartPicker } from '../components/DartPicker/GameModeDartPicker'
 import { GameBoardLayout } from '../components/GameBoardLayout'
 import { MobileVisitHistory } from '../components/Scoreboard/MobileVisitHistory'
 import { Scoreboard } from '../components/Scoreboard/Scoreboard'
-import { useSettings } from '../hooks/settingsContext'
 import { useGamePage } from '../hooks/useGamePage'
 import { showsVisitHistory } from '../lib/game/gameModeDefinitions'
 import { mainContentMaxWidth } from '../layout'
-import { X01InputMode } from '../types/settings'
+import { VisitInputMode } from '../types/visit'
 import { GamePageDialogs } from './GamePageDialogs'
 
 export const GamePage = () => {
@@ -26,8 +25,9 @@ export const GamePage = () => {
     confirmAbortMatch,
     resumeSavedGame,
     pickerTargets,
+    visitEntryMode,
+    setVisitEntryMode,
   } = useGamePage()
-  const { x01InputMode } = useSettings()
   const isMobile = useBreakpointValue({ base: true, md: false }, { ssr: false }) ?? true
 
   const inputDisabled = controller.isComplete || loadState.kind === 'conflict'
@@ -61,10 +61,14 @@ export const GamePage = () => {
       config={controller.session.config}
       matchProgress={controller.session.matchProgress}
       hideVisitDartSlots={
-        x01InputMode === X01InputMode.VisitScore && controller.pendingDarts.length === 0
+        visitEntryMode === VisitInputMode.VisitScore && controller.pendingDarts.length === 0
       }
     />
   )
+
+  const activeCheckoutTarget = controller.scoreboard.players.find(
+    (player) => player.isActive,
+  )?.primaryScore
 
   const picker = (
     <GameModeDartPicker
@@ -72,8 +76,10 @@ export const GamePage = () => {
       config={controller.session.config}
       aroundTheClockTargetIndex={pickerTargets.aroundTheClockTargetIndex}
       bob27TargetIndex={pickerTargets.bob27TargetIndex}
+      checkoutTarget={activeCheckoutTarget}
       pendingDarts={controller.pendingDarts}
-      x01InputMode={x01InputMode}
+      visitEntryMode={visitEntryMode}
+      onVisitEntryModeChange={setVisitEntryMode}
       onDart={recordDart}
       onDarts={recordDarts}
       onVisitScore={recordVisitScore}

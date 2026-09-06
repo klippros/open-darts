@@ -38,23 +38,29 @@ export const AroundTheClockHistoryColumn = ({
   const { aimMode } = getAroundTheClockConfig(config)
   const completedTargets = getAroundTheClockCompletedTargets(playerVisits, aimMode).toReversed()
   const isStack = variant === 'stack'
-  const cardAlign = isStack ? 'left' : align
+  const isRight = align === 'right'
 
   return (
     <Stack
       gap={3}
-      align={isStack ? 'stretch' : cardAlign === 'right' ? 'flex-end' : 'flex-start'}
+      align={isStack ? 'stretch' : isRight ? 'flex-end' : 'flex-start'}
       display={isStack ? 'flex' : { base: 'none', lg: 'flex' }}
       w={isStack ? 'full' : undefined}
     >
       {showPlayerName && (
-        <Text fontSize="xs" color="whiteAlpha.500" textTransform="uppercase" letterSpacing="0.08em">
+        <Text
+          fontSize="xs"
+          color="whiteAlpha.500"
+          textTransform="uppercase"
+          letterSpacing="0.08em"
+          textAlign={isRight ? 'right' : 'left'}
+        >
           {player.name}
         </Text>
       )}
 
       {completedTargets.length === 0 ? (
-        <Text fontSize="sm" color="whiteAlpha.400">
+        <Text fontSize="sm" color="whiteAlpha.400" textAlign={isRight ? 'right' : 'left'}>
           No targets hit yet
         </Text>
       ) : (
@@ -69,7 +75,7 @@ export const AroundTheClockHistoryColumn = ({
             borderWidth="1px"
             borderColor="whiteAlpha.200"
             bg="whiteAlpha.50"
-            textAlign={cardAlign === 'right' ? 'right' : 'left'}
+            textAlign={isRight ? 'right' : 'left'}
           >
             <Text color={getHeadlineColor(target.dartsToHit)} fontWeight="bold" fontSize="lg">
               {target.label}

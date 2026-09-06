@@ -30,23 +30,29 @@ export const VisitHistoryColumn = ({
   const legVisits = currentLeg === undefined ? visits : getVisitsForLeg(visits, currentLeg)
   const playerVisits = legVisits.filter((visit) => visit.playerId === player.id).toReversed()
   const isStack = variant === 'stack'
-  const cardAlign = isStack ? 'left' : align
+  const isRight = align === 'right'
 
   return (
     <Stack
       gap={3}
-      align={isStack ? 'stretch' : cardAlign === 'right' ? 'flex-end' : 'flex-start'}
+      align={isStack ? 'stretch' : isRight ? 'flex-end' : 'flex-start'}
       display={isStack ? 'flex' : { base: 'none', lg: 'flex' }}
       w={isStack ? 'full' : undefined}
     >
       {showPlayerName && (
-        <Text fontSize="xs" color="whiteAlpha.500" textTransform="uppercase" letterSpacing="0.08em">
+        <Text
+          fontSize="xs"
+          color="whiteAlpha.500"
+          textTransform="uppercase"
+          letterSpacing="0.08em"
+          textAlign={isRight ? 'right' : 'left'}
+        >
           {player.name}
         </Text>
       )}
 
       {playerVisits.length === 0 ? (
-        <Text fontSize="sm" color="whiteAlpha.400">
+        <Text fontSize="sm" color="whiteAlpha.400" textAlign={isRight ? 'right' : 'left'}>
           No visits yet
         </Text>
       ) : (
@@ -65,7 +71,7 @@ export const VisitHistoryColumn = ({
               borderWidth="1px"
               borderColor="whiteAlpha.200"
               bg="whiteAlpha.50"
-              textAlign={cardAlign === 'right' ? 'right' : 'left'}
+              textAlign={isRight ? 'right' : 'left'}
             >
               {display.sublabel !== undefined && (
                 <Text

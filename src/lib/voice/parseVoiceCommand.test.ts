@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { GameModeId } from '../../types/gameMode'
-import { X01InputMode } from '../../types/settings'
+import { VisitInputMode } from '../../types/visit'
 import { parseVoiceCommand, VoiceIntentKind } from './parseVoiceCommand'
 
 describe('parseVoiceCommand', () => {
@@ -43,43 +43,90 @@ describe('parseVoiceCommand', () => {
         expect(parseVoiceCommand(mode, 'one hit')).toBeNull()
         expect(parseVoiceCommand(mode, 'hit miss hit')).toBeNull()
         expect(parseVoiceCommand(mode, 'sixty')).toBeNull()
+        expect(parseVoiceCommand(mode, 'miss')).toBeNull()
+        expect(parseVoiceCommand(mode, 'game shot')).toBeNull()
       },
     )
   })
 
   describe('visit score', () => {
-    const options = { x01InputMode: X01InputMode.VisitScore }
+    const options = { visitEntryMode: VisitInputMode.VisitScore }
 
-    it.each([GameModeId.X01, GameModeId.OneTwentyOne, GameModeId.TenUpOneDown])(
-      'parses visit totals for %s',
-      (mode) => {
-        expect(parseVoiceCommand(mode, 'sixty', options)).toEqual({
-          kind: VoiceIntentKind.VisitScore,
-          score: 60,
-        })
-        expect(parseVoiceCommand(mode, 'one eighty', options)).toEqual({
-          kind: VoiceIntentKind.VisitScore,
-          score: 180,
-        })
-        expect(parseVoiceCommand(mode, '26', options)).toEqual({
-          kind: VoiceIntentKind.VisitScore,
-          score: 26,
-        })
-        expect(parseVoiceCommand(mode, 'no score', options)).toEqual({
-          kind: VoiceIntentKind.VisitScore,
-          score: 0,
-        })
-        expect(parseVoiceCommand(mode, '0', options)).toEqual({
-          kind: VoiceIntentKind.VisitScore,
-          score: 0,
-        })
-        expect(parseVoiceCommand(mode, 'undo', options)).toEqual({ kind: VoiceIntentKind.Undo })
-        expect(parseVoiceCommand(mode, 'undo sixty', options)).toEqual({
-          kind: VoiceIntentKind.Fix,
-          inner: { kind: VoiceIntentKind.VisitScore, score: 60 },
-        })
-      },
-    )
+    it.each([GameModeId.X01, GameModeId.OneTwentyOne])('parses visit totals for %s', (mode) => {
+      expect(parseVoiceCommand(mode, 'sixty', options)).toEqual({
+        kind: VoiceIntentKind.VisitScore,
+        score: 60,
+      })
+      expect(parseVoiceCommand(mode, 'one eighty', options)).toEqual({
+        kind: VoiceIntentKind.VisitScore,
+        score: 180,
+      })
+      expect(parseVoiceCommand(mode, '26', options)).toEqual({
+        kind: VoiceIntentKind.VisitScore,
+        score: 26,
+      })
+      expect(parseVoiceCommand(mode, 'no score', options)).toEqual({
+        kind: VoiceIntentKind.VisitScore,
+        score: 0,
+      })
+      expect(parseVoiceCommand(mode, '0', options)).toEqual({
+        kind: VoiceIntentKind.VisitScore,
+        score: 0,
+      })
+      expect(parseVoiceCommand(mode, 'undo', options)).toEqual({ kind: VoiceIntentKind.Undo })
+      expect(parseVoiceCommand(mode, 'undo sixty', options)).toEqual({
+        kind: VoiceIntentKind.Fix,
+        inner: { kind: VoiceIntentKind.VisitScore, score: 60 },
+      })
+    })
+  })
+
+  describe('ten up one down', () => {
+    const options = { visitEntryMode: VisitInputMode.VisitScore }
+
+    it('accepts failed and checkout on the Visit tab', () => {
+      expect(parseVoiceCommand(GameModeId.TenUpOneDown, 'failed', options)).toEqual({
+        kind: VoiceIntentKind.TenUpOneDown,
+        outcome: 'miss',
+      })
+      expect(parseVoiceCommand(GameModeId.TenUpOneDown, 'fail', options)).toEqual({
+        kind: VoiceIntentKind.TenUpOneDown,
+        outcome: 'miss',
+      })
+      expect(parseVoiceCommand(GameModeId.TenUpOneDown, 'miss', options)).toEqual({
+        kind: VoiceIntentKind.TenUpOneDown,
+        outcome: 'miss',
+      })
+      expect(parseVoiceCommand(GameModeId.TenUpOneDown, 'no score', options)).toEqual({
+        kind: VoiceIntentKind.TenUpOneDown,
+        outcome: 'miss',
+      })
+      expect(parseVoiceCommand(GameModeId.TenUpOneDown, 'checkout', options)).toEqual({
+        kind: VoiceIntentKind.TenUpOneDown,
+        outcome: 'checkout',
+      })
+      expect(parseVoiceCommand(GameModeId.TenUpOneDown, 'success', options)).toEqual({
+        kind: VoiceIntentKind.TenUpOneDown,
+        outcome: 'checkout',
+      })
+      expect(parseVoiceCommand(GameModeId.TenUpOneDown, 'game shot', options)).toEqual({
+        kind: VoiceIntentKind.TenUpOneDown,
+        outcome: 'checkout',
+      })
+      expect(parseVoiceCommand(GameModeId.TenUpOneDown, 'undo', options)).toEqual({
+        kind: VoiceIntentKind.Undo,
+      })
+      expect(parseVoiceCommand(GameModeId.TenUpOneDown, 'undo checkout', options)).toEqual({
+        kind: VoiceIntentKind.Fix,
+        inner: { kind: VoiceIntentKind.TenUpOneDown, outcome: 'checkout' },
+      })
+    })
+
+    it('rejects visit totals and incomplete phrases', () => {
+      expect(parseVoiceCommand(GameModeId.TenUpOneDown, 'sixty', options)).toBeNull()
+      expect(parseVoiceCommand(GameModeId.TenUpOneDown, 'game', options)).toBeNull()
+      expect(parseVoiceCommand(GameModeId.TenUpOneDown, 'shot', options)).toBeNull()
+    })
   })
 
   describe('bob27', () => {

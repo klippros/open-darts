@@ -1,5 +1,5 @@
 import { GameModeId } from '../../types/gameMode'
-import { X01InputMode } from '../../types/settings'
+import { VisitInputMode } from '../../types/visit'
 import { getBob27Target } from '../bob27/bob27Rules'
 import type { VoiceCommandHelpSection } from '../voice/voiceCommandHelp'
 import { getVoiceCommandHelpSection } from '../voice/voiceCommandHelp'
@@ -52,9 +52,9 @@ export const getGameModePickerTargets = (
 export const getDartPickerHelpContent = (
   mode: GameModeId,
   bob27TargetIndex?: number,
-  x01InputMode: X01InputMode = X01InputMode.Board,
+  visitEntryMode: VisitInputMode = VisitInputMode.PerDart,
 ): DartPickerHelpContent => {
-  const voice = getVoiceCommandHelpSection(mode, { x01InputMode }) ?? undefined
+  const voice = getVoiceCommandHelpSection(mode, { visitEntryMode }) ?? undefined
 
   if (mode === GameModeId.AroundTheClock) {
     return {
@@ -79,13 +79,36 @@ export const getDartPickerHelpContent = (
     }
   }
 
-  if (x01InputMode === X01InputMode.VisitScore) {
+  if (mode === GameModeId.TenUpOneDown) {
+    if (visitEntryMode === VisitInputMode.VisitScore) {
+      return {
+        title: 'How to score',
+        paragraphs: [
+          'Tap Checkout when you check out the target, or Failed when you do not. Undo removes the last visit.',
+          'Use the Dart tab to enter each dart on the board and see checkout paths update live.',
+        ],
+        voice,
+      }
+    }
+
+    return {
+      title: 'How to score',
+      paragraphs: [
+        'Keyboard: D/T for double/triple, type the segment number, then Space to confirm. B bull, Tab miss, Backspace undo, Esc clear modifier.',
+        'Tap the board to score. Center arms double/triple; corners are Bull, 25, Undo, and Miss.',
+        'Use the Visit tab for a quick Failed or Checkout instead of entering each dart.',
+      ],
+      voice,
+    }
+  }
+
+  if (visitEntryMode === VisitInputMode.VisitScore) {
     return {
       title: 'How to score',
       paragraphs: [
         'Enter the total for your visit (0–180) with the number pad or keyboard, then Enter. Scores above the remaining total bust automatically.',
         'Backspace edits the number, Escape clears it, and Undo removes the last visit.',
-        'Switch back to board scoring in Settings if you want to enter each dart.',
+        'Use the Dart tab to enter each dart on the board instead.',
       ],
       voice,
     }
@@ -96,7 +119,7 @@ export const getDartPickerHelpContent = (
     paragraphs: [
       'Keyboard: D/T for double/triple, type the segment number, then Space to confirm. B bull, Tab miss, Backspace undo, Esc clear modifier.',
       'Tap the board to score. Center arms double/triple; corners are Bull, 25, Undo, and Miss.',
-      'Voice scoring is not available in this game mode.',
+      'Use the Visit tab to enter a visit total instead.',
     ],
   }
 }

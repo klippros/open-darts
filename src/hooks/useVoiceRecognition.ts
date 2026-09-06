@@ -28,7 +28,7 @@ import { createVoiceUndoHistory } from '../lib/voice/voiceUndoHistory'
 import { isVoiceInputSupportedForMode } from '../lib/voice/voiceModeSupport'
 import { shouldSupersedePendingVisitScore } from '../lib/voice/shouldSupersedePendingVisitScore'
 import type { GameModeId } from '../types/gameMode'
-import type { X01InputMode } from '../types/settings'
+import type { VisitInputMode } from '../types/visit'
 import { useUiSounds } from './useUiSounds'
 import { useVoiceControl } from './voiceControlContext'
 
@@ -36,7 +36,7 @@ export interface UseVoiceRecognitionOptions {
   mode: GameModeId
   sessionId: string
   inputDisabled: boolean
-  x01InputMode?: X01InputMode
+  visitEntryMode?: VisitInputMode
   applyControllerTransaction: (
     updater: (current: AppGameController) => {
       next: AppGameController
@@ -50,12 +50,12 @@ export const useVoiceRecognition = ({
   mode,
   sessionId,
   inputDisabled,
-  x01InputMode,
+  visitEntryMode,
   applyControllerTransaction,
 }: UseVoiceRecognitionOptions): void => {
   const { enabled, setEnabled, setStatus } = useVoiceControl()
   const { playUndo, playSequence } = useUiSounds()
-  const modeSupportsVoice = isVoiceInputSupportedForMode(mode, { x01InputMode })
+  const modeSupportsVoice = isVoiceInputSupportedForMode(mode, { visitEntryMode })
 
   const historyRef = useRef(createVoiceUndoHistory())
   const isolationRef = useRef<CommandIsolationState>(createCommandIsolationState())
@@ -64,7 +64,7 @@ export const useVoiceRecognition = ({
   const pendingTranscriptRef = useRef<string | null>(null)
   const bestInterimRef = useRef<string | null>(null)
   const modeRef = useRef(mode)
-  const x01InputModeRef = useRef(x01InputMode)
+  const visitEntryModeRef = useRef(visitEntryMode)
   const applyRef = useRef(applyControllerTransaction)
   const playUndoRef = useRef(playUndo)
   const playSequenceRef = useRef(playSequence)
@@ -75,7 +75,7 @@ export const useVoiceRecognition = ({
   const handleTranscriptRef = useRef<(transcript: string) => void>(() => undefined)
 
   modeRef.current = mode
-  x01InputModeRef.current = x01InputMode
+  visitEntryModeRef.current = visitEntryMode
   applyRef.current = applyControllerTransaction
   playUndoRef.current = playUndo
   playSequenceRef.current = playSequence
@@ -116,7 +116,8 @@ export const useVoiceRecognition = ({
 
     if (
       intent.kind === VoiceIntentKind.VisitScore ||
-      intent.kind === VoiceIntentKind.Bob27HitCount
+      intent.kind === VoiceIntentKind.Bob27HitCount ||
+      intent.kind === VoiceIntentKind.TenUpOneDown
     ) {
       return true
     }
@@ -183,7 +184,7 @@ export const useVoiceRecognition = ({
     }
 
     const intent = parseVoiceCommand(modeRef.current, transcript, {
-      x01InputMode: x01InputModeRef.current,
+      visitEntryMode: visitEntryModeRef.current,
     })
 
     if (intent?.kind !== VoiceIntentKind.VisitScore) {
@@ -201,7 +202,7 @@ export const useVoiceRecognition = ({
     }
 
     const intent = parseVoiceCommand(modeRef.current, transcript, {
-      x01InputMode: x01InputModeRef.current,
+      visitEntryMode: visitEntryModeRef.current,
     })
 
     const eligible =
@@ -230,7 +231,7 @@ export const useVoiceRecognition = ({
 
   const commitTranscript = (transcript: string): void => {
     const intent = parseVoiceCommand(modeRef.current, transcript, {
-      x01InputMode: x01InputModeRef.current,
+      visitEntryMode: visitEntryModeRef.current,
     })
 
     if (intent === null) {
@@ -322,7 +323,7 @@ export const useVoiceRecognition = ({
     }
 
     const intent = parseVoiceCommand(modeRef.current, transcript, {
-      x01InputMode: x01InputModeRef.current,
+      visitEntryMode: visitEntryModeRef.current,
     })
 
     // After the match ends, only voice undo remains (same as keyboard undo).
@@ -458,7 +459,7 @@ export const useVoiceRecognition = ({
         }
 
         const intent = parseVoiceCommand(modeRef.current, transcript, {
-          x01InputMode: x01InputModeRef.current,
+          visitEntryMode: visitEntryModeRef.current,
         })
 
         if (isInterimCommitEligible(intent)) {
@@ -492,7 +493,7 @@ export const useVoiceRecognition = ({
           modeRef.current,
           finalTranscript,
           interimTranscript,
-          { x01InputMode: x01InputModeRef.current },
+          { visitEntryMode: visitEntryModeRef.current },
         )
 
         if (transcript !== finalTranscript) {
@@ -505,7 +506,7 @@ export const useVoiceRecognition = ({
 
         if (interimCommittedRef.current) {
           const intent = parseVoiceCommand(modeRef.current, transcript, {
-            x01InputMode: x01InputModeRef.current,
+            visitEntryMode: visitEntryModeRef.current,
           })
 
           if (isInterimCommitEligible(intent)) {

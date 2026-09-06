@@ -64,3 +64,6 @@ export const getDefaultConfig = (mode: GameModeId): GameConfig =>
 export const showsVisitHistory = (_mode: GameModeId): boolean => true
 
 export const supportsScoreCaller = (mode: GameModeId): boolean => mode !== GameModeId.AroundTheClock
+
+export const supportsVisitScoreInput = (mode: GameModeId): boolean =>
+  mode === GameModeId.X01 || mode === GameModeId.OneTwentyOne || mode === GameModeId.TenUpOneDown

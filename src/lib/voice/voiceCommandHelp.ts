@@ -1,5 +1,5 @@
 import { GameModeId } from '../../types/gameMode'
-import type { X01InputMode } from '../../types/settings'
+import type { VisitInputMode } from '../../types/visit'
 import { isVisitScoreVoiceMode, isVoiceInputSupportedForMode } from './voiceModeSupport'
 
 export const VOICE_COMMANDS_SECTION_TITLE = 'Voice commands'
@@ -22,7 +22,7 @@ export interface VoiceCommandHelpSection {
 }
 
 export interface VoiceCommandHelpOptions {
-  x01InputMode?: X01InputMode
+  visitEntryMode?: VisitInputMode
 }
 
 /**
@@ -64,6 +64,20 @@ export const getVoiceCommandHelpSection = (
         { say: 'No hits', means: 'Miss every dart in this visit' },
         { say: 'Undo', means: 'Remove the last voice entry' },
         { say: 'Undo hit miss miss', means: 'Replace the last voice entry' },
+      ],
+    }
+  }
+
+  if (mode === GameModeId.TenUpOneDown) {
+    return {
+      title: VOICE_COMMANDS_SECTION_TITLE,
+      intro: VOICE_COMMANDS_SECTION_INTRO,
+      note: 'Also accepted: "success", "game shot", "miss", "no score", and "no hits".',
+      rows: [
+        { say: 'Checkout', means: 'Checkout the current target' },
+        { say: 'Failed', means: 'Fail the current target' },
+        { say: 'Undo', means: 'Remove the last voice entry' },
+        { say: 'Undo checkout', means: 'Replace the last voice entry' },
       ],
     }
   }

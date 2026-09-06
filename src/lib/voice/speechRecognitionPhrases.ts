@@ -38,6 +38,24 @@ const AROUND_THE_CLOCK_PHRASES: VoicePhraseHint[] = [
   { phrase: 'missed all', boost: 4 },
 ]
 
+const TEN_UP_ONE_DOWN_PHRASES: VoicePhraseHint[] = [
+  { phrase: 'checkout', boost: 9 },
+  { phrase: 'success', boost: 8 },
+  // Prefer "failed" — longer and more reliable than bare "miss".
+  { phrase: 'failed', boost: 9 },
+  { phrase: 'fail', boost: 6 },
+  { phrase: 'no score', boost: 7 },
+  { phrase: 'no hits', boost: 7 },
+  { phrase: 'zero hits', boost: 5 },
+  { phrase: 'miss all', boost: 4 },
+  { phrase: 'missed all', boost: 3 },
+  { phrase: 'miss', boost: 5 },
+  { phrase: 'missed', boost: 4 },
+  { phrase: 'nil', boost: 3 },
+  { phrase: 'nought', boost: 2 },
+  { phrase: 'game shot', boost: 6 },
+]
+
 /**
  * Visit-score biasing: help short scores without reintroducing "hundred" ghosts.
  * Never boost "hundred" / "a hundred" — silence often becomes that with confidence 1.
@@ -127,6 +145,10 @@ export const getVoiceRecognitionPhrases = (mode: GameModeId): VoicePhraseHint[] 
 
   if (mode === GameModeId.AroundTheClock) {
     return dedupePhrases([...META_PHRASES, ...AROUND_THE_CLOCK_PHRASES])
+  }
+
+  if (mode === GameModeId.TenUpOneDown) {
+    return dedupePhrases([...META_PHRASES, ...TEN_UP_ONE_DOWN_PHRASES])
   }
 
   if (isVisitScoreVoiceMode(mode)) {

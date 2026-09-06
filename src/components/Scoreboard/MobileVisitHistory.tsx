@@ -1,4 +1,4 @@
-import { Stack } from '@chakra-ui/react'
+import { SimpleGrid, Stack } from '@chakra-ui/react'
 import { getAroundTheClockConfig } from '../../lib/aroundTheClock/aroundTheClockConfig'
 import { isAroundTheClockConfig } from '../../lib/game/gameConfigGuards'
 import type { GameConfig, GameModeId } from '../../types/gameMode'
@@ -27,31 +27,45 @@ export const MobileVisitHistory = ({
     ? getAroundTheClockConfig(config)
     : null
 
+  const columns = players.map((player, index) => {
+    const align = showPlayerName && index > 0 ? 'right' : 'left'
+
+    return aroundTheClockConfig === null ? (
+      <VisitHistoryColumn
+        key={player.id}
+        player={player}
+        visits={visits}
+        mode={mode}
+        currentLeg={currentLeg}
+        align={align}
+        showPlayerName={showPlayerName}
+        variant="stack"
+      />
+    ) : (
+      <AroundTheClockHistoryColumn
+        key={player.id}
+        player={player}
+        visits={visits}
+        config={aroundTheClockConfig}
+        currentLeg={currentLeg}
+        align={align}
+        showPlayerName={showPlayerName}
+        variant="stack"
+      />
+    )
+  })
+
+  if (players.length > 1) {
+    return (
+      <SimpleGrid columns={2} gap={3} w="full" alignItems="start">
+        {columns}
+      </SimpleGrid>
+    )
+  }
+
   return (
     <Stack gap={6} w="full">
-      {players.map((player) =>
-        aroundTheClockConfig === null ? (
-          <VisitHistoryColumn
-            key={player.id}
-            player={player}
-            visits={visits}
-            mode={mode}
-            currentLeg={currentLeg}
-            showPlayerName={showPlayerName}
-            variant="stack"
-          />
-        ) : (
-          <AroundTheClockHistoryColumn
-            key={player.id}
-            player={player}
-            visits={visits}
-            config={aroundTheClockConfig}
-            currentLeg={currentLeg}
-            showPlayerName={showPlayerName}
-            variant="stack"
-          />
-        ),
-      )}
+      {columns}
     </Stack>
   )
 }
