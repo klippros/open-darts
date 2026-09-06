@@ -1,5 +1,5 @@
 import type { AppSettings } from '../../types/settings'
-import { DEFAULT_APP_SETTINGS, X01InputMode } from '../../types/settings'
+import { DEFAULT_APP_SETTINGS, SingleDartScoringMode } from '../../types/settings'
 import type { StorageAdapter } from './localStorageAdapter'
 import { browserLocalStorage } from './localStorageAdapter'
 import { StorageKey } from './storageKeys'
@@ -19,12 +19,16 @@ const parseJson = (value: string | null): unknown => {
 const readBooleanSetting = (value: unknown, fallback: boolean): boolean =>
   typeof value === 'boolean' ? value : fallback
 
-const readX01InputMode = (value: unknown): X01InputMode => {
-  if (value === X01InputMode.Board || value === X01InputMode.VisitScore) {
+const readSingleDartScoring = (value: unknown): SingleDartScoringMode => {
+  if (
+    value === SingleDartScoringMode.Always ||
+    value === SingleDartScoringMode.Sub171 ||
+    value === SingleDartScoringMode.Never
+  ) {
     return value
   }
 
-  return DEFAULT_APP_SETTINGS.x01InputMode
+  return DEFAULT_APP_SETTINGS.singleDartScoring
 }
 
 const mergeAppSettings = (value: unknown): AppSettings | null => {
@@ -43,7 +47,7 @@ const mergeAppSettings = (value: unknown): AppSettings | null => {
       stored.uiSoundsEnabled,
       DEFAULT_APP_SETTINGS.uiSoundsEnabled,
     ),
-    x01InputMode: readX01InputMode(stored.x01InputMode),
+    singleDartScoring: readSingleDartScoring(stored.singleDartScoring),
   }
 }
 

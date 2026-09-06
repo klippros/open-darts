@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { GameModeId } from '../../types/gameMode'
-import { X01InputMode } from '../../types/settings'
+import { VisitInputMode } from '../../types/visit'
 import { parseVoiceCommand, VoiceIntentKind } from './parseVoiceCommand'
 
 describe('parseVoiceCommand', () => {
@@ -48,7 +48,7 @@ describe('parseVoiceCommand', () => {
   })
 
   describe('visit score', () => {
-    const options = { x01InputMode: X01InputMode.VisitScore }
+    const options = { visitEntryMode: VisitInputMode.VisitScore }
 
     it.each([GameModeId.X01, GameModeId.OneTwentyOne, GameModeId.TenUpOneDown])(
       'parses visit totals for %s',

@@ -1,16 +1,17 @@
-export enum X01InputMode {
-  Board = 'board',
-  VisitScore = 'visit-score',
+export enum SingleDartScoringMode {
+  Always = 'always',
+  Sub171 = 'sub-171',
+  Never = 'never',
 }
 
 export interface AppSettings {
   scoreCallerEnabled: boolean
   uiSoundsEnabled: boolean
-  x01InputMode: X01InputMode
+  singleDartScoring: SingleDartScoringMode
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
   scoreCallerEnabled: true,
   uiSoundsEnabled: true,
-  x01InputMode: X01InputMode.Board,
+  singleDartScoring: SingleDartScoringMode.Sub171,
 }

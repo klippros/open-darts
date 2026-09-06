@@ -1,5 +1,5 @@
 import { GameModeId } from '../../types/gameMode'
-import { X01InputMode } from '../../types/settings'
+import { VisitInputMode } from '../../types/visit'
 
 /** Modes where browser speech recognition is reliable enough for scoring. */
 const ALWAYS_VOICE_INPUT_MODES = new Set<GameModeId>([GameModeId.Bob27, GameModeId.AroundTheClock])
@@ -11,7 +11,7 @@ const VISIT_SCORE_VOICE_MODES = new Set<GameModeId>([
 ])
 
 export interface VoiceModeSupportOptions {
-  x01InputMode?: X01InputMode
+  visitEntryMode?: VisitInputMode
 }
 
 export const isVoiceInputSupportedForMode = (
@@ -22,7 +22,7 @@ export const isVoiceInputSupportedForMode = (
     return true
   }
 
-  return VISIT_SCORE_VOICE_MODES.has(mode) && options.x01InputMode === X01InputMode.VisitScore
+  return VISIT_SCORE_VOICE_MODES.has(mode) && options.visitEntryMode === VisitInputMode.VisitScore
 }
 
 export const isVisitScoreVoiceMode = (mode: GameModeId): boolean =>

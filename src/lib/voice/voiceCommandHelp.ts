@@ -1,5 +1,5 @@
 import { GameModeId } from '../../types/gameMode'
-import type { X01InputMode } from '../../types/settings'
+import type { VisitInputMode } from '../../types/visit'
 import { isVisitScoreVoiceMode, isVoiceInputSupportedForMode } from './voiceModeSupport'
 
 export const VOICE_COMMANDS_SECTION_TITLE = 'Voice commands'
@@ -22,7 +22,7 @@ export interface VoiceCommandHelpSection {
 }
 
 export interface VoiceCommandHelpOptions {
-  x01InputMode?: X01InputMode
+  visitEntryMode?: VisitInputMode
 }
 
 /**

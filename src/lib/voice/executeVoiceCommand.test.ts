@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { DartMultiplier } from '../../types/dart'
 import { GameModeId } from '../../types/gameMode'
 import { PlayerKind } from '../../types/player'
-import { X01InputMode } from '../../types/settings'
+import { VisitInputMode } from '../../types/visit'
 import { createGameController } from '../game/createSession'
 import { createPlayer } from '../game/playerFactory'
 import { numberDart } from '../testHelpers'
@@ -161,7 +161,7 @@ describe('voiceUndoHistory + executeVoiceCommand', () => {
   it('applies and undoes X01 visit-score voice commands', () => {
     const history = createVoiceUndoHistory()
     let controller = createGameController({ mode: GameModeId.X01, players: [solo] })
-    const options = { x01InputMode: X01InputMode.VisitScore }
+    const options = { visitEntryMode: VisitInputMode.VisitScore }
 
     const applied = executeVoiceCommand(
       controller,

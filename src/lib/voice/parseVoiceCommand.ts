@@ -1,5 +1,5 @@
 import { GameModeId } from '../../types/gameMode'
-import type { X01InputMode } from '../../types/settings'
+import type { VisitInputMode } from '../../types/visit'
 import type { Bob27HitCount } from '../bob27/buildBob27Darts'
 import { parseAroundTheClockCommand } from './grammars/aroundTheClockGrammar'
 import type { AroundTheClockCommand } from './grammars/aroundTheClockGrammar'
@@ -28,7 +28,7 @@ export type VoiceIntent =
   | VoiceGameplayIntent
 
 export interface ParseVoiceCommandOptions {
-  x01InputMode?: X01InputMode
+  visitEntryMode?: VisitInputMode
 }
 
 const parseGameplayTokens = (mode: GameModeId, tokens: string[]): VoiceGameplayIntent | null => {

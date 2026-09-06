@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { loadSettings, saveSettings } from './settingsStore'
 import type { StorageAdapter } from './localStorageAdapter'
 import { StorageKey } from './storageKeys'
-import { DEFAULT_APP_SETTINGS, X01InputMode } from '../../types/settings'
+import { DEFAULT_APP_SETTINGS, SingleDartScoringMode } from '../../types/settings'
 
 const createMemoryStorage = (): StorageAdapter & { data: Map<string, string> } => {
   const data = new Map<string, string>()
@@ -20,7 +20,7 @@ const createMemoryStorage = (): StorageAdapter & { data: Map<string, string> } =
 }
 
 describe('settingsStore', () => {
-  it('defaults score caller, UI sounds, and board input', () => {
+  it('defaults score caller, UI sounds, and Sub 171 single-dart scoring', () => {
     const storage = createMemoryStorage()
 
     expect(loadSettings(storage)).toEqual(DEFAULT_APP_SETTINGS)
@@ -33,7 +33,7 @@ describe('settingsStore', () => {
       {
         scoreCallerEnabled: false,
         uiSoundsEnabled: false,
-        x01InputMode: X01InputMode.VisitScore,
+        singleDartScoring: SingleDartScoringMode.Never,
       },
       storage,
     )
@@ -41,7 +41,7 @@ describe('settingsStore', () => {
     expect(loadSettings(storage)).toEqual({
       scoreCallerEnabled: false,
       uiSoundsEnabled: false,
-      x01InputMode: X01InputMode.VisitScore,
+      singleDartScoring: SingleDartScoringMode.Never,
     })
   })
 
@@ -52,11 +52,11 @@ describe('settingsStore', () => {
     expect(loadSettings(storage)).toEqual({
       scoreCallerEnabled: false,
       uiSoundsEnabled: true,
-      x01InputMode: X01InputMode.Board,
+      singleDartScoring: SingleDartScoringMode.Sub171,
     })
   })
 
-  it('ignores legacy voiceIsolationMs when loading', () => {
+  it('ignores legacy x01InputMode and voiceIsolationMs when loading', () => {
     const storage = createMemoryStorage()
     storage.setItem(
       StorageKey.Settings,
@@ -64,13 +64,14 @@ describe('settingsStore', () => {
         scoreCallerEnabled: true,
         uiSoundsEnabled: true,
         voiceIsolationMs: 9999,
+        x01InputMode: 'visit-score',
       }),
     )
 
     expect(loadSettings(storage)).toEqual({
       scoreCallerEnabled: true,
       uiSoundsEnabled: true,
-      x01InputMode: X01InputMode.Board,
+      singleDartScoring: SingleDartScoringMode.Sub171,
     })
   })
 
@@ -81,7 +82,7 @@ describe('settingsStore', () => {
     expect(loadSettings(storage)).toEqual({
       scoreCallerEnabled: true,
       uiSoundsEnabled: true,
-      x01InputMode: X01InputMode.Board,
+      singleDartScoring: SingleDartScoringMode.Sub171,
     })
   })
 

@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { clearActiveSnapshot } from '../lib/storage/gameStore'
+import { supportsVisitScoreInput } from '../lib/game/gameModeDefinitions'
 import { parseGameLaunchParams } from '../lib/game/gameRoute'
 import {
   getDartPickerHelpContent,
   getGameModePickerTargets,
 } from '../lib/game/getGameModePickerTargets'
 import { matchHasProgress } from '../lib/game/matchProgress'
+import { resolveVisitEntryMode } from '../lib/game/resolveVisitEntryMode'
 import { isVoiceInputSupportedForMode } from '../lib/voice/voiceModeSupport'
+import { VisitInputMode } from '../types/visit'
 import { useAuth } from './authContext'
 import { useSetGameChrome } from './gameChromeContext'
 import { useSettings } from './settingsContext'
@@ -18,9 +21,10 @@ import { useVoiceRecognition } from './useVoiceRecognition'
 export const useGamePage = () => {
   const navigate = useNavigate()
   const { profile } = useAuth()
-  const { x01InputMode } = useSettings()
+  const { singleDartScoring } = useSettings()
   const [searchParams] = useSearchParams()
   const [abortDialogOpen, setAbortDialogOpen] = useState(false)
+  const [visitEntryModeOverride, setVisitEntryModeOverride] = useState<VisitInputMode | null>(null)
   const setGameChrome = useSetGameChrome()
   const mode = useMemo(
     () => parseGameLaunchParams(searchParams, profile?.displayName).mode,
@@ -34,15 +38,31 @@ export const useGamePage = () => {
 
   useScoreCallerInitialLeg(game.controller, game.loadState.kind === 'ready')
 
+  const sessionId = game.controller.session.id
+  useEffect(() => {
+    setVisitEntryModeOverride(null)
+  }, [sessionId])
+
   const inputDisabled = game.controller.isComplete || game.loadState.kind === 'conflict'
   const sessionMode = game.controller.session.mode
-  const voiceInputAvailable = isVoiceInputSupportedForMode(sessionMode, { x01InputMode })
+  const activePrimaryScore =
+    game.controller.scoreboard.players.find((player) => player.isActive)?.primaryScore ?? 0
+
+  const visitEntryMode = supportsVisitScoreInput(sessionMode)
+    ? resolveVisitEntryMode(singleDartScoring, activePrimaryScore, visitEntryModeOverride)
+    : VisitInputMode.PerDart
+
+  const setVisitEntryMode = useCallback((next: VisitInputMode) => {
+    setVisitEntryModeOverride(next)
+  }, [])
+
+  const voiceInputAvailable = isVoiceInputSupportedForMode(sessionMode, { visitEntryMode })
 
   useVoiceRecognition({
     mode: sessionMode,
     sessionId: game.controller.session.id,
     inputDisabled,
-    x01InputMode,
+    visitEntryMode,
     applyControllerTransaction: game.applyControllerTransaction,
   })
 
@@ -68,8 +88,8 @@ export const useGamePage = () => {
     game.controller.activePlayerId,
   )
   const help = useMemo(
-    () => getDartPickerHelpContent(sessionMode, pickerTargets.bob27TargetIndex, x01InputMode),
-    [sessionMode, pickerTargets.bob27TargetIndex, x01InputMode],
+    () => getDartPickerHelpContent(sessionMode, pickerTargets.bob27TargetIndex, visitEntryMode),
+    [sessionMode, pickerTargets.bob27TargetIndex, visitEntryMode],
   )
 
   useEffect(() => {
@@ -105,6 +125,8 @@ export const useGamePage = () => {
   return {
     ...game,
     pickerTargets,
+    visitEntryMode,
+    setVisitEntryMode,
     abortDialogOpen,
     cancelAbortMatch,
     confirmAbortMatch,

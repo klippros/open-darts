@@ -1,7 +1,14 @@
 import { Stack } from '@chakra-ui/react'
 import { useSettings } from '../../hooks/settingsContext'
-import { X01InputMode } from '../../types/settings'
+import { SingleDartScoringMode } from '../../types/settings'
+import { SettingsSegmentRow } from './SettingsSegmentRow'
 import { SettingsSwitchRow } from './SettingsSwitchRow'
+
+const SINGLE_DART_SCORING_OPTIONS = [
+  { value: SingleDartScoringMode.Always, label: 'Always' },
+  { value: SingleDartScoringMode.Sub171, label: 'Sub 171' },
+  { value: SingleDartScoringMode.Never, label: 'Never' },
+]
 
 export const SettingsPopoverContent = () => {
   const {
@@ -9,8 +16,8 @@ export const SettingsPopoverContent = () => {
     setScoreCallerEnabled,
     uiSoundsEnabled,
     setUiSoundsEnabled,
-    x01InputMode,
-    setX01InputMode,
+    singleDartScoring,
+    setSingleDartScoring,
   } = useSettings()
 
   return (
@@ -27,13 +34,12 @@ export const SettingsPopoverContent = () => {
         checked={uiSoundsEnabled}
         onCheckedChange={setUiSoundsEnabled}
       />
-      <SettingsSwitchRow
-        label="Visit score input"
-        description="Enter a visit total (0–180) instead of each dart for X01, 121, and 10-up-1-down"
-        checked={x01InputMode === X01InputMode.VisitScore}
-        onCheckedChange={(checked) => {
-          setX01InputMode(checked ? X01InputMode.VisitScore : X01InputMode.Board)
-        }}
+      <SettingsSegmentRow
+        label="Single dart scoring"
+        description="Enter each dart, or full visit scores."
+        value={singleDartScoring}
+        options={SINGLE_DART_SCORING_OPTIONS}
+        onValueChange={setSingleDartScoring}
       />
     </Stack>
   )
