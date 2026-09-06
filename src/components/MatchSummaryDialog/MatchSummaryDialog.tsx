@@ -6,8 +6,8 @@ import type { GameSession } from '../../types/gameSession'
 import { getMatchSummary } from '../../lib/history/sessionSummary'
 import { darkDialogContentProps } from '../darkDialogContentProps'
 import { SignInDialog } from '../SignInDialog/SignInDialog'
-import { MatchSummaryBody } from './MatchSummaryBody'
-import { MatchSummaryTitle } from './MatchSummaryTitle'
+import { MatchSummaryBody } from '../SessionSummary/MatchSummaryBody'
+import { MatchSummaryTitle } from '../SessionSummary/MatchSummaryTitle'
 
 export interface MatchSummaryDialogProps {
   open: boolean

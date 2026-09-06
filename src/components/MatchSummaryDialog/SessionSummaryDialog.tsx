@@ -2,8 +2,8 @@ import { Dialog } from '@chakra-ui/react'
 import type { GameSession } from '../../types/gameSession'
 import { getMatchSummary } from '../../lib/history/sessionSummary'
 import { darkDialogContentProps } from '../darkDialogContentProps'
-import { MatchSummaryBody } from './MatchSummaryBody'
-import { MatchSummaryTitle } from './MatchSummaryTitle'
+import { MatchSummaryBody } from '../SessionSummary/MatchSummaryBody'
+import { MatchSummaryTitle } from '../SessionSummary/MatchSummaryTitle'
 
 export interface SessionSummaryDialogProps {
   open: boolean
