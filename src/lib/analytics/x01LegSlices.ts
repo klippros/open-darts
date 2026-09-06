@@ -33,3 +33,9 @@ export const countDartsInVisits = (visits: Visit[]): number =>
 
 export const getX01LegSlicePointId = (slice: X01LegSlice): string =>
   `${slice.session.id}:leg:${slice.legNumber}`
+
+export const getSessionIdFromTimelinePointId = (pointId: string): string => {
+  const match = /^(.*):leg:\d+$/u.exec(pointId)
+
+  return match?.[1] ?? pointId
+}

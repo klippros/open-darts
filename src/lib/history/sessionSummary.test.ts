@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { AroundTheClockAimMode } from '../../types/aroundTheClock'
 import { GameModeId, GameStatus } from '../../types/gameMode'
 import type { GameSession } from '../../types/gameSession'
 import { PlayerKind } from '../../types/player'
@@ -54,6 +55,14 @@ describe('sessionSummary', () => {
         }),
       ),
     ).toBe("Bob's 27")
+    expect(
+      getSessionModeLabel(
+        sampleSession({
+          mode: GameModeId.AroundTheClock,
+          config: { finishOnBull: true, aimMode: AroundTheClockAimMode.Singles },
+        }),
+      ),
+    ).toBe('Around the Clock · Singles')
   })
 
   it('summarizes x01 sessions without visit stats in the text summary', () => {
@@ -65,6 +74,18 @@ describe('sessionSummary', () => {
       title: 'Session complete',
       details: [],
     })
+  })
+
+  it('puts Around the Clock aim mode in the match summary title', () => {
+    expect(
+      getMatchSummary(
+        sampleSession({
+          mode: GameModeId.AroundTheClock,
+          config: { finishOnBull: true, aimMode: AroundTheClockAimMode.Doubles },
+          visits: [],
+        }),
+      ).title,
+    ).toBe('Around the Clock · Doubles complete')
   })
 
   it('uses the checkout visit score before the winning visit', () => {
@@ -145,6 +166,64 @@ describe('sessionSummary', () => {
       title: '10 Up 1 Down session ended',
       details: ['1 visit', 'Stopped on 70'],
     })
+  })
+
+  it('titles a 10 up 1 down win after checking out 170', () => {
+    expect(
+      getMatchSummary(
+        sampleSession({
+          mode: GameModeId.TenUpOneDown,
+          config: {
+            startScore: 60,
+            incrementUp: 10,
+            decrementDown: 1,
+            minScore: 2,
+            doubleOut: true,
+          },
+          visits: [
+            {
+              visitIndex: 0,
+              playerId: 'player-1',
+              darts: [],
+              visitScore: 170,
+              scoreBefore: 170,
+              scoreAfter: 170,
+              bust: false,
+              checkout: true,
+            },
+          ],
+        }),
+      ).title,
+    ).toBe('10 Up 1 Down complete')
+  })
+
+  it('titles a 10 up 1 down loss after failing at 2', () => {
+    expect(
+      getMatchSummary(
+        sampleSession({
+          mode: GameModeId.TenUpOneDown,
+          config: {
+            startScore: 60,
+            incrementUp: 10,
+            decrementDown: 1,
+            minScore: 2,
+            doubleOut: true,
+          },
+          visits: [
+            {
+              visitIndex: 0,
+              playerId: 'player-1',
+              darts: [],
+              visitScore: 0,
+              scoreBefore: 2,
+              scoreAfter: 2,
+              bust: true,
+              checkout: false,
+            },
+          ],
+        }),
+      ).title,
+    ).toBe('10 Up 1 Down game over')
   })
 
   it('sorts completed sessions newest first', () => {

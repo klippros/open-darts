@@ -1,5 +1,5 @@
 import type { X01LegStats } from './x01Stats'
-import { formatAverage, formatDoubleCheckout, formatInteger } from './formatAnalytics'
+import { formatAverage, formatCount, formatDoubleCheckout, formatInteger } from './formatAnalytics'
 import type { PlayerMatchStats } from './matchPlayerStats'
 import { emptyPlayerMatchStats } from './matchPlayerStats'
 
@@ -144,7 +144,7 @@ export const formatStatsPageRowValue = (rowId: MatchStatRowId, stats: X01LegStat
   }
 
   if (rowId === MatchStatRowId.AvgDarts) {
-    return formatInteger(stats.avgDarts)
+    return formatCount(stats.avgDarts)
   }
 
   return (

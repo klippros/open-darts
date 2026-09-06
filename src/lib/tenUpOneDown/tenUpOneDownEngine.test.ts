@@ -3,7 +3,7 @@ import { DartMultiplier } from '../../types/dart'
 import { GameModeId } from '../../types/gameMode'
 import { PlayerKind } from '../../types/player'
 import { tenUpOneDownEngine } from './tenUpOneDownEngine'
-import { numberDart } from '../testHelpers'
+import { bullDart, numberDart } from '../testHelpers'
 
 const player = { id: 'p1', name: 'Player 1', kind: PlayerKind.Human }
 const config = {
@@ -41,5 +41,37 @@ describe('tenUpOneDownEngine', () => {
       primaryScore: 60,
       secondaryLabel: 'Checkout target',
     })
+  })
+
+  it('completes with a winner after checking out 170', () => {
+    const state = {
+      ...tenUpOneDownEngine.createInitialState([player], config),
+      players: { [player.id]: { targetScore: 170 } },
+    }
+    const result = tenUpOneDownEngine.commitVisit(state, player.id, 0, [
+      numberDart(20, DartMultiplier.Triple),
+      numberDart(20, DartMultiplier.Triple),
+      bullDart(),
+    ])
+
+    expect(result.visit.checkout).toBe(true)
+    expect(result.state.winnerId).toBe(player.id)
+    expect(result.state.failed).toBeUndefined()
+    expect(tenUpOneDownEngine.isGameComplete(result.state)).toBe(true)
+  })
+
+  it('completes as failed after missing at 2', () => {
+    const state = {
+      ...tenUpOneDownEngine.createInitialState([player], config),
+      players: { [player.id]: { targetScore: 2 } },
+    }
+    const result = tenUpOneDownEngine.commitVisit(state, player.id, 0, [
+      numberDart(1, DartMultiplier.Single),
+    ])
+
+    expect(result.visit.checkout).toBe(false)
+    expect(result.state.winnerId).toBeUndefined()
+    expect(result.state.failed).toBe(true)
+    expect(tenUpOneDownEngine.isGameComplete(result.state)).toBe(true)
   })
 })

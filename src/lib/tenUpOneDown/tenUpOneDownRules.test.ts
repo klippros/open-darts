@@ -23,6 +23,8 @@ describe('tenUpOneDownRules', () => {
       targetScoreAfter: 70,
       bust: false,
       checkout: true,
+      completed: false,
+      won: false,
     })
   })
 
@@ -33,6 +35,8 @@ describe('tenUpOneDownRules', () => {
       targetScoreAfter: 59,
       bust: true,
       checkout: false,
+      completed: false,
+      won: false,
     })
   })
 
@@ -51,16 +55,44 @@ describe('tenUpOneDownRules', () => {
       targetScoreAfter: 59,
       bust: false,
       checkout: false,
+      completed: false,
+      won: false,
     })
   })
 
-  it('does not drop below the minimum score', () => {
+  it('ends the game when failing at the minimum score', () => {
     const outcome = resolveTenUpOneDownVisit(2, [numberDart(1, DartMultiplier.Single)], config)
 
     expect(outcome).toEqual({
       targetScoreAfter: 2,
       bust: true,
       checkout: false,
+      completed: true,
+      won: false,
+    })
+  })
+
+  it('does not end mid-visit at the minimum score', () => {
+    const outcome = resolveTenUpOneDownVisit(2, [], config)
+
+    expect(outcome).toEqual({
+      targetScoreAfter: 2,
+      bust: false,
+      checkout: false,
+      completed: false,
+      won: false,
+    })
+  })
+
+  it('climbs after checking out the minimum score', () => {
+    const outcome = resolveTenUpOneDownVisit(2, [numberDart(1, DartMultiplier.Double)], config)
+
+    expect(outcome).toEqual({
+      targetScoreAfter: 12,
+      bust: false,
+      checkout: true,
+      completed: false,
+      won: false,
     })
   })
 
@@ -79,6 +111,8 @@ describe('tenUpOneDownRules', () => {
       targetScoreAfter: 167,
       bust: false,
       checkout: false,
+      completed: false,
+      won: false,
     })
   })
 
@@ -93,6 +127,24 @@ describe('tenUpOneDownRules', () => {
       targetScoreAfter: 170,
       bust: false,
       checkout: true,
+      completed: false,
+      won: false,
+    })
+  })
+
+  it('wins after checking out 170', () => {
+    const outcome = resolveTenUpOneDownVisit(
+      170,
+      [numberDart(20, DartMultiplier.Triple), numberDart(20, DartMultiplier.Triple), bullDart()],
+      config,
+    )
+
+    expect(outcome).toEqual({
+      targetScoreAfter: 170,
+      bust: false,
+      checkout: true,
+      completed: true,
+      won: true,
     })
   })
 })

@@ -2,6 +2,7 @@ import { Box, Button, Heading, Stack, Text } from '@chakra-ui/react'
 import { useCallback, useEffect, useState } from 'react'
 import { ContentContainer } from '../components/ContentContainer'
 import { HistoryList } from '../components/HistoryList/HistoryList'
+import { SessionSummaryDialog } from '../components/MatchSummaryDialog/SessionSummaryDialog'
 import { ResetStatsDialog } from '../components/ResetStatsDialog/ResetStatsDialog'
 import { SignInDialog } from '../components/SignInDialog/SignInDialog'
 import { useAuth } from '../hooks/authContext'
@@ -9,12 +10,14 @@ import { getSyncStatusLabel } from '../lib/auth/syncStatusLabel'
 import { sortSessionsByDate } from '../lib/history/sessionSummary'
 import { clearStoredSessions, loadStoredSessions } from '../lib/storage/gameStore'
 import { AuthStatus, SyncStatus } from '../types/auth'
+import type { GameSession } from '../types/gameSession'
 
 export const HistoryPage = () => {
   const { user, profile, authStatus, syncStatus, isConfigured, signOut, clearSyncedSessions } =
     useAuth()
   const [signInDialogOpen, setSignInDialogOpen] = useState(false)
   const [resetDialogOpen, setResetDialogOpen] = useState(false)
+  const [selectedSession, setSelectedSession] = useState<GameSession | null>(null)
   const [sessions, setSessions] = useState(() => sortSessionsByDate(loadStoredSessions()))
 
   useEffect(() => {
@@ -147,9 +150,16 @@ export const HistoryPage = () => {
             </Box>
           )}
 
-          <HistoryList sessions={sessions} />
+          <HistoryList sessions={sessions} onSelectSession={setSelectedSession} />
         </Stack>
       </Box>
+      <SessionSummaryDialog
+        open={selectedSession !== null}
+        session={selectedSession}
+        onClose={() => {
+          setSelectedSession(null)
+        }}
+      />
       <ResetStatsDialog
         open={resetDialogOpen}
         onOpenChange={setResetDialogOpen}

@@ -64,7 +64,8 @@ const buildVisitResult = (
         targetScore: outcome.targetScoreAfter,
       },
     },
-    winnerId: state.winnerId,
+    winnerId: outcome.won ? playerId : state.winnerId,
+    ...(outcome.completed && !outcome.won ? { failed: true } : {}),
   }
 
   return {
@@ -166,5 +167,5 @@ export const tenUpOneDownEngine: GameEngine<TenUpOneDownState, TenUpOneDownConfi
     return outcome.checkout || outcome.bust
   },
 
-  isGameComplete: () => false,
+  isGameComplete: (state) => state.winnerId !== undefined || state.failed === true,
 }

@@ -10,9 +10,10 @@ import { HistoryListItem } from './HistoryListItem'
 
 export interface HistoryListProps {
   sessions: GameSession[]
+  onSelectSession: (session: GameSession) => void
 }
 
-export const HistoryList = ({ sessions }: HistoryListProps) => {
+export const HistoryList = ({ sessions, onSelectSession }: HistoryListProps) => {
   if (sessions.length === 0) {
     return (
       <Box
@@ -38,6 +39,9 @@ export const HistoryList = ({ sessions }: HistoryListProps) => {
           modeLabel={getSessionModeLabel(session)}
           resultSummary={getSessionResultSummary(session)}
           completedAtLabel={formatSessionDate(getSessionCompletedAt(session))}
+          onClick={() => {
+            onSelectSession(session)
+          }}
         />
       ))}
     </Stack>

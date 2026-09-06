@@ -12,6 +12,7 @@ import { formatSessionDate } from '../../lib/history/sessionSummary'
 export interface StatTimelineChartProps {
   points: StatTimelinePoint[]
   format: StatTimelineFormat
+  onPointClick?: (point: StatTimelinePoint) => void
 }
 
 const CHART_WIDTH = 640
@@ -50,7 +51,7 @@ const getTooltipPosition = (x: number, y: number): { tooltipX: number; tooltipY:
   return { tooltipX, tooltipY }
 }
 
-export const StatTimelineChart = ({ points, format }: StatTimelineChartProps) => {
+export const StatTimelineChart = ({ points, format, onPointClick }: StatTimelineChartProps) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
   const plotValues = getPlotValues(points)
 
@@ -209,6 +210,9 @@ export const StatTimelineChart = ({ points, format }: StatTimelineChartProps) =>
                 style={{ cursor: 'pointer' }}
                 onMouseEnter={() => {
                   setHoveredIndex(index)
+                }}
+                onClick={() => {
+                  onPointClick?.(point)
                 }}
               />
               <circle
