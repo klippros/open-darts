@@ -50,19 +50,21 @@ export const CheckoutPracticeCard = ({
             })
           }}
         />
-        <StatCard
-          label="3-dart average"
-          value={formatAverage(stats.threeDartAverage)}
-          onClick={() => {
-            onStatSelect({
-              scope,
-              metric: 'threeDartAverage',
-              metricLabel: '3-dart average',
-              scopeLabel: stats.label,
-            })
-          }}
-        />
-        {isOneTwentyOne && stats.avgCheckoutsPerGame !== null && (
+        {isOneTwentyOne && (
+          <StatCard
+            label="3-dart average"
+            value={formatAverage(stats.threeDartAverage)}
+            onClick={() => {
+              onStatSelect({
+                scope,
+                metric: 'threeDartAverage',
+                metricLabel: '3-dart average',
+                scopeLabel: stats.label,
+              })
+            }}
+          />
+        )}
+        {stats.avgCheckoutsPerGame !== null && (
           <StatCard
             label="Avg checkouts / game"
             value={formatAverage(stats.avgCheckoutsPerGame)}
@@ -76,7 +78,7 @@ export const CheckoutPracticeCard = ({
             }}
           />
         )}
-        {isOneTwentyOne && stats.bestCheckoutsPerGame !== null && (
+        {stats.bestCheckoutsPerGame !== null && (
           <StatCard
             label="Best checkouts / game"
             value={formatInteger(stats.bestCheckoutsPerGame)}
@@ -90,15 +92,15 @@ export const CheckoutPracticeCard = ({
             }}
           />
         )}
-        {isOneTwentyOne && stats.highestCheckout !== null && (
+        {stats.highestCheckout !== null && (
           <StatCard
-            label="Highest target"
+            label="Highest checkout"
             value={formatInteger(stats.highestCheckout)}
             onClick={() => {
               onStatSelect({
                 scope,
                 metric: 'highestCheckout',
-                metricLabel: 'Highest target',
+                metricLabel: 'Highest checkout',
                 scopeLabel: stats.label,
               })
             }}

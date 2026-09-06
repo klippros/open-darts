@@ -8,6 +8,7 @@ import { numberDart } from '../testHelpers'
 import {
   computeOneTwentyOneSingleSessionStats,
   getHighestOneTwentyOneCheckoutTarget,
+  getOneTwentyOneCheckoutRate,
   getSessionCheckoutCount,
 } from './oneTwentyOneVisitStats'
 
@@ -88,7 +89,38 @@ describe('oneTwentyOneVisitStats', () => {
     ).toBe(140)
   })
 
-  it('computes single-session summary stats', () => {
+  it('computes checkout rate from resolved targets, not every visit', () => {
+    expect(
+      getOneTwentyOneCheckoutRate([
+        visit({
+          checkout: false,
+          scoreBefore: 121,
+          scoreAfter: 81,
+          visitScore: 40,
+          metadata: { roundTarget: 121 },
+        }),
+        visit({
+          visitIndex: 1,
+          checkout: true,
+          scoreBefore: 81,
+          scoreAfter: 122,
+          visitScore: 81,
+          metadata: { roundTarget: 121 },
+        }),
+        visit({
+          visitIndex: 2,
+          checkout: false,
+          bust: true,
+          scoreBefore: 122,
+          scoreAfter: 121,
+          visitScore: 0,
+          metadata: { roundTarget: 122, roundFailed: true },
+        }),
+      ]),
+    ).toBe(50)
+  })
+
+  it('computes single-session summary stats with successful highest checkout', () => {
     expect(
       computeOneTwentyOneSingleSessionStats(
         session([
@@ -97,7 +129,7 @@ describe('oneTwentyOneVisitStats', () => {
             scoreBefore: 121,
             scoreAfter: 122,
             visitScore: 121,
-            metadata: { peakTargetAfter: 122 },
+            metadata: { roundTarget: 121 },
           }),
           visit({
             visitIndex: 1,
@@ -105,7 +137,7 @@ describe('oneTwentyOneVisitStats', () => {
             scoreBefore: 140,
             scoreAfter: 141,
             visitScore: 140,
-            metadata: { peakTargetAfter: 141 },
+            metadata: { roundTarget: 140 },
           }),
         ]),
       ),
@@ -113,7 +145,8 @@ describe('oneTwentyOneVisitStats', () => {
       checkouts: 2,
       visitCount: 2,
       threeDartAverage: 130.5,
-      peakTarget: 141,
+      checkoutRate: 100,
+      highestCheckout: 140,
     })
   })
 

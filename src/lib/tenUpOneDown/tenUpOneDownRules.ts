@@ -2,7 +2,7 @@ import type { DartThrow } from '../../types/dart'
 import type { CheckoutRules } from '../../types/checkout'
 import type { TenUpOneDownConfig } from '../../types/tenUpOneDown'
 import type { X01Config } from '../../types/x01'
-import { normalizeCheckoutTarget } from '../checkout/checkoutSuggestions'
+import { MAX_CHECKOUT_SCORE, normalizeCheckoutTarget } from '../checkout/checkoutSuggestions'
 import { resolveX01Visit, resolveX01VisitScore } from '../x01/x01Rules'
 
 const toX01Config = (config: TenUpOneDownConfig): X01Config => ({
@@ -20,6 +20,8 @@ export interface TenUpOneDownVisitOutcome {
   targetScoreAfter: number
   bust: boolean
   checkout: boolean
+  completed: boolean
+  won: boolean
 }
 
 const applyTenUpOneDownOutcome = (
@@ -31,6 +33,16 @@ const applyTenUpOneDownOutcome = (
   const checkoutRules = toCheckoutRules(config)
 
   if (outcome.checkout) {
+    if (targetScore === MAX_CHECKOUT_SCORE) {
+      return {
+        targetScoreAfter: targetScore,
+        bust: false,
+        checkout: true,
+        completed: true,
+        won: true,
+      }
+    }
+
     return {
       targetScoreAfter: normalizeCheckoutTarget(targetScore + config.incrementUp, checkoutRules, {
         minScore: config.minScore,
@@ -38,10 +50,22 @@ const applyTenUpOneDownOutcome = (
       }),
       bust: false,
       checkout: true,
+      completed: false,
+      won: false,
     }
   }
 
   if (outcome.bust || treatAsFullVisit) {
+    if (targetScore === config.minScore) {
+      return {
+        targetScoreAfter: targetScore,
+        bust: outcome.bust,
+        checkout: false,
+        completed: true,
+        won: false,
+      }
+    }
+
     return {
       targetScoreAfter: normalizeCheckoutTarget(
         Math.max(config.minScore, targetScore - config.decrementDown),
@@ -50,6 +74,8 @@ const applyTenUpOneDownOutcome = (
       ),
       bust: outcome.bust,
       checkout: false,
+      completed: false,
+      won: false,
     }
   }
 
@@ -57,6 +83,8 @@ const applyTenUpOneDownOutcome = (
     targetScoreAfter: targetScore,
     bust: false,
     checkout: false,
+    completed: false,
+    won: false,
   }
 }
 

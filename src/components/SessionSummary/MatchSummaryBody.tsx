@@ -7,6 +7,7 @@ import { Bob27SummaryPanel } from './Bob27SummaryPanel'
 import { MatchLegScore } from './MatchLegScore'
 import { MatchStatsPanel } from './MatchStatsPanel'
 import { OneTwentyOneSummaryPanel } from './OneTwentyOneSummaryPanel'
+import { TenUpOneDownSummaryPanel } from './TenUpOneDownSummaryPanel'
 
 export interface MatchSummaryBodyProps {
   session: GameSession
@@ -19,7 +20,8 @@ export const MatchSummaryBody = ({ session }: MatchSummaryBodyProps) => {
     session.mode !== GameModeId.X01 &&
     session.mode !== GameModeId.AroundTheClock &&
     session.mode !== GameModeId.Bob27 &&
-    session.mode !== GameModeId.OneTwentyOne
+    session.mode !== GameModeId.OneTwentyOne &&
+    session.mode !== GameModeId.TenUpOneDown
 
   return (
     <Stack gap={5}>
@@ -30,6 +32,8 @@ export const MatchSummaryBody = ({ session }: MatchSummaryBodyProps) => {
       {session.mode === GameModeId.Bob27 && <Bob27SummaryPanel session={session} />}
 
       {session.mode === GameModeId.OneTwentyOne && <OneTwentyOneSummaryPanel session={session} />}
+
+      {session.mode === GameModeId.TenUpOneDown && <TenUpOneDownSummaryPanel session={session} />}
 
       {showTextDetails && (
         <>

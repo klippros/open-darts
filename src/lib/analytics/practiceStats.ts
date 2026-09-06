@@ -11,6 +11,7 @@ import {
 import { getSessionModeLabel } from '../history/sessionSummary'
 import {
   getHighestOneTwentyOneCheckoutTarget,
+  getOneTwentyOneCheckoutRate,
   getSessionCheckoutCount,
 } from '../oneTwentyOne/oneTwentyOneVisitStats'
 import { aggregateAroundTheClockSessionStats } from './aroundTheClockStats'
@@ -115,7 +116,12 @@ const computeCheckoutPracticeStats = (
     label: getSessionLabel(modeSessions, mode),
     gameCount: modeSessions.length,
     visitCount: visits.length,
-    checkoutRate: visits.length === 0 ? null : (checkoutVisits / visits.length) * 100,
+    checkoutRate:
+      mode === GameModeId.OneTwentyOne
+        ? getOneTwentyOneCheckoutRate(visits)
+        : visits.length === 0
+          ? null
+          : (checkoutVisits / visits.length) * 100,
     threeDartAverage: getThreeDartAverage(visits),
     avgCheckoutsPerGame:
       checkoutsPerGame.length === 0

@@ -8,7 +8,7 @@ import {
 } from '../analytics/visitStats'
 import {
   getOneTwentyOneAttemptedTargetFromVisit,
-  getOneTwentyOnePeakTargetFromVisit,
+  isOneTwentyOneRoundFailedVisit,
 } from './oneTwentyOneVisitMetadata'
 
 /** Successful checkout visits for the primary player in a session. */
@@ -29,11 +29,28 @@ export const getHighestOneTwentyOneCheckoutTarget = (visits: Visit[]): number | 
   return Math.max(...targets)
 }
 
+/**
+ * Checkout rate by resolved target attempts: successful checkouts ÷
+ * (checkouts + failed rounds). Mid-target visits are excluded.
+ */
+export const getOneTwentyOneCheckoutRate = (visits: Visit[]): number | null => {
+  const successfulTargets = countCheckoutVisits(visits)
+  const failedTargets = visits.filter((visit) => isOneTwentyOneRoundFailedVisit(visit)).length
+  const resolvedTargets = successfulTargets + failedTargets
+
+  if (resolvedTargets === 0) {
+    return null
+  }
+
+  return (successfulTargets / resolvedTargets) * 100
+}
+
 export interface OneTwentyOneSingleSessionStats {
   checkouts: number
   visitCount: number
   threeDartAverage: number | null
-  peakTarget: number | null
+  checkoutRate: number | null
+  highestCheckout: number | null
 }
 
 export const computeOneTwentyOneSingleSessionStats = (
@@ -44,13 +61,12 @@ export const computeOneTwentyOneSingleSessionStats = (
   }
 
   const visits = getPrimaryPlayerVisits(session)
-  const lastVisit = visits.at(-1)
-  const peakTarget = getOneTwentyOnePeakTargetFromVisit(lastVisit)
 
   return {
     checkouts: countCheckoutVisits(visits),
     visitCount: visits.length,
     threeDartAverage: getThreeDartAverage(visits),
-    peakTarget: peakTarget ?? null,
+    checkoutRate: getOneTwentyOneCheckoutRate(visits),
+    highestCheckout: getHighestOneTwentyOneCheckoutTarget(visits),
   }
 }

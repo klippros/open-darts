@@ -7,10 +7,9 @@ import {
   getAroundTheClockConfig,
 } from '../aroundTheClock/aroundTheClockConfig'
 import { formatChallengeMatchScore, isChallengeMode } from '../game/challenge'
-import {
-  getOneTwentyOnePeakTargetFromVisit,
-  getOneTwentyOneRoundTargetFromVisit,
-} from '../oneTwentyOne/oneTwentyOneVisitMetadata'
+import { getOneTwentyOneRoundTargetFromVisit } from '../oneTwentyOne/oneTwentyOneVisitMetadata'
+import { getHighestOneTwentyOneCheckoutTarget } from '../oneTwentyOne/oneTwentyOneVisitStats'
+import { isTenUpOneDownWinSession } from '../tenUpOneDown/tenUpOneDownVisitStats'
 import { getMatchWinnerId } from '../game/matchLegs'
 import { formatLegWinLine } from '../game/matchLegDisplay'
 import { formatX01StartScore } from '../x01/x01Presets'
@@ -174,15 +173,15 @@ export const getMatchSummary = (session: GameSession): MatchSummary => {
   }
 
   if (session.mode === GameModeId.OneTwentyOne) {
-    const peakTarget = getOneTwentyOnePeakTargetFromVisit(lastVisit)
+    const highestCheckout = getHighestOneTwentyOneCheckoutTarget(playerVisits)
     const details = [`${visitCount} visit${visitCount === 1 ? '' : 's'}`]
 
     if (average !== null) {
       details.push(`${average.toFixed(2)} 3-dart average`)
     }
 
-    if (peakTarget !== undefined) {
-      details.push(`Peak ${peakTarget}`)
+    if (highestCheckout !== null) {
+      details.push(`Highest checkout ${highestCheckout}`)
     } else if (finishedEarly && lastVisit !== undefined) {
       const roundTarget = getOneTwentyOneRoundTargetFromVisit(lastVisit)
 
@@ -190,6 +189,26 @@ export const getMatchSummary = (session: GameSession): MatchSummary => {
     }
 
     const title = finishedEarly ? '121 session ended' : '121 game over'
+
+    return {
+      title,
+      details,
+    }
+  }
+
+  if (session.mode === GameModeId.TenUpOneDown) {
+    const finalScore = lastVisit?.scoreAfter
+    const details = [`${visitCount} visit${visitCount === 1 ? '' : 's'}`]
+
+    if (finalScore !== undefined) {
+      details.push(`Stopped on ${finalScore}`)
+    }
+
+    const title = finishedEarly
+      ? '10 Up 1 Down session ended'
+      : isTenUpOneDownWinSession(session)
+        ? '10 Up 1 Down complete'
+        : '10 Up 1 Down game over'
 
     return {
       title,
@@ -205,7 +224,7 @@ export const getMatchSummary = (session: GameSession): MatchSummary => {
   }
 
   return {
-    title: finishedEarly ? '10 Up 1 Down session ended' : '10 Up 1 Down complete',
+    title: finishedEarly ? `${getSessionModeLabel(session)} session ended` : 'Session complete',
     details,
   }
 }

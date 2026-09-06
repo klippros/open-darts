@@ -223,6 +223,26 @@ describe('GameController', () => {
     expect(controller.session.finishedEarly).toBeUndefined()
     expect(controller.session.status).toBe(GameStatus.Completed)
   })
+
+  it('completes 10-up-1-down without finishedEarly after failing at 2', () => {
+    let controller = createGameController({
+      mode: GameModeId.TenUpOneDown,
+      config: {
+        startScore: 2,
+        incrementUp: 10,
+        decrementDown: 1,
+        minScore: 2,
+        doubleOut: true,
+      },
+      players: [soloPlayer],
+    })
+
+    controller = controller.recordDart(numberDart(1, DartMultiplier.Single))
+
+    expect(controller.isComplete).toBe(true)
+    expect(controller.session.finishedEarly).toBeUndefined()
+    expect(controller.session.status).toBe(GameStatus.Completed)
+  })
 })
 
 describe('GameController challenge mode', () => {

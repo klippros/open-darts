@@ -168,6 +168,64 @@ describe('sessionSummary', () => {
     })
   })
 
+  it('titles a 10 up 1 down win after checking out 170', () => {
+    expect(
+      getMatchSummary(
+        sampleSession({
+          mode: GameModeId.TenUpOneDown,
+          config: {
+            startScore: 60,
+            incrementUp: 10,
+            decrementDown: 1,
+            minScore: 2,
+            doubleOut: true,
+          },
+          visits: [
+            {
+              visitIndex: 0,
+              playerId: 'player-1',
+              darts: [],
+              visitScore: 170,
+              scoreBefore: 170,
+              scoreAfter: 170,
+              bust: false,
+              checkout: true,
+            },
+          ],
+        }),
+      ).title,
+    ).toBe('10 Up 1 Down complete')
+  })
+
+  it('titles a 10 up 1 down loss after failing at 2', () => {
+    expect(
+      getMatchSummary(
+        sampleSession({
+          mode: GameModeId.TenUpOneDown,
+          config: {
+            startScore: 60,
+            incrementUp: 10,
+            decrementDown: 1,
+            minScore: 2,
+            doubleOut: true,
+          },
+          visits: [
+            {
+              visitIndex: 0,
+              playerId: 'player-1',
+              darts: [],
+              visitScore: 0,
+              scoreBefore: 2,
+              scoreAfter: 2,
+              bust: true,
+              checkout: false,
+            },
+          ],
+        }),
+      ).title,
+    ).toBe('10 Up 1 Down game over')
+  })
+
   it('sorts completed sessions newest first', () => {
     const older = sampleSession({
       id: 'older',

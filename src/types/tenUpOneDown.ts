@@ -14,4 +14,5 @@ export interface TenUpOneDownState {
   config: TenUpOneDownConfig
   players: Record<string, TenUpOneDownPlayerState>
   winnerId?: string
+  failed?: boolean
 }

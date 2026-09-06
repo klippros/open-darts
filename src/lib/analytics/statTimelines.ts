@@ -11,6 +11,7 @@ import {
 import {
   getSessionCheckoutCount,
   getHighestOneTwentyOneCheckoutTarget,
+  getOneTwentyOneCheckoutRate,
 } from '../oneTwentyOne/oneTwentyOneVisitStats'
 import { getSessionCompletedAt, getSessionModeLabel } from '../history/sessionSummary'
 import { isAroundTheClockConfig, isX01Config } from '../game/gameConfigGuards'
@@ -173,7 +174,9 @@ const getCheckoutPracticeSessionMetric = (
 ): number | null => {
   switch (metric) {
     case 'checkoutRate':
-      return getSessionCheckoutRate(session)
+      return session.mode === GameModeId.OneTwentyOne
+        ? getOneTwentyOneCheckoutRate(getPrimaryPlayerVisits(session))
+        : getSessionCheckoutRate(session)
     case 'threeDartAverage':
       return getThreeDartAverage(getPrimaryPlayerVisits(session))
     case 'avgCheckoutsPerGame':

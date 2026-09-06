@@ -1,15 +1,15 @@
 import { SimpleGrid } from '@chakra-ui/react'
-import { formatAverage, formatInteger, formatPercent } from '../../lib/analytics/formatAnalytics'
-import { computeOneTwentyOneSingleSessionStats } from '../../lib/oneTwentyOne/oneTwentyOneVisitStats'
+import { formatInteger, formatPercent } from '../../lib/analytics/formatAnalytics'
+import { computeTenUpOneDownSingleSessionStats } from '../../lib/tenUpOneDown/tenUpOneDownVisitStats'
 import type { GameSession } from '../../types/gameSession'
 import { StatCard } from '../StatsPageSections/StatCard'
 
-export interface OneTwentyOneSummaryPanelProps {
+export interface TenUpOneDownSummaryPanelProps {
   session: GameSession
 }
 
-export const OneTwentyOneSummaryPanel = ({ session }: OneTwentyOneSummaryPanelProps) => {
-  const stats = computeOneTwentyOneSingleSessionStats(session)
+export const TenUpOneDownSummaryPanel = ({ session }: TenUpOneDownSummaryPanelProps) => {
+  const stats = computeTenUpOneDownSingleSessionStats(session)
 
   if (stats === null) {
     return null
@@ -22,7 +22,6 @@ export const OneTwentyOneSummaryPanel = ({ session }: OneTwentyOneSummaryPanelPr
         value={formatInteger(stats.checkouts)}
         detail={`${stats.visitCount} visit${stats.visitCount === 1 ? '' : 's'}`}
       />
-      <StatCard label="3-dart average" value={formatAverage(stats.threeDartAverage)} />
       {stats.checkoutRate !== null && (
         <StatCard label="Checkout rate" value={formatPercent(stats.checkoutRate)} />
       )}

@@ -58,9 +58,10 @@ describe('practiceStats', () => {
             visitIndex: 1,
             checkout: false,
             scoreBefore: 122,
-            scoreAfter: 122,
+            scoreAfter: 121,
             visitScore: 0,
             bust: true,
+            metadata: { roundTarget: 122, roundFailed: true },
           }),
         ],
       }),
@@ -76,6 +77,46 @@ describe('practiceStats', () => {
         bestCheckoutsPerGame: 1,
         highestCheckout: 121,
         lastPlayedAt: '2026-01-05T10:00:00.000Z',
+      }),
+    ])
+  })
+
+  it('uses per-visit checkout rate for 10 up 1 down', () => {
+    const stats = computePracticeStats([
+      sampleSession({
+        mode: GameModeId.TenUpOneDown,
+        config: {
+          startScore: 60,
+          incrementUp: 10,
+          decrementDown: 1,
+          minScore: 2,
+          doubleOut: true,
+        },
+        startedAt: '2026-01-05T10:00:00.000Z',
+        visits: [
+          sampleVisit({
+            checkout: true,
+            scoreBefore: 60,
+            scoreAfter: 70,
+            visitScore: 60,
+          }),
+          sampleVisit({
+            visitIndex: 1,
+            checkout: false,
+            scoreBefore: 70,
+            scoreAfter: 69,
+            visitScore: 0,
+            bust: true,
+          }),
+        ],
+      }),
+    ])
+
+    expect(stats.checkout).toEqual([
+      expect.objectContaining({
+        mode: GameModeId.TenUpOneDown,
+        checkoutRate: 50,
+        highestCheckout: 60,
       }),
     ])
   })
