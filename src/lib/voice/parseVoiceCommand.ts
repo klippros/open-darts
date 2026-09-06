@@ -4,6 +4,8 @@ import type { Bob27HitCount } from '../bob27/buildBob27Darts'
 import { parseAroundTheClockCommand } from './grammars/aroundTheClockGrammar'
 import type { AroundTheClockCommand } from './grammars/aroundTheClockGrammar'
 import { parseBob27Command } from './grammars/bob27Grammar'
+import { parseTenUpOneDownCommand } from './grammars/tenUpOneDownGrammar'
+import type { TenUpOneDownVoiceOutcome } from './grammars/tenUpOneDownGrammar'
 import { parseVisitScoreCommand } from './grammars/visitScoreGrammar'
 import { normalizeTranscriptLight } from './normalizeTranscriptLight'
 import { isPathologicalVoiceHypothesis } from './sanitizeVoiceTranscript'
@@ -15,12 +17,14 @@ export enum VoiceIntentKind {
   Bob27HitCount = 'bob27-hit-count',
   AroundTheClock = 'around-the-clock',
   VisitScore = 'visit-score',
+  TenUpOneDown = 'ten-up-one-down',
 }
 
 export type VoiceGameplayIntent =
   | { kind: VoiceIntentKind.Bob27HitCount; hitCount: Bob27HitCount }
   | { kind: VoiceIntentKind.AroundTheClock; command: AroundTheClockCommand }
   | { kind: VoiceIntentKind.VisitScore; score: number }
+  | { kind: VoiceIntentKind.TenUpOneDown; outcome: TenUpOneDownVoiceOutcome }
 
 export type VoiceIntent =
   | { kind: VoiceIntentKind.Undo }
@@ -50,6 +54,16 @@ const parseGameplayTokens = (mode: GameModeId, tokens: string[]): VoiceGameplayI
     }
 
     return { kind: VoiceIntentKind.AroundTheClock, command }
+  }
+
+  if (mode === GameModeId.TenUpOneDown) {
+    const outcome = parseTenUpOneDownCommand(tokens)
+
+    if (outcome === null) {
+      return null
+    }
+
+    return { kind: VoiceIntentKind.TenUpOneDown, outcome }
   }
 
   if (isVisitScoreVoiceMode(mode)) {

@@ -32,6 +32,7 @@ export const Bob27DartPicker = ({
             key={hitCount}
             label={String(hitCount)}
             variant={inputDisabled ? 'empty' : 'selectable'}
+            tone={hitCount === 0 ? 'red' : 'green'}
             size="comfortable"
             showArrow={false}
             disabled={inputDisabled}

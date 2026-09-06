@@ -78,6 +78,7 @@ export const AroundTheClockDartPicker = ({
                 key={ordinal}
                 label={currentTargetLabel}
                 variant="selectable"
+                tone="green"
                 size="comfortable"
                 disabled={inputDisabled}
                 ariaLabel={`Hit ${currentTargetLabel} on ${ORDINAL_LABELS[ordinal]} dart`}
@@ -98,6 +99,7 @@ export const AroundTheClockDartPicker = ({
       <VisitDartSlotCard
         label={dartsLeft === 1 ? 'Miss' : 'No hits'}
         variant={dartsLeft === 0 || inputDisabled ? 'empty' : 'selectable'}
+        tone="red"
         size="comfortable"
         disabled={inputDisabled || dartsLeft === 0}
         ariaLabel={dartsLeft === 1 ? 'Miss' : `No hits — miss ${dartsLeft} darts`}

@@ -68,6 +68,20 @@ export const getVoiceCommandHelpSection = (
     }
   }
 
+  if (mode === GameModeId.TenUpOneDown) {
+    return {
+      title: VOICE_COMMANDS_SECTION_TITLE,
+      intro: VOICE_COMMANDS_SECTION_INTRO,
+      note: 'Also accepted: "success", "game shot", "miss", "no score", and "no hits".',
+      rows: [
+        { say: 'Checkout', means: 'Checkout the current target' },
+        { say: 'Failed', means: 'Fail the current target' },
+        { say: 'Undo', means: 'Remove the last voice entry' },
+        { say: 'Undo checkout', means: 'Replace the last voice entry' },
+      ],
+    }
+  }
+
   if (isVisitScoreVoiceMode(mode)) {
     return {
       title: VOICE_COMMANDS_SECTION_TITLE,

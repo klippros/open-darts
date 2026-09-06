@@ -216,6 +216,10 @@ const buildGameplayDarts = (
     return null
   }
 
+  if (intent.kind === VoiceIntentKind.TenUpOneDown) {
+    return null
+  }
+
   if (controller.session.mode !== GameModeId.AroundTheClock) {
     return null
   }
@@ -289,6 +293,36 @@ const applyGameplay = (
       before,
       after: fingerprintOf(next),
       playback: [intent.score === 0 ? 'miss' : 'hit'],
+    }
+  }
+
+  if (intent.kind === VoiceIntentKind.TenUpOneDown) {
+    if (controller.pendingDarts.length > 0 || controller.session.mode !== GameModeId.TenUpOneDown) {
+      return null
+    }
+
+    const checkoutTarget = controller.scoreboard.players.find(
+      (player) => player.isActive,
+    )?.primaryScore
+
+    if (checkoutTarget === undefined) {
+      return null
+    }
+
+    const score = intent.outcome === 'miss' ? 0 : checkoutTarget
+    const before = fingerprintOf(controller)
+    const next = controller.recordVisitScore(score)
+
+    if (next === controller || next.session.visits.length <= controller.session.visits.length) {
+      return null
+    }
+
+    return {
+      next,
+      undoSteps: 1,
+      before,
+      after: fingerprintOf(next),
+      playback: [intent.outcome === 'miss' ? 'miss' : 'hit'],
     }
   }
 

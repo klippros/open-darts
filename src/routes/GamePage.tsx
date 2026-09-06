@@ -66,12 +66,17 @@ export const GamePage = () => {
     />
   )
 
+  const activeCheckoutTarget = controller.scoreboard.players.find(
+    (player) => player.isActive,
+  )?.primaryScore
+
   const picker = (
     <GameModeDartPicker
       mode={controller.session.mode}
       config={controller.session.config}
       aroundTheClockTargetIndex={pickerTargets.aroundTheClockTargetIndex}
       bob27TargetIndex={pickerTargets.bob27TargetIndex}
+      checkoutTarget={activeCheckoutTarget}
       pendingDarts={controller.pendingDarts}
       visitEntryMode={visitEntryMode}
       onVisitEntryModeChange={setVisitEntryMode}

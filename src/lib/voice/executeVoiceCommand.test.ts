@@ -184,4 +184,34 @@ describe('voiceUndoHistory + executeVoiceCommand', () => {
     expect(controller.session.visits).toHaveLength(0)
     expect(controller.scoreboard.players[0]?.primaryScore).toBe(501)
   })
+
+  it('applies and undoes 10 Up 1 Down failed / checkout voice commands', () => {
+    const history = createVoiceUndoHistory()
+    let controller = createGameController({ mode: GameModeId.TenUpOneDown, players: [solo] })
+    const options = { visitEntryMode: VisitInputMode.VisitScore }
+    const parseTenUp = (transcript: string) =>
+      parseVoiceCommand(GameModeId.TenUpOneDown, transcript, options)!
+
+    expect(controller.scoreboard.players[0]?.primaryScore).toBe(60)
+
+    const failed = executeVoiceCommand(controller, parseTenUp('failed'), history)!
+    expect(failed.playback).toEqual(['miss'])
+    failed.commitHistory(history)
+    controller = failed.next
+    expect(controller.session.visits).toHaveLength(1)
+    expect(controller.scoreboard.players[0]?.primaryScore).toBe(59)
+
+    const checkout = executeVoiceCommand(controller, parseTenUp('checkout'), history)!
+    expect(checkout.playback).toEqual(['hit'])
+    checkout.commitHistory(history)
+    controller = checkout.next
+    expect(controller.session.visits).toHaveLength(2)
+    expect(controller.scoreboard.players[0]?.primaryScore).toBe(69)
+
+    const undone = executeVoiceCommand(controller, { kind: VoiceIntentKind.Undo }, history)!
+    undone.commitHistory(history)
+    controller = undone.next
+    expect(controller.session.visits).toHaveLength(1)
+    expect(controller.scoreboard.players[0]?.primaryScore).toBe(59)
+  })
 })

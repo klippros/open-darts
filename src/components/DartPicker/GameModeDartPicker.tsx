@@ -2,6 +2,7 @@ import { AroundTheClockDartPicker } from './AroundTheClockDartPicker'
 import { Bob27DartPicker } from './Bob27DartPicker'
 import { DartPicker } from './DartPicker'
 import { ScoringInputCard } from './ScoringInputCard/ScoringInputCard'
+import { TenUpOneDownDartPicker } from './TenUpOneDownDartPicker'
 import { VisitScorePicker } from './VisitScorePicker/VisitScorePicker'
 import { isAroundTheClockConfig } from '../../lib/game/gameConfigGuards'
 import { supportsVisitScoreInput } from '../../lib/game/gameModeDefinitions'
@@ -15,6 +16,7 @@ export interface GameModeDartPickerProps {
   config: GameConfig
   aroundTheClockTargetIndex?: number
   bob27TargetIndex?: number
+  checkoutTarget?: number
   pendingDarts: DartThrow[]
   visitEntryMode: VisitInputMode
   onVisitEntryModeChange: (mode: VisitInputMode) => void
@@ -30,6 +32,7 @@ export const GameModeDartPicker = ({
   config,
   aroundTheClockTargetIndex,
   bob27TargetIndex,
+  checkoutTarget,
   pendingDarts,
   visitEntryMode,
   onVisitEntryModeChange,
@@ -81,7 +84,16 @@ export const GameModeDartPicker = ({
       onEntryModeChange={onVisitEntryModeChange}
     >
       {showVisitScorePicker ? (
-        <VisitScorePicker onSubmit={onVisitScore} onUndo={onUndo} inputDisabled={inputDisabled} />
+        mode === GameModeId.TenUpOneDown && checkoutTarget !== undefined ? (
+          <TenUpOneDownDartPicker
+            checkoutTarget={checkoutTarget}
+            onVisitScore={onVisitScore}
+            onUndo={onUndo}
+            inputDisabled={inputDisabled}
+          />
+        ) : (
+          <VisitScorePicker onSubmit={onVisitScore} onUndo={onUndo} inputDisabled={inputDisabled} />
+        )
       ) : (
         <DartPicker onDart={onDart} onUndo={onUndo} inputDisabled={inputDisabled} />
       )}

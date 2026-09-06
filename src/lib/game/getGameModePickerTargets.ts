@@ -79,6 +79,29 @@ export const getDartPickerHelpContent = (
     }
   }
 
+  if (mode === GameModeId.TenUpOneDown) {
+    if (visitEntryMode === VisitInputMode.VisitScore) {
+      return {
+        title: 'How to score',
+        paragraphs: [
+          'Tap Checkout when you check out the target, or Failed when you do not. Undo removes the last visit.',
+          'Use the Dart tab to enter each dart on the board and see checkout paths update live.',
+        ],
+        voice,
+      }
+    }
+
+    return {
+      title: 'How to score',
+      paragraphs: [
+        'Keyboard: D/T for double/triple, type the segment number, then Space to confirm. B bull, Tab miss, Backspace undo, Esc clear modifier.',
+        'Tap the board to score. Center arms double/triple; corners are Bull, 25, Undo, and Miss.',
+        'Use the Visit tab for a quick Failed or Checkout instead of entering each dart.',
+      ],
+      voice,
+    }
+  }
+
   if (visitEntryMode === VisitInputMode.VisitScore) {
     return {
       title: 'How to score',

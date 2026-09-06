@@ -49,4 +49,14 @@ describe('getVoiceRecognitionPhrases', () => {
     expect(byPhrase.hit).toBeUndefined()
     expect(byPhrase.miss).toBeUndefined()
   })
+
+  it('prefers failed over bare miss for 10 Up 1 Down', () => {
+    const phrases = getVoiceRecognitionPhrases(GameModeId.TenUpOneDown)
+    const byPhrase = Object.fromEntries(phrases.map((hint) => [hint.phrase, hint.boost]))
+
+    expect(byPhrase.checkout).toBeGreaterThanOrEqual(8)
+    expect(byPhrase.failed).toBeGreaterThanOrEqual(8)
+    expect(byPhrase.failed).toBeGreaterThan(byPhrase.miss ?? 0)
+    expect(byPhrase.failed).toBeGreaterThan(byPhrase['no score'] ?? 0)
+  })
 })

@@ -17,6 +17,8 @@ const intentFingerprint = (intent: VoiceIntent): string => {
         : `atc:${intent.command.outcomes.join(',')}`
     case VoiceIntentKind.VisitScore:
       return `visit-score:${intent.score}`
+    case VoiceIntentKind.TenUpOneDown:
+      return `ten-up-one-down:${intent.outcome}`
     default: {
       const _exhaustive: never = intent
       return _exhaustive

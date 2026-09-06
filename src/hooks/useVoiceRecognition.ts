@@ -116,7 +116,8 @@ export const useVoiceRecognition = ({
 
     if (
       intent.kind === VoiceIntentKind.VisitScore ||
-      intent.kind === VoiceIntentKind.Bob27HitCount
+      intent.kind === VoiceIntentKind.Bob27HitCount ||
+      intent.kind === VoiceIntentKind.TenUpOneDown
     ) {
       return true
     }
