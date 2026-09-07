@@ -8,9 +8,10 @@ create table public.online_matches (
   creator_user_id uuid not null references auth.users (id) on delete restrict,
   status text not null check (status in ('waiting', 'active', 'completed', 'cancelled')),
   play_mode text not null check (play_mode in ('synchronous', 'asynchronous')),
-  start_score integer not null check (start_score > 0),
-  double_in boolean not null default false,
-  double_out boolean not null default true,
+  mode text not null check (
+    mode in ('x01', 'bob27', '121', 'around-the-clock', '10-up-1-down')
+  ),
+  config jsonb not null check (jsonb_typeof(config) = 'object'),
   legs_to_win integer not null check (legs_to_win between 1 and 15),
   starting_player_slot smallint not null check (starting_player_slot in (0, 1)),
   created_at timestamptz not null default now(),
@@ -69,6 +70,9 @@ create index online_match_players_user_id_idx
 
 create index online_matches_status_idx
   on public.online_matches (status);
+
+create index online_matches_mode_idx
+  on public.online_matches (mode);
 
 create index online_matches_creator_user_id_idx
   on public.online_matches (creator_user_id);
@@ -143,9 +147,8 @@ create type public.online_match_invite as (
   status text,
   creator_user_id uuid,
   creator_display_name text,
-  start_score integer,
-  double_in boolean,
-  double_out boolean,
+  mode text,
+  config jsonb,
   legs_to_win integer,
   starting_player_slot smallint,
   player_count integer
@@ -162,9 +165,8 @@ as $$
     match.status,
     match.creator_user_id,
     profile.display_name,
-    match.start_score,
-    match.double_in,
-    match.double_out,
+    match.mode,
+    match.config,
     match.legs_to_win,
     match.starting_player_slot,
     (
