@@ -1,6 +1,6 @@
-import type { CreateSessionParams } from '../game/createSession'
+import type { CreateSessionParams } from '@open-darts/game/game/createSession'
 import { sessionMatchesLaunchParams } from '../storage/sessionMatching'
-import type { ActiveGameSnapshot } from '../../types/activeGameSnapshot'
+import type { ActiveGameSnapshot } from '@open-darts/game/types/activeGameSnapshot'
 
 export interface GameLoadStrategy {
   shouldRestoreOnLoad: boolean

@@ -1,7 +1,7 @@
 import { Heading } from '@chakra-ui/react'
-import { GameModeId } from '../../types/gameMode'
-import type { GameSession } from '../../types/gameSession'
-import { formatLegWinScore } from '../../lib/game/matchLegDisplay'
+import { GameModeId } from '@open-darts/game/types/gameMode'
+import type { GameSession } from '@open-darts/game/types/gameSession'
+import { formatLegWinScore } from '@open-darts/game/game/matchLegDisplay'
 
 export interface MatchLegScoreProps {
   session: GameSession

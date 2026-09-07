@@ -1,7 +1,7 @@
 import { Button, Dialog, Text } from '@chakra-ui/react'
 import { darkDialogContentProps } from '../darkDialogContentProps'
 import { getSessionModeLabel } from '../../lib/history/sessionSummary'
-import type { GameSession } from '../../types/gameSession'
+import type { GameSession } from '@open-darts/game/types/gameSession'
 
 export interface ResumeGameDialogProps {
   open: boolean

@@ -4,8 +4,8 @@ import { ContentContainer } from '../components/ContentContainer'
 import { ResumeGameBanner } from '../components/ResumeGameBanner/ResumeGameBanner'
 import { buildPracticeGamePath } from '../lib/game/gameRoute'
 import { explicitGameLaunchState } from '../lib/routing/gameNavigation'
-import { GameModeId } from '../types/gameMode'
-import { buildX01PresetPath, X01PresetId } from '../lib/x01/x01Presets'
+import { GameModeId } from '@open-darts/game/types/gameMode'
+import { buildX01PresetPath, X01PresetId } from '@open-darts/game/x01/x01Presets'
 
 const MATCH_MODES = [
   {

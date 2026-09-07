@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { GameModeId, GameStatus } from '../../types/gameMode'
-import type { GameSession } from '../../types/gameSession'
-import { PlayerKind } from '../../types/player'
-import { DartMultiplier } from '../../types/dart'
-import { numberDart } from '../testHelpers'
+import { GameModeId, GameStatus } from '@open-darts/game/types/gameMode'
+import type { GameSession } from '@open-darts/game/types/gameSession'
+import { PlayerKind } from '@open-darts/game/types/player'
+import { DartMultiplier } from '@open-darts/game/types/dart'
+import { numberDart } from '@open-darts/game/testHelpers'
 import { buildStatTimeline, hasPlottableTimeline } from './statTimelines'
 
 const sampleVisit = (

@@ -1,7 +1,7 @@
 import { SimpleGrid } from '@chakra-ui/react'
 import { computeAroundTheClockSingleSessionStats } from '../../lib/analytics/aroundTheClockStats'
 import { formatCount, formatInteger } from '../../lib/analytics/formatAnalytics'
-import type { GameSession } from '../../types/gameSession'
+import type { GameSession } from '@open-darts/game/types/gameSession'
 import { StatCard } from '../StatsPageSections/StatCard'
 
 export interface AroundTheClockSummaryPanelProps {

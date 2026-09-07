@@ -1,6 +1,6 @@
 import { Box, Heading, Stack, Text } from '@chakra-ui/react'
 import { countTotalDartsThrown } from '../../lib/analytics/visitStats'
-import type { GameSession } from '../../types/gameSession'
+import type { GameSession } from '@open-darts/game/types/gameSession'
 import { formatInteger } from '../../lib/analytics/formatAnalytics'
 
 export interface TotalDartsHeroProps {

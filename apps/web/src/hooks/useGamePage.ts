@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { clearActiveSnapshot } from '../lib/storage/gameStore'
-import { supportsVisitScoreInput } from '../lib/game/gameModeDefinitions'
+import { supportsVisitScoreInput } from '@open-darts/game/game/gameModeDefinitions'
 import { parseGameLaunchParams } from '../lib/game/gameRoute'
 import {
   getDartPickerHelpContent,
   getGameModePickerTargets,
 } from '../lib/game/getGameModePickerTargets'
-import { matchHasProgress } from '../lib/game/matchProgress'
+import { matchHasProgress } from '@open-darts/game/game/matchProgress'
 import { resolveVisitEntryMode } from '../lib/game/resolveVisitEntryMode'
 import { isVoiceInputSupportedForMode } from '../lib/voice/voiceModeSupport'
-import { VisitInputMode } from '../types/visit'
+import { VisitInputMode } from '@open-darts/game/types/visit'
 import { useAuth } from './authContext'
 import { useSetGameChrome } from './gameChromeContext'
 import { useSettings } from './settingsContext'

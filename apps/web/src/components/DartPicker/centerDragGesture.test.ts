@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DartMultiplier } from '../../types/dart'
+import { DartMultiplier } from '@open-darts/game/types/dart'
 import { resolveCenterDragRelease } from './centerDragGesture'
 
 describe('resolveCenterDragRelease', () => {

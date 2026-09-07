@@ -1,15 +1,15 @@
-import type { AroundTheClockAimMode } from '../../types/aroundTheClock'
-import type { DartThrow } from '../../types/dart'
-import type { GameSession } from '../../types/gameSession'
-import type { Visit } from '../../types/visit'
-import { getAroundTheClockCurrentTargetIndex } from '../aroundTheClock/buildAroundTheClockDarts'
-import { getAroundTheClockConfig } from '../aroundTheClock/aroundTheClockConfig'
-import { isAroundTheClockConfig } from '../game/gameConfigGuards'
+import type { AroundTheClockAimMode } from '@open-darts/game/types/aroundTheClock'
+import type { DartThrow } from '@open-darts/game/types/dart'
+import type { GameSession } from '@open-darts/game/types/gameSession'
+import type { Visit } from '@open-darts/game/types/visit'
+import { getAroundTheClockCurrentTargetIndex } from '@open-darts/game/aroundTheClock/buildAroundTheClockDarts'
+import { getAroundTheClockConfig } from '@open-darts/game/aroundTheClock/aroundTheClockConfig'
+import { isAroundTheClockConfig } from '@open-darts/game/game/gameConfigGuards'
 import {
   AROUND_THE_CLOCK_TARGET_COUNT,
   getAroundTheClockTargetLabel,
   isAroundTheClockTargetHit,
-} from '../aroundTheClock/aroundTheClockRules'
+} from '@open-darts/game/aroundTheClock/aroundTheClockRules'
 import type { AroundTheClockTargetAttempt } from '../aroundTheClock/aroundTheClockTargetHits'
 import {
   extractAroundTheClockTargetAttempts,

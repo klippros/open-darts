@@ -1,17 +1,21 @@
-import { GameModeId } from '../../types/gameMode'
-import type { GameConfig } from '../../types/gameMode'
-import type { GameSession } from '../../types/gameSession'
-import type { CreateSessionParams } from '../game/createSession'
-import { isX01Config } from '../game/gameConfigGuards'
-import { getDefaultConfig } from '../game/gameModeDefinitions'
+import { GameModeId } from '@open-darts/game/types/gameMode'
+import type { GameConfig } from '@open-darts/game/types/gameMode'
+import type { GameSession } from '@open-darts/game/types/gameSession'
+import type { CreateSessionParams } from '@open-darts/game/game/createSession'
+import { isX01Config } from '@open-darts/game/game/gameConfigGuards'
+import { getDefaultConfig } from '@open-darts/game/game/gameModeDefinitions'
 import { buildPracticeGamePath, isPracticeGameMode } from '../game/gameRoute'
 import {
   appendOpponentSetupParams,
   getOpponentSetupFromSession,
   opponentSetupsMatch,
   playersMatchLaunchSetup,
-} from '../game/opponentSetup'
-import { buildX01GameSearchParams, findX01PresetId, x01ConfigsMatch } from '../x01/x01Presets'
+} from '@open-darts/game/game/opponentSetup'
+import {
+  buildX01GameSearchParams,
+  findX01PresetId,
+  x01ConfigsMatch,
+} from '@open-darts/game/x01/x01Presets'
 
 export const configsMatch = (mode: GameModeId, left: GameConfig, right: GameConfig): boolean => {
   if (isX01Config(mode, left) && isX01Config(mode, right)) {

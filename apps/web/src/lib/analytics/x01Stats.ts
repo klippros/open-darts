@@ -1,6 +1,6 @@
-import type { GameSession } from '../../types/gameSession'
-import { isX01Config } from '../game/gameConfigGuards'
-import { x01PresetConfigs, X01PresetId } from '../x01/x01Presets'
+import type { GameSession } from '@open-darts/game/types/gameSession'
+import { isX01Config } from '@open-darts/game/game/gameConfigGuards'
+import { x01PresetConfigs, X01PresetId } from '@open-darts/game/x01/x01Presets'
 import {
   countDoubleCheckoutStatsSkippingVisitScoreLegs,
   mergeDoubleCheckoutStats,

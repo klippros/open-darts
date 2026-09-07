@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { GameModeId } from '../../types/gameMode'
+import { GameModeId } from '@open-darts/game/types/gameMode'
 import { getGameModePickerTargets } from './getGameModePickerTargets'
 
 describe('getGameModePickerTargets', () => {

@@ -22,7 +22,7 @@ import { getSessionIdFromTimelinePointId } from '../lib/analytics/x01LegSlices'
 import { loadStoredSessions } from '../lib/storage/gameStore'
 import { useAuth } from '../hooks/authContext'
 import { AuthStatus, SyncStatus } from '../types/auth'
-import type { GameSession } from '../types/gameSession'
+import type { GameSession } from '@open-darts/game/types/gameSession'
 
 const DATE_RANGE_OPTIONS: { value: DateRangePreset; label: string }[] = [
   { value: 'all', label: 'All time' },

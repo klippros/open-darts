@@ -11,9 +11,9 @@ import {
   formatInteger,
   formatPercent,
 } from '../../lib/analytics/formatAnalytics'
-import { getAroundTheClockAimModeLabel } from '../../lib/aroundTheClock/aroundTheClockConfig'
-import { gameModeDefinitions } from '../../lib/game/gameModeDefinitions'
-import { GameModeId } from '../../types/gameMode'
+import { getAroundTheClockAimModeLabel } from '@open-darts/game/aroundTheClock/aroundTheClockConfig'
+import { gameModeDefinitions } from '@open-darts/game/game/gameModeDefinitions'
+import { GameModeId } from '@open-darts/game/types/gameMode'
 import { AroundTheClockHeatmap } from './AroundTheClockHeatmap/AroundTheClockHeatmap'
 import { PracticeModeCard } from './PracticeModeCard'
 import { StatCard } from './StatCard'

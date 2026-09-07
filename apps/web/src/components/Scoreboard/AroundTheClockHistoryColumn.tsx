@@ -1,10 +1,10 @@
 import { Box, Stack, Text } from '@chakra-ui/react'
-import { getAroundTheClockConfig } from '../../lib/aroundTheClock/aroundTheClockConfig'
+import { getAroundTheClockConfig } from '@open-darts/game/aroundTheClock/aroundTheClockConfig'
 import { getAroundTheClockCompletedTargets } from '../../lib/aroundTheClock/aroundTheClockTargetHits'
-import { getVisitsForLeg } from '../../lib/game/matchLegs'
-import type { AroundTheClockConfig } from '../../types/aroundTheClock'
-import type { Player } from '../../types/player'
-import type { Visit } from '../../types/visit'
+import { getVisitsForLeg } from '@open-darts/game/game/matchLegs'
+import type { AroundTheClockConfig } from '@open-darts/game/types/aroundTheClock'
+import type { Player } from '@open-darts/game/types/player'
+import type { Visit } from '@open-darts/game/types/visit'
 
 export type AroundTheClockHistoryLayoutVariant = 'sidebar' | 'stack'
 

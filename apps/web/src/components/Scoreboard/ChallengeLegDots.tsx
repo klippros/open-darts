@@ -1,6 +1,6 @@
 import { Box, HStack, Text } from '@chakra-ui/react'
-import { formatChallengeLegProgressLabel } from '../../lib/game/challenge'
-import { ChallengeLegStatus } from '../../types/match'
+import { formatChallengeLegProgressLabel } from '@open-darts/game/game/challenge'
+import { ChallengeLegStatus } from '@open-darts/game/types/match'
 
 export interface ChallengeLegDotsProps {
   legStatuses: ChallengeLegStatus[]

@@ -1,5 +1,5 @@
 import { Box, Stack, Text } from '@chakra-ui/react'
-import type { GameSession } from '../../types/gameSession'
+import type { GameSession } from '@open-darts/game/types/gameSession'
 import {
   formatSessionDate,
   getSessionCompletedAt,

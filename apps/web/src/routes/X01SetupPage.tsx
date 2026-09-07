@@ -6,8 +6,8 @@ import { SetupPageHeader } from '../components/SetupPageLayout/SetupPageHeader'
 import { SetupPageLayout } from '../components/SetupPageLayout/SetupPageLayout'
 import { SetupOptionCard } from '../components/SetupPageLayout/SetupOptionCard'
 import { SetupSection } from '../components/SetupPageLayout/SetupSection'
-import { buildX01CustomGamePath, parseOptionalStartScore } from '../lib/x01/x01Presets'
-import type { X01Config } from '../types/x01'
+import { buildX01CustomGamePath, parseOptionalStartScore } from '@open-darts/game/x01/x01Presets'
+import type { X01Config } from '@open-darts/game/types/x01'
 
 export const X01SetupPage = () => {
   const navigate = useNavigate()

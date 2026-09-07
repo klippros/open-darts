@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { DartMultiplier } from '../../types/dart'
-import { AroundTheClockAimMode } from '../../types/aroundTheClock'
-import type { Visit } from '../../types/visit'
+import { DartMultiplier } from '@open-darts/game/types/dart'
+import { AroundTheClockAimMode } from '@open-darts/game/types/aroundTheClock'
+import type { Visit } from '@open-darts/game/types/visit'
 import { aggregatePerTargetStats } from '../analytics/aroundTheClockStats'
-import { bullDart, missDart, numberDart, outerBullDart } from '../testHelpers'
+import { bullDart, missDart, numberDart, outerBullDart } from '@open-darts/game/testHelpers'
 import {
   extractAroundTheClockTargetAttempts,
   getAroundTheClockCompletedTargets,

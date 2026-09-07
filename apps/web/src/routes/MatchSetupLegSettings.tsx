@@ -1,10 +1,10 @@
 import { Box, Stack, Text } from '@chakra-ui/react'
-import { getChallengeMaxLegs } from '../lib/game/challenge'
-import { clampLegsToWin, getMaxPossibleLegs } from '../lib/game/matchLegs'
-import type { OpponentSetup } from '../lib/game/opponentSetup'
-import { resolveHumanPlayerName } from '../lib/game/playerFactory'
+import { getChallengeMaxLegs } from '@open-darts/game/game/challenge'
+import { clampLegsToWin, getMaxPossibleLegs } from '@open-darts/game/game/matchLegs'
+import type { OpponentSetup } from '@open-darts/game/game/opponentSetup'
+import { resolveHumanPlayerName } from '@open-darts/game/game/playerFactory'
 import { useAuth } from '../hooks/authContext'
-import { DEFAULT_LEGS_TO_WIN, LEGS_TO_WIN_MAX, LEGS_TO_WIN_MIN } from '../types/match'
+import { DEFAULT_LEGS_TO_WIN, LEGS_TO_WIN_MAX, LEGS_TO_WIN_MIN } from '@open-darts/game/types/match'
 import { SetupOptionCard } from '../components/SetupPageLayout/SetupOptionCard'
 
 const rangeInputStyle = {

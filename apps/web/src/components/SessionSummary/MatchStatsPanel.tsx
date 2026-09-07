@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { GameModeId } from '../../types/gameMode'
-import type { GameSession } from '../../types/gameSession'
+import { GameModeId } from '@open-darts/game/types/gameMode'
+import type { GameSession } from '@open-darts/game/types/gameSession'
 import { buildLegVisitRows } from '../../lib/analytics/legVisitRows'
 import { getVisibleMatchStatRows } from '../../lib/analytics/matchStatRows'
 import {
@@ -13,7 +13,7 @@ import {
   getMatchWinnerId,
   getPlayedLegNumbers,
   getVisitsForLeg,
-} from '../../lib/game/matchLegs'
+} from '@open-darts/game/game/matchLegs'
 import { StatsTable } from '../StatsTable/StatsTable'
 import { MatchStatsScopeSelector } from './MatchStatsScopeSelector'
 import type { MatchStatsScope } from './MatchStatsScopeSelector'

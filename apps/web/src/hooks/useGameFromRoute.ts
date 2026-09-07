@@ -6,7 +6,7 @@ import { isExplicitGameLaunch } from '../lib/routing/gameNavigation'
 import { resolveGameLoadStrategy } from '../lib/routing/gameLoadStrategy'
 import { buildGamePathFromSession } from '../lib/storage/sessionMatching'
 import { getResumableSnapshot } from '../lib/storage/visitPersistence'
-import type { ActiveGameSnapshot } from '../types/activeGameSnapshot'
+import type { ActiveGameSnapshot } from '@open-darts/game/types/activeGameSnapshot'
 import { useGame } from './useGame'
 import type { UseGameOptions } from './useGame'
 

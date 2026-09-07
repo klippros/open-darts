@@ -1,10 +1,10 @@
 import { Button, Grid, Stack } from '@chakra-ui/react'
 import { VisitDartSlotCard } from '../Scoreboard/VisitDartSlotCard'
 import { useUiSounds } from '../../hooks/useUiSounds'
-import { buildBob27DartsForHitCount } from '../../lib/bob27/buildBob27Darts'
-import type { Bob27HitCount } from '../../lib/bob27/buildBob27Darts'
-import { getBob27Target } from '../../lib/bob27/bob27Rules'
-import type { DartThrow } from '../../types/dart'
+import { buildBob27DartsForHitCount } from '@open-darts/game/bob27/buildBob27Darts'
+import type { Bob27HitCount } from '@open-darts/game/bob27/buildBob27Darts'
+import { getBob27Target } from '@open-darts/game/bob27/bob27Rules'
+import type { DartThrow } from '@open-darts/game/types/dart'
 
 export interface Bob27DartPickerProps {
   targetIndex: number

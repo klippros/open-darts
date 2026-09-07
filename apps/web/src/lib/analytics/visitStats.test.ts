@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { PlayerKind } from '../../types/player'
-import type { Visit } from '../../types/visit'
+import { PlayerKind } from '@open-darts/game/types/player'
+import type { Visit } from '@open-darts/game/types/visit'
 import { getVisitAverages, getLegAndMatchAverages } from './visitStats'
 
 const player = { id: 'p1', name: 'Player 1', kind: PlayerKind.Human }

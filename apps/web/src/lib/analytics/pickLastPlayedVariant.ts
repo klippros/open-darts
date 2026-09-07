@@ -1,4 +1,4 @@
-import type { GameSession } from '../../types/gameSession'
+import type { GameSession } from '@open-darts/game/types/gameSession'
 
 export const getLatestSessionStartedAt = (sessions: readonly GameSession[]): string | null => {
   const [firstSession] = sessions

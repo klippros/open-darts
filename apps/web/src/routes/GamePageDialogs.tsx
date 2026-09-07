@@ -1,7 +1,7 @@
 import { AbortMatchDialog } from '../components/AbortMatchDialog/AbortMatchDialog'
 import { MatchSummaryDialog } from '../components/MatchSummaryDialog/MatchSummaryDialog'
 import { ResumeGameDialog } from '../components/ResumeGameDialog/ResumeGameDialog'
-import type { GameSession } from '../types/gameSession'
+import type { GameSession } from '@open-darts/game/types/gameSession'
 
 export interface GamePageDialogsProps {
   resumeConflictSession: GameSession | null

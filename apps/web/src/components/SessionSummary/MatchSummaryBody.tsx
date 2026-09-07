@@ -1,6 +1,6 @@
 import { Stack, Text } from '@chakra-ui/react'
-import { GameModeId } from '../../types/gameMode'
-import type { GameSession } from '../../types/gameSession'
+import { GameModeId } from '@open-darts/game/types/gameMode'
+import type { GameSession } from '@open-darts/game/types/gameSession'
 import { getMatchSummary, getSessionModeLabel } from '../../lib/history/sessionSummary'
 import { AroundTheClockSummaryPanel } from './AroundTheClockSummaryPanel'
 import { Bob27SummaryPanel } from './Bob27SummaryPanel'

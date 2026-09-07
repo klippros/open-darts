@@ -1,4 +1,4 @@
-import type { Bob27HitCount } from '../../bob27/buildBob27Darts'
+import type { Bob27HitCount } from '@open-darts/game/bob27/buildBob27Darts'
 import { isMissedAllPhrase } from './missedAllPhrase'
 
 const HIT_COUNTS: Record<string, Bob27HitCount> = {

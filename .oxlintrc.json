@@ -74,6 +74,13 @@
       }
     },
     {
+      "files": ["packages/game/**"],
+      "rules": {
+        "react/rules-of-hooks": "off",
+        "react/only-export-components": "off"
+      }
+    },
+    {
       "files": ["**/*.test.ts", "**/*.test.tsx"],
       "rules": {
         "typescript/strict-void-return": "off",

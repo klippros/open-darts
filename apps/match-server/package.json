@@ -8,6 +8,9 @@
     "types": "wrangler types",
     "typecheck": "wrangler types --check && tsc --noEmit"
   },
+  "dependencies": {
+    "@open-darts/game": "workspace:*"
+  },
   "devDependencies": {
     "@types/node": "^24.13.2",
     "typescript": "~6.0.2",

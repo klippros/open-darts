@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { DartMultiplier } from '../../types/dart'
-import type { Visit } from '../../types/visit'
-import { VisitInputMode } from '../../types/visit'
-import { numberDart } from '../testHelpers'
+import { DartMultiplier } from '@open-darts/game/types/dart'
+import type { Visit } from '@open-darts/game/types/visit'
+import { VisitInputMode } from '@open-darts/game/types/visit'
+import { numberDart } from '@open-darts/game/testHelpers'
 import {
   countDoubleCheckoutStats,
   countDoubleCheckoutStatsForVisit,

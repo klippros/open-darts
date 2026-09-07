@@ -1,13 +1,13 @@
-import { GameModeId } from '../../types/gameMode'
-import type { CreateSessionParams } from '../game/createSession'
-import { parseAroundTheClockConfigFromSearchParams } from '../aroundTheClock/aroundTheClockConfig'
+import { GameModeId } from '@open-darts/game/types/gameMode'
+import type { CreateSessionParams } from '@open-darts/game/game/createSession'
+import { parseAroundTheClockConfigFromSearchParams } from '@open-darts/game/aroundTheClock/aroundTheClockConfig'
 import {
   buildPlayersFromOpponentSetup,
   getChallengeConfigFromSetup,
   parseOpponentSetup,
-} from './opponentSetup'
-import { createSoloHumanPlayer } from './playerFactory'
-import { parseX01ConfigFromSearchParams } from '../x01/x01Presets'
+} from '@open-darts/game/game/opponentSetup'
+import { createSoloHumanPlayer } from '@open-darts/game/game/playerFactory'
+import { parseX01ConfigFromSearchParams } from '@open-darts/game/x01/x01Presets'
 
 export type PracticeGameMode =
   GameModeId.Bob27 | GameModeId.OneTwentyOne | GameModeId.AroundTheClock | GameModeId.TenUpOneDown

@@ -1,5 +1,5 @@
-import { GameStatus } from '../../types/gameMode'
-import type { GameSession } from '../../types/gameSession'
+import { GameStatus } from '@open-darts/game/types/gameMode'
+import type { GameSession } from '@open-darts/game/types/gameSession'
 import { getSessionCompletedAt } from '../history/sessionSummary'
 
 export type DateRangePreset = 'all' | '7d' | '30d'

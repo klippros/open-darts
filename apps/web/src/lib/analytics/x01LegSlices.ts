@@ -1,7 +1,7 @@
-import type { GameSession } from '../../types/gameSession'
-import type { Visit } from '../../types/visit'
-import { getVisitDartCount } from '../../types/visit'
-import { getPlayedLegNumbers, getVisitsForLeg } from '../game/matchLegs'
+import type { GameSession } from '@open-darts/game/types/gameSession'
+import type { Visit } from '@open-darts/game/types/visit'
+import { getVisitDartCount } from '@open-darts/game/types/visit'
+import { getPlayedLegNumbers, getVisitsForLeg } from '@open-darts/game/game/matchLegs'
 import { getPrimaryPlayerVisits } from './visitStats'
 
 export interface X01LegSlice {

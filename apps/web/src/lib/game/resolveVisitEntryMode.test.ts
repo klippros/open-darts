@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { SingleDartScoringMode } from '../../types/settings'
-import { VisitInputMode } from '../../types/visit'
+import { VisitInputMode } from '@open-darts/game/types/visit'
 import { resolveVisitEntryMode } from './resolveVisitEntryMode'
 
 describe('resolveVisitEntryMode', () => {

@@ -12,11 +12,14 @@ import {
   formatTargetThreeDartAverage,
   getMaxVisits,
   getMinVisits,
-} from '../lib/game/challenge'
-import { appendOpponentSetupParams, parseOpponentSetup } from '../lib/game/opponentSetup'
-import type { OpponentMode, OpponentSetup } from '../lib/game/opponentSetup'
-import { formatX01StartScore, parseX01ConfigFromSearchParams } from '../lib/x01/x01Presets'
-import { ChallengeLegEndMode } from '../types/match'
+} from '@open-darts/game/game/challenge'
+import { appendOpponentSetupParams, parseOpponentSetup } from '@open-darts/game/game/opponentSetup'
+import type { OpponentMode, OpponentSetup } from '@open-darts/game/game/opponentSetup'
+import {
+  formatX01StartScore,
+  parseX01ConfigFromSearchParams,
+} from '@open-darts/game/x01/x01Presets'
+import { ChallengeLegEndMode } from '@open-darts/game/types/match'
 import { MatchSetupLegSettings } from './MatchSetupLegSettings'
 
 const rangeInputStyle = {

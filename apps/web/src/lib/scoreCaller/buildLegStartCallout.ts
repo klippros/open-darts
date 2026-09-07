@@ -1,5 +1,5 @@
-import type { AppGameController } from '../game/createSession'
-import { isSoloLegMatch } from '../game/matchLegs'
+import type { AppGameController } from '@open-darts/game/game/createSession'
+import { isSoloLegMatch } from '@open-darts/game/game/matchLegs'
 import { capitalizeCallout, numberToWords } from './numberToWords'
 
 export const buildLegStartCallout = (controller: AppGameController): string | null => {

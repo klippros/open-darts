@@ -1,12 +1,15 @@
-import type { CheckoutRules } from '../../types/checkout'
-import { DartMultiplier, DartSegmentType } from '../../types/dart'
-import type { DartThrow } from '../../types/dart'
-import type { Visit } from '../../types/visit'
-import { visitsIncludeVisitScoreInput } from '../../types/visit'
-import { isDoubleDart } from '../dartScoring'
-import { formatDart } from '../formatDart'
-import type { CheckoutDart } from '../checkout/checkoutSuggestions'
-import { isCheckoutPossible, suggestCheckoutPath } from '../checkout/checkoutSuggestions'
+import type { CheckoutRules } from '@open-darts/game/types/checkout'
+import { DartMultiplier, DartSegmentType } from '@open-darts/game/types/dart'
+import type { DartThrow } from '@open-darts/game/types/dart'
+import type { Visit } from '@open-darts/game/types/visit'
+import { visitsIncludeVisitScoreInput } from '@open-darts/game/types/visit'
+import { isDoubleDart } from '@open-darts/game/dartScoring'
+import { formatDart } from '@open-darts/game/formatDart'
+import type { CheckoutDart } from '@open-darts/game/checkout/checkoutSuggestions'
+import {
+  isCheckoutPossible,
+  suggestCheckoutPath,
+} from '@open-darts/game/checkout/checkoutSuggestions'
 
 export interface DoubleCheckoutStats {
   attempts: number

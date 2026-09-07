@@ -1,7 +1,7 @@
 import { Button, Grid, Stack } from '@chakra-ui/react'
 import { VisitDartSlotCard } from '../Scoreboard/VisitDartSlotCard'
 import { useUiSounds } from '../../hooks/useUiSounds'
-import { getAroundTheClockConfig } from '../../lib/aroundTheClock/aroundTheClockConfig'
+import { getAroundTheClockConfig } from '@open-darts/game/aroundTheClock/aroundTheClockConfig'
 import {
   buildDartsForMissAll,
   buildDartsForOrdinalHit,
@@ -9,11 +9,11 @@ import {
   getAroundTheClockCurrentTargetIndex,
   getAroundTheClockDartsLeft,
   getAroundTheClockThrownSlotLabel,
-} from '../../lib/aroundTheClock/buildAroundTheClockDarts'
-import type { AroundTheClockDartOrdinal } from '../../lib/aroundTheClock/buildAroundTheClockDarts'
-import { getAroundTheClockTargetAimLabel } from '../../lib/aroundTheClock/aroundTheClockRules'
-import type { AroundTheClockConfig } from '../../types/aroundTheClock'
-import type { DartThrow } from '../../types/dart'
+} from '@open-darts/game/aroundTheClock/buildAroundTheClockDarts'
+import type { AroundTheClockDartOrdinal } from '@open-darts/game/aroundTheClock/buildAroundTheClockDarts'
+import { getAroundTheClockTargetAimLabel } from '@open-darts/game/aroundTheClock/aroundTheClockRules'
+import type { AroundTheClockConfig } from '@open-darts/game/types/aroundTheClock'
+import type { DartThrow } from '@open-darts/game/types/dart'
 
 export interface AroundTheClockDartPickerProps {
   committedTargetIndex: number

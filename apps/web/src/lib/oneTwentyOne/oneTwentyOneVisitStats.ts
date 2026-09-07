@@ -1,6 +1,6 @@
-import type { GameSession } from '../../types/gameSession'
-import type { Visit } from '../../types/visit'
-import { GameModeId } from '../../types/gameMode'
+import type { GameSession } from '@open-darts/game/types/gameSession'
+import type { Visit } from '@open-darts/game/types/visit'
+import { GameModeId } from '@open-darts/game/types/gameMode'
 import {
   countCheckoutVisits,
   getPrimaryPlayerVisits,
@@ -9,7 +9,7 @@ import {
 import {
   getOneTwentyOneAttemptedTargetFromVisit,
   isOneTwentyOneRoundFailedVisit,
-} from './oneTwentyOneVisitMetadata'
+} from '@open-darts/game/oneTwentyOne/oneTwentyOneVisitMetadata'
 
 /** Successful checkout visits for the primary player in a session. */
 export const getSessionCheckoutCount = (session: GameSession): number =>

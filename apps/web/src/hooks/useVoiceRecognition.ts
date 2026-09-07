@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import type { AppGameController } from '../lib/game/createSession'
+import type { AppGameController } from '@open-darts/game/game/createSession'
 import { subscribeCalloutActivity } from '../lib/scoreCaller/speakCallout'
 import {
   VOICE_CALLER_RESUME_MS,
@@ -27,8 +27,8 @@ import {
 import { createVoiceUndoHistory } from '../lib/voice/voiceUndoHistory'
 import { isVoiceInputSupportedForMode } from '../lib/voice/voiceModeSupport'
 import { shouldSupersedePendingVisitScore } from '../lib/voice/shouldSupersedePendingVisitScore'
-import type { GameModeId } from '../types/gameMode'
-import type { VisitInputMode } from '../types/visit'
+import type { GameModeId } from '@open-darts/game/types/gameMode'
+import type { VisitInputMode } from '@open-darts/game/types/visit'
 import { useUiSounds } from './useUiSounds'
 import { useVoiceControl } from './voiceControlContext'
 

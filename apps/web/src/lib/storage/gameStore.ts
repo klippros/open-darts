@@ -1,5 +1,5 @@
-import type { ActiveGameSnapshot } from '../../types/activeGameSnapshot'
-import type { GameSession } from '../../types/gameSession'
+import type { ActiveGameSnapshot } from '@open-darts/game/types/activeGameSnapshot'
+import type { GameSession } from '@open-darts/game/types/gameSession'
 import type { StorageAdapter } from './localStorageAdapter'
 import { browserLocalStorage } from './localStorageAdapter'
 import { StorageKey } from './storageKeys'

@@ -1,4 +1,4 @@
-import { isValidVisitScore, MAX_VISIT_SCORE } from '../../../lib/x01/x01Rules'
+import { isValidVisitScore, MAX_VISIT_SCORE } from '@open-darts/game/x01/x01Rules'
 
 export const appendVisitScoreDigit = (current: string, digit: string): string => {
   if (!/^\d$/u.test(digit)) {

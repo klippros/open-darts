@@ -1,17 +1,17 @@
-import { getAroundTheClockConfig } from '../aroundTheClock/aroundTheClockConfig'
-import { resolveAroundTheClockVisit } from '../aroundTheClock/aroundTheClockRules'
+import { getAroundTheClockConfig } from '@open-darts/game/aroundTheClock/aroundTheClockConfig'
+import { resolveAroundTheClockVisit } from '@open-darts/game/aroundTheClock/aroundTheClockRules'
 import {
   buildDartsForMissAll,
   buildDartsForOrdinalHit,
   getAroundTheClockDartsLeft,
-} from '../aroundTheClock/buildAroundTheClockDarts'
-import type { AroundTheClockDartOrdinal } from '../aroundTheClock/buildAroundTheClockDarts'
-import { buildBob27DartsForHitCount } from '../bob27/buildBob27Darts'
-import type { AppGameController } from '../game/createSession'
-import { isAroundTheClockConfig } from '../game/gameConfigGuards'
+} from '@open-darts/game/aroundTheClock/buildAroundTheClockDarts'
+import type { AroundTheClockDartOrdinal } from '@open-darts/game/aroundTheClock/buildAroundTheClockDarts'
+import { buildBob27DartsForHitCount } from '@open-darts/game/bob27/buildBob27Darts'
+import type { AppGameController } from '@open-darts/game/game/createSession'
+import { isAroundTheClockConfig } from '@open-darts/game/game/gameConfigGuards'
 import { getGameModePickerTargets } from '../game/getGameModePickerTargets'
-import type { DartThrow } from '../../types/dart'
-import { GameModeId } from '../../types/gameMode'
+import type { DartThrow } from '@open-darts/game/types/dart'
+import { GameModeId } from '@open-darts/game/types/gameMode'
 import type { AroundTheClockOutcome } from './grammars/aroundTheClockGrammar'
 import { VoiceIntentKind } from './parseVoiceCommand'
 import type { VoiceGameplayIntent, VoiceIntent } from './parseVoiceCommand'

@@ -1,20 +1,20 @@
 import { getVisitAverages, getPrimaryPlayerVisits } from '../analytics/visitStats'
 import { computeAroundTheClockSingleSessionStats } from '../analytics/aroundTheClockStats'
-import { gameModeDefinitions } from '../game/gameModeDefinitions'
-import { isX01Config, isAroundTheClockConfig } from '../game/gameConfigGuards'
+import { gameModeDefinitions } from '@open-darts/game/game/gameModeDefinitions'
+import { isX01Config, isAroundTheClockConfig } from '@open-darts/game/game/gameConfigGuards'
 import {
   getAroundTheClockAimModeLabel,
   getAroundTheClockConfig,
-} from '../aroundTheClock/aroundTheClockConfig'
-import { formatChallengeMatchScore, isChallengeMode } from '../game/challenge'
-import { getOneTwentyOneRoundTargetFromVisit } from '../oneTwentyOne/oneTwentyOneVisitMetadata'
+} from '@open-darts/game/aroundTheClock/aroundTheClockConfig'
+import { formatChallengeMatchScore, isChallengeMode } from '@open-darts/game/game/challenge'
+import { getOneTwentyOneRoundTargetFromVisit } from '@open-darts/game/oneTwentyOne/oneTwentyOneVisitMetadata'
 import { getHighestOneTwentyOneCheckoutTarget } from '../oneTwentyOne/oneTwentyOneVisitStats'
 import { isTenUpOneDownWinSession } from '../tenUpOneDown/tenUpOneDownVisitStats'
-import { getMatchWinnerId } from '../game/matchLegs'
-import { formatLegWinLine } from '../game/matchLegDisplay'
-import { formatX01StartScore } from '../x01/x01Presets'
-import { GameModeId, GameStatus } from '../../types/gameMode'
-import type { GameSession } from '../../types/gameSession'
+import { getMatchWinnerId } from '@open-darts/game/game/matchLegs'
+import { formatLegWinLine } from '@open-darts/game/game/matchLegDisplay'
+import { formatX01StartScore } from '@open-darts/game/x01/x01Presets'
+import { GameModeId, GameStatus } from '@open-darts/game/types/gameMode'
+import type { GameSession } from '@open-darts/game/types/gameSession'
 
 export interface MatchSummary {
   title: string

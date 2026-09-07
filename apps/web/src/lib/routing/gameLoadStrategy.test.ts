@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { GameModeId, GameStatus } from '../../types/gameMode'
-import type { ActiveGameSnapshot } from '../../types/activeGameSnapshot'
-import type { CreateSessionParams } from '../game/createSession'
-import { PlayerKind } from '../../types/player'
+import { GameModeId, GameStatus } from '@open-darts/game/types/gameMode'
+import type { ActiveGameSnapshot } from '@open-darts/game/types/activeGameSnapshot'
+import type { CreateSessionParams } from '@open-darts/game/game/createSession'
+import { PlayerKind } from '@open-darts/game/types/player'
 import { resolveGameLoadStrategy } from './gameLoadStrategy'
 
 const human = { id: 'player-1', name: 'Alice', kind: PlayerKind.Human }

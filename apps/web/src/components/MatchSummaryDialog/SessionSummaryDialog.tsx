@@ -1,5 +1,5 @@
 import { Dialog } from '@chakra-ui/react'
-import type { GameSession } from '../../types/gameSession'
+import type { GameSession } from '@open-darts/game/types/gameSession'
 import { getMatchSummary } from '../../lib/history/sessionSummary'
 import { darkDialogContentProps } from '../darkDialogContentProps'
 import { MatchSummaryBody } from '../SessionSummary/MatchSummaryBody'

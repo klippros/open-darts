@@ -1,8 +1,8 @@
-import type { CheckoutRules } from '../../types/checkout'
-import type { GameSession } from '../../types/gameSession'
-import type { Visit } from '../../types/visit'
-import { isX01Config } from '../game/gameConfigGuards'
-import { getVisitsForLeg } from '../game/matchLegs'
+import type { CheckoutRules } from '@open-darts/game/types/checkout'
+import type { GameSession } from '@open-darts/game/types/gameSession'
+import type { Visit } from '@open-darts/game/types/visit'
+import { isX01Config } from '@open-darts/game/game/gameConfigGuards'
+import { getVisitsForLeg } from '@open-darts/game/game/matchLegs'
 import {
   countCheckouts100Plus,
   countThrown100Plus,

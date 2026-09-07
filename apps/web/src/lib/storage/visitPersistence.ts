@@ -1,7 +1,7 @@
-import type { ActiveGameSnapshot } from '../../types/activeGameSnapshot'
-import { GameStatus } from '../../types/gameMode'
-import type { AppGameController } from '../game/createSession'
-import { matchHasProgress } from '../game/matchProgress'
+import type { ActiveGameSnapshot } from '@open-darts/game/types/activeGameSnapshot'
+import { GameStatus } from '@open-darts/game/types/gameMode'
+import type { AppGameController } from '@open-darts/game/game/createSession'
+import { matchHasProgress } from '@open-darts/game/game/matchProgress'
 import { queueCompletedSessionSync, queueSessionDeletionSync } from '../sync/sessionSync'
 import {
   clearActiveSnapshot,

@@ -1,31 +1,31 @@
 import { useMemo } from 'react'
 import { Stack } from '@chakra-ui/react'
-import { sumDartPoints } from '../../lib/dartScoring'
+import { sumDartPoints } from '@open-darts/game/dartScoring'
 import {
   formatAroundTheClockLiveStatsLabel,
   getAroundTheClockLiveStats,
 } from '../../lib/analytics/aroundTheClockStats'
-import { getAroundTheClockConfig } from '../../lib/aroundTheClock/aroundTheClockConfig'
-import type { ScoreboardPlayerEntry } from '../../lib/game/GameEngine'
+import { getAroundTheClockConfig } from '@open-darts/game/aroundTheClock/aroundTheClockConfig'
+import type { ScoreboardPlayerEntry } from '@open-darts/game/game/GameEngine'
 import {
   countPlayerVisitsInLeg,
   formatChallengeVisitProgressLabel,
   getChallengeLegStatuses,
   isChallengeMode,
-} from '../../lib/game/challenge'
+} from '@open-darts/game/game/challenge'
 import { formatOneTwentyOneVisitProgressLabel } from '../../lib/oneTwentyOne/formatOneTwentyOneVisitProgress'
 import {
   isAroundTheClockConfig,
   isOneTwentyOneConfig,
   isX01Config,
   toCheckoutSuggestionRules,
-} from '../../lib/game/gameConfigGuards'
-import { getLegStartingPlayerIndex } from '../../lib/game/matchLegs'
-import { GameModeId } from '../../types/gameMode'
-import type { MatchProgress } from '../../types/match'
-import type { DartThrow } from '../../types/dart'
-import type { GameConfig, GameModeId as GameModeIdType } from '../../types/gameMode'
-import type { Visit } from '../../types/visit'
+} from '@open-darts/game/game/gameConfigGuards'
+import { getLegStartingPlayerIndex } from '@open-darts/game/game/matchLegs'
+import { GameModeId } from '@open-darts/game/types/gameMode'
+import type { MatchProgress } from '@open-darts/game/types/match'
+import type { DartThrow } from '@open-darts/game/types/dart'
+import type { GameConfig, GameModeId as GameModeIdType } from '@open-darts/game/types/gameMode'
+import type { Visit } from '@open-darts/game/types/visit'
 import { PlayerScorePanels } from './PlayerScorePanel'
 import { VisitDartSlots } from './VisitDartSlots'
 

@@ -1,8 +1,8 @@
-import { AroundTheClockAimMode } from '../../types/aroundTheClock'
-import { GameModeId } from '../../types/gameMode'
-import type { GameSession } from '../../types/gameSession'
-import { gameModeDefinitions } from '../game/gameModeDefinitions'
-import { getAroundTheClockAimModeLabel } from '../aroundTheClock/aroundTheClockConfig'
+import { AroundTheClockAimMode } from '@open-darts/game/types/aroundTheClock'
+import { GameModeId } from '@open-darts/game/types/gameMode'
+import type { GameSession } from '@open-darts/game/types/gameSession'
+import { gameModeDefinitions } from '@open-darts/game/game/gameModeDefinitions'
+import { getAroundTheClockAimModeLabel } from '@open-darts/game/aroundTheClock/aroundTheClockConfig'
 import {
   getBob27AvgHitsPerVisit,
   getBob27SessionDoublesHit,

@@ -4,12 +4,12 @@ import { DartPicker } from './DartPicker'
 import { ScoringInputCard } from './ScoringInputCard/ScoringInputCard'
 import { TenUpOneDownDartPicker } from './TenUpOneDownDartPicker'
 import { VisitScorePicker } from './VisitScorePicker/VisitScorePicker'
-import { isAroundTheClockConfig } from '../../lib/game/gameConfigGuards'
-import { supportsVisitScoreInput } from '../../lib/game/gameModeDefinitions'
-import type { DartThrow } from '../../types/dart'
-import type { GameConfig } from '../../types/gameMode'
-import { GameModeId } from '../../types/gameMode'
-import { VisitInputMode } from '../../types/visit'
+import { isAroundTheClockConfig } from '@open-darts/game/game/gameConfigGuards'
+import { supportsVisitScoreInput } from '@open-darts/game/game/gameModeDefinitions'
+import type { DartThrow } from '@open-darts/game/types/dart'
+import type { GameConfig } from '@open-darts/game/types/gameMode'
+import { GameModeId } from '@open-darts/game/types/gameMode'
+import { VisitInputMode } from '@open-darts/game/types/visit'
 
 export interface GameModeDartPickerProps {
   mode: GameModeId

@@ -10,7 +10,7 @@ import { getSyncStatusLabel } from '../lib/auth/syncStatusLabel'
 import { sortSessionsByDate } from '../lib/history/sessionSummary'
 import { clearStoredSessions, loadStoredSessions } from '../lib/storage/gameStore'
 import { AuthStatus, SyncStatus } from '../types/auth'
-import type { GameSession } from '../types/gameSession'
+import type { GameSession } from '@open-darts/game/types/gameSession'
 
 export const HistoryPage = () => {
   const { user, profile, authStatus, syncStatus, isConfigured, signOut, clearSyncedSessions } =

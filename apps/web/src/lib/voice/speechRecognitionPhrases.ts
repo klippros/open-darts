@@ -1,4 +1,4 @@
-import { GameModeId } from '../../types/gameMode'
+import { GameModeId } from '@open-darts/game/types/gameMode'
 import { isVisitScoreVoiceMode } from './voiceModeSupport'
 
 export interface VoicePhraseHint {

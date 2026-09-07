@@ -1,6 +1,6 @@
-import type { GameSession } from '../../types/gameSession'
-import { GameModeId } from '../../types/gameMode'
-import { MAX_CHECKOUT_SCORE } from '../checkout/checkoutSuggestions'
+import type { GameSession } from '@open-darts/game/types/gameSession'
+import { GameModeId } from '@open-darts/game/types/gameMode'
+import { MAX_CHECKOUT_SCORE } from '@open-darts/game/checkout/checkoutSuggestions'
 import {
   countCheckoutVisits,
   getHighestCheckout,

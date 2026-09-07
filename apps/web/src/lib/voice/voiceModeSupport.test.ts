@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { GameModeId } from '../../types/gameMode'
-import { VisitInputMode } from '../../types/visit'
+import { GameModeId } from '@open-darts/game/types/gameMode'
+import { VisitInputMode } from '@open-darts/game/types/visit'
 import { isVoiceInputSupportedForMode } from './voiceModeSupport'
 
 describe('isVoiceInputSupportedForMode', () => {

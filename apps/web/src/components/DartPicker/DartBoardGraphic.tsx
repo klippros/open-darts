@@ -1,6 +1,6 @@
 import type { PointerEvent } from 'react'
 import { lightenHex } from '../../lib/color/lightenHex'
-import { DartMultiplier } from '../../types/dart'
+import { DartMultiplier } from '@open-darts/game/types/dart'
 import { getCenterDividerLine, getCornerDividerLines, DARTBOARD_DIVIDER } from './dartboardBorders'
 import {
   CORNER_ZONES,

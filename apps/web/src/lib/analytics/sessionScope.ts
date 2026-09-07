@@ -1,9 +1,9 @@
-import type { AroundTheClockAimMode } from '../../types/aroundTheClock'
-import { GameModeId } from '../../types/gameMode'
-import type { GameSession } from '../../types/gameSession'
-import { getAroundTheClockConfig } from '../aroundTheClock/aroundTheClockConfig'
-import { isAroundTheClockConfig, isX01Config } from '../game/gameConfigGuards'
-import { x01PresetConfigs, X01PresetId } from '../x01/x01Presets'
+import type { AroundTheClockAimMode } from '@open-darts/game/types/aroundTheClock'
+import { GameModeId } from '@open-darts/game/types/gameMode'
+import type { GameSession } from '@open-darts/game/types/gameSession'
+import { getAroundTheClockConfig } from '@open-darts/game/aroundTheClock/aroundTheClockConfig'
+import { isAroundTheClockConfig, isX01Config } from '@open-darts/game/game/gameConfigGuards'
+import { x01PresetConfigs, X01PresetId } from '@open-darts/game/x01/x01Presets'
 
 const FIVE_OH_ONE_START_SCORE = x01PresetConfigs[X01PresetId.FiveOhOne].startScore
 const FOUR_OH_ONE_START_SCORE = x01PresetConfigs[X01PresetId.FourOhOne].startScore

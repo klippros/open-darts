@@ -1,6 +1,6 @@
-import { GameModeId } from '../../types/gameMode'
-import { VisitInputMode } from '../../types/visit'
-import { getBob27Target } from '../bob27/bob27Rules'
+import { GameModeId } from '@open-darts/game/types/gameMode'
+import { VisitInputMode } from '@open-darts/game/types/visit'
+import { getBob27Target } from '@open-darts/game/bob27/bob27Rules'
 import type { VoiceCommandHelpSection } from '../voice/voiceCommandHelp'
 import { getVoiceCommandHelpSection } from '../voice/voiceCommandHelp'
 

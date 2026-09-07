@@ -1,5 +1,5 @@
 import type { ArmedMultiplier } from '../../lib/dartKeyboardInput'
-import { DartMultiplier } from '../../types/dart'
+import { DartMultiplier } from '@open-darts/game/types/dart'
 import type { CenterZone } from './dartboardLayout'
 
 export interface CenterDragReleaseTarget {

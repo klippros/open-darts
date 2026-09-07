@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { getDartKeyboardPreview, processDartKeyboardKey } from '../lib/dartKeyboardInput'
 import type { DartKeyboardInputState } from '../lib/dartKeyboardInput'
-import type { DartThrow } from '../types/dart'
+import type { DartThrow } from '@open-darts/game/types/dart'
 
 const isEditableTarget = (target: EventTarget | null): boolean => {
   if (!(target instanceof HTMLElement)) {

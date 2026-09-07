@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { DartMultiplier } from '../../types/dart'
-import { GameModeId, GameStatus } from '../../types/gameMode'
-import type { GameSession } from '../../types/gameSession'
-import { PlayerKind } from '../../types/player'
-import type { Visit } from '../../types/visit'
-import { numberDart } from '../testHelpers'
+import { DartMultiplier } from '@open-darts/game/types/dart'
+import { GameModeId, GameStatus } from '@open-darts/game/types/gameMode'
+import type { GameSession } from '@open-darts/game/types/gameSession'
+import { PlayerKind } from '@open-darts/game/types/player'
+import type { Visit } from '@open-darts/game/types/visit'
+import { numberDart } from '@open-darts/game/testHelpers'
 import {
   computeOneTwentyOneSingleSessionStats,
   getHighestOneTwentyOneCheckoutTarget,

@@ -16,7 +16,7 @@ import {
 } from '../../DartPicker/dartboardLayout'
 import type { AroundTheClockPerTargetStats } from '../../../lib/analytics/aroundTheClockStats'
 import { formatCount, formatInteger } from '../../../lib/analytics/formatAnalytics'
-import { isAroundTheClockBullTarget } from '../../../lib/aroundTheClock/aroundTheClockRules'
+import { isAroundTheClockBullTarget } from '@open-darts/game/aroundTheClock/aroundTheClockRules'
 import {
   getHeatmapFillColor,
   getOverallAvgDartsPerHit,

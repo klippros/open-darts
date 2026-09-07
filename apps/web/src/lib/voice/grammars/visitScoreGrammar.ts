@@ -1,4 +1,4 @@
-import { isValidVisitScore, MAX_VISIT_SCORE } from '../../x01/x01Rules'
+import { isValidVisitScore, MAX_VISIT_SCORE } from '@open-darts/game/x01/x01Rules'
 
 const UNITS: Record<string, number> = {
   zero: 0,
