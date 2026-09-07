@@ -24,6 +24,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Match-server secrets for wrangler types
+        run: cp apps/match-server/.dev.vars.example apps/match-server/.dev.vars
+
       - name: Prettier check
         run: pnpm format:check
 

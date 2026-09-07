@@ -1,15 +1,10 @@
-import { DurableObject } from 'cloudflare:workers'
+import { handleRequest } from './http/handleRequest'
+import { MatchObject } from './match/MatchObject'
 
-export class MatchObject extends DurableObject<Env> {}
+export { MatchObject }
 
 export default {
-  fetch(request: Request): Response {
-    const url = new URL(request.url)
-
-    if (url.pathname === '/health') {
-      return Response.json({ ok: true })
-    }
-
-    return new Response('Not found', { status: 404 })
+  fetch(request: Request, env: Env): Promise<Response> {
+    return handleRequest(request, env)
   },
 } satisfies ExportedHandler<Env>
