@@ -17,6 +17,8 @@ export interface Visit {
   legIndex?: number
   inputMode?: VisitInputMode
   metadata?: Record<string, unknown>
+  /** Kept on the row but skipped when rebuilding engine state and stats. */
+  voided?: boolean
 }
 
 export const VISIT_SCORE_DART_COUNT = 3
@@ -29,3 +31,7 @@ export const visitUsesVisitScoreInput = (visit: Visit): boolean =>
 
 export const visitsIncludeVisitScoreInput = (visits: Visit[]): boolean =>
   visits.some(visitUsesVisitScoreInput)
+
+export const isCountingVisit = (visit: Visit): boolean => visit.voided !== true
+
+export const getCountingVisits = (visits: Visit[]): Visit[] => visits.filter(isCountingVisit)

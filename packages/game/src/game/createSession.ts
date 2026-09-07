@@ -39,7 +39,7 @@ const createGameSession = ({
     matchFormat === undefined ? undefined : createInitialMatchProgress(players, matchFormat),
 })
 
-const getInitialTurnIndex = (session: GameSession): number => {
+export const getInitialTurnIndex = (session: GameSession): number => {
   const { matchProgress, players } = session
 
   if (matchProgress === undefined) {

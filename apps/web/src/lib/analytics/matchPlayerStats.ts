@@ -1,6 +1,7 @@
 import type { CheckoutRules } from '@open-darts/game/types/checkout'
 import type { GameSession } from '@open-darts/game/types/gameSession'
 import type { Visit } from '@open-darts/game/types/visit'
+import { getCountingVisits } from '@open-darts/game/types/visit'
 import { isX01Config } from '@open-darts/game/game/gameConfigGuards'
 import { getVisitsForLeg } from '@open-darts/game/game/matchLegs'
 import {
@@ -79,7 +80,7 @@ export const computeLegPlayerStats = (
     return {}
   }
 
-  const legVisits = getVisitsForLeg(session.visits, legNumber)
+  const legVisits = getCountingVisits(getVisitsForLeg(session.visits, legNumber))
   const rules = {
     doubleIn: config.doubleIn,
     doubleOut: config.doubleOut,

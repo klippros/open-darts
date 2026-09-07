@@ -123,7 +123,7 @@ export const getLegWinnerIdFromVisits = (
 ): string | undefined => {
   const checkoutVisit = [...getVisitsForLeg(visits, legNumber)]
     .reverse()
-    .find((visit) => visit.checkout)
+    .find((visit) => visit.checkout && visit.voided !== true)
 
   return checkoutVisit?.playerId
 }

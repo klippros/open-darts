@@ -1,7 +1,7 @@
 import type { Player } from '@open-darts/game/types/player'
 import type { GameSession } from '@open-darts/game/types/gameSession'
 import type { Visit } from '@open-darts/game/types/visit'
-import { getVisitDartCount } from '@open-darts/game/types/visit'
+import { getVisitDartCount, isCountingVisit } from '@open-darts/game/types/visit'
 import { MAX_CHECKOUT_SCORE } from '@open-darts/game/checkout/checkoutSuggestions'
 import { getVisitsForLeg } from '@open-darts/game/game/matchLegs'
 
@@ -9,14 +9,14 @@ export const getPrimaryPlayerVisits = (session: GameSession): Visit[] => {
   const playerId = session.players[0]?.id
 
   if (playerId === undefined) {
-    return session.visits
+    return session.visits.filter(isCountingVisit)
   }
 
-  return session.visits.filter((visit) => visit.playerId === playerId)
+  return session.visits.filter((visit) => visit.playerId === playerId && isCountingVisit(visit))
 }
 
 export const getPlayerVisits = (visits: Visit[], playerId: string): Visit[] =>
-  visits.filter((visit) => visit.playerId === playerId)
+  visits.filter((visit) => visit.playerId === playerId && isCountingVisit(visit))
 
 export const getSessionFinalScore = (session: GameSession): number | null => {
   const lastVisit = getPrimaryPlayerVisits(session).at(-1)

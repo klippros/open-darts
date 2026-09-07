@@ -1,5 +1,5 @@
 import type { GameSession } from '../types/gameSession'
-import { VisitInputMode } from '../types/visit'
+import { isCountingVisit, VisitInputMode } from '../types/visit'
 import type { GameEngine } from './GameEngine'
 import { getVisitsForLeg } from './matchLegs'
 
@@ -16,6 +16,10 @@ export const rebuildEngineStateFromSession = <State, Config>(
   let state = engine.createInitialState(session.players, session.config as Config)
 
   for (const visit of legVisits) {
+    if (!isCountingVisit(visit)) {
+      continue
+    }
+
     if (visit.inputMode === VisitInputMode.VisitScore) {
       const commitVisitScore = engine.commitVisitScore
 

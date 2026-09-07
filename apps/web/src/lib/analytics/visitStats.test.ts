@@ -30,6 +30,15 @@ describe('getVisitAverages', () => {
 
     expect(getVisitAverages([player], visits)[player.id]).toBe(30)
   })
+
+  it('ignores voided visits', () => {
+    const visits = [
+      visit({ visitIndex: 0, visitScore: 60, scoreAfter: 441 }),
+      visit({ visitIndex: 1, visitScore: 180, scoreAfter: 261, voided: true }),
+    ]
+
+    expect(getVisitAverages([player], visits)[player.id]).toBe(60)
+  })
 })
 
 describe('getLegAndMatchAverages', () => {

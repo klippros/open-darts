@@ -1,6 +1,7 @@
 import { ChallengeLegEndMode, ChallengeLegStatus } from '../types/match'
 import type { ChallengeConfig, MatchProgress } from '../types/match'
 import type { Visit } from '../types/visit'
+import { isCountingVisit } from '../types/visit'
 import { getVisitsForLeg } from './matchLegs'
 
 const MIN_CHECKOUT_DARTS_BY_START_SCORE: Record<number, number> = {
@@ -74,7 +75,9 @@ export const countPlayerVisitsInLeg = (
   legNumber: number,
   playerId: string,
 ): number =>
-  getVisitsForLeg(visits, legNumber).filter((visit) => visit.playerId === playerId).length
+  getVisitsForLeg(visits, legNumber).filter(
+    (visit) => visit.playerId === playerId && isCountingVisit(visit),
+  ).length
 
 export const isLegWithinVisitLimit = (visitsUsed: number, maxVisits: number): boolean =>
   visitsUsed <= maxVisits
@@ -141,7 +144,7 @@ export const getCompletedChallengeLegOutcome = (
   challenge: ChallengeConfig,
 ): ChallengeLegStatus.Won | ChallengeLegStatus.Lost | null => {
   const legVisits = getVisitsForLeg(visits, legNumber).filter(
-    (visit) => visit.playerId === playerId,
+    (visit) => visit.playerId === playerId && isCountingVisit(visit),
   )
 
   if (legVisits.length === 0) {
