@@ -4,6 +4,7 @@
   "env": {
     "browser": true
   },
+  "ignorePatterns": ["apps/match-server/worker-configuration.d.ts"],
   "options": {
     "typeAware": true
   },
@@ -62,6 +63,16 @@
     "react/iframe-missing-sandbox": "off"
   },
   "overrides": [
+    {
+      "files": ["apps/match-server/**"],
+      "env": {
+        "browser": false
+      },
+      "rules": {
+        "react/rules-of-hooks": "off",
+        "react/only-export-components": "off"
+      }
+    },
     {
       "files": ["**/*.test.ts", "**/*.test.tsx"],
       "rules": {

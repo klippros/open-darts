@@ -5,4 +5,4 @@
 - Define React components as **arrow functions** (`export const MyComponent = () => ...`), not `function` declarations.
 - When a component body is only a `return`, use an **implicit return** (`() => (...)`) instead of a block with `return`.
 - Prefer **string enums** over string literal union types for fixed sets of values (game modes, statuses, multipliers, etc.). Reference enum members (`GameModeId.X01`) instead of raw strings so renames and refactors stay safe.
-- Add **Vitest tests** for game logic in `src/lib/**/*.test.ts`. Each game mode engine must cover scoring, busts, checkouts, turn rules, and edge cases before the stage is considered done.
+- Add **Vitest tests** for game logic in `packages/game/**/*.test.ts` and web-app logic in `apps/web/src/**/*.test.ts`. Each game mode engine must cover scoring, busts, checkouts, turn rules, and edge cases before the stage is considered done.

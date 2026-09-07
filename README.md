@@ -3,7 +3,9 @@
 An open source darts scoring app that is easy to get started with.
 No login required, lives in the browsers local storage by default.
 When Supabase is configured, finished games can be synced between
-devices too, when the user signs up.
+devices too, when the user signs up. When both Supabase and a Cloudflare
+match Worker are configured, signed-in players can also play online.
+
 Pick from many fun game modes for practice and play, from classic
 501 to Bob's 27 and Around the Clock.
 
@@ -17,7 +19,8 @@ Prerequisites: Node.js, pnpm 10+.
 
 ```bash
 pnpm install
-pnpm dev      # http://localhost:5173/tools/open-darts/
+pnpm dev        # http://localhost:5173/tools/open-darts/
+pnpm dev:match  # optional match Worker at http://localhost:8787
 pnpm test
 pnpm build
 pnpm preview
@@ -29,9 +32,10 @@ See [AGENTS.md](AGENTS.md) for project conventions.
 
 ## Hosting
 
-The example deployment uses cloudflare pages and Supabase.
-You can easily setup your own deployment using Supabase following the
-instructions in [Supabase and deployment setup](docs/self-hosting.md).
+The example deployment uses Cloudflare Pages and optional Supabase.
+Online matches also need the optional match Worker. Follow
+[optional backends](docs/self-hosting.md) to run web only, web + Supabase,
+or web + Supabase + the match Worker.
 
 ---
 

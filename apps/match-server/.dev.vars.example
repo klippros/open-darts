@@ -1,0 +1,7 @@
+# Local match-server secrets. Copy to .dev.vars and fill in values.
+# Never commit .dev.vars. These are not VITE_ variables and must not
+# be added to the web app bundle.
+
+SUPABASE_URL=
+SUPABASE_JWT_SECRET=
+SUPABASE_SERVICE_ROLE_KEY=

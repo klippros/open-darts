@@ -1,14 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import type { SupabaseClient } from '@supabase/supabase-js'
-
-const readEnvironmentVariable = (value: unknown): string | undefined => {
-  if (typeof value !== 'string') {
-    return undefined
-  }
-
-  const trimmed = value.trim()
-  return trimmed === '' ? undefined : trimmed
-}
+import { readEnvironmentVariable } from '../env'
 
 const supabaseUrl = readEnvironmentVariable(import.meta.env.VITE_SUPABASE_URL)
 const supabaseAnonKey = readEnvironmentVariable(import.meta.env.VITE_SUPABASE_ANON_KEY)
