@@ -36,6 +36,11 @@ export enum MatchCommandName {
   KickPlayer = 'kick_player',
   LeaveWaiting = 'leave_waiting',
   BeginMatch = 'begin_match',
+  RecordVisit = 'record_visit',
+  RecordVisitScore = 'record_visit_score',
+  UndoVisit = 'undo_visit',
+  CorrectVisit = 'correct_visit',
+  FinishMatch = 'finish_match',
 }
 
 export enum CommandErrorCode {
@@ -63,12 +68,30 @@ export type MatchCommand =
   | { name: MatchCommandName.KickPlayer; targetUserId: string }
   | { name: MatchCommandName.LeaveWaiting }
   | { name: MatchCommandName.BeginMatch }
+  | { name: MatchCommandName.RecordVisit; darts: PublicDartThrow[] }
+  | { name: MatchCommandName.RecordVisitScore; score: number }
+  | { name: MatchCommandName.UndoVisit }
+  | {
+      name: MatchCommandName.CorrectVisit
+      visitIndex: number
+      darts?: PublicDartThrow[]
+      visitScore?: number
+    }
+  | { name: MatchCommandName.FinishMatch }
+
+export interface PublicDartThrow {
+  segment: { type: string; value?: number }
+  multiplier: string
+  points: number
+  timestamp: string
+}
 
 export interface MatchPlayerSnapshot {
   userId: string
   slot: 0 | 1
   connected: boolean
   lastSeenAt: number | null
+  lastVisitAt: number | null
 }
 
 export interface MatchDeadlineSnapshot {
@@ -92,6 +115,12 @@ export interface PublicMatchState {
   winnerUserId: string | null
   createdAt: number
   startedAt: number | null
+  completedAt: number | null
+  sessionJson: string | null
+  turnIndex: number | null
+  activePlayerId: string | null
+  pendingFinalization: boolean
+  resultPayloadJson: string | null
   version: number
 }
 

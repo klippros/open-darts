@@ -1,6 +1,7 @@
 import { GameModeId } from '@open-darts/game/types/gameMode'
 import type { JsonObject } from '../json'
 import { isJsonObject } from '../json'
+import { parsePlayState } from './sessionPlay'
 import { MatchEndingKind, MatchStatus, PlayMode, isDeadlineKind } from './types'
 import type { MatchDeadlineSnapshot, MatchPlayerSnapshot, PublicMatchState } from './types'
 
@@ -16,9 +17,13 @@ interface MatchRow {
   created_at: number
   updated_at: number
   started_at: number | null
+  completed_at: number | null
   session_json: string | null
+  turn_index: number | null
+  pending_finalization: number
   ending_kind: string | null
   winner_user_id: string | null
+  result_payload_json: string | null
   invite_token: string
   version: number
   [column: string]: string | number | null
@@ -31,6 +36,7 @@ interface PlayerRow {
   abandoned_at: number | null
   connected: number
   last_seen_at: number | null
+  last_visit_at: number | null
   [column: string]: string | number | null
 }
 
@@ -95,6 +101,15 @@ export const migrateMatchSchema = (sql: SqlStorage): void => {
     sql.exec('ALTER TABLE match_state ADD COLUMN invite_token TEXT NOT NULL DEFAULT ""')
     sql.exec('INSERT INTO _sql_schema_migrations (id, applied_at) VALUES (2, ?)', Date.now())
   }
+
+  if (version < 3) {
+    sql.exec('ALTER TABLE match_state ADD COLUMN turn_index INTEGER')
+    sql.exec('ALTER TABLE match_state ADD COLUMN pending_finalization INTEGER NOT NULL DEFAULT 0')
+    sql.exec('ALTER TABLE match_state ADD COLUMN completed_at INTEGER')
+    sql.exec('ALTER TABLE match_state ADD COLUMN result_payload_json TEXT')
+    sql.exec('ALTER TABLE match_players ADD COLUMN last_visit_at INTEGER')
+    sql.exec('INSERT INTO _sql_schema_migrations (id, applied_at) VALUES (3, ?)', Date.now())
+  }
 }
 
 const isGameModeId = (value: string): value is GameModeId =>
@@ -149,6 +164,7 @@ export const loadPublicMatchState = (sql: SqlStorage): PublicMatchState | null =
         slot: player.slot,
         connected: player.connected === 1,
         lastSeenAt: player.last_seen_at,
+        lastVisitAt: player.last_visit_at,
       }
     })
 
@@ -162,6 +178,17 @@ export const loadPublicMatchState = (sql: SqlStorage): PublicMatchState | null =
 
       return { kind: deadline.kind, fireAt: deadline.fire_at }
     })
+
+  let turnIndex = match.turn_index
+  let activePlayerId: string | null = null
+  const pendingFinalization = match.pending_finalization === 1
+
+  if (match.session_json !== null) {
+    const play = parsePlayState(match.session_json)
+    turnIndex = play.turnIndex
+    const active = play.session.players[play.turnIndex]
+    activePlayerId = active?.id ?? null
+  }
 
   return {
     matchId: match.id,
@@ -180,6 +207,12 @@ export const loadPublicMatchState = (sql: SqlStorage): PublicMatchState | null =
     winnerUserId: match.winner_user_id,
     createdAt: match.created_at,
     startedAt: match.started_at,
+    completedAt: match.completed_at,
+    sessionJson: match.session_json,
+    turnIndex,
+    activePlayerId,
+    pendingFinalization,
+    resultPayloadJson: match.result_payload_json,
     version: match.version,
   }
 }
@@ -209,6 +242,7 @@ export const findPlayer = (sql: SqlStorage, userId: string): MatchPlayerSnapshot
     slot: row.slot,
     connected: row.connected === 1,
     lastSeenAt: row.last_seen_at,
+    lastVisitAt: row.last_visit_at,
   }
 }
 
@@ -233,4 +267,42 @@ export const findOpenSlot = (sql: SqlStorage): 0 | 1 | null => {
 
 export const deletePlayer = (sql: SqlStorage, userId: string): void => {
   sql.exec('DELETE FROM match_players WHERE user_id = ?', userId)
+}
+
+export const loadPlayStateJson = (sql: SqlStorage): string | null => {
+  const row = sql
+    .exec<{ session_json: string | null }>('SELECT session_json FROM match_state LIMIT 1')
+    .toArray()[0]
+
+  return row?.session_json ?? null
+}
+
+export const writePlayState = (
+  sql: SqlStorage,
+  playJson: string,
+  turnIndex: number,
+  pendingFinalization: boolean,
+): void => {
+  const now = Date.now()
+  sql.exec(
+    `
+      UPDATE match_state
+      SET session_json = ?, turn_index = ?, pending_finalization = ?,
+          updated_at = ?, version = version + 1
+      WHERE id IS NOT NULL
+    `,
+    playJson,
+    turnIndex,
+    pendingFinalization ? 1 : 0,
+    now,
+  )
+}
+
+export const setPlayerLastVisitAt = (sql: SqlStorage, userId: string, at: number): void => {
+  sql.exec(
+    'UPDATE match_players SET last_visit_at = ?, last_seen_at = ? WHERE user_id = ?',
+    at,
+    at,
+    userId,
+  )
 }

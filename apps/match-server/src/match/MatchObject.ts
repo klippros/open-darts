@@ -1,5 +1,6 @@
 import { DurableObject } from 'cloudflare:workers'
 import { LEGS_TO_WIN_MAX, LEGS_TO_WIN_MIN } from '@open-darts/game/types/match'
+import type { GameConfig } from '@open-darts/game/types/gameMode'
 import { isUuid } from '../ids'
 import { isJsonObject, isRecord } from '../json'
 import {
@@ -11,17 +12,32 @@ import {
 } from './alarms'
 import { broadcast, serializeErrorMessage, serializeStateMessage } from './broadcast'
 import { commandFailure, commandSuccess, parseMatchCommand } from './commands'
-import { MATCH_USER_HEADER, WAITING_TIMEOUT_MS } from './constants'
+import { FINALIZE_TIMEOUT_MS, MATCH_USER_HEADER, WAITING_TIMEOUT_MS } from './constants'
+import { parsePublicDartThrows } from './dartPayload'
 import { publishMatchIndex } from './indexSync'
 import {
   deletePlayer,
   findOpenSlot,
   findPlayer,
   loadCreatorUserId,
+  loadPlayStateJson,
   loadPublicMatchState,
   matchExists,
   migrateMatchSchema,
+  setPlayerLastVisitAt,
+  writePlayState,
 } from './schema'
+import {
+  applyCorrectVisit,
+  applyRecordDarts,
+  applyRecordVisitScore,
+  applyUndoVisit,
+  createOnlineSession,
+  finalizeSession,
+  parsePlayState,
+  playStateToSessionJson,
+  resolveMatchWinnerUserId,
+} from './sessionPlay'
 import {
   ClientMessageType,
   CommandErrorCode,
@@ -107,8 +123,9 @@ export class MatchObject extends DurableObject<Env> {
         INSERT INTO match_state (
           id, creator_user_id, status, play_mode, mode, config_json,
           legs_to_win, starting_player_slot, created_at, updated_at,
-          started_at, session_json, ending_kind, winner_user_id, invite_token, version
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, ?, 1)
+          started_at, session_json, ending_kind, winner_user_id, invite_token,
+          turn_index, pending_finalization, completed_at, result_payload_json, version
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, ?, NULL, 0, NULL, NULL, 1)
       `,
       input.matchId,
       input.creatorUserId,
@@ -124,8 +141,10 @@ export class MatchObject extends DurableObject<Env> {
     )
     sql.exec(
       `
-        INSERT INTO match_players (user_id, slot, joined_at, abandoned_at, connected, last_seen_at)
-        VALUES (?, 0, ?, NULL, 0, NULL)
+        INSERT INTO match_players (
+          user_id, slot, joined_at, abandoned_at, connected, last_seen_at, last_visit_at
+        )
+        VALUES (?, 0, ?, NULL, 0, NULL, NULL)
       `,
       input.creatorUserId,
       now,
@@ -193,8 +212,10 @@ export class MatchObject extends DurableObject<Env> {
     const now = Date.now()
     sql.exec(
       `
-        INSERT INTO match_players (user_id, slot, joined_at, abandoned_at, connected, last_seen_at)
-        VALUES (?, ?, ?, NULL, 0, NULL)
+        INSERT INTO match_players (
+          user_id, slot, joined_at, abandoned_at, connected, last_seen_at, last_visit_at
+        )
+        VALUES (?, ?, ?, NULL, 0, NULL, NULL)
       `,
       input.userId,
       slot,
@@ -244,6 +265,30 @@ export class MatchObject extends DurableObject<Env> {
       case MatchCommandName.BeginMatch: {
         const beginResult = await this.persistBeginMatch(userId)
         return beginResult
+      }
+      case MatchCommandName.RecordVisit: {
+        const darts = parsePublicDartThrows(command.darts)
+        if (darts === null) {
+          return commandFailure(CommandErrorCode.Invalid, 'Invalid darts payload')
+        }
+        const recordResult = await this.persistRecordDarts(userId, darts)
+        return recordResult
+      }
+      case MatchCommandName.RecordVisitScore: {
+        const scoreResult = await this.persistRecordVisitScore(userId, command.score)
+        return scoreResult
+      }
+      case MatchCommandName.UndoVisit: {
+        const undoResult = await this.persistUndoVisit(userId)
+        return undoResult
+      }
+      case MatchCommandName.CorrectVisit: {
+        const correctResult = await this.persistCorrectVisit(userId, command)
+        return correctResult
+      }
+      case MatchCommandName.FinishMatch: {
+        const finishResult = await this.persistFinishMatch(userId)
+        return finishResult
       }
       default:
         return commandFailure(CommandErrorCode.Invalid, 'Unknown command')
@@ -369,6 +414,14 @@ export class MatchObject extends DurableObject<Env> {
         }
       }
 
+      if (kind === DeadlineKind.FinalizeAt) {
+        const state = loadPublicMatchState(sql)
+
+        if (state?.status === MatchStatus.Active && state.pendingFinalization) {
+          this.completeFromPendingFinalization()
+        }
+      }
+
       deleteDeadline(sql, kind)
     }
 
@@ -483,21 +536,236 @@ export class MatchObject extends DurableObject<Env> {
       return commandFailure(CommandErrorCode.Invalid, 'Match needs two players to start')
     }
 
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- online config is GameConfig shaped
+    const config = state.config as unknown as GameConfig
+    const play = createOnlineSession({
+      matchId: state.matchId,
+      mode: state.mode,
+      config,
+      legsToWin: state.legsToWin,
+      startingPlayerSlot: state.startingPlayerSlot,
+      players: state.players,
+    })
+
     const now = Date.now()
     sql.exec(
       `
         UPDATE match_state
-        SET status = ?, started_at = ?, updated_at = ?, version = version + 1
+        SET status = ?, started_at = ?, session_json = ?, turn_index = ?,
+            pending_finalization = 0, updated_at = ?, version = version + 1
         WHERE id IS NOT NULL
       `,
       MatchStatus.Active,
       now,
+      playStateToSessionJson(play),
+      play.turnIndex,
       now,
     )
     deleteDeadline(sql, DeadlineKind.WaitingExpiresAt)
 
     const started = await this.finishMutation()
     return started
+  }
+
+  private requireActivePlay():
+    { ok: true; play: ReturnType<typeof parsePlayState> } | { ok: false; result: CommandResult } {
+    const sql = this.ctx.storage.sql
+    const state = loadPublicMatchState(sql)
+
+    if (state?.status !== MatchStatus.Active) {
+      return {
+        ok: false,
+        result: commandFailure(CommandErrorCode.Invalid, 'Match is not active'),
+      }
+    }
+
+    const sessionJson = loadPlayStateJson(sql)
+
+    if (sessionJson === null) {
+      return {
+        ok: false,
+        result: commandFailure(CommandErrorCode.Invalid, 'Match has no session'),
+      }
+    }
+
+    return { ok: true, play: parsePlayState(sessionJson) }
+  }
+
+  private async persistRecordDarts(
+    userId: string,
+    darts: NonNullable<ReturnType<typeof parsePublicDartThrows>>,
+  ): Promise<CommandResult> {
+    const required = this.requireActivePlay()
+
+    if (!required.ok) {
+      return required.result
+    }
+
+    const applied = applyRecordDarts(required.play, userId, darts)
+
+    if (!applied.ok) {
+      return commandFailure(CommandErrorCode.Forbidden, applied.reason)
+    }
+
+    this.persistPlayMutation(userId, applied.play)
+    const result = await this.finishMutation()
+    return result
+  }
+
+  private async persistRecordVisitScore(userId: string, score: number): Promise<CommandResult> {
+    const required = this.requireActivePlay()
+
+    if (!required.ok) {
+      return required.result
+    }
+
+    const applied = applyRecordVisitScore(required.play, userId, score)
+
+    if (!applied.ok) {
+      return commandFailure(CommandErrorCode.Forbidden, applied.reason)
+    }
+
+    this.persistPlayMutation(userId, applied.play)
+    const result = await this.finishMutation()
+    return result
+  }
+
+  private async persistUndoVisit(userId: string): Promise<CommandResult> {
+    const required = this.requireActivePlay()
+
+    if (!required.ok) {
+      return required.result
+    }
+
+    const applied = applyUndoVisit(required.play, userId)
+
+    if (!applied.ok) {
+      return commandFailure(CommandErrorCode.Forbidden, applied.reason)
+    }
+
+    const sql = this.ctx.storage.sql
+    writePlayState(sql, playStateToSessionJson(applied.play), applied.play.turnIndex, false)
+    deleteDeadline(sql, DeadlineKind.FinalizeAt)
+
+    const result = await this.finishMutation()
+    return result
+  }
+
+  private async persistCorrectVisit(
+    userId: string,
+    command: Extract<MatchCommand, { name: MatchCommandName.CorrectVisit }>,
+  ): Promise<CommandResult> {
+    const required = this.requireActivePlay()
+
+    if (!required.ok) {
+      return required.result
+    }
+
+    if (command.darts !== undefined) {
+      const darts = parsePublicDartThrows(command.darts)
+
+      if (darts === null) {
+        return commandFailure(CommandErrorCode.Invalid, 'Invalid correction darts')
+      }
+
+      const applied = applyCorrectVisit(required.play, userId, command.visitIndex, { darts })
+
+      if (!applied.ok) {
+        return commandFailure(CommandErrorCode.Forbidden, applied.reason)
+      }
+
+      this.persistPlayMutation(userId, applied.play)
+      const result = await this.finishMutation()
+      return result
+    }
+
+    if (command.visitScore === undefined) {
+      return commandFailure(CommandErrorCode.Invalid, 'Correction requires darts or visitScore')
+    }
+
+    const applied = applyCorrectVisit(required.play, userId, command.visitIndex, {
+      visitScore: command.visitScore,
+    })
+
+    if (!applied.ok) {
+      return commandFailure(CommandErrorCode.Forbidden, applied.reason)
+    }
+
+    this.persistPlayMutation(userId, applied.play)
+    const result = await this.finishMutation()
+    return result
+  }
+
+  private async persistFinishMatch(userId: string): Promise<CommandResult> {
+    const required = this.requireActivePlay()
+
+    if (!required.ok) {
+      return required.result
+    }
+
+    if (!required.play.pendingFinalization) {
+      return commandFailure(CommandErrorCode.Invalid, 'Match is not waiting to be finalized')
+    }
+
+    const winnerUserId = resolveMatchWinnerUserId(required.play.session)
+
+    if (winnerUserId !== userId && findPlayer(this.ctx.storage.sql, userId) === null) {
+      return commandFailure(CommandErrorCode.Forbidden, 'Not allowed to finish')
+    }
+
+    // Either player who is a member can confirm finish (typically the winner).
+    this.completeFromPendingFinalization()
+    const result = await this.finishMutation()
+    return result
+  }
+
+  private persistPlayMutation(actorUserId: string, play: ReturnType<typeof parsePlayState>): void {
+    const sql = this.ctx.storage.sql
+    const now = Date.now()
+    writePlayState(sql, playStateToSessionJson(play), play.turnIndex, play.pendingFinalization)
+    setPlayerLastVisitAt(sql, actorUserId, now)
+
+    if (play.pendingFinalization) {
+      upsertDeadline(sql, DeadlineKind.FinalizeAt, now + FINALIZE_TIMEOUT_MS)
+    } else {
+      deleteDeadline(sql, DeadlineKind.FinalizeAt)
+    }
+  }
+
+  private completeFromPendingFinalization(): void {
+    const sql = this.ctx.storage.sql
+    const sessionJson = loadPlayStateJson(sql)
+
+    if (sessionJson === null) {
+      return
+    }
+
+    const play = finalizeSession(parsePlayState(sessionJson))
+    const winnerUserId = resolveMatchWinnerUserId(play.session)
+    const now = Date.now()
+    const resultPayload = JSON.stringify({
+      session: play.session,
+      winnerUserId,
+    })
+
+    sql.exec(
+      `
+        UPDATE match_state
+        SET status = ?, ending_kind = ?, winner_user_id = ?, completed_at = ?,
+            session_json = ?, turn_index = ?, pending_finalization = 0,
+            result_payload_json = ?, updated_at = ?, version = version + 1
+        WHERE id IS NOT NULL
+      `,
+      MatchStatus.Completed,
+      MatchEndingKind.Checkout,
+      winnerUserId,
+      now,
+      playStateToSessionJson(play),
+      play.turnIndex,
+      resultPayload,
+      now,
+    )
+    deleteAllDeadlines(sql)
   }
 
   private closeSocketsForUser(userId: string): void {

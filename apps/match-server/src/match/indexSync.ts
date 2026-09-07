@@ -1,5 +1,6 @@
+import { isRecord } from '../json'
 import type { PublicMatchState } from './types'
-import { MatchEndingKind, MatchStatus } from './types'
+import { MatchEndingKind, MatchStatus, TERMINAL_STATUSES } from './types'
 
 export enum IndexPublishErrorCode {
   Conflict = 'conflict',
@@ -85,6 +86,16 @@ const deleteIndexedMatch = async (env: Env, matchId: string): Promise<void> => {
 }
 
 const upsertIndexedMatch = async (env: Env, state: PublicMatchState): Promise<void> => {
+  let resultPayload: Record<string, unknown> | null = null
+
+  if (state.resultPayloadJson !== null) {
+    const parsed: unknown = JSON.parse(state.resultPayloadJson)
+
+    if (isRecord(parsed)) {
+      resultPayload = parsed
+    }
+  }
+
   await restFetch(env, 'online_matches', {
     method: 'POST',
     prefer: 'return=minimal,resolution=merge-duplicates',
@@ -100,8 +111,10 @@ const upsertIndexedMatch = async (env: Env, state: PublicMatchState): Promise<vo
       starting_player_slot: state.startingPlayerSlot,
       created_at: toIso(state.createdAt),
       started_at: state.startedAt === null ? null : toIso(state.startedAt),
+      completed_at: state.completedAt === null ? null : toIso(state.completedAt),
       ending_kind: state.endingKind,
       winner_user_id: state.winnerUserId,
+      result_payload: resultPayload,
     }),
   })
 }
@@ -135,7 +148,7 @@ const replaceOccupancy = async (env: Env, state: PublicMatchState): Promise<void
     prefer: 'return=minimal',
   })
 
-  if (state.players.length === 0) {
+  if (TERMINAL_STATUSES.has(state.status) || state.players.length === 0) {
     return
   }
 
