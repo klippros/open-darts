@@ -7,6 +7,7 @@ import type { MatchObject } from '../src/match/MatchObject'
 
 export const creatorUserId = '11111111-1111-4111-8111-111111111111'
 export const otherUserId = '22222222-2222-4222-8222-222222222222'
+export const thirdUserId = '33333333-3333-4333-8333-333333333333'
 
 export const createMatchId = (): string => crypto.randomUUID()
 
@@ -33,6 +34,7 @@ export const initWaitingMatch = async (
   const stub = env.MATCH.getByName(matchId)
   const result = await stub.init({
     matchId,
+    inviteToken: crypto.randomUUID(),
     creatorUserId,
     mode: GameModeId.X01,
     config: defaultX01Config(),

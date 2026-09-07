@@ -19,6 +19,7 @@ interface MatchRow {
   session_json: string | null
   ending_kind: string | null
   winner_user_id: string | null
+  invite_token: string
   version: number
   [column: string]: string | number | null
 }
@@ -51,46 +52,49 @@ export const migrateMatchSchema = (sql: SqlStorage): void => {
     .exec<{ version: number }>('SELECT COALESCE(MAX(id), 0) AS version FROM _sql_schema_migrations')
     .one().version
 
-  if (version >= 1) {
-    return
+  if (version < 1) {
+    sql.exec(`
+      CREATE TABLE match_state (
+        id TEXT PRIMARY KEY,
+        creator_user_id TEXT NOT NULL,
+        status TEXT NOT NULL,
+        play_mode TEXT NOT NULL,
+        mode TEXT NOT NULL,
+        config_json TEXT NOT NULL,
+        legs_to_win INTEGER NOT NULL,
+        starting_player_slot INTEGER NOT NULL,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        started_at INTEGER,
+        session_json TEXT,
+        ending_kind TEXT,
+        winner_user_id TEXT,
+        version INTEGER NOT NULL
+      )
+    `)
+    sql.exec(`
+      CREATE TABLE match_players (
+        user_id TEXT PRIMARY KEY,
+        slot INTEGER NOT NULL UNIQUE,
+        joined_at INTEGER NOT NULL,
+        abandoned_at INTEGER,
+        connected INTEGER NOT NULL,
+        last_seen_at INTEGER
+      )
+    `)
+    sql.exec(`
+      CREATE TABLE deadlines (
+        kind TEXT PRIMARY KEY,
+        fire_at INTEGER NOT NULL
+      )
+    `)
+    sql.exec('INSERT INTO _sql_schema_migrations (id, applied_at) VALUES (1, ?)', Date.now())
   }
 
-  sql.exec(`
-    CREATE TABLE match_state (
-      id TEXT PRIMARY KEY,
-      creator_user_id TEXT NOT NULL,
-      status TEXT NOT NULL,
-      play_mode TEXT NOT NULL,
-      mode TEXT NOT NULL,
-      config_json TEXT NOT NULL,
-      legs_to_win INTEGER NOT NULL,
-      starting_player_slot INTEGER NOT NULL,
-      created_at INTEGER NOT NULL,
-      updated_at INTEGER NOT NULL,
-      started_at INTEGER,
-      session_json TEXT,
-      ending_kind TEXT,
-      winner_user_id TEXT,
-      version INTEGER NOT NULL
-    )
-  `)
-  sql.exec(`
-    CREATE TABLE match_players (
-      user_id TEXT PRIMARY KEY,
-      slot INTEGER NOT NULL UNIQUE,
-      joined_at INTEGER NOT NULL,
-      abandoned_at INTEGER,
-      connected INTEGER NOT NULL,
-      last_seen_at INTEGER
-    )
-  `)
-  sql.exec(`
-    CREATE TABLE deadlines (
-      kind TEXT PRIMARY KEY,
-      fire_at INTEGER NOT NULL
-    )
-  `)
-  sql.exec('INSERT INTO _sql_schema_migrations (id, applied_at) VALUES (1, ?)', Date.now())
+  if (version < 2) {
+    sql.exec('ALTER TABLE match_state ADD COLUMN invite_token TEXT NOT NULL DEFAULT ""')
+    sql.exec('INSERT INTO _sql_schema_migrations (id, applied_at) VALUES (2, ?)', Date.now())
+  }
 }
 
 const isGameModeId = (value: string): value is GameModeId =>
@@ -161,6 +165,8 @@ export const loadPublicMatchState = (sql: SqlStorage): PublicMatchState | null =
 
   return {
     matchId: match.id,
+    inviteToken: match.invite_token,
+    creatorUserId: match.creator_user_id,
     status: match.status,
     playMode: match.play_mode,
     mode: match.mode,
@@ -172,6 +178,8 @@ export const loadPublicMatchState = (sql: SqlStorage): PublicMatchState | null =
     endingKind:
       match.ending_kind !== null && isEndingKind(match.ending_kind) ? match.ending_kind : null,
     winnerUserId: match.winner_user_id,
+    createdAt: match.created_at,
+    startedAt: match.started_at,
     version: match.version,
   }
 }
@@ -202,4 +210,27 @@ export const findPlayer = (sql: SqlStorage, userId: string): MatchPlayerSnapshot
     connected: row.connected === 1,
     lastSeenAt: row.last_seen_at,
   }
+}
+
+export const findOpenSlot = (sql: SqlStorage): 0 | 1 | null => {
+  const taken = new Set(
+    sql
+      .exec<{ slot: number }>('SELECT slot FROM match_players')
+      .toArray()
+      .map((row) => row.slot),
+  )
+
+  if (!taken.has(0)) {
+    return 0
+  }
+
+  if (!taken.has(1)) {
+    return 1
+  }
+
+  return null
+}
+
+export const deletePlayer = (sql: SqlStorage, userId: string): void => {
+  sql.exec('DELETE FROM match_players WHERE user_id = ?', userId)
 }

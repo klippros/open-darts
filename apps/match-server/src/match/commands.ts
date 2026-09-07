@@ -2,10 +2,12 @@ import { isRecord } from '../json'
 import { MatchCommandName } from './types'
 import type { CommandErrorCode, CommandResult, MatchCommand, PublicMatchState } from './types'
 
-const COMMANDS_BY_NAME: Record<string, MatchCommand> = {
+const SIMPLE_COMMANDS: Record<string, MatchCommand> = {
   [MatchCommandName.GetState]: { name: MatchCommandName.GetState },
   [MatchCommandName.Ping]: { name: MatchCommandName.Ping },
   [MatchCommandName.CancelWaiting]: { name: MatchCommandName.CancelWaiting },
+  [MatchCommandName.LeaveWaiting]: { name: MatchCommandName.LeaveWaiting },
+  [MatchCommandName.BeginMatch]: { name: MatchCommandName.BeginMatch },
 }
 
 export const parseMatchCommand = (value: unknown): MatchCommand | null => {
@@ -13,7 +15,19 @@ export const parseMatchCommand = (value: unknown): MatchCommand | null => {
     return null
   }
 
-  return COMMANDS_BY_NAME[value.name] ?? null
+  const simple = SIMPLE_COMMANDS[value.name]
+
+  if (simple !== undefined) {
+    return simple
+  }
+
+  const kickCommandName: string = MatchCommandName.KickPlayer
+
+  if (value.name === kickCommandName && typeof value.targetUserId === 'string') {
+    return { name: MatchCommandName.KickPlayer, targetUserId: value.targetUserId }
+  }
+
+  return null
 }
 
 export const commandFailure = (code: CommandErrorCode, message: string): CommandResult => ({

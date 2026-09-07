@@ -33,6 +33,9 @@ export enum MatchCommandName {
   GetState = 'get_state',
   Ping = 'ping',
   CancelWaiting = 'cancel_waiting',
+  KickPlayer = 'kick_player',
+  LeaveWaiting = 'leave_waiting',
+  BeginMatch = 'begin_match',
 }
 
 export enum CommandErrorCode {
@@ -41,6 +44,7 @@ export enum CommandErrorCode {
   Forbidden = 'forbidden',
   Terminal = 'terminal',
   Invalid = 'invalid',
+  Conflict = 'conflict',
 }
 
 export enum ClientMessageType {
@@ -56,6 +60,9 @@ export type MatchCommand =
   | { name: MatchCommandName.GetState }
   | { name: MatchCommandName.Ping }
   | { name: MatchCommandName.CancelWaiting }
+  | { name: MatchCommandName.KickPlayer; targetUserId: string }
+  | { name: MatchCommandName.LeaveWaiting }
+  | { name: MatchCommandName.BeginMatch }
 
 export interface MatchPlayerSnapshot {
   userId: string
@@ -71,6 +78,8 @@ export interface MatchDeadlineSnapshot {
 
 export interface PublicMatchState {
   matchId: string
+  inviteToken: string
+  creatorUserId: string
   status: MatchStatus
   playMode: PlayMode
   mode: GameModeId
@@ -81,6 +90,8 @@ export interface PublicMatchState {
   deadlines: MatchDeadlineSnapshot[]
   endingKind: MatchEndingKind | null
   winnerUserId: string | null
+  createdAt: number
+  startedAt: number | null
   version: number
 }
 
@@ -93,11 +104,17 @@ export interface CommandResult {
 
 export interface InitMatchInput {
   matchId: string
+  inviteToken: string
   creatorUserId: string
   mode: GameModeId
   config: GameConfig
   legsToWin: number
   startingPlayerSlot: 0 | 1
+}
+
+export interface JoinMatchInput {
+  userId: string
+  inviteToken: string
 }
 
 export type TicketInspection = { kind: 'missing' } | { kind: 'forbidden' } | { kind: 'ok' }

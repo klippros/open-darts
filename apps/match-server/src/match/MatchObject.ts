@@ -14,6 +14,8 @@ import { commandFailure, commandSuccess, parseMatchCommand } from './commands'
 import { MATCH_USER_HEADER, WAITING_TIMEOUT_MS } from './constants'
 import { publishMatchIndex } from './indexSync'
 import {
+  deletePlayer,
+  findOpenSlot,
   findPlayer,
   loadCreatorUserId,
   loadPublicMatchState,
@@ -30,7 +32,22 @@ import {
   PlayMode,
   TERMINAL_STATUSES,
 } from './types'
-import type { CommandResult, InitMatchInput, MatchCommand, TicketInspection } from './types'
+import type {
+  CommandResult,
+  InitMatchInput,
+  JoinMatchInput,
+  MatchCommand,
+  PublicMatchState,
+  TicketInspection,
+} from './types'
+
+const publishIndexBestEffort = async (env: Env, state: PublicMatchState): Promise<void> => {
+  try {
+    await publishMatchIndex(env, state)
+  } catch {
+    // The next persist retries the index write.
+  }
+}
 
 const readSocketUserId = (socket: WebSocket): string | null => {
   const attachment: unknown = socket.deserializeAttachment()
@@ -63,8 +80,11 @@ export class MatchObject extends DurableObject<Env> {
       return commandFailure(CommandErrorCode.Invalid, 'Match already exists')
     }
 
-    if (!isUuid(input.matchId) || !isUuid(input.creatorUserId)) {
-      return commandFailure(CommandErrorCode.Invalid, 'Match and creator ids must be UUIDs')
+    if (!isUuid(input.matchId) || !isUuid(input.creatorUserId) || !isUuid(input.inviteToken)) {
+      return commandFailure(
+        CommandErrorCode.Invalid,
+        'Match, invite, and creator ids must be UUIDs',
+      )
     }
 
     if (input.legsToWin < LEGS_TO_WIN_MIN || input.legsToWin > LEGS_TO_WIN_MAX) {
@@ -87,8 +107,8 @@ export class MatchObject extends DurableObject<Env> {
         INSERT INTO match_state (
           id, creator_user_id, status, play_mode, mode, config_json,
           legs_to_win, starting_player_slot, created_at, updated_at,
-          started_at, session_json, ending_kind, winner_user_id, version
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, 1)
+          started_at, session_json, ending_kind, winner_user_id, invite_token, version
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, ?, 1)
       `,
       input.matchId,
       input.creatorUserId,
@@ -100,6 +120,7 @@ export class MatchObject extends DurableObject<Env> {
       input.startingPlayerSlot,
       now,
       now,
+      input.inviteToken,
     )
     sql.exec(
       `
@@ -135,6 +156,56 @@ export class MatchObject extends DurableObject<Env> {
     return { kind: 'ok' }
   }
 
+  async join(input: JoinMatchInput): Promise<CommandResult> {
+    const sql = this.ctx.storage.sql
+    const state = loadPublicMatchState(sql)
+
+    if (state === null) {
+      return commandFailure(CommandErrorCode.NotFound, 'Match not found')
+    }
+
+    if (!isUuid(input.userId)) {
+      return commandFailure(CommandErrorCode.Invalid, 'User id must be a UUID')
+    }
+
+    if (input.inviteToken !== state.inviteToken) {
+      return commandFailure(CommandErrorCode.Forbidden, 'Invite token does not match')
+    }
+
+    if (TERMINAL_STATUSES.has(state.status)) {
+      return commandFailure(CommandErrorCode.Terminal, 'Match is no longer joinable')
+    }
+
+    if (state.status !== MatchStatus.Waiting) {
+      return commandFailure(CommandErrorCode.Invalid, 'Match is not waiting')
+    }
+
+    if (findPlayer(sql, input.userId) !== null) {
+      return commandSuccess(state)
+    }
+
+    const slot = findOpenSlot(sql)
+
+    if (slot === null) {
+      return commandFailure(CommandErrorCode.Conflict, 'Match is full')
+    }
+
+    const now = Date.now()
+    sql.exec(
+      `
+        INSERT INTO match_players (user_id, slot, joined_at, abandoned_at, connected, last_seen_at)
+        VALUES (?, ?, ?, NULL, 0, NULL)
+      `,
+      input.userId,
+      slot,
+      now,
+    )
+    sql.exec('UPDATE match_state SET updated_at = ?, version = version + 1', now)
+
+    const joined = await this.finishMutation()
+    return joined
+  }
+
   async applyCommand(userId: string, command: MatchCommand): Promise<CommandResult> {
     const sql = this.ctx.storage.sql
     const state = loadPublicMatchState(sql)
@@ -161,6 +232,18 @@ export class MatchObject extends DurableObject<Env> {
       case MatchCommandName.CancelWaiting: {
         const cancelResult = await this.persistCancelWaiting(userId)
         return cancelResult
+      }
+      case MatchCommandName.KickPlayer: {
+        const kickResult = await this.persistKickPlayer(userId, command.targetUserId)
+        return kickResult
+      }
+      case MatchCommandName.LeaveWaiting: {
+        const leaveResult = await this.persistLeaveWaiting(userId)
+        return leaveResult
+      }
+      case MatchCommandName.BeginMatch: {
+        const beginResult = await this.persistBeginMatch(userId)
+        return beginResult
       }
       default:
         return commandFailure(CommandErrorCode.Invalid, 'Unknown command')
@@ -323,6 +406,108 @@ export class MatchObject extends DurableObject<Env> {
     return cancelled
   }
 
+  private async persistKickPlayer(
+    actorUserId: string,
+    targetUserId: string,
+  ): Promise<CommandResult> {
+    const sql = this.ctx.storage.sql
+    const creatorUserId = loadCreatorUserId(sql)
+    const state = loadPublicMatchState(sql)
+
+    if (creatorUserId !== actorUserId) {
+      return commandFailure(CommandErrorCode.Forbidden, 'Only the creator can kick a player')
+    }
+
+    if (state?.status !== MatchStatus.Waiting) {
+      return commandFailure(CommandErrorCode.Invalid, 'Match is not waiting')
+    }
+
+    if (!isUuid(targetUserId)) {
+      return commandFailure(CommandErrorCode.Invalid, 'Target user id must be a UUID')
+    }
+
+    if (targetUserId === creatorUserId) {
+      return commandFailure(CommandErrorCode.Invalid, 'The creator cannot be kicked')
+    }
+
+    if (findPlayer(sql, targetUserId) === null) {
+      return commandFailure(CommandErrorCode.NotFound, 'Player is not in this match')
+    }
+
+    deletePlayer(sql, targetUserId)
+    sql.exec('UPDATE match_state SET updated_at = ?, version = version + 1', Date.now())
+    this.closeSocketsForUser(targetUserId)
+
+    const kicked = await this.finishMutation()
+    return kicked
+  }
+
+  private async persistLeaveWaiting(userId: string): Promise<CommandResult> {
+    const sql = this.ctx.storage.sql
+    const creatorUserId = loadCreatorUserId(sql)
+    const state = loadPublicMatchState(sql)
+
+    if (state?.status !== MatchStatus.Waiting) {
+      return commandFailure(CommandErrorCode.Invalid, 'Match is not waiting')
+    }
+
+    if (userId === creatorUserId) {
+      return commandFailure(
+        CommandErrorCode.Forbidden,
+        'The creator must cancel the match instead of leaving',
+      )
+    }
+
+    deletePlayer(sql, userId)
+    sql.exec('UPDATE match_state SET updated_at = ?, version = version + 1', Date.now())
+    this.closeSocketsForUser(userId)
+
+    const left = await this.finishMutation()
+    return left
+  }
+
+  private async persistBeginMatch(userId: string): Promise<CommandResult> {
+    const sql = this.ctx.storage.sql
+    const creatorUserId = loadCreatorUserId(sql)
+    const state = loadPublicMatchState(sql)
+
+    if (creatorUserId !== userId) {
+      return commandFailure(CommandErrorCode.Forbidden, 'Only the creator can start the match')
+    }
+
+    if (state?.status !== MatchStatus.Waiting) {
+      return commandFailure(CommandErrorCode.Invalid, 'Match is not waiting')
+    }
+
+    if (state.players.length !== 2) {
+      return commandFailure(CommandErrorCode.Invalid, 'Match needs two players to start')
+    }
+
+    const now = Date.now()
+    sql.exec(
+      `
+        UPDATE match_state
+        SET status = ?, started_at = ?, updated_at = ?, version = version + 1
+        WHERE id IS NOT NULL
+      `,
+      MatchStatus.Active,
+      now,
+      now,
+    )
+    deleteDeadline(sql, DeadlineKind.WaitingExpiresAt)
+
+    const started = await this.finishMutation()
+    return started
+  }
+
+  private closeSocketsForUser(userId: string): void {
+    for (const socket of this.ctx.getWebSockets()) {
+      if (readSocketUserId(socket) === userId) {
+        socket.close(4000, 'left')
+      }
+    }
+  }
+
   private persistTerminal(status: MatchStatus, endingKind: MatchEndingKind): void {
     const sql = this.ctx.storage.sql
     const now = Date.now()
@@ -371,7 +556,7 @@ export class MatchObject extends DurableObject<Env> {
 
     if (state !== null) {
       broadcast(this.ctx.getWebSockets(), serializeStateMessage(state))
-      this.ctx.waitUntil(publishMatchIndex(this.env, state.matchId))
+      this.ctx.waitUntil(publishIndexBestEffort(this.env, state))
     }
 
     if (state !== null && TERMINAL_STATUSES.has(state.status)) {
