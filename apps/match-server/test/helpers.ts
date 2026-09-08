@@ -3,7 +3,11 @@ import { env } from 'cloudflare:workers'
 import { GameModeId } from '@open-darts/game/types/gameMode'
 import { defaultX01Config } from '@open-darts/game/x01/x01Presets'
 import { signHs256Jwt } from '../src/auth/jwt'
-import { ASYNC_DISCONNECT_MS } from '../src/match/constants'
+import {
+  ASYNC_DISCONNECT_MS,
+  ASYNC_VISIT_STALL_MS,
+  MATCH_USER_HEADER,
+} from '../src/match/constants'
 import type { MatchObject } from '../src/match/MatchObject'
 import { TEST_SUPABASE_JWT_SECRET } from './secrets'
 
@@ -67,4 +71,65 @@ export const markOpponentDisconnectedLongEnough = async (
       opponentUserId,
     )
   })
+}
+
+/** Disconnects the opponent, but not long enough for start_async. */
+export const markOpponentDisconnectedRecently = async (
+  stub: DurableObjectStub<MatchObject>,
+  opponentUserId: string,
+): Promise<void> => {
+  await runInDurableObject(stub, (_instance: MatchObject, durableState) => {
+    durableState.storage.sql.exec(
+      `
+        UPDATE match_players
+        SET connected = 0, last_seen_at = ?
+        WHERE user_id = ?
+      `,
+      Date.now() - ASYNC_DISCONNECT_MS + 1000,
+      opponentUserId,
+    )
+  })
+}
+
+/**
+ * Ages turn anchors past ASYNC_VISIT_STALL_MS while keeping the opponent connected.
+ * Caller must ensure the opponent is the active player (e.g. after a miss visit).
+ */
+export const markOpponentTurnStalled = async (
+  stub: DurableObjectStub<MatchObject>,
+  opponentUserId: string,
+): Promise<void> => {
+  const stalledAt = Date.now() - ASYNC_VISIT_STALL_MS
+
+  await runInDurableObject(stub, (_instance: MatchObject, durableState) => {
+    durableState.storage.sql.exec('UPDATE match_state SET started_at = ?', stalledAt)
+    durableState.storage.sql.exec('UPDATE match_players SET last_visit_at = ?', stalledAt)
+    durableState.storage.sql.exec(
+      `
+        UPDATE match_players
+        SET connected = 1
+        WHERE user_id = ?
+      `,
+      opponentUserId,
+    )
+  })
+}
+
+export const openMatchSocket = async (
+  stub: DurableObjectStub<MatchObject>,
+  userId: string,
+): Promise<WebSocket> => {
+  const response = await stub.fetch('https://match/ws', {
+    headers: {
+      Upgrade: 'websocket',
+      [MATCH_USER_HEADER]: userId,
+    },
+  })
+
+  if (response.status !== 101 || response.webSocket === null) {
+    throw new Error(`Expected WebSocket upgrade, got ${String(response.status)}`)
+  }
+
+  response.webSocket.accept()
+  return response.webSocket
 }

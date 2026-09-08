@@ -16,6 +16,8 @@ import {
   createMatchId,
   creatorUserId,
   markOpponentDisconnectedLongEnough,
+  markOpponentDisconnectedRecently,
+  markOpponentTurnStalled,
   otherUserId,
 } from './helpers'
 
@@ -101,6 +103,41 @@ const startAsyncMatch = async (): Promise<DurableObjectStub<MatchObject>> => {
   return stub
 }
 
+/** Forces FinalizeAt due: deadline fire_at and pending stream finalizeAt → 0. */
+const forceFinalizeAtDue = async (stub: DurableObjectStub<MatchObject>): Promise<void> => {
+  await runInDurableObject(stub, async (_instance: MatchObject, durableState) => {
+    const sql = durableState.storage.sql
+    sql.exec('UPDATE deadlines SET fire_at = 0 WHERE kind = ?', DeadlineKind.FinalizeAt)
+
+    const row = sql
+      .exec<{ session_json: string | null }>('SELECT session_json FROM match_state LIMIT 1')
+      .toArray()[0]
+    const sessionJson = row?.session_json
+
+    if (sessionJson === null || sessionJson === undefined) {
+      return
+    }
+
+    const play = JSON.parse(sessionJson) as {
+      asyncPlay?: {
+        players: Record<string, { pendingFinalization: boolean; finalizeAt: number | null }>
+      }
+    }
+
+    if (play.asyncPlay === undefined) {
+      return
+    }
+
+    for (const stream of Object.values(play.asyncPlay.players)) {
+      if (stream.pendingFinalization && stream.finalizeAt !== null) {
+        stream.finalizeAt = 0
+      }
+    }
+
+    sql.exec('UPDATE match_state SET session_json = ?', JSON.stringify(play))
+  })
+}
+
 describe('async lifecycle', () => {
   it('start_async sets play mode, darts owner, and 24h deadline', async () => {
     const stub = await startActiveMatch()
@@ -125,6 +162,34 @@ describe('async lifecycle', () => {
 
     expect(started.ok).toBe(false)
     expect(started.code).toBeDefined()
+
+    const state = await stub.applyCommand(creatorUserId, { name: MatchCommandName.GetState })
+    expect(state.state?.playMode).toBe(PlayMode.Synchronous)
+  })
+
+  it('allows start_async when opponent turn stalled (connected)', async () => {
+    const stub = await startActiveMatch()
+    const miss = await stub.applyCommand(creatorUserId, {
+      name: MatchCommandName.RecordVisit,
+      darts: toPublicDarts(missVisit()),
+    })
+    expect(miss.ok).toBe(true)
+    expect(miss.state?.activePlayerId).toBe(otherUserId)
+
+    await markOpponentTurnStalled(stub, otherUserId)
+    const started = await stub.applyCommand(creatorUserId, { name: MatchCommandName.StartAsync })
+
+    expect(started.ok).toBe(true)
+    expect(started.state?.playMode).toBe(PlayMode.Asynchronous)
+  })
+
+  it('rejects start_async when opponent disconnected too recently', async () => {
+    const stub = await startActiveMatch()
+    await markOpponentDisconnectedRecently(stub, otherUserId)
+    const started = await stub.applyCommand(creatorUserId, { name: MatchCommandName.StartAsync })
+
+    expect(started.ok).toBe(false)
+    expect(started.state?.playMode ?? PlayMode.Synchronous).toBe(PlayMode.Synchronous)
 
     const state = await stub.applyCommand(creatorUserId, { name: MatchCommandName.GetState })
     expect(state.state?.playMode).toBe(PlayMode.Synchronous)
@@ -260,5 +325,98 @@ describe('async lifecycle', () => {
     expect(finished.state?.status).toBe(MatchStatus.Completed)
     expect(finished.state?.endingKind).toBe(MatchEndingKind.AsyncResult)
     expect(finished.state?.winnerUserId).toBe(creatorUserId)
+  })
+
+  it('schedules FinalizeAt after checkout in async', async () => {
+    const stub = await startAsyncMatch()
+    const checkedOut = await stub.applyCommand(creatorUserId, {
+      name: MatchCommandName.RecordVisit,
+      darts: toPublicDarts(checkoutDouble20()),
+    })
+
+    expect(checkedOut.ok).toBe(true)
+    expect(checkedOut.state?.pendingFinalization).toBe(true)
+    expect(
+      checkedOut.state?.deadlines.some((deadline) => deadline.kind === DeadlineKind.FinalizeAt),
+    ).toBe(true)
+  })
+
+  it('auto-finalizes only the due async player and stays Active', async () => {
+    const stub = await startAsyncMatch()
+    const checkedOut = await stub.applyCommand(creatorUserId, {
+      name: MatchCommandName.RecordVisit,
+      darts: toPublicDarts(checkoutDouble20()),
+    })
+    expect(checkedOut.ok).toBe(true)
+    expect(checkedOut.state?.pendingFinalization).toBe(true)
+
+    await forceFinalizeAtDue(stub)
+
+    expect(await runDurableObjectAlarm(stub)).toBe(true)
+
+    const state = await stub.applyCommand(creatorUserId, { name: MatchCommandName.GetState })
+    expect(state.state?.status).toBe(MatchStatus.Active)
+    expect(state.state?.pendingFinalization).toBe(false)
+    expect(state.state?.endingKind).toBeNull()
+
+    const asyncState = JSON.parse(state.state?.asyncStateJson ?? '{}') as {
+      players: Record<string, { finalized: boolean }>
+    }
+    expect(asyncState.players[creatorUserId]?.finalized).toBe(true)
+    expect(asyncState.players[otherUserId]?.finalized).toBe(false)
+  })
+
+  it('completes AsyncResult when both pending players auto-finalize via alarm', async () => {
+    const stub = await startAsyncMatch()
+
+    await stub.applyCommand(creatorUserId, {
+      name: MatchCommandName.RecordVisit,
+      darts: toPublicDarts(checkoutDouble20()),
+    })
+    await stub.applyCommand(otherUserId, {
+      name: MatchCommandName.RecordVisit,
+      darts: toPublicDarts(missVisit()),
+    })
+    await stub.applyCommand(otherUserId, {
+      name: MatchCommandName.RecordVisit,
+      darts: toPublicDarts(checkoutDouble20()),
+    })
+
+    await forceFinalizeAtDue(stub)
+
+    expect(await runDurableObjectAlarm(stub)).toBe(true)
+
+    const state = await stub.applyCommand(creatorUserId, { name: MatchCommandName.GetState })
+    expect(state.state?.status).toBe(MatchStatus.Completed)
+    expect(state.state?.endingKind).toBe(MatchEndingKind.AsyncResult)
+    expect(state.state?.winnerUserId).toBe(creatorUserId)
+  })
+
+  it('completes AsyncResult when one finished and the other auto-finalizes', async () => {
+    const stub = await startAsyncMatch()
+
+    await stub.applyCommand(creatorUserId, {
+      name: MatchCommandName.RecordVisit,
+      darts: toPublicDarts(checkoutDouble20()),
+    })
+    await stub.applyCommand(creatorUserId, { name: MatchCommandName.FinishMatch })
+
+    await stub.applyCommand(otherUserId, {
+      name: MatchCommandName.RecordVisit,
+      darts: toPublicDarts(missVisit()),
+    })
+    await stub.applyCommand(otherUserId, {
+      name: MatchCommandName.RecordVisit,
+      darts: toPublicDarts(checkoutDouble20()),
+    })
+
+    await forceFinalizeAtDue(stub)
+
+    expect(await runDurableObjectAlarm(stub)).toBe(true)
+
+    const state = await stub.applyCommand(creatorUserId, { name: MatchCommandName.GetState })
+    expect(state.state?.status).toBe(MatchStatus.Completed)
+    expect(state.state?.endingKind).toBe(MatchEndingKind.AsyncResult)
+    expect(state.state?.winnerUserId).toBe(creatorUserId)
   })
 })
