@@ -112,6 +112,11 @@ runs with `pnpm dev` and does not require a Cloudflare account.
 
    The JWT secret and service role key are in Supabase **Project Settings → API**.
    The service role key bypasses Row Level Security and must stay on the Worker.
+   Access tokens may be **HS256** (legacy shared secret) or **ES256/RS256**
+   (asymmetric signing keys). The Worker verifies HS256 with
+   `SUPABASE_JWT_SECRET` and fetches public keys from
+   `${SUPABASE_URL}/auth/v1/.well-known/jwks.json` for asymmetric tokens.
+   Local Supabase CLI stacks often issue ES256 by default.
 
 3. Set the public Worker URL in the repository-root `.env` (together with the
    Supabase `VITE_*` values above):

@@ -14,7 +14,10 @@ const readJson = async (request: Request): Promise<unknown> => {
 }
 
 export const createMatch = async (request: Request, env: Env): Promise<Response> => {
-  const access = await readAccessUserId(request, env.SUPABASE_JWT_SECRET)
+  const access = await readAccessUserId(request, {
+    jwtSecret: env.SUPABASE_JWT_SECRET,
+    supabaseUrl: env.SUPABASE_URL,
+  })
 
   if (!access.ok) {
     return jsonResponse(request, { error: access.error }, 401)

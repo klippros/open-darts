@@ -1,40 +1,15 @@
 import { Box, Button, Stack, Text } from '@chakra-ui/react'
-import { useEffect, useState } from 'react'
 import { Link as RouterLink } from 'react-router-dom'
-import { buildMatchPath, getMyInProgressOnlineMatch } from '../../lib/matchServer/api'
+import { buildMatchPath } from '../../lib/matchServer/api'
 import type { InProgressOnlineMatchRow } from '../../lib/matchServer/types'
+import { MatchStatus } from '../../lib/matchServer/types'
 
-export const ResumeOnlineMatchBanner = () => {
-  const [match, setMatch] = useState<InProgressOnlineMatchRow | null>(null)
+export interface ResumeOnlineMatchBannerProps {
+  match: InProgressOnlineMatchRow
+}
 
-  useEffect(() => {
-    let cancelled = false
-
-    const load = async () => {
-      try {
-        const inProgress = await getMyInProgressOnlineMatch()
-        if (!cancelled) {
-          setMatch(inProgress)
-        }
-      } catch {
-        if (!cancelled) {
-          setMatch(null)
-        }
-      }
-    }
-
-    void load()
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  if (match === null) {
-    return null
-  }
-
-  const label = match.status === 'waiting' ? 'waiting room' : 'online match'
+export const ResumeOnlineMatchBanner = ({ match }: ResumeOnlineMatchBannerProps) => {
+  const label = match.status === MatchStatus.Waiting ? 'waiting room' : 'online match'
 
   return (
     <Box
@@ -51,7 +26,8 @@ export const ResumeOnlineMatchBanner = () => {
             Continue your {label}
           </Text>
           <Text fontSize="sm" color="whiteAlpha.700">
-            You already have an in-progress online match.
+            You already have an in-progress online match. Finish or leave it before starting
+            another.
           </Text>
         </Stack>
         <Button asChild variant="cta" flexShrink={0}>

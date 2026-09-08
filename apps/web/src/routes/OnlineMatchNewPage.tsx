@@ -7,6 +7,7 @@ import { SetupPageLayout } from '../components/SetupPageLayout/SetupPageLayout'
 import { SetupOptionCard } from '../components/SetupPageLayout/SetupOptionCard'
 import { SetupSection } from '../components/SetupPageLayout/SetupSection'
 import { useAuth } from '../hooks/authContext'
+import { useInProgressOnlineMatch } from '../hooks/useInProgressOnlineMatch'
 import { AuthStatus } from '../types/auth'
 import { buildMatchPath, createMatch, MatchServerApiError } from '../lib/matchServer/api'
 import { isOnlineMatchesEnabled } from '../lib/matchServer/config'
@@ -24,6 +25,7 @@ const rangeInputStyle = {
 export const OnlineMatchNewPage = () => {
   const navigate = useNavigate()
   const { authStatus, profile, user } = useAuth()
+  const inProgress = useInProgressOnlineMatch()
   const [legsToWin, setLegsToWin] = useState(DEFAULT_LEGS_TO_WIN)
   const [startingPlayerSlot, setStartingPlayerSlot] = useState(MatchPlayerSlot.Creator)
   const [submitting, setSubmitting] = useState(false)
@@ -33,7 +35,11 @@ export const OnlineMatchNewPage = () => {
     return <Navigate to="/" replace />
   }
 
-  if (authStatus === AuthStatus.Loading) {
+  if (
+    authStatus === AuthStatus.Loading ||
+    inProgress.status === 'idle' ||
+    inProgress.status === 'loading'
+  ) {
     return (
       <SetupPageLayout>
         <Text color="whiteAlpha.700">Loading…</Text>
@@ -43,6 +49,10 @@ export const OnlineMatchNewPage = () => {
 
   if (authStatus !== AuthStatus.Authenticated || user === null) {
     return <Navigate to="/" replace />
+  }
+
+  if (inProgress.status === 'ready' && inProgress.match !== null) {
+    return <Navigate to={buildMatchPath(inProgress.match.id)} replace />
   }
 
   const primaryPlayerLabel = resolveHumanPlayerName(profile?.displayName)
@@ -55,11 +65,17 @@ export const OnlineMatchNewPage = () => {
       const created = await createMatch(clampLegsToWin(legsToWin), startingPlayerSlot)
       void navigate(buildMatchPath(created.matchId), { replace: true })
     } catch (createError) {
-      const message =
-        createError instanceof MatchServerApiError
-          ? createError.message
-          : 'Unable to create online match'
-      setError(message)
+      if (createError instanceof MatchServerApiError && createError.code === 'conflict') {
+        setError(
+          'You already have an in-progress online match. Return to it before creating another.',
+        )
+      } else {
+        const message =
+          createError instanceof MatchServerApiError
+            ? createError.message
+            : 'Unable to create online match'
+        setError(message)
+      }
     } finally {
       setSubmitting(false)
     }

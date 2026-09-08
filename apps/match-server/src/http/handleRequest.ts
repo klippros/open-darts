@@ -23,7 +23,10 @@ const readMatchId = (pathname: string, pattern: RegExp): string | null => {
 }
 
 const issueTicket = async (request: Request, env: Env, matchId: string): Promise<Response> => {
-  const access = await readAccessUserId(request, env.SUPABASE_JWT_SECRET)
+  const access = await readAccessUserId(request, {
+    jwtSecret: env.SUPABASE_JWT_SECRET,
+    supabaseUrl: env.SUPABASE_URL,
+  })
 
   if (!access.ok) {
     return jsonResponse(request, { error: access.error }, 401)

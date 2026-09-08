@@ -121,18 +121,29 @@ const upsertIndexedMatch = async (env: Env, state: PublicMatchState): Promise<vo
 }
 
 const replaceIndexedPlayers = async (env: Env, state: PublicMatchState): Promise<void> => {
-  await restFetch(env, `online_match_players?match_id=eq.${state.matchId}`, {
-    method: 'DELETE',
-    prefer: 'return=minimal',
-  })
-
   if (state.players.length === 0) {
+    await restFetch(env, `online_match_players?match_id=eq.${state.matchId}`, {
+      method: 'DELETE',
+      prefer: 'return=minimal',
+    })
     return
   }
 
-  await restFetch(env, 'online_match_players', {
+  const userIds = state.players.map((player) => player.userId).join(',')
+
+  // Drop members who left before upserting current seats so slot uniqueness stays valid.
+  await restFetch(
+    env,
+    `online_match_players?match_id=eq.${state.matchId}&user_id=not.in.(${userIds})`,
+    {
+      method: 'DELETE',
+      prefer: 'return=minimal',
+    },
+  )
+
+  await restFetch(env, 'online_match_players?on_conflict=match_id,user_id', {
     method: 'POST',
-    prefer: 'return=minimal',
+    prefer: 'return=minimal,resolution=merge-duplicates',
     body: JSON.stringify(
       state.players.map((player) => ({
         match_id: state.matchId,
@@ -153,6 +164,7 @@ const replaceOccupancy = async (env: Env, state: PublicMatchState): Promise<void
     return
   }
 
+  // Plain insert so a user already occupied by another match still 409s.
   await restFetch(env, 'online_match_occupancy', {
     method: 'POST',
     prefer: 'return=minimal',

@@ -4,9 +4,13 @@ import { ContentContainer } from '../components/ContentContainer'
 import { ResumeGameBanner } from '../components/ResumeGameBanner/ResumeGameBanner'
 import { ResumeOnlineMatchBanner } from '../components/ResumeOnlineMatchBanner/ResumeOnlineMatchBanner'
 import { useAuth } from '../hooks/authContext'
+import { useInProgressOnlineMatch } from '../hooks/useInProgressOnlineMatch'
 import { AuthStatus } from '../types/auth'
 import { buildPracticeGamePath } from '../lib/game/gameRoute'
+import { buildMatchPath } from '../lib/matchServer/api'
 import { isOnlineMatchesEnabled } from '../lib/matchServer/config'
+import type { InProgressOnlineMatchRow } from '../lib/matchServer/types'
+import { MatchStatus } from '../lib/matchServer/types'
 import { explicitGameLaunchState } from '../lib/routing/gameNavigation'
 import { GameModeId } from '@open-darts/game/types/gameMode'
 import { buildX01PresetPath, X01PresetId } from '@open-darts/game/x01/x01Presets'
@@ -111,16 +115,24 @@ const ModeGrid = ({
   </SimpleGrid>
 )
 
-const OnlineSection = () => {
+const OnlineSection = ({ resumeMatch }: { resumeMatch: InProgressOnlineMatchRow | null }) => {
   const { authStatus } = useAuth()
 
   if (!isOnlineMatchesEnabled || authStatus !== AuthStatus.Authenticated) {
     return null
   }
 
+  const onlinePath = resumeMatch !== null ? buildMatchPath(resumeMatch.id) : '/match/new'
+  const onlineTitle = resumeMatch !== null ? 'Continue online match' : 'Online 501'
+  const onlineDescription =
+    resumeMatch !== null
+      ? resumeMatch.status === MatchStatus.Waiting
+        ? 'Return to your waiting room'
+        : 'Return to your in-progress match'
+      : 'Create a match and share an invite'
+
   return (
     <Stack gap={4}>
-      <ResumeOnlineMatchBanner />
       <Stack gap={1}>
         <Heading as="h2" size="lg" color="white" fontFamily="Archivo Black, sans-serif">
           Online
@@ -141,12 +153,12 @@ const OnlineSection = () => {
           gap={1}
           textAlign="left"
         >
-          <RouterLink to="/match/new">
+          <RouterLink to={onlinePath}>
             <Text fontSize="lg" fontWeight="semibold" color="white">
-              Online 501
+              {onlineTitle}
             </Text>
             <Text fontSize="sm" color="whiteAlpha.700" fontWeight="normal">
-              Create a match and share an invite
+              {onlineDescription}
             </Text>
           </RouterLink>
         </Button>
@@ -155,37 +167,43 @@ const OnlineSection = () => {
   )
 }
 
-export const HomePage = () => (
-  <ContentContainer>
-    <Box py={{ base: 6, md: 10 }} pb={10}>
-      <Stack gap={8}>
-        <ResumeGameBanner />
-        <OnlineSection />
+export const HomePage = () => {
+  const inProgress = useInProgressOnlineMatch()
+  const resumeMatch = inProgress.status === 'ready' ? inProgress.match : null
 
-        <Stack gap={4}>
-          <Stack gap={1}>
-            <Heading as="h2" size="lg" color="white" fontFamily="Archivo Black, sans-serif">
-              Match
-            </Heading>
-            <Text color="whiteAlpha.700" fontSize="sm" lineHeight="1.55">
-              x01 legs with optional guest opponents or visit-limit challenge mode.
-            </Text>
-          </Stack>
-          <ModeGrid modes={MATCH_MODES} />
-        </Stack>
+  return (
+    <ContentContainer>
+      <Box py={{ base: 6, md: 10 }} pb={10}>
+        <Stack gap={8}>
+          {resumeMatch !== null && <ResumeOnlineMatchBanner match={resumeMatch} />}
+          <ResumeGameBanner />
+          <OnlineSection resumeMatch={resumeMatch} />
 
-        <Stack gap={4}>
-          <Stack gap={1}>
-            <Heading as="h2" size="lg" color="white" fontFamily="Archivo Black, sans-serif">
-              Practice
-            </Heading>
-            <Text color="whiteAlpha.700" fontSize="sm" lineHeight="1.55">
-              Solo training modes to sharpen specific parts of your game.
-            </Text>
+          <Stack gap={4}>
+            <Stack gap={1}>
+              <Heading as="h2" size="lg" color="white" fontFamily="Archivo Black, sans-serif">
+                Match
+              </Heading>
+              <Text color="whiteAlpha.700" fontSize="sm" lineHeight="1.55">
+                x01 legs with optional guest opponents or visit-limit challenge mode.
+              </Text>
+            </Stack>
+            <ModeGrid modes={MATCH_MODES} />
           </Stack>
-          <ModeGrid modes={PRACTICE_MODES} explicitLaunch />
+
+          <Stack gap={4}>
+            <Stack gap={1}>
+              <Heading as="h2" size="lg" color="white" fontFamily="Archivo Black, sans-serif">
+                Practice
+              </Heading>
+              <Text color="whiteAlpha.700" fontSize="sm" lineHeight="1.55">
+                Solo training modes to sharpen specific parts of your game.
+              </Text>
+            </Stack>
+            <ModeGrid modes={PRACTICE_MODES} explicitLaunch />
+          </Stack>
         </Stack>
-      </Stack>
-    </Box>
-  </ContentContainer>
-)
+      </Box>
+    </ContentContainer>
+  )
+}

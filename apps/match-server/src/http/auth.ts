@@ -6,7 +6,7 @@ export type AccessUserResult =
 
 export const readAccessUserId = async (
   request: Request,
-  jwtSecret: string,
+  options: { jwtSecret: string; supabaseUrl: string },
 ): Promise<AccessUserResult> => {
   const bearer = readBearerToken(request)
 
@@ -15,7 +15,7 @@ export const readAccessUserId = async (
   }
 
   try {
-    const payload = await verifySupabaseAccessToken(bearer, jwtSecret)
+    const payload = await verifySupabaseAccessToken(bearer, options)
 
     if (!isUuid(payload.sub)) {
       return { ok: false, error: 'invalid_token' }

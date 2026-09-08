@@ -2,6 +2,8 @@ import { isRecord } from '../json'
 
 const textEncoder = new TextEncoder()
 
+const JWKS_CACHE_TTL_MS = 10 * 60 * 1000
+
 export interface JwtPayload {
   sub: string
   role?: string
@@ -11,6 +13,25 @@ export interface JwtPayload {
   aud?: string | string[]
   [key: string]: unknown
 }
+
+export interface SupabaseAccessTokenOptions {
+  jwtSecret: string
+  supabaseUrl: string
+}
+
+export interface JwtSigningJwk extends JsonWebKey {
+  kid?: string
+  alg?: string
+  use?: string
+}
+
+interface JwksCacheEntry {
+  url: string
+  expiresAt: number
+  keys: JwtSigningJwk[]
+}
+
+let jwksCache: JwksCacheEntry | null = null
 
 const toBase64Url = (bytes: Uint8Array): string => {
   let binary = ''
@@ -54,20 +75,14 @@ const decodeJsonObject = (part: string): Record<string, unknown> => {
   return parsed
 }
 
-export const signHs256Jwt = async (
-  payload: Record<string, unknown>,
-  secret: string,
-): Promise<string> => {
-  const header = toBase64Url(textEncoder.encode(JSON.stringify({ alg: 'HS256', typ: 'JWT' })))
-  const body = toBase64Url(textEncoder.encode(JSON.stringify(payload)))
-  const data = `${header}.${body}`
-  const key = await importHmacKey(secret, ['sign'])
-  const signature = await crypto.subtle.sign('HMAC', key, textEncoder.encode(data))
-
-  return `${data}.${toBase64Url(new Uint8Array(signature))}`
-}
-
-export const verifyHs256Jwt = async (token: string, secret: string): Promise<JwtPayload> => {
+const splitJwt = (
+  token: string,
+): {
+  header: Record<string, unknown>
+  payloadPart: string
+  signature: Uint8Array
+  data: string
+} => {
   const parts = token.split('.')
 
   if (
@@ -79,26 +94,15 @@ export const verifyHs256Jwt = async (token: string, secret: string): Promise<Jwt
     throw new Error('Malformed JWT')
   }
 
-  const header = decodeJsonObject(parts[0])
-
-  if (header.alg !== 'HS256') {
-    throw new Error('Unsupported JWT algorithm')
+  return {
+    header: decodeJsonObject(parts[0]),
+    payloadPart: parts[1],
+    signature: fromBase64Url(parts[2]),
+    data: `${parts[0]}.${parts[1]}`,
   }
+}
 
-  const data = `${parts[0]}.${parts[1]}`
-  const key = await importHmacKey(secret, ['verify'])
-  const valid = await crypto.subtle.verify(
-    'HMAC',
-    key,
-    fromBase64Url(parts[2]),
-    textEncoder.encode(data),
-  )
-
-  if (!valid) {
-    throw new Error('Invalid JWT signature')
-  }
-
-  const payload = decodeJsonObject(parts[1])
+const normalizeJwtPayload = (payload: Record<string, unknown>): JwtPayload => {
   const nowSeconds = Math.floor(Date.now() / 1000)
 
   if (typeof payload.exp === 'number' && payload.exp < nowSeconds) {
@@ -132,6 +136,187 @@ export const verifyHs256Jwt = async (token: string, secret: string): Promise<Jwt
   }
 }
 
+const jwksUrlFor = (supabaseUrl: string): string =>
+  `${supabaseUrl.replace(/\/$/u, '')}/auth/v1/.well-known/jwks.json`
+
+const parseJwksKeys = (body: unknown): JwtSigningJwk[] => {
+  if (!isRecord(body) || !Array.isArray(body.keys)) {
+    throw new Error('Invalid JWKS response')
+  }
+
+  return body.keys.filter(
+    (entry): entry is JwtSigningJwk => isRecord(entry) && typeof entry.kty === 'string',
+  )
+}
+
+export const clearSupabaseJwksCache = (): void => {
+  jwksCache = null
+}
+
+export const fetchSupabaseJwks = async (supabaseUrl: string): Promise<JwtSigningJwk[]> => {
+  const url = jwksUrlFor(supabaseUrl)
+  const now = Date.now()
+
+  if (jwksCache !== null && jwksCache.url === url && jwksCache.expiresAt > now) {
+    return jwksCache.keys
+  }
+
+  const response = await fetch(url)
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch JWKS')
+  }
+
+  const keys = parseJwksKeys(await response.json())
+  jwksCache = { url, expiresAt: now + JWKS_CACHE_TTL_MS, keys }
+
+  return keys
+}
+
+const importVerifyKey = (jwk: JwtSigningJwk, alg: string): Promise<CryptoKey> => {
+  const publicJwk: JsonWebKey = { ...jwk }
+  delete publicJwk.d
+  publicJwk.key_ops = ['verify']
+
+  if (alg === 'ES256') {
+    return crypto.subtle.importKey(
+      'jwk',
+      publicJwk,
+      { name: 'ECDSA', namedCurve: 'P-256' },
+      false,
+      ['verify'],
+    )
+  }
+
+  if (alg === 'RS256') {
+    return crypto.subtle.importKey(
+      'jwk',
+      publicJwk,
+      { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+      false,
+      ['verify'],
+    )
+  }
+
+  return Promise.reject(new Error('Unsupported JWT algorithm'))
+}
+
+const verifyWithJwk = async (
+  data: string,
+  signature: Uint8Array,
+  jwk: JwtSigningJwk,
+  alg: string,
+): Promise<boolean> => {
+  const key = await importVerifyKey(jwk, alg)
+
+  if (alg === 'ES256') {
+    return crypto.subtle.verify(
+      { name: 'ECDSA', hash: 'SHA-256' },
+      key,
+      signature,
+      textEncoder.encode(data),
+    )
+  }
+
+  return crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, signature, textEncoder.encode(data))
+}
+
+export const verifyAsymmetricJwt = async (
+  token: string,
+  keys: JwtSigningJwk[],
+): Promise<JwtPayload> => {
+  const { header, payloadPart, signature, data } = splitJwt(token)
+  const alg = header.alg
+
+  if (alg !== 'ES256' && alg !== 'RS256') {
+    throw new Error('Unsupported JWT algorithm')
+  }
+
+  const kid = typeof header.kid === 'string' ? header.kid : undefined
+  const candidates =
+    kid === undefined
+      ? keys.filter((key) => key.alg === undefined || key.alg === alg)
+      : keys.filter((key) => key.kid === kid)
+
+  if (candidates.length === 0) {
+    throw new Error('No matching JWKS key')
+  }
+
+  for (const candidate of candidates) {
+    try {
+      if (await verifyWithJwk(data, signature, candidate, alg)) {
+        return normalizeJwtPayload(decodeJsonObject(payloadPart))
+      }
+    } catch {
+      // Try the next key when import/verify fails for a candidate.
+    }
+  }
+
+  throw new Error('Invalid JWT signature')
+}
+
+export const signHs256Jwt = async (
+  payload: Record<string, unknown>,
+  secret: string,
+): Promise<string> => {
+  const header = toBase64Url(textEncoder.encode(JSON.stringify({ alg: 'HS256', typ: 'JWT' })))
+  const body = toBase64Url(textEncoder.encode(JSON.stringify(payload)))
+  const data = `${header}.${body}`
+  const key = await importHmacKey(secret, ['sign'])
+  const signature = await crypto.subtle.sign('HMAC', key, textEncoder.encode(data))
+
+  return `${data}.${toBase64Url(new Uint8Array(signature))}`
+}
+
+export const signEs256Jwt = async (
+  payload: Record<string, unknown>,
+  privateJwk: JwtSigningJwk,
+  kid?: string,
+): Promise<string> => {
+  const header = toBase64Url(
+    textEncoder.encode(
+      JSON.stringify({
+        alg: 'ES256',
+        typ: 'JWT',
+        ...(kid === undefined ? {} : { kid }),
+      }),
+    ),
+  )
+  const body = toBase64Url(textEncoder.encode(JSON.stringify(payload)))
+  const data = `${header}.${body}`
+  const key = await crypto.subtle.importKey(
+    'jwk',
+    privateJwk,
+    { name: 'ECDSA', namedCurve: 'P-256' },
+    false,
+    ['sign'],
+  )
+  const signature = await crypto.subtle.sign(
+    { name: 'ECDSA', hash: 'SHA-256' },
+    key,
+    textEncoder.encode(data),
+  )
+
+  return `${data}.${toBase64Url(new Uint8Array(signature))}`
+}
+
+export const verifyHs256Jwt = async (token: string, secret: string): Promise<JwtPayload> => {
+  const { header, payloadPart, signature, data } = splitJwt(token)
+
+  if (header.alg !== 'HS256') {
+    throw new Error('Unsupported JWT algorithm')
+  }
+
+  const key = await importHmacKey(secret, ['verify'])
+  const valid = await crypto.subtle.verify('HMAC', key, signature, textEncoder.encode(data))
+
+  if (!valid) {
+    throw new Error('Invalid JWT signature')
+  }
+
+  return normalizeJwtPayload(decodeJsonObject(payloadPart))
+}
+
 export const readBearerToken = (request: Request): string | null => {
   const header = request.headers.get('Authorization')
 
@@ -146,9 +331,29 @@ export const readBearerToken = (request: Request): string | null => {
 
 export const verifySupabaseAccessToken = async (
   token: string,
-  jwtSecret: string,
+  options: SupabaseAccessTokenOptions,
 ): Promise<JwtPayload> => {
-  const payload = await verifyHs256Jwt(token, jwtSecret)
+  const { header } = splitJwt(token)
+  const alg = header.alg
+
+  let payload: JwtPayload
+
+  if (alg === 'HS256') {
+    payload = await verifyHs256Jwt(token, options.jwtSecret)
+  } else if (alg === 'ES256' || alg === 'RS256') {
+    try {
+      payload = await verifyAsymmetricJwt(token, await fetchSupabaseJwks(options.supabaseUrl))
+    } catch (error) {
+      clearSupabaseJwksCache()
+      try {
+        payload = await verifyAsymmetricJwt(token, await fetchSupabaseJwks(options.supabaseUrl))
+      } catch {
+        throw error
+      }
+    }
+  } else {
+    throw new Error('Unsupported JWT algorithm')
+  }
 
   if (payload.role !== 'authenticated') {
     throw new Error('JWT role is not authenticated')

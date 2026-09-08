@@ -4,6 +4,7 @@ import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { SetupPageHeader } from '../components/SetupPageLayout/SetupPageHeader'
 import { SetupPageLayout } from '../components/SetupPageLayout/SetupPageLayout'
 import { useAuth } from '../hooks/authContext'
+import { useInProgressOnlineMatch } from '../hooks/useInProgressOnlineMatch'
 import { AuthStatus } from '../types/auth'
 import {
   buildMatchPath,
@@ -18,6 +19,7 @@ export const OnlineMatchJoinPage = () => {
   const { token } = useParams<{ token: string }>()
   const navigate = useNavigate()
   const { authStatus, user } = useAuth()
+  const inProgress = useInProgressOnlineMatch()
   const [invite, setInvite] = useState<OnlineMatchInvite | null>(null)
   const [loading, setLoading] = useState(true)
   const [joining, setJoining] = useState(false)
@@ -90,6 +92,47 @@ export const OnlineMatchJoinPage = () => {
     return <Navigate to="/" replace />
   }
 
+  if (
+    inProgress.status === 'ready' &&
+    inProgress.match !== null &&
+    invite !== null &&
+    inProgress.match.id !== invite.matchId
+  ) {
+    const currentMatchId = inProgress.match.id
+
+    return (
+      <SetupPageLayout>
+        <Stack gap={8}>
+          <SetupPageHeader
+            title="Join online match"
+            description="You already have an in-progress online match."
+          />
+          <Text color="whiteAlpha.700" fontSize="sm" lineHeight="1.55">
+            Finish or leave your current match before joining another lobby.
+          </Text>
+          <Stack direction="row" justify="space-between" gap={3}>
+            <Button
+              variant="cancel"
+              onClick={() => {
+                void navigate('/')
+              }}
+            >
+              Back
+            </Button>
+            <Button
+              variant="emphasis"
+              onClick={() => {
+                void navigate(buildMatchPath(currentMatchId))
+              }}
+            >
+              Continue current match
+            </Button>
+          </Stack>
+        </Stack>
+      </SetupPageLayout>
+    )
+  }
+
   const handleJoin = async () => {
     if (invite === null) {
       return
@@ -102,9 +145,13 @@ export const OnlineMatchJoinPage = () => {
       const joined = await joinMatch(invite.matchId, token)
       void navigate(buildMatchPath(joined.matchId), { replace: true })
     } catch (joinError) {
-      setError(
-        joinError instanceof MatchServerApiError ? joinError.message : 'Unable to join match',
-      )
+      if (joinError instanceof MatchServerApiError && joinError.code === 'conflict') {
+        setError('You already have an in-progress online match.')
+      } else {
+        setError(
+          joinError instanceof MatchServerApiError ? joinError.message : 'Unable to join match',
+        )
+      }
     } finally {
       setJoining(false)
     }

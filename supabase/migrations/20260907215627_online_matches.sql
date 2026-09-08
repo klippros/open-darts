@@ -94,31 +94,35 @@ revoke all on public.online_match_occupancy from anon, authenticated;
 grant select on public.online_matches to authenticated;
 grant select on public.online_match_players to authenticated;
 
+create function private.is_online_match_member(p_match_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1
+    from public.online_match_players as membership
+    where membership.match_id = p_match_id
+      and membership.user_id = (select auth.uid())
+  );
+$$;
+
+revoke all on function private.is_online_match_member(uuid) from public, anon;
+grant execute on function private.is_online_match_member(uuid) to authenticated;
+
 create policy "Users can read online matches they belong to"
   on public.online_matches
   for select
   to authenticated
-  using (
-    exists (
-      select 1
-      from public.online_match_players as membership
-      where membership.match_id = online_matches.id
-        and membership.user_id = (select auth.uid())
-    )
-  );
+  using (private.is_online_match_member(id));
 
 create policy "Users can read players in their online matches"
   on public.online_match_players
   for select
   to authenticated
-  using (
-    exists (
-      select 1
-      from public.online_match_players as membership
-      where membership.match_id = online_match_players.match_id
-        and membership.user_id = (select auth.uid())
-    )
-  );
+  using (private.is_online_match_member(match_id));
 
 drop policy "Users can read their profile" on public.profiles;
 
@@ -131,10 +135,8 @@ create policy "Users can read their profile or online match opponents"
     or exists (
       select 1
       from public.online_match_players as membership
-      join public.online_match_players as opponent
-        on opponent.match_id = membership.match_id
-      where membership.user_id = (select auth.uid())
-        and opponent.user_id = profiles.user_id
+      where membership.user_id = profiles.user_id
+        and private.is_online_match_member(membership.match_id)
     )
   );
 

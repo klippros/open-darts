@@ -282,14 +282,32 @@ export const lookupOnlineMatchInvite = async (
   return mapInviteRow(first)
 }
 
+const isMatchStatus = (value: string): value is MatchStatus =>
+  (Object.values(MatchStatus) as string[]).includes(value)
+
+const isPlayMode = (value: string): value is PlayMode =>
+  (Object.values(PlayMode) as string[]).includes(value)
+
+const isMatchEndingKind = (value: string): value is MatchEndingKind =>
+  (Object.values(MatchEndingKind) as string[]).includes(value)
+
+const isGameModeId = (value: string): value is GameModeId =>
+  (Object.values(GameModeId) as string[]).includes(value)
+
 const mapInProgressRow = (row: Record<string, unknown>): InProgressOnlineMatchRow | null => {
   if (typeof row.id !== 'string') {
     return null
   }
 
+  const statusRaw = readString(row.status)
+
+  if (!isMatchStatus(statusRaw)) {
+    return null
+  }
+
   return {
     id: row.id,
-    status: readString(row.status),
+    status: statusRaw,
     mode: readString(row.mode),
     legs_to_win: readNumber(row.legs_to_win),
     invite_token: readString(row.invite_token),
@@ -317,18 +335,6 @@ export const getMyInProgressOnlineMatch = async (): Promise<InProgressOnlineMatc
 
   return mapInProgressRow(first)
 }
-
-const isMatchStatus = (value: string): value is MatchStatus =>
-  (Object.values(MatchStatus) as string[]).includes(value)
-
-const isPlayMode = (value: string): value is PlayMode =>
-  (Object.values(PlayMode) as string[]).includes(value)
-
-const isMatchEndingKind = (value: string): value is MatchEndingKind =>
-  (Object.values(MatchEndingKind) as string[]).includes(value)
-
-const isGameModeId = (value: string): value is GameModeId =>
-  (Object.values(GameModeId) as string[]).includes(value)
 
 const mapHistoryRow = (
   row: Record<string, unknown>,

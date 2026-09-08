@@ -170,7 +170,8 @@ export class MatchObject extends DurableObject<Env> {
       now,
     )
     upsertDeadline(sql, DeadlineKind.WaitingExpiresAt, waitingExpiresAt)
-    await this.afterPersist()
+    // HTTP createMatch awaits publishMatchIndex and rolls back on conflict.
+    await this.afterPersist({ publishIndex: false })
 
     const state = loadPublicMatchState(sql)
 
@@ -243,7 +244,8 @@ export class MatchObject extends DurableObject<Env> {
     )
     sql.exec('UPDATE match_state SET updated_at = ?, version = version + 1', now)
 
-    const joined = await this.finishMutation()
+    // HTTP joinMatch awaits publishMatchIndex and rolls back on conflict.
+    const joined = await this.finishMutation({ publishIndex: false })
     return joined
   }
 
@@ -1223,14 +1225,14 @@ export class MatchObject extends DurableObject<Env> {
     deleteAllDeadlines(sql)
   }
 
-  private async finishMutation(): Promise<CommandResult> {
+  private async finishMutation(options: { publishIndex?: boolean } = {}): Promise<CommandResult> {
     const state = loadPublicMatchState(this.ctx.storage.sql)
 
     if (state === null) {
       return commandFailure(CommandErrorCode.NotFound, 'Match not found')
     }
 
-    await this.afterPersist()
+    await this.afterPersist(options)
 
     return commandSuccess(state)
   }
@@ -1250,12 +1252,16 @@ export class MatchObject extends DurableObject<Env> {
     this.ctx.storage.sql.exec('UPDATE match_state SET updated_at = ?, version = version + 1', now)
   }
 
-  private async afterPersist(): Promise<void> {
+  private async afterPersist(options: { publishIndex?: boolean } = {}): Promise<void> {
     const state = loadPublicMatchState(this.ctx.storage.sql)
+    const publishIndex = options.publishIndex !== false
 
     if (state !== null) {
       broadcast(this.ctx.getWebSockets(), serializeStateMessage(state))
-      this.ctx.waitUntil(publishIndexBestEffort(this.env, state))
+
+      if (publishIndex) {
+        this.ctx.waitUntil(publishIndexBestEffort(this.env, state))
+      }
     }
 
     if (state !== null && TERMINAL_STATUSES.has(state.status)) {

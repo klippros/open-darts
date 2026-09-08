@@ -179,7 +179,7 @@ export interface OnlineMatchInvite {
 
 export interface InProgressOnlineMatchRow {
   id: string
-  status: string
+  status: MatchStatus
   mode: string
   legs_to_win: number
   invite_token: string
