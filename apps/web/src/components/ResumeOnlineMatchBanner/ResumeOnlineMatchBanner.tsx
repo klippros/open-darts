@@ -1,4 +1,4 @@
-import { Box, Button, Stack, Text } from '@chakra-ui/react'
+import { Box, Button, HStack, Stack, Text } from '@chakra-ui/react'
 import { Link as RouterLink } from 'react-router-dom'
 import { buildMatchPath } from '../../lib/matchServer/api'
 import type { InProgressOnlineMatchRow } from '../../lib/matchServer/types'
@@ -22,9 +22,20 @@ export const ResumeOnlineMatchBanner = ({ match }: ResumeOnlineMatchBannerProps)
     >
       <Stack gap={3} direction={{ base: 'column', sm: 'row' }} align={{ sm: 'center' }}>
         <Stack gap={1} flex="1">
-          <Text fontWeight="semibold" color="white">
-            Continue your {label}
-          </Text>
+          <HStack gap={2} align="center">
+            <Box
+              className="online-pulse-dot"
+              w="8px"
+              h="8px"
+              borderRadius="full"
+              bg="yellow.400"
+              flexShrink={0}
+              aria-hidden
+            />
+            <Text fontWeight="semibold" color="white">
+              Continue your {label}
+            </Text>
+          </HStack>
           <Text fontSize="sm" color="whiteAlpha.700">
             You already have an in-progress online match. Finish or leave it before starting
             another.

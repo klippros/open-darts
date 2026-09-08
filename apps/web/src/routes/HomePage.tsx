@@ -7,10 +7,8 @@ import { useAuth } from '../hooks/authContext'
 import { useInProgressOnlineMatch } from '../hooks/useInProgressOnlineMatch'
 import { AuthStatus } from '../types/auth'
 import { buildPracticeGamePath } from '../lib/game/gameRoute'
-import { buildMatchPath } from '../lib/matchServer/api'
 import { isOnlineMatchesEnabled } from '../lib/matchServer/config'
 import type { InProgressOnlineMatchRow } from '../lib/matchServer/types'
-import { MatchStatus } from '../lib/matchServer/types'
 import { explicitGameLaunchState } from '../lib/routing/gameNavigation'
 import { GameModeId } from '@open-darts/game/types/gameMode'
 import { buildX01PresetPath, X01PresetId } from '@open-darts/game/x01/x01Presets'
@@ -122,15 +120,6 @@ const OnlineSection = ({ resumeMatch }: { resumeMatch: InProgressOnlineMatchRow 
     return null
   }
 
-  const onlinePath = resumeMatch !== null ? buildMatchPath(resumeMatch.id) : '/match/new'
-  const onlineTitle = resumeMatch !== null ? 'Continue online match' : 'Online 501'
-  const onlineDescription =
-    resumeMatch !== null
-      ? resumeMatch.status === MatchStatus.Waiting
-        ? 'Return to your waiting room'
-        : 'Return to your in-progress match'
-      : 'Create a match and share an invite'
-
   return (
     <Stack gap={4}>
       <Stack gap={1}>
@@ -141,39 +130,43 @@ const OnlineSection = ({ resumeMatch }: { resumeMatch: InProgressOnlineMatchRow 
           Two-player 501 over the internet. Invite a signed-in opponent.
         </Text>
       </Stack>
-      <SimpleGrid columns={{ base: 1, sm: 2, lg: 3 }} gap={4}>
-        <Button
-          asChild
-          variant="cta"
-          h="auto"
-          py={5}
-          px={5}
-          flexDirection="column"
-          alignItems="flex-start"
-          gap={1}
-          textAlign="left"
-        >
-          <RouterLink to={onlinePath}>
-            <HStack gap={2} align="center">
-              <Box
-                className="online-pulse-dot"
-                w="8px"
-                h="8px"
-                borderRadius="full"
-                bg="yellow.400"
-                flexShrink={0}
-                aria-hidden
-              />
-              <Text fontSize="lg" fontWeight="semibold" color="white">
-                {onlineTitle}
+      {resumeMatch !== null ? (
+        <ResumeOnlineMatchBanner match={resumeMatch} />
+      ) : (
+        <SimpleGrid columns={{ base: 1, sm: 2, lg: 3 }} gap={4}>
+          <Button
+            asChild
+            variant="cta"
+            h="auto"
+            py={5}
+            px={5}
+            flexDirection="column"
+            alignItems="flex-start"
+            gap={1}
+            textAlign="left"
+          >
+            <RouterLink to="/match/new">
+              <HStack gap={2} align="center">
+                <Box
+                  className="online-pulse-dot"
+                  w="8px"
+                  h="8px"
+                  borderRadius="full"
+                  bg="yellow.400"
+                  flexShrink={0}
+                  aria-hidden
+                />
+                <Text fontSize="lg" fontWeight="semibold" color="white">
+                  Online 501
+                </Text>
+              </HStack>
+              <Text fontSize="sm" color="whiteAlpha.700" fontWeight="normal">
+                Create a match and share an invite
               </Text>
-            </HStack>
-            <Text fontSize="sm" color="whiteAlpha.700" fontWeight="normal">
-              {onlineDescription}
-            </Text>
-          </RouterLink>
-        </Button>
-      </SimpleGrid>
+            </RouterLink>
+          </Button>
+        </SimpleGrid>
+      )}
     </Stack>
   )
 }
@@ -186,7 +179,6 @@ export const HomePage = () => {
     <ContentContainer>
       <Box py={{ base: 6, md: 10 }} pb={10}>
         <Stack gap={8}>
-          {resumeMatch !== null && <ResumeOnlineMatchBanner match={resumeMatch} />}
           <ResumeGameBanner />
           <OnlineSection resumeMatch={resumeMatch} />
 
