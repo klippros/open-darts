@@ -1,4 +1,4 @@
-import { Box, Button, Heading, SimpleGrid, Stack, Text } from '@chakra-ui/react'
+import { Box, Button, Heading, HStack, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { Link as RouterLink } from 'react-router-dom'
 import { ContentContainer } from '../components/ContentContainer'
 import { ResumeGameBanner } from '../components/ResumeGameBanner/ResumeGameBanner'
@@ -154,9 +154,20 @@ const OnlineSection = ({ resumeMatch }: { resumeMatch: InProgressOnlineMatchRow 
           textAlign="left"
         >
           <RouterLink to={onlinePath}>
-            <Text fontSize="lg" fontWeight="semibold" color="white">
-              {onlineTitle}
-            </Text>
+            <HStack gap={2} align="center">
+              <Box
+                className="online-pulse-dot"
+                w="8px"
+                h="8px"
+                borderRadius="full"
+                bg="yellow.400"
+                flexShrink={0}
+                aria-hidden
+              />
+              <Text fontSize="lg" fontWeight="semibold" color="white">
+                {onlineTitle}
+              </Text>
+            </HStack>
             <Text fontSize="sm" color="whiteAlpha.700" fontWeight="normal">
               {onlineDescription}
             </Text>
