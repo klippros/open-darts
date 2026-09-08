@@ -9,10 +9,11 @@ import type {
   JoinMatchResponse,
   MatchPlayerSlot,
   MatchTicketResponse,
+  OnlineMatchHistoryRow,
   OnlineMatchInvite,
   PublicMatchState,
 } from './types'
-import { V1_ONLINE_X01_CONFIG } from './types'
+import { MatchEndingKind, MatchStatus, PlayMode, V1_ONLINE_X01_CONFIG } from './types'
 
 export class MatchServerApiError extends Error {
   readonly status: number
@@ -315,6 +316,106 @@ export const getMyInProgressOnlineMatch = async (): Promise<InProgressOnlineMatc
   }
 
   return mapInProgressRow(first)
+}
+
+const isMatchStatus = (value: string): value is MatchStatus =>
+  (Object.values(MatchStatus) as string[]).includes(value)
+
+const isPlayMode = (value: string): value is PlayMode =>
+  (Object.values(PlayMode) as string[]).includes(value)
+
+const isMatchEndingKind = (value: string): value is MatchEndingKind =>
+  (Object.values(MatchEndingKind) as string[]).includes(value)
+
+const isGameModeId = (value: string): value is GameModeId =>
+  (Object.values(GameModeId) as string[]).includes(value)
+
+const mapHistoryRow = (
+  row: Record<string, unknown>,
+  opponentByMatchId: Record<string, string>,
+): OnlineMatchHistoryRow | null => {
+  if (typeof row.id !== 'string') {
+    return null
+  }
+
+  const statusRaw = readString(row.status)
+  const playModeRaw = readString(row.play_mode)
+  const endingKindRaw = readString(row.ending_kind)
+  const modeRaw = readString(row.mode)
+
+  if (
+    !isMatchStatus(statusRaw) ||
+    !isPlayMode(playModeRaw) ||
+    !isMatchEndingKind(endingKindRaw) ||
+    !isGameModeId(modeRaw)
+  ) {
+    return null
+  }
+
+  return {
+    id: row.id,
+    status: statusRaw,
+    playMode: playModeRaw,
+    mode: modeRaw,
+    config: readGameConfig(row.config),
+    legsToWin: readNumber(row.legs_to_win, 1),
+    endingKind: endingKindRaw,
+    winnerUserId: typeof row.winner_user_id === 'string' ? row.winner_user_id : null,
+    creatorUserId: readString(row.creator_user_id),
+    completedAt: typeof row.completed_at === 'string' ? row.completed_at : null,
+    createdAt: readString(row.created_at),
+    opponentUserId: opponentByMatchId[row.id] ?? null,
+  }
+}
+
+export const listMyOnlineMatchHistory = async (
+  viewerUserId: string,
+): Promise<OnlineMatchHistoryRow[]> => {
+  if (supabaseClient === null) {
+    throw new MatchServerApiError('Supabase is not configured', 503, 'not_configured')
+  }
+
+  const result = await supabaseClient.rpc('list_my_online_match_history')
+
+  if (result.error !== null) {
+    throw new MatchServerApiError(result.error.message, 500, result.error.code)
+  }
+
+  const data: unknown = result.data
+  const rows = Array.isArray(data) ? data : data === null || data === undefined ? [] : [data]
+  const matchRows = rows.filter(isRecord)
+  const matchIds = matchRows
+    .map((row) => (typeof row.id === 'string' ? row.id : null))
+    .filter((id): id is string => id !== null)
+
+  const opponentByMatchId: Record<string, string> = {}
+
+  if (matchIds.length > 0) {
+    const playersResult = await supabaseClient
+      .from('online_match_players')
+      .select('match_id, user_id')
+      .in('match_id', matchIds)
+
+    if (playersResult.error !== null) {
+      throw new MatchServerApiError(playersResult.error.message, 500, playersResult.error.code)
+    }
+
+    for (const player of playersResult.data ?? []) {
+      if (
+        typeof player === 'object' &&
+        player !== null &&
+        typeof player.match_id === 'string' &&
+        typeof player.user_id === 'string' &&
+        player.user_id !== viewerUserId
+      ) {
+        opponentByMatchId[player.match_id] = player.user_id
+      }
+    }
+  }
+
+  return matchRows
+    .map((row) => mapHistoryRow(row, opponentByMatchId))
+    .filter((row): row is OnlineMatchHistoryRow => row !== null)
 }
 
 export const isPublicMatchState = (value: unknown): value is PublicMatchState => {

@@ -185,6 +185,21 @@ export interface InProgressOnlineMatchRow {
   invite_token: string
 }
 
+export interface OnlineMatchHistoryRow {
+  id: string
+  status: MatchStatus
+  playMode: PlayMode
+  mode: GameModeId
+  config: GameConfig
+  legsToWin: number
+  endingKind: MatchEndingKind
+  winnerUserId: string | null
+  creatorUserId: string
+  completedAt: string | null
+  createdAt: string
+  opponentUserId: string | null
+}
+
 export interface ClientCommandMessage {
   type: ClientMessageType.Command
   id?: string

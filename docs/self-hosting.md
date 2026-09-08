@@ -4,6 +4,12 @@ Open Darts works without Supabase or Cloudflare. Local games stay in the
 browser. Online matches are available only when **both** Supabase and the
 match Worker are configured.
 
+| Setup                         | What you get                                    |
+| ----------------------------- | ----------------------------------------------- |
+| Web only                      | Anonymous play, local history in `localStorage` |
+| Web + Supabase                | Optional sign-in, sync completed local games    |
+| Web + Supabase + match Worker | Online two-player matches (plus sync)           |
+
 ## Web only
 
 Copy `.env.example` to `.env` and leave every value empty, then run:
@@ -14,7 +20,7 @@ pnpm dev
 ```
 
 The app is at `http://localhost:5173/tools/open-darts/`. Users stay anonymous
-and completed games stay in `localStorage`.
+and completed games stay in `localStorage`. Online play UI stays hidden.
 
 ## Supabase (optional sign-in and local-game sync)
 
@@ -84,9 +90,12 @@ pnpm install
 pnpm dev
 ```
 
+Online matches stay disabled until `VITE_MATCH_SERVER_URL` is set as well.
+
 ## Cloudflare match Worker (optional online matches)
 
-Online matches also need a Cloudflare Worker with Durable Objects. Leave
+Online matches need **both** backends: Supabase (auth + match index) and a
+Cloudflare Worker with Durable Objects (live match state). Leave
 `VITE_MATCH_SERVER_URL` empty to keep online play disabled. The web app still
 runs with `pnpm dev` and does not require a Cloudflare account.
 
@@ -104,7 +113,8 @@ runs with `pnpm dev` and does not require a Cloudflare account.
    The JWT secret and service role key are in Supabase **Project Settings → API**.
    The service role key bypasses Row Level Security and must stay on the Worker.
 
-3. Set the public Worker URL in the repository-root `.env`:
+3. Set the public Worker URL in the repository-root `.env` (together with the
+   Supabase `VITE_*` values above):
 
    ```text
    VITE_MATCH_SERVER_URL=http://localhost:8787
@@ -132,3 +142,19 @@ pnpm exec wrangler deploy
 
 Put the deployed Worker origin in the web app build as `VITE_MATCH_SERVER_URL`
 (for example `https://open-darts-match-server.<account>.workers.dev`).
+
+Rebuild and redeploy the web app so the browser picks up the new URL.
+
+### CORS and WebSocket origins
+
+Browser clients call the Worker over HTTPS and open WebSockets to the same
+origin (for example `wss://…workers.dev/…` after minting a short-lived ticket).
+
+The Worker reflects the request `Origin` on CORS responses so local Vite
+(`http://localhost:5173`) and your production Pages origin both work. Serve the
+web app and the Worker on HTTPS in production; mixed-content or blocked
+cross-origin WebSockets will prevent online play even when REST create/join
+succeeds.
+
+If you put the Worker behind a custom domain, point `VITE_MATCH_SERVER_URL` at
+that origin and keep Supabase auth redirect URLs aligned with the web app host.

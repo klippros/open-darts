@@ -226,7 +226,13 @@ as $$
   join public.online_match_players as membership
     on membership.match_id = match.id
   where membership.user_id = (select auth.uid())
-    and match.status = 'completed'
+    and (
+      match.status = 'completed'
+      or (
+        match.status = 'cancelled'
+        and match.ending_kind = 'mutual_cancel'
+      )
+    )
   order by match.completed_at desc nulls last, match.created_at desc;
 $$;
 

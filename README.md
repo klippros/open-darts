@@ -32,10 +32,15 @@ See [AGENTS.md](AGENTS.md) for project conventions.
 
 ## Hosting
 
-The example deployment uses Cloudflare Pages and optional Supabase.
-Online matches also need the optional match Worker. Follow
-[optional backends](docs/self-hosting.md) to run web only, web + Supabase,
-or web + Supabase + the match Worker.
+The example deployment uses Cloudflare Pages. Backends are optional:
+
+- **Web only** — no env vars; anonymous local play
+- **Web + Supabase** — sign-in and sync of completed local games
+- **Web + Supabase + match Worker** — online two-player matches
+
+Online play needs **both** Supabase and the Worker (`wrangler deploy` plus
+`SUPABASE_URL`, `SUPABASE_JWT_SECRET`, and `SUPABASE_SERVICE_ROLE_KEY`
+secrets). Follow [optional backends](docs/self-hosting.md).
 
 ---
 

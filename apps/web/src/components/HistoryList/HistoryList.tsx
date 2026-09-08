@@ -1,20 +1,41 @@
 import { Box, Stack, Text } from '@chakra-ui/react'
 import type { GameSession } from '@open-darts/game/types/gameSession'
+import type { OnlineMatchHistoryRow } from '../../lib/matchServer/types'
 import {
   formatSessionDate,
   getSessionCompletedAt,
   getSessionModeLabel,
   getSessionResultSummary,
 } from '../../lib/history/sessionSummary'
+import {
+  formatOnlineMatchDate,
+  getOnlineMatchModeLabel,
+  HistoryEntrySource,
+} from '../../lib/history/onlineHistorySummary'
 import { HistoryListItem } from './HistoryListItem'
 
+export type HistoryListEntry =
+  | {
+      source: HistoryEntrySource.Local
+      id: string
+      sortAt: string
+      session: GameSession
+    }
+  | {
+      source: HistoryEntrySource.Online
+      id: string
+      sortAt: string
+      match: OnlineMatchHistoryRow
+      resultSummary: string
+    }
+
 export interface HistoryListProps {
-  sessions: GameSession[]
+  entries: HistoryListEntry[]
   onSelectSession: (session: GameSession) => void
 }
 
-export const HistoryList = ({ sessions, onSelectSession }: HistoryListProps) => {
-  if (sessions.length === 0) {
+export const HistoryList = ({ entries, onSelectSession }: HistoryListProps) => {
+  if (entries.length === 0) {
     return (
       <Box
         borderWidth="1px"
@@ -33,17 +54,31 @@ export const HistoryList = ({ sessions, onSelectSession }: HistoryListProps) => 
 
   return (
     <Stack gap={3}>
-      {sessions.map((session) => (
-        <HistoryListItem
-          key={session.id}
-          modeLabel={getSessionModeLabel(session)}
-          resultSummary={getSessionResultSummary(session)}
-          completedAtLabel={formatSessionDate(getSessionCompletedAt(session))}
-          onClick={() => {
-            onSelectSession(session)
-          }}
-        />
-      ))}
+      {entries.map((entry) => {
+        if (entry.source === HistoryEntrySource.Local) {
+          return (
+            <HistoryListItem
+              key={`local:${entry.id}`}
+              modeLabel={getSessionModeLabel(entry.session)}
+              resultSummary={getSessionResultSummary(entry.session)}
+              completedAtLabel={formatSessionDate(getSessionCompletedAt(entry.session))}
+              onClick={() => {
+                onSelectSession(entry.session)
+              }}
+            />
+          )
+        }
+
+        return (
+          <HistoryListItem
+            key={`online:${entry.id}`}
+            modeLabel={getOnlineMatchModeLabel(entry.match)}
+            resultSummary={entry.resultSummary}
+            completedAtLabel={formatOnlineMatchDate(entry.match)}
+            badgeLabel="Online"
+          />
+        )
+      })}
     </Stack>
   )
 }
