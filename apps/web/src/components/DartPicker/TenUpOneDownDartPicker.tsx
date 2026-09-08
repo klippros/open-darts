@@ -7,6 +7,7 @@ export interface TenUpOneDownDartPickerProps {
   onVisitScore: (score: number) => void
   onUndo: () => void
   inputDisabled?: boolean
+  undoDisabled?: boolean
 }
 
 export const TenUpOneDownDartPicker = ({
@@ -14,6 +15,7 @@ export const TenUpOneDownDartPicker = ({
   onVisitScore,
   onUndo,
   inputDisabled = false,
+  undoDisabled = inputDisabled,
 }: TenUpOneDownDartPickerProps) => {
   const { playHit, playMiss } = useUiSounds()
   const cardVariant = inputDisabled ? 'empty' : 'selectable'
@@ -57,7 +59,7 @@ export const TenUpOneDownDartPicker = ({
         />
       </Grid>
 
-      <Button variant="cta" disabled={inputDisabled} onClick={onUndo}>
+      <Button variant="cta" disabled={undoDisabled} onClick={onUndo}>
         Undo visit
       </Button>
     </Stack>

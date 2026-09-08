@@ -11,6 +11,7 @@ export interface VisitScorePickerProps {
   onSubmit: (score: number) => void
   onUndo: () => void
   inputDisabled?: boolean
+  undoDisabled?: boolean
 }
 
 const PAD_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'clear', '0', 'enter'] as const
@@ -52,6 +53,7 @@ export const VisitScorePicker = ({
   onSubmit,
   onUndo,
   inputDisabled = false,
+  undoDisabled = inputDisabled,
 }: VisitScorePickerProps) => {
   const [value, setValue] = useState('')
   const valueRef = useRef(value)
@@ -161,7 +163,7 @@ export const VisitScorePicker = ({
         ))}
       </Grid>
 
-      <Button variant="cta" disabled={inputDisabled} onClick={onUndo}>
+      <Button variant="cta" disabled={undoDisabled} onClick={onUndo}>
         Undo
       </Button>
     </Stack>

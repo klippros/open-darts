@@ -192,6 +192,83 @@ describe('sync play', () => {
     expect(again).toMatchObject({ ok: false, code: CommandErrorCode.Forbidden })
   })
 
+  it('rejects undo after the opponent has thrown', async () => {
+    const stub = await startCheckoutMatch()
+    await stub.applyCommand(creatorUserId, {
+      name: MatchCommandName.RecordVisit,
+      darts: toPublicDarts(missVisit()),
+    })
+    await stub.applyCommand(otherUserId, {
+      name: MatchCommandName.RecordVisit,
+      darts: toPublicDarts(missVisit()),
+    })
+
+    const undone = await stub.applyCommand(creatorUserId, { name: MatchCommandName.UndoVisit })
+    expect(undone).toMatchObject({
+      ok: false,
+      code: CommandErrorCode.Forbidden,
+      message: 'Can only undo your own visit',
+    })
+  })
+
+  it('corrects a prior visit after the opponent has thrown', async () => {
+    const stub = await startCheckoutMatch()
+    await stub.applyCommand(creatorUserId, {
+      name: MatchCommandName.RecordVisit,
+      darts: toPublicDarts(missVisit()),
+    })
+    await stub.applyCommand(otherUserId, {
+      name: MatchCommandName.RecordVisit,
+      darts: toPublicDarts(missVisit()),
+    })
+
+    const corrected = await stub.applyCommand(creatorUserId, {
+      name: MatchCommandName.CorrectVisit,
+      visitIndex: 0,
+      visitScore: 20,
+    })
+
+    expect(corrected.ok).toBe(true)
+    expect(corrected.state?.activePlayerId).toBe(creatorUserId)
+    expect(corrected.state?.pendingFinalization).toBe(false)
+
+    const sessionJson = corrected.state?.sessionJson
+    expect(sessionJson).toEqual(expect.any(String))
+    const envelope = JSON.parse(sessionJson!) as {
+      session: { visits: { visitIndex: number; visitScore: number; voided?: boolean }[] }
+    }
+    expect(envelope.session.visits.find((visit) => visit.visitIndex === 0)?.visitScore).toBe(20)
+    expect(envelope.session.visits.find((visit) => visit.visitIndex === 1)?.voided).not.toBe(true)
+  })
+
+  it('voids later visits when a correction checkouts earlier', async () => {
+    const stub = await startCheckoutMatch()
+    await stub.applyCommand(creatorUserId, {
+      name: MatchCommandName.RecordVisit,
+      darts: toPublicDarts(missVisit()),
+    })
+    await stub.applyCommand(otherUserId, {
+      name: MatchCommandName.RecordVisit,
+      darts: toPublicDarts(missVisit()),
+    })
+
+    const corrected = await stub.applyCommand(creatorUserId, {
+      name: MatchCommandName.CorrectVisit,
+      visitIndex: 0,
+      darts: toPublicDarts(checkoutDouble20()),
+    })
+
+    expect(corrected.ok).toBe(true)
+    expect(corrected.state?.pendingFinalization).toBe(true)
+    expect(corrected.state?.activePlayerId).toBe(creatorUserId)
+
+    const envelope = JSON.parse(corrected.state!.sessionJson!) as {
+      session: { visits: { visitIndex: number; voided?: boolean; checkout?: boolean }[] }
+    }
+    expect(envelope.session.visits.find((visit) => visit.visitIndex === 0)?.checkout).toBe(true)
+    expect(envelope.session.visits.find((visit) => visit.visitIndex === 1)?.voided).toBe(true)
+  })
+
   it('rejects mutating commands after the match is completed', async () => {
     const stub = await startCheckoutMatch()
     await stub.applyCommand(creatorUserId, {

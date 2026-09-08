@@ -23,6 +23,7 @@ export interface UseDartKeyboardOptions {
   onDart: (dart: DartThrow) => void
   onUndo: () => void
   inputDisabled?: boolean
+  undoDisabled?: boolean
 }
 
 export const useDartKeyboard = ({
@@ -31,6 +32,7 @@ export const useDartKeyboard = ({
   onDart,
   onUndo,
   inputDisabled = false,
+  undoDisabled = inputDisabled,
 }: UseDartKeyboardOptions) => {
   const inputStateRef = useRef(inputState)
   inputStateRef.current = inputState
@@ -58,6 +60,10 @@ export const useDartKeyboard = ({
 
       const isUndoKey = event.key === 'Backspace'
 
+      if (isUndoKey && undoDisabled) {
+        return
+      }
+
       if (inputDisabled && !isUndoKey) {
         return
       }
@@ -74,7 +80,7 @@ export const useDartKeyboard = ({
         event.preventDefault()
       }
     },
-    [applyOutputs, inputDisabled, setInputState],
+    [applyOutputs, inputDisabled, setInputState, undoDisabled],
   )
 
   useEffect(() => {

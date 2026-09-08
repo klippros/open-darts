@@ -22,6 +22,7 @@ export interface AroundTheClockDartPickerProps {
   onDarts: (darts: DartThrow[]) => void
   onUndo: () => void
   inputDisabled?: boolean
+  undoDisabled?: boolean
 }
 
 const ORDINAL_LABELS: Record<AroundTheClockDartOrdinal, string> = {
@@ -39,6 +40,7 @@ export const AroundTheClockDartPicker = ({
   onDarts,
   onUndo,
   inputDisabled = false,
+  undoDisabled = inputDisabled,
 }: AroundTheClockDartPickerProps) => {
   const { playHit, playMiss } = useUiSounds()
   const { aimMode } = getAroundTheClockConfig(config)
@@ -113,7 +115,7 @@ export const AroundTheClockDartPicker = ({
         }
       />
 
-      <Button variant="cta" disabled={inputDisabled} onClick={onUndo}>
+      <Button variant="cta" disabled={undoDisabled} onClick={onUndo}>
         Undo last dart
       </Button>
     </Stack>

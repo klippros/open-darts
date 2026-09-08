@@ -16,6 +16,7 @@ export interface UseDartBoardPointerOptions {
   armedMultiplier: ArmedMultiplier
   setArmedMultiplier: (multiplier: ArmedMultiplier) => void
   inputDisabled?: boolean
+  undoDisabled?: boolean
 }
 
 const centerZoneToMultiplier = (zone: CenterZone): DartMultiplier =>
@@ -43,6 +44,7 @@ export const useDartBoardPointer = ({
   armedMultiplier,
   setArmedMultiplier,
   inputDisabled = false,
+  undoDisabled = inputDisabled,
 }: UseDartBoardPointerOptions) => {
   const svgRef = useRef<SVGSVGElement>(null)
   const [heldMultiplier, setHeldMultiplier] = useState<DartMultiplier | null>(null)
@@ -89,7 +91,9 @@ export const useDartBoardPointer = ({
   const handleCornerClick = useCallback(
     (corner: CornerZone) => {
       if (corner === 'undo') {
-        onUndo()
+        if (!undoDisabled) {
+          onUndo()
+        }
         clearHoverState()
         return
       }
@@ -116,7 +120,7 @@ export const useDartBoardPointer = ({
 
       clearHoverState()
     },
-    [clearHoverState, inputDisabled, onUndo, recordBull, recordMiss, recordOuterBull],
+    [clearHoverState, inputDisabled, onUndo, recordBull, recordMiss, recordOuterBull, undoDisabled],
   )
 
   const handleNumberClick = useCallback(

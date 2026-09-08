@@ -44,6 +44,8 @@ export interface UseVoiceRecognitionOptions {
       didUndo?: boolean
     } | null,
   ) => void
+  /** When this returns true, the intent was handled without mutating the local controller. */
+  tryHandleVoiceIntent?: (intent: NonNullable<ReturnType<typeof parseVoiceCommand>>) => boolean
 }
 
 export const useVoiceRecognition = ({
@@ -52,6 +54,7 @@ export const useVoiceRecognition = ({
   inputDisabled,
   visitEntryMode,
   applyControllerTransaction,
+  tryHandleVoiceIntent,
 }: UseVoiceRecognitionOptions): void => {
   const { enabled, setEnabled, setStatus } = useVoiceControl()
   const { playUndo, playSequence } = useUiSounds()
@@ -66,6 +69,7 @@ export const useVoiceRecognition = ({
   const modeRef = useRef(mode)
   const visitEntryModeRef = useRef(visitEntryMode)
   const applyRef = useRef(applyControllerTransaction)
+  const tryHandleVoiceIntentRef = useRef(tryHandleVoiceIntent)
   const playUndoRef = useRef(playUndo)
   const playSequenceRef = useRef(playSequence)
   const inputDisabledRef = useRef(inputDisabled)
@@ -77,6 +81,7 @@ export const useVoiceRecognition = ({
   modeRef.current = mode
   visitEntryModeRef.current = visitEntryMode
   applyRef.current = applyControllerTransaction
+  tryHandleVoiceIntentRef.current = tryHandleVoiceIntent
   playUndoRef.current = playUndo
   playSequenceRef.current = playSequence
   inputDisabledRef.current = inputDisabled
@@ -236,6 +241,11 @@ export const useVoiceRecognition = ({
 
     if (intent === null) {
       voiceWarn('commit skipped — parse returned null', { transcript })
+      return
+    }
+
+    if (tryHandleVoiceIntentRef.current?.(intent) === true) {
+      voiceLog('executed via tryHandleVoiceIntent', { transcript, intent })
       return
     }
 

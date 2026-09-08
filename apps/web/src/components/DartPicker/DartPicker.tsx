@@ -14,9 +14,15 @@ export interface DartPickerProps {
   onDart: (dart: DartThrow) => void
   onUndo: () => void
   inputDisabled?: boolean
+  undoDisabled?: boolean
 }
 
-export const DartPicker = ({ onDart, onUndo, inputDisabled = false }: DartPickerProps) => {
+export const DartPicker = ({
+  onDart,
+  onUndo,
+  inputDisabled = false,
+  undoDisabled = inputDisabled,
+}: DartPickerProps) => {
   const [inputState, setInputState] = useState(createDartKeyboardInputState)
 
   const setArmedMultiplier = useCallback((armedMultiplier: ArmedMultiplier) => {
@@ -33,6 +39,7 @@ export const DartPicker = ({ onDart, onUndo, inputDisabled = false }: DartPicker
     onDart,
     onUndo,
     inputDisabled,
+    undoDisabled,
   })
 
   const recordNumber = useCallback(
@@ -79,6 +86,7 @@ export const DartPicker = ({ onDart, onUndo, inputDisabled = false }: DartPicker
     armedMultiplier: inputState.armedMultiplier,
     setArmedMultiplier,
     inputDisabled,
+    undoDisabled,
   })
 
   const hoveredNumber = keyboardPreview.highlightedNumber ?? pointerHoveredNumber

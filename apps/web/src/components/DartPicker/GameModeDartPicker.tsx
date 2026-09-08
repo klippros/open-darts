@@ -25,6 +25,7 @@ export interface GameModeDartPickerProps {
   onVisitScore: (score: number) => void
   onUndo: () => void
   inputDisabled: boolean
+  undoDisabled?: boolean
 }
 
 export const GameModeDartPicker = ({
@@ -41,6 +42,7 @@ export const GameModeDartPicker = ({
   onVisitScore,
   onUndo,
   inputDisabled,
+  undoDisabled = inputDisabled,
 }: GameModeDartPickerProps) => {
   if (
     mode === GameModeId.AroundTheClock &&
@@ -55,6 +57,7 @@ export const GameModeDartPicker = ({
         onDarts={onDarts}
         onUndo={onUndo}
         inputDisabled={inputDisabled}
+        undoDisabled={undoDisabled}
       />
     )
   }
@@ -66,12 +69,20 @@ export const GameModeDartPicker = ({
         onDarts={onDarts}
         onUndo={onUndo}
         inputDisabled={inputDisabled}
+        undoDisabled={undoDisabled}
       />
     )
   }
 
   if (!supportsVisitScoreInput(mode)) {
-    return <DartPicker onDart={onDart} onUndo={onUndo} inputDisabled={inputDisabled} />
+    return (
+      <DartPicker
+        onDart={onDart}
+        onUndo={onUndo}
+        inputDisabled={inputDisabled}
+        undoDisabled={undoDisabled}
+      />
+    )
   }
 
   const hasPendingDarts = pendingDarts.length > 0
@@ -90,12 +101,23 @@ export const GameModeDartPicker = ({
             onVisitScore={onVisitScore}
             onUndo={onUndo}
             inputDisabled={inputDisabled}
+            undoDisabled={undoDisabled}
           />
         ) : (
-          <VisitScorePicker onSubmit={onVisitScore} onUndo={onUndo} inputDisabled={inputDisabled} />
+          <VisitScorePicker
+            onSubmit={onVisitScore}
+            onUndo={onUndo}
+            inputDisabled={inputDisabled}
+            undoDisabled={undoDisabled}
+          />
         )
       ) : (
-        <DartPicker onDart={onDart} onUndo={onUndo} inputDisabled={inputDisabled} />
+        <DartPicker
+          onDart={onDart}
+          onUndo={onUndo}
+          inputDisabled={inputDisabled}
+          undoDisabled={undoDisabled}
+        />
       )}
     </ScoringInputCard>
   )

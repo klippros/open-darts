@@ -11,6 +11,7 @@ export interface Bob27DartPickerProps {
   onDarts: (darts: DartThrow[]) => void
   onUndo: () => void
   inputDisabled?: boolean
+  undoDisabled?: boolean
 }
 
 const HIT_COUNTS: Bob27HitCount[] = [0, 1, 2, 3]
@@ -20,6 +21,7 @@ export const Bob27DartPicker = ({
   onDarts,
   onUndo,
   inputDisabled = false,
+  undoDisabled = inputDisabled,
 }: Bob27DartPickerProps) => {
   const { playHit, playMiss } = useUiSounds()
   const target = getBob27Target(targetIndex)
@@ -57,7 +59,7 @@ export const Bob27DartPicker = ({
         ))}
       </Grid>
 
-      <Button variant="cta" disabled={inputDisabled} onClick={onUndo}>
+      <Button variant="cta" disabled={undoDisabled} onClick={onUndo}>
         Undo visit
       </Button>
     </Stack>
