@@ -4,6 +4,7 @@ import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { OnlineMatchPlayBoard } from '../components/OnlineMatchPlay/OnlineMatchPlayBoard'
 import { OnlineWaitingRoom } from '../components/OnlineWaitingRoom/OnlineWaitingRoom'
 import { ContentContainer } from '../components/ContentContainer'
+import { MatchConnectionNotice } from '../components/MatchConnectionNotice/MatchConnectionNotice'
 import { useAuth } from '../hooks/authContext'
 import {
   OnlineMatchConnectionStatus,
@@ -125,11 +126,13 @@ export const OnlineMatchPage = () => {
   if (state.status === MatchStatus.Waiting) {
     return (
       <>
-        {error !== null && (
-          <Text px={6} pt={3} color="red.300" fontSize="sm">
-            {error}
-          </Text>
-        )}
+        <MatchConnectionNotice
+          error={error}
+          showReconnecting={
+            status === OnlineMatchConnectionStatus.Reconnecting ||
+            status === OnlineMatchConnectionStatus.Connecting
+          }
+        />
         <OnlineWaitingRoom
           state={state}
           currentUserId={user.id}
@@ -174,17 +177,14 @@ export const OnlineMatchPage = () => {
 
   return (
     <>
-      {error !== null && (
-        <Text px={6} pt={3} color="red.300" fontSize="sm">
-          {error}
-        </Text>
-      )}
-      {(status === OnlineMatchConnectionStatus.Reconnecting ||
-        status === OnlineMatchConnectionStatus.Connecting) && (
-        <Text px={6} pt={2} color="whiteAlpha.600" fontSize="sm">
-          Reconnecting…
-        </Text>
-      )}
+      <MatchConnectionNotice
+        error={error}
+        showReconnecting={
+          state.status !== MatchStatus.Completed &&
+          (status === OnlineMatchConnectionStatus.Reconnecting ||
+            status === OnlineMatchConnectionStatus.Connecting)
+        }
+      />
       <OnlineMatchPlayBoard
         state={state}
         currentUserId={user.id}

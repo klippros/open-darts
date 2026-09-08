@@ -6,6 +6,7 @@ import {
 } from '../lib/matchServer/api'
 import { ClientMessageType, MatchCommandName, ServerMessageType } from '../lib/matchServer/types'
 import type { MatchCommand, PublicMatchState, ServerMessage } from '../lib/matchServer/types'
+import { shouldAttemptMatchReconnect } from './onlineMatchReconnect'
 
 export enum OnlineMatchConnectionStatus {
   Idle = 'idle',
@@ -98,10 +99,16 @@ export const useOnlineMatchConnection = (matchId: string | undefined): OnlineMat
   const [state, setState] = useState<PublicMatchState | null>(null)
   const [error, setError] = useState<string | null>(null)
   const socketRef = useRef<WebSocket | null>(null)
+  const stateRef = useRef<PublicMatchState | null>(null)
   const reconnectAttemptRef = useRef(0)
   const reconnectTimerRef = useRef<number | null>(null)
   const disposedRef = useRef(false)
   const connectGenerationRef = useRef(0)
+
+  const updateState = useCallback((next: PublicMatchState | null) => {
+    stateRef.current = next
+    setState(next)
+  }, [])
 
   const clearReconnectTimer = useCallback(() => {
     if (reconnectTimerRef.current !== null) {
@@ -173,7 +180,7 @@ export const useOnlineMatchConnection = (matchId: string | undefined): OnlineMat
         }
 
         if (message.type === ServerMessageType.State) {
-          setState(message.state)
+          updateState(message.state)
           setError(null)
           return
         }
@@ -189,12 +196,18 @@ export const useOnlineMatchConnection = (matchId: string | undefined): OnlineMat
         setError('Match connection error')
       }
 
-      socket.onclose = () => {
+      socket.onclose = (event) => {
         if (disposedRef.current || generation !== connectGenerationRef.current) {
           return
         }
 
         socketRef.current = null
+
+        if (!shouldAttemptMatchReconnect(event.code, event.reason, stateRef.current?.status)) {
+          setStatus(OnlineMatchConnectionStatus.Connected)
+          return
+        }
+
         setStatus(OnlineMatchConnectionStatus.Reconnecting)
         const attempt = reconnectAttemptRef.current
         reconnectAttemptRef.current = attempt + 1
@@ -211,6 +224,12 @@ export const useOnlineMatchConnection = (matchId: string | undefined): OnlineMat
       const message =
         connectError instanceof Error ? connectError.message : 'Unable to connect to match'
       setError(message)
+
+      if (!shouldAttemptMatchReconnect(1006, '', stateRef.current?.status)) {
+        setStatus(OnlineMatchConnectionStatus.Connected)
+        return
+      }
+
       setStatus(OnlineMatchConnectionStatus.Reconnecting)
       const attempt = reconnectAttemptRef.current
       reconnectAttemptRef.current = attempt + 1
@@ -219,14 +238,14 @@ export const useOnlineMatchConnection = (matchId: string | undefined): OnlineMat
         void connect()
       }, delay)
     }
-  }, [clearReconnectTimer, closeSocket, matchId])
+  }, [clearReconnectTimer, closeSocket, matchId, updateState])
 
   useEffect(() => {
     disposedRef.current = false
 
     if (matchId === undefined) {
       setStatus(OnlineMatchConnectionStatus.Idle)
-      setState(null)
+      updateState(null)
       return undefined
     }
 
@@ -237,7 +256,7 @@ export const useOnlineMatchConnection = (matchId: string | undefined): OnlineMat
       clearReconnectTimer()
       closeSocket()
     }
-  }, [clearReconnectTimer, closeSocket, connect, matchId])
+  }, [clearReconnectTimer, closeSocket, connect, matchId, updateState])
 
   const sendCommand = useCallback((command: MatchCommand) => {
     const socket = socketRef.current
