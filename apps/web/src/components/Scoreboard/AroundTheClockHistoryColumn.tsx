@@ -5,6 +5,7 @@ import { getVisitsForLeg } from '@open-darts/game/game/matchLegs'
 import type { AroundTheClockConfig } from '@open-darts/game/types/aroundTheClock'
 import type { Player } from '@open-darts/game/types/player'
 import type { Visit } from '@open-darts/game/types/visit'
+import { WaitingVisitHistoryCard } from './WaitingVisitHistoryCard'
 
 export type AroundTheClockHistoryLayoutVariant = 'sidebar' | 'stack'
 
@@ -16,6 +17,7 @@ export interface AroundTheClockHistoryColumnProps {
   align?: 'left' | 'right'
   showPlayerName?: boolean
   variant?: AroundTheClockHistoryLayoutVariant
+  showWaitingVisit?: boolean
 }
 
 const getDartsLabel = (dartsToHit: number): string =>
@@ -32,6 +34,7 @@ export const AroundTheClockHistoryColumn = ({
   align = 'left',
   showPlayerName = true,
   variant = 'sidebar',
+  showWaitingVisit = false,
 }: AroundTheClockHistoryColumnProps) => {
   const legVisits = currentLeg === undefined ? visits : getVisitsForLeg(visits, currentLeg)
   const playerVisits = legVisits.filter((visit) => visit.playerId === player.id)
@@ -59,33 +62,33 @@ export const AroundTheClockHistoryColumn = ({
         </Text>
       )}
 
-      {completedTargets.length === 0 ? (
+      {showWaitingVisit && <WaitingVisitHistoryCard variant={variant} />}
+      {completedTargets.length === 0 && !showWaitingVisit && (
         <Text fontSize="sm" color="whiteAlpha.400" textAlign={isRight ? 'right' : 'left'}>
           No targets hit yet
         </Text>
-      ) : (
-        completedTargets.map((target, index) => (
-          <Box
-            key={`${target.label}-${completedTargets.length - index}`}
-            w="full"
-            maxW={isStack ? 'full' : '200px'}
-            px={3}
-            py={2}
-            borderRadius="12px"
-            borderWidth="1px"
-            borderColor="whiteAlpha.200"
-            bg="whiteAlpha.50"
-            textAlign={isRight ? 'right' : 'left'}
-          >
-            <Text color={getHeadlineColor(target.dartsToHit)} fontWeight="bold" fontSize="lg">
-              {target.label}
-            </Text>
-            <Text mt={1} color="whiteAlpha.700" fontSize="sm" lineHeight="short">
-              {getDartsLabel(target.dartsToHit)}
-            </Text>
-          </Box>
-        ))
       )}
+      {completedTargets.map((target, index) => (
+        <Box
+          key={`${target.label}-${completedTargets.length - index}`}
+          w="full"
+          maxW={isStack ? 'full' : '200px'}
+          px={3}
+          py={2}
+          borderRadius="12px"
+          borderWidth="1px"
+          borderColor="whiteAlpha.200"
+          bg="whiteAlpha.50"
+          textAlign={isRight ? 'right' : 'left'}
+        >
+          <Text color={getHeadlineColor(target.dartsToHit)} fontWeight="bold" fontSize="lg">
+            {target.label}
+          </Text>
+          <Text mt={1} color="whiteAlpha.700" fontSize="sm" lineHeight="short">
+            {getDartsLabel(target.dartsToHit)}
+          </Text>
+        </Box>
+      ))}
     </Stack>
   )
 }

@@ -13,6 +13,7 @@ export interface MobileVisitHistoryProps {
   mode: GameModeId
   config: GameConfig
   currentLeg?: number
+  waitingPlayerId?: string | null
 }
 
 export const MobileVisitHistory = ({
@@ -21,6 +22,7 @@ export const MobileVisitHistory = ({
   mode,
   config,
   currentLeg,
+  waitingPlayerId = null,
 }: MobileVisitHistoryProps) => {
   const showPlayerName = players.length > 1
   const aroundTheClockConfig = isAroundTheClockConfig(mode, config)
@@ -40,6 +42,7 @@ export const MobileVisitHistory = ({
         align={align}
         showPlayerName={showPlayerName}
         variant="stack"
+        showWaitingVisit={waitingPlayerId === player.id}
       />
     ) : (
       <AroundTheClockHistoryColumn
@@ -51,6 +54,7 @@ export const MobileVisitHistory = ({
         align={align}
         showPlayerName={showPlayerName}
         variant="stack"
+        showWaitingVisit={waitingPlayerId === player.id}
       />
     )
   })

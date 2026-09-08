@@ -232,6 +232,10 @@ export const OnlineMatchPlayBoard = ({
   const inputDisabled = !isMyTurn || state.status !== MatchStatus.Active
   const completed = state.status === MatchStatus.Completed
   const summary = completed ? getMatchSummary(controller.session) : null
+  const waitingPlayerId =
+    !isMyTurn && state.status === MatchStatus.Active && !state.pendingFinalization
+      ? state.activePlayerId
+      : null
 
   const scoreboard = (
     <Scoreboard
@@ -394,14 +398,6 @@ export const OnlineMatchPlayBoard = ({
       />
     ) : null
 
-  const turnHint = !isMyTurn &&
-    state.status === MatchStatus.Active &&
-    !state.pendingFinalization && (
-      <Text px={6} pt={2} color="whiteAlpha.600" fontSize="sm">
-        Waiting for opponent…
-      </Text>
-    )
-
   if (isMobile) {
     const showMobileVisitHistory = showsVisitHistory(controller.session.mode)
 
@@ -409,7 +405,6 @@ export const OnlineMatchPlayBoard = ({
       <Flex direction="column" h="100%" minH={0} w="full" maxW={mainContentMaxWidth} mx="auto">
         {dialogs}
         {cancelBanner}
-        {turnHint}
         <Box flexShrink={0} px={6} pt={3} pb={showMobileVisitHistory ? 3 : 4}>
           {scoreboard}
         </Box>
@@ -422,6 +417,7 @@ export const OnlineMatchPlayBoard = ({
                 mode={controller.session.mode}
                 config={controller.session.config}
                 currentLeg={controller.session.matchProgress?.currentLeg}
+                waitingPlayerId={waitingPlayerId}
               />
             </Box>
           </Box>
@@ -447,7 +443,6 @@ export const OnlineMatchPlayBoard = ({
     >
       {dialogs}
       {cancelBanner}
-      {turnHint}
       <Flex direction="column" h="100%" minH={0} flex="1" pt={{ base: 3, md: 4 }} pb={10}>
         <GameBoardLayout
           players={controller.session.players}
@@ -456,6 +451,7 @@ export const OnlineMatchPlayBoard = ({
           config={controller.session.config}
           currentLeg={controller.session.matchProgress?.currentLeg}
           showVisitHistory={showsVisitHistory(controller.session.mode)}
+          waitingPlayerId={waitingPlayerId}
         >
           <Flex direction="column" justify="space-between" gap={8} flex="1" minH="100%">
             {scoreboard}

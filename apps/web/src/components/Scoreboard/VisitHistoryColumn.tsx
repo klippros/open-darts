@@ -5,6 +5,7 @@ import type { GameModeId } from '@open-darts/game/types/gameMode'
 import type { Player } from '@open-darts/game/types/player'
 import type { Visit } from '@open-darts/game/types/visit'
 import { getVisitHistoryEntryDisplay, getVisitHistoryHeadlineColor } from './visitHistoryDisplay'
+import { WaitingVisitHistoryCard } from './WaitingVisitHistoryCard'
 
 export type VisitHistoryLayoutVariant = 'sidebar' | 'stack'
 
@@ -16,6 +17,7 @@ export interface VisitHistoryColumnProps {
   align?: 'left' | 'right'
   showPlayerName?: boolean
   variant?: VisitHistoryLayoutVariant
+  showWaitingVisit?: boolean
 }
 
 export const VisitHistoryColumn = ({
@@ -26,6 +28,7 @@ export const VisitHistoryColumn = ({
   align = 'left',
   showPlayerName = true,
   variant = 'sidebar',
+  showWaitingVisit = false,
 }: VisitHistoryColumnProps) => {
   const legVisits = currentLeg === undefined ? visits : getVisitsForLeg(visits, currentLeg)
   const playerVisits = legVisits.filter((visit) => visit.playerId === player.id).toReversed()
@@ -51,50 +54,50 @@ export const VisitHistoryColumn = ({
         </Text>
       )}
 
-      {playerVisits.length === 0 ? (
+      {showWaitingVisit && <WaitingVisitHistoryCard variant={variant} />}
+      {playerVisits.length === 0 && !showWaitingVisit && (
         <Text fontSize="sm" color="whiteAlpha.400" textAlign={isRight ? 'right' : 'left'}>
           No visits yet
         </Text>
-      ) : (
-        playerVisits.map((visit) => {
-          const display = getVisitHistoryEntryDisplay(visit, mode)
-          const headlineColor = getVisitHistoryHeadlineColor(display.tone)
-
-          return (
-            <Box
-              key={visit.visitIndex}
-              w="full"
-              maxW={isStack ? 'full' : '200px'}
-              px={3}
-              py={2}
-              borderRadius="12px"
-              borderWidth="1px"
-              borderColor="whiteAlpha.200"
-              bg="whiteAlpha.50"
-              textAlign={isRight ? 'right' : 'left'}
-            >
-              {display.sublabel !== undefined && (
-                <Text
-                  color={headlineColor}
-                  fontSize="xs"
-                  fontWeight="semibold"
-                  textTransform="uppercase"
-                >
-                  {display.sublabel}
-                </Text>
-              )}
-              <Text color={headlineColor} fontWeight="bold" fontSize="lg">
-                {display.headline}
-              </Text>
-              {visit.darts.length > 0 && (
-                <Text mt={1} color="whiteAlpha.700" fontSize="sm" lineHeight="short">
-                  {visit.darts.map((dart) => formatDart(dart)).join(' · ')}
-                </Text>
-              )}
-            </Box>
-          )
-        })
       )}
+      {playerVisits.map((visit) => {
+        const display = getVisitHistoryEntryDisplay(visit, mode)
+        const headlineColor = getVisitHistoryHeadlineColor(display.tone)
+
+        return (
+          <Box
+            key={visit.visitIndex}
+            w="full"
+            maxW={isStack ? 'full' : '200px'}
+            px={3}
+            py={2}
+            borderRadius="12px"
+            borderWidth="1px"
+            borderColor="whiteAlpha.200"
+            bg="whiteAlpha.50"
+            textAlign={isRight ? 'right' : 'left'}
+          >
+            {display.sublabel !== undefined && (
+              <Text
+                color={headlineColor}
+                fontSize="xs"
+                fontWeight="semibold"
+                textTransform="uppercase"
+              >
+                {display.sublabel}
+              </Text>
+            )}
+            <Text color={headlineColor} fontWeight="bold" fontSize="lg">
+              {display.headline}
+            </Text>
+            {visit.darts.length > 0 && (
+              <Text mt={1} color="whiteAlpha.700" fontSize="sm" lineHeight="short">
+                {visit.darts.map((dart) => formatDart(dart)).join(' · ')}
+              </Text>
+            )}
+          </Box>
+        )
+      })}
     </Stack>
   )
 }

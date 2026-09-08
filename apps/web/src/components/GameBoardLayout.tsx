@@ -16,6 +16,7 @@ export interface GameBoardLayoutProps {
   config: GameConfig
   currentLeg?: number
   showVisitHistory: boolean
+  waitingPlayerId?: string | null
   children: ReactNode
 }
 
@@ -26,6 +27,7 @@ export const GameBoardLayout = ({
   config,
   currentLeg,
   showVisitHistory,
+  waitingPlayerId = null,
   children,
 }: GameBoardLayoutProps) => {
   const [leftPlayer, rightPlayer] = players
@@ -50,6 +52,7 @@ export const GameBoardLayout = ({
           currentLeg={currentLeg}
           align={align}
           showPlayerName={showPlayerName}
+          showWaitingVisit={waitingPlayerId === player.id}
         />
       ) : (
         <AroundTheClockHistoryColumn
@@ -59,6 +62,7 @@ export const GameBoardLayout = ({
           currentLeg={currentLeg}
           align={align}
           showPlayerName={showPlayerName}
+          showWaitingVisit={waitingPlayerId === player.id}
         />
       )}
     </Box>
