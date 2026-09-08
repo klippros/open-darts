@@ -11,7 +11,13 @@ import {
   MatchStatus,
   PlayMode,
 } from '../src/match/types'
-import { createMatchId, creatorUserId, otherUserId, thirdUserId } from './helpers'
+import {
+  createMatchId,
+  creatorUserId,
+  markOpponentDisconnectedLongEnough,
+  otherUserId,
+  thirdUserId,
+} from './helpers'
 
 const checkoutDouble20 = () => [
   createDartThrow(
@@ -127,6 +133,7 @@ describe('match security', () => {
 
   it('rejects start_async when play is already asynchronous', async () => {
     const { stub } = await startActiveMatch()
+    await markOpponentDisconnectedLongEnough(stub, otherUserId)
     const first = await stub.applyCommand(creatorUserId, { name: MatchCommandName.StartAsync })
     expect(first.ok).toBe(true)
     expect(first.state?.playMode).toBe(PlayMode.Asynchronous)
@@ -145,6 +152,20 @@ describe('match security', () => {
       name: MatchCommandName.RecordVisit,
       darts: toPublicDarts(checkoutDouble20()),
     })
+    await markOpponentDisconnectedLongEnough(stub, otherUserId)
+
+    const result = await stub.applyCommand(creatorUserId, {
+      name: MatchCommandName.StartAsync,
+    })
+
+    expect(result).toMatchObject({
+      ok: false,
+      code: CommandErrorCode.Invalid,
+    })
+  })
+
+  it('rejects start_async while the opponent is still active', async () => {
+    const { stub } = await startActiveMatch()
 
     const result = await stub.applyCommand(creatorUserId, {
       name: MatchCommandName.StartAsync,

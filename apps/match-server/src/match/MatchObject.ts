@@ -32,6 +32,7 @@ import {
   MATCH_USER_HEADER,
   WAITING_TIMEOUT_MS,
 } from './constants'
+import { canStartAsyncFromInactivity } from './startAsyncEligibility'
 import { parsePublicDartThrows } from './dartPayload'
 import { publishMatchIndex } from './indexSync'
 import {
@@ -854,7 +855,7 @@ export class MatchObject extends DurableObject<Env> {
     return result
   }
 
-  private async persistStartAsync(_userId: string): Promise<CommandResult> {
+  private async persistStartAsync(userId: string): Promise<CommandResult> {
     const sql = this.ctx.storage.sql
     const state = loadPublicMatchState(sql)
 
@@ -868,6 +869,23 @@ export class MatchObject extends DurableObject<Env> {
 
     if (state.pendingFinalization) {
       return commandFailure(CommandErrorCode.Invalid, 'Cannot start async during finalization')
+    }
+
+    const opponent = state.players.find((player) => player.userId !== userId) ?? null
+
+    if (
+      !canStartAsyncFromInactivity({
+        nowMs: Date.now(),
+        matchStartedAt: state.startedAt,
+        activePlayerId: state.activePlayerId,
+        opponent,
+        players: state.players,
+      })
+    ) {
+      return commandFailure(
+        CommandErrorCode.Invalid,
+        'Opponent is still active; wait for disconnect or a stalled turn',
+      )
     }
 
     const required = this.requireActivePlay()

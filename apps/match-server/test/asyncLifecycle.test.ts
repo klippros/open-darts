@@ -12,7 +12,12 @@ import {
   MatchStatus,
   PlayMode,
 } from '../src/match/types'
-import { createMatchId, creatorUserId, otherUserId } from './helpers'
+import {
+  createMatchId,
+  creatorUserId,
+  markOpponentDisconnectedLongEnough,
+  otherUserId,
+} from './helpers'
 
 const checkoutDouble20 = () => [
   createDartThrow(
@@ -86,6 +91,7 @@ const startActiveMatch = async (): Promise<DurableObjectStub<MatchObject>> => {
 
 const startAsyncMatch = async (): Promise<DurableObjectStub<MatchObject>> => {
   const stub = await startActiveMatch()
+  await markOpponentDisconnectedLongEnough(stub, otherUserId)
   const started = await stub.applyCommand(creatorUserId, { name: MatchCommandName.StartAsync })
 
   if (!started.ok) {
@@ -98,6 +104,7 @@ const startAsyncMatch = async (): Promise<DurableObjectStub<MatchObject>> => {
 describe('async lifecycle', () => {
   it('start_async sets play mode, darts owner, and 24h deadline', async () => {
     const stub = await startActiveMatch()
+    await markOpponentDisconnectedLongEnough(stub, creatorUserId)
     const before = Date.now()
     const started = await stub.applyCommand(otherUserId, { name: MatchCommandName.StartAsync })
 
@@ -110,6 +117,17 @@ describe('async lifecycle', () => {
       started.state?.deadlines.some((deadline) => deadline.kind === DeadlineKind.AsyncDeadlineAt),
     ).toBe(true)
     expect(started.state?.asyncStateJson).toEqual(expect.any(String))
+  })
+
+  it('rejects start_async while the opponent is still active', async () => {
+    const stub = await startActiveMatch()
+    const started = await stub.applyCommand(creatorUserId, { name: MatchCommandName.StartAsync })
+
+    expect(started.ok).toBe(false)
+    expect(started.code).toBeDefined()
+
+    const state = await stub.applyCommand(creatorUserId, { name: MatchCommandName.GetState })
+    expect(state.state?.playMode).toBe(PlayMode.Synchronous)
   })
 
   it('lets both players record visits independently', async () => {

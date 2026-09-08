@@ -1,9 +1,11 @@
+import { runInDurableObject } from 'cloudflare:test'
 import { env } from 'cloudflare:workers'
 import { GameModeId } from '@open-darts/game/types/gameMode'
 import { defaultX01Config } from '@open-darts/game/x01/x01Presets'
 import { signHs256Jwt } from '../src/auth/jwt'
-import { TEST_SUPABASE_JWT_SECRET } from './secrets'
+import { ASYNC_DISCONNECT_MS } from '../src/match/constants'
 import type { MatchObject } from '../src/match/MatchObject'
+import { TEST_SUPABASE_JWT_SECRET } from './secrets'
 
 export const creatorUserId = '11111111-1111-4111-8111-111111111111'
 export const otherUserId = '22222222-2222-4222-8222-222222222222'
@@ -47,4 +49,22 @@ export const initWaitingMatch = async (
   }
 
   return stub
+}
+
+/** Ages opponent presence so start_async passes the disconnect inactivity gate. */
+export const markOpponentDisconnectedLongEnough = async (
+  stub: DurableObjectStub<MatchObject>,
+  opponentUserId: string,
+): Promise<void> => {
+  await runInDurableObject(stub, (_instance: MatchObject, durableState) => {
+    durableState.storage.sql.exec(
+      `
+        UPDATE match_players
+        SET connected = 0, last_seen_at = ?
+        WHERE user_id = ?
+      `,
+      Date.now() - ASYNC_DISCONNECT_MS,
+      opponentUserId,
+    )
+  })
 }

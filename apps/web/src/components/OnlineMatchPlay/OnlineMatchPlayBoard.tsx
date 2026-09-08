@@ -40,6 +40,7 @@ import {
   shouldClearOnlineLocalDraft,
   visitsWithCorrectionRemoved,
 } from '../../lib/matchServer/onlineVisitCorrection'
+import { canStartAsyncFromInactivity } from '../../lib/matchServer/startAsyncEligibility'
 import { DeadlineKind, MatchCommandName, MatchStatus, PlayMode } from '../../lib/matchServer/types'
 import type { MatchCommand, PublicMatchState } from '../../lib/matchServer/types'
 import { isVoiceInputSupportedForMode } from '../../lib/voice/voiceModeSupport'
@@ -155,12 +156,6 @@ export const OnlineMatchPlayBoard = ({
   ])
 
   useEffect(() => {
-    if (opponent?.connected === true) {
-      setAsyncPromptDismissed(false)
-    }
-  }, [opponent?.connected])
-
-  useEffect(() => {
     const interval = window.setInterval(() => {
       setNowMs(Date.now())
     }, 1000)
@@ -170,12 +165,30 @@ export const OnlineMatchPlayBoard = ({
     }
   }, [])
 
-  const opponentDisconnected =
+  const asyncInactivityEligible =
     state.status === MatchStatus.Active &&
     state.playMode === PlayMode.Synchronous &&
     !state.pendingFinalization &&
-    opponent !== undefined &&
-    !opponent.connected
+    canStartAsyncFromInactivity({
+      nowMs,
+      matchStartedAt: state.startedAt,
+      activePlayerId: state.activePlayerId,
+      opponent:
+        opponent === undefined
+          ? null
+          : {
+              userId: opponent.userId,
+              connected: opponent.connected,
+              lastSeenAt: opponent.lastSeenAt,
+            },
+      players: state.players,
+    })
+
+  useEffect(() => {
+    if (!asyncInactivityEligible) {
+      setAsyncPromptDismissed(false)
+    }
+  }, [asyncInactivityEligible])
 
   const finalizeDeadline = state.deadlines.find(
     (deadline) => deadline.kind === DeadlineKind.FinalizeAt,
@@ -700,7 +713,7 @@ export const OnlineMatchPlayBoard = ({
         }}
       />
       <OnlineMatchAsyncPrompt
-        open={opponentDisconnected && !asyncPromptDismissed}
+        open={asyncInactivityEligible && !asyncPromptDismissed}
         onWait={() => {
           setAsyncPromptDismissed(true)
         }}

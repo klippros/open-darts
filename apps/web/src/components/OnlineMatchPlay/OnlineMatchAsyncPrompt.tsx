@@ -29,7 +29,7 @@ export const OnlineMatchAsyncPrompt = ({
         </Dialog.Header>
         <Dialog.Body>
           <Text color="whiteAlpha.800" lineHeight="1.55">
-            Your opponent is not connected. Keep waiting, or continue asynchronously with a 24-hour
+            Your opponent has been inactive. Keep waiting, or continue asynchronously with a 24-hour
             deadline for them to finish their visits.
           </Text>
         </Dialog.Body>
