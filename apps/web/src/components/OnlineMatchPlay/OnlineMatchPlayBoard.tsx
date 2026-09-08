@@ -49,6 +49,7 @@ import type { VoiceIntent } from '../../lib/voice/parseVoiceCommand'
 import { useSetGameChrome } from '../../hooks/gameChromeContext'
 import { useSettings } from '../../hooks/settingsContext'
 import { useVoiceRecognition } from '../../hooks/useVoiceRecognition'
+import { OnlineMatchAsyncDeadlineBanner } from './OnlineMatchAsyncDeadlineBanner'
 import { OnlineMatchAsyncPrompt } from './OnlineMatchAsyncPrompt'
 import { OnlineMatchCancelBanner } from './OnlineMatchCancelBanner'
 import { OnlineMatchFinishPrompt } from './OnlineMatchFinishPrompt'
@@ -197,6 +198,16 @@ export const OnlineMatchPlayBoard = ({
     finalizeDeadline === undefined
       ? null
       : Math.max(0, Math.ceil((finalizeDeadline.fireAt - nowMs) / 1000))
+
+  const asyncDeadline = state.deadlines.find(
+    (deadline) => deadline.kind === DeadlineKind.AsyncDeadlineAt,
+  )
+  const asyncSecondsLeft =
+    state.playMode === PlayMode.Asynchronous &&
+    state.status === MatchStatus.Active &&
+    asyncDeadline !== undefined
+      ? Math.max(0, Math.ceil((asyncDeadline.fireAt - nowMs) / 1000))
+      : null
 
   const lastOwnVisit =
     boardController === null
@@ -820,6 +831,19 @@ export const OnlineMatchPlayBoard = ({
       />
     ) : null
 
+  const asyncDeadlineBanner =
+    asyncSecondsLeft !== null ? (
+      <OnlineMatchAsyncDeadlineBanner secondsLeft={asyncSecondsLeft} />
+    ) : null
+
+  const statusBanners =
+    cancelBanner !== null || asyncDeadlineBanner !== null ? (
+      <Stack gap={3} mb={3}>
+        {cancelBanner}
+        {asyncDeadlineBanner}
+      </Stack>
+    ) : null
+
   if (isMobile) {
     const showMobileVisitHistory = showsVisitHistory(boardController.session.mode)
 
@@ -827,7 +851,7 @@ export const OnlineMatchPlayBoard = ({
       <Flex direction="column" h="100%" minH={0} w="full" maxW={mainContentMaxWidth} mx="auto">
         {dialogs}
         <Box flexShrink={0} px={6} pt={3} pb={showMobileVisitHistory ? 3 : 4}>
-          {cancelBanner !== null ? <Box mb={3}>{cancelBanner}</Box> : null}
+          {statusBanners}
           {scoreboard}
         </Box>
         {showMobileVisitHistory ? (
@@ -876,7 +900,7 @@ export const OnlineMatchPlayBoard = ({
         >
           <Flex direction="column" justify="space-between" gap={8} flex="1" minH="100%">
             <Box>
-              {cancelBanner !== null ? <Box mb={3}>{cancelBanner}</Box> : null}
+              {statusBanners}
               {scoreboard}
             </Box>
             {picker}
