@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ContentContainer } from '../components/ContentContainer'
 import { HistoryList } from '../components/HistoryList/HistoryList'
 import type { HistoryListEntry } from '../components/HistoryList/HistoryList'
+import { OnlineMatchSummaryDialog } from '../components/MatchSummaryDialog/OnlineMatchSummaryDialog'
 import { SessionSummaryDialog } from '../components/MatchSummaryDialog/SessionSummaryDialog'
 import { ResetStatsDialog } from '../components/ResetStatsDialog/ResetStatsDialog'
 import { SignInDialog } from '../components/SignInDialog/SignInDialog'
@@ -16,6 +17,7 @@ import {
 import { sortSessionsByDate } from '../lib/history/sessionSummary'
 import { listMyOnlineMatchHistory } from '../lib/matchServer/api'
 import { isOnlineMatchesEnabled } from '../lib/matchServer/config'
+import { decorateOnlineSessionForViewer } from '../lib/matchServer/onlinePlay'
 import type { OnlineMatchHistoryRow } from '../lib/matchServer/types'
 import { clearStoredSessions, loadStoredSessions } from '../lib/storage/gameStore'
 import { supabaseClient } from '../lib/supabase/client'
@@ -29,6 +31,10 @@ export const HistoryPage = () => {
   const [signInDialogOpen, setSignInDialogOpen] = useState(false)
   const [resetDialogOpen, setResetDialogOpen] = useState(false)
   const [selectedSession, setSelectedSession] = useState<GameSession | null>(null)
+  const [selectedOnlineMatch, setSelectedOnlineMatch] = useState<{
+    match: OnlineMatchHistoryRow
+    resultSummary: string
+  } | null>(null)
   const [sessions, setSessions] = useState(() => sortSessionsByDate(loadStoredSessions()))
   const [onlineMatches, setOnlineMatches] = useState<OnlineMatchHistoryRow[]>([])
   const [opponentNames, setOpponentNames] = useState<Record<string, string>>({})
@@ -126,6 +132,37 @@ export const HistoryPage = () => {
     setSessions([])
     setResetDialogOpen(false)
   }, [clearSyncedSessions])
+
+  const handleSelectOnlineMatch = useCallback(
+    (match: OnlineMatchHistoryRow, resultSummary: string) => {
+      if (match.session !== null && user !== null) {
+        const opponentName =
+          match.opponentUserId === null
+            ? 'Opponent'
+            : (opponentNames[match.opponentUserId] ?? 'Opponent')
+
+        setSelectedOnlineMatch(null)
+        setSelectedSession(
+          decorateOnlineSessionForViewer(
+            match.session,
+            user.id,
+            profile?.displayName,
+            opponentName,
+          ),
+        )
+        return
+      }
+
+      setSelectedSession(null)
+      setSelectedOnlineMatch({ match, resultSummary })
+    },
+    [opponentNames, profile?.displayName, user],
+  )
+
+  const handleSelectSession = useCallback((session: GameSession) => {
+    setSelectedOnlineMatch(null)
+    setSelectedSession(session)
+  }, [])
 
   const entries = useMemo((): HistoryListEntry[] => {
     const localEntries: HistoryListEntry[] = sessions.map((session) => ({
@@ -268,7 +305,11 @@ export const HistoryPage = () => {
             </Box>
           )}
 
-          <HistoryList entries={entries} onSelectSession={setSelectedSession} />
+          <HistoryList
+            entries={entries}
+            onSelectSession={handleSelectSession}
+            onSelectOnlineMatch={handleSelectOnlineMatch}
+          />
         </Stack>
       </Box>
       <SessionSummaryDialog
@@ -276,6 +317,15 @@ export const HistoryPage = () => {
         session={selectedSession}
         onClose={() => {
           setSelectedSession(null)
+        }}
+      />
+      <OnlineMatchSummaryDialog
+        open={selectedOnlineMatch !== null}
+        match={selectedOnlineMatch?.match ?? null}
+        viewerUserId={user?.id ?? ''}
+        resultSummary={selectedOnlineMatch?.resultSummary ?? ''}
+        onClose={() => {
+          setSelectedOnlineMatch(null)
         }}
       />
       <ResetStatsDialog

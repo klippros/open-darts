@@ -1,7 +1,9 @@
 import { formatX01StartScore } from '@open-darts/game/x01/x01Presets'
 import { isX01Config } from '@open-darts/game/game/gameConfigGuards'
+import { parseGameSession } from '@open-darts/game/game/serializeGame'
 import { GameModeId } from '@open-darts/game/types/gameMode'
 import { gameModeDefinitions } from '@open-darts/game/game/gameModeDefinitions'
+import type { GameSession } from '@open-darts/game/types/gameSession'
 import type { OnlineMatchHistoryRow } from '../matchServer/types'
 import { MatchEndingKind } from '../matchServer/types'
 import { formatSessionDate } from './sessionSummary'
@@ -9,6 +11,31 @@ import { formatSessionDate } from './sessionSummary'
 export enum HistoryEntrySource {
   Local = 'local',
   Online = 'online',
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value)
+
+export const readOnlineMatchHistorySession = (resultPayload: unknown): GameSession | null => {
+  let payload: unknown = resultPayload
+
+  if (typeof payload === 'string') {
+    try {
+      payload = JSON.parse(payload)
+    } catch {
+      return null
+    }
+  }
+
+  if (!isRecord(payload) || !('session' in payload)) {
+    return null
+  }
+
+  try {
+    return parseGameSession(JSON.stringify(payload.session))
+  } catch {
+    return null
+  }
 }
 
 export const getOnlineMatchModeLabel = (match: OnlineMatchHistoryRow): string => {
@@ -40,6 +67,21 @@ export const getOnlineMatchEndingLabel = (endingKind: MatchEndingKind): string =
       return _exhaustive
     }
   }
+}
+
+export const getOnlineMatchSummaryTitle = (
+  match: OnlineMatchHistoryRow,
+  viewerUserId: string,
+): string => {
+  if (match.endingKind === MatchEndingKind.MutualCancel || match.winnerUserId === null) {
+    return 'Draw'
+  }
+
+  if (match.winnerUserId === viewerUserId) {
+    return 'Match won!'
+  }
+
+  return 'Match lost'
 }
 
 export const getOnlineMatchResultSummary = (

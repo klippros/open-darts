@@ -41,6 +41,7 @@ export const decorateOnlineSessionForViewer = (
   session: GameSession,
   viewerUserId: string,
   viewerDisplayName?: string | null,
+  opponentDisplayName?: string | null,
 ): GameSession => ({
   ...session,
   players: session.players.map((player) => {
@@ -52,10 +53,16 @@ export const decorateOnlineSessionForViewer = (
       }
     }
 
+    const fallbackName =
+      player.name === 'Player 1' || player.name === 'Player 2' ? 'Opponent' : player.name
+
     return {
       ...player,
       kind: PlayerKind.Remote,
-      name: player.name === 'Player 1' || player.name === 'Player 2' ? 'Opponent' : player.name,
+      name:
+        opponentDisplayName === undefined || opponentDisplayName === null
+          ? fallbackName
+          : resolveHumanPlayerName(opponentDisplayName),
     }
   }),
 })

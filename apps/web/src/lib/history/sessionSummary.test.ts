@@ -242,4 +242,35 @@ describe('sessionSummary', () => {
   it('formats session dates for display', () => {
     expect(formatSessionDate('2026-01-01T10:15:00.000Z')).toMatch(/2026/u)
   })
+
+  it('titles wins for the human player even when they are not first in the roster', () => {
+    expect(
+      getMatchSummary(
+        sampleSession({
+          players: [
+            { id: 'opponent', name: 'Alex', kind: PlayerKind.Remote },
+            { id: 'viewer', name: 'Timon', kind: PlayerKind.Human },
+          ],
+          matchProgress: {
+            legsToWin: 1,
+            currentLeg: 1,
+            legWins: { viewer: 1, opponent: 0 },
+            startingPlayerIndex: 0,
+          },
+          visits: [
+            {
+              visitIndex: 0,
+              playerId: 'viewer',
+              darts: [],
+              visitScore: 40,
+              scoreBefore: 40,
+              scoreAfter: 0,
+              bust: false,
+              checkout: true,
+            },
+          ],
+        }),
+      ).title,
+    ).toBe('Match won!')
+  })
 })

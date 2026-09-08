@@ -32,9 +32,14 @@ export type HistoryListEntry =
 export interface HistoryListProps {
   entries: HistoryListEntry[]
   onSelectSession: (session: GameSession) => void
+  onSelectOnlineMatch: (match: OnlineMatchHistoryRow, resultSummary: string) => void
 }
 
-export const HistoryList = ({ entries, onSelectSession }: HistoryListProps) => {
+export const HistoryList = ({
+  entries,
+  onSelectSession,
+  onSelectOnlineMatch,
+}: HistoryListProps) => {
   if (entries.length === 0) {
     return (
       <Box
@@ -76,6 +81,9 @@ export const HistoryList = ({ entries, onSelectSession }: HistoryListProps) => {
             resultSummary={entry.resultSummary}
             completedAtLabel={formatOnlineMatchDate(entry.match)}
             badgeLabel="Online"
+            onClick={() => {
+              onSelectOnlineMatch(entry.match, entry.resultSummary)
+            }}
           />
         )
       })}

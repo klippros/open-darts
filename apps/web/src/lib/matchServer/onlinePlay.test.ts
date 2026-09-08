@@ -58,6 +58,30 @@ describe('onlinePlay helpers', () => {
     })
   })
 
+  it('uses the provided opponent display name when decorating', () => {
+    const decorated = decorateOnlineSessionForViewer(
+      {
+        id: 'match-1',
+        mode: GameModeId.X01,
+        config: { startScore: 501, doubleIn: false, doubleOut: true },
+        players: [
+          { id: 'user-a', name: 'Player 1', kind: PlayerKind.Remote },
+          { id: 'user-b', name: 'Player 2', kind: PlayerKind.Remote },
+        ],
+        visits: [],
+        status: GameStatus.InProgress,
+        startedAt: '2026-01-01T00:00:00.000Z',
+      },
+      'user-b',
+      'Timon',
+      'Alex',
+    )
+
+    expect(decorated.players[0]?.name).toBe('Alex')
+    expect(decorated.players[1]?.name).toBe('Timon')
+    expect(decorated.players[1]?.kind).toBe(PlayerKind.Human)
+  })
+
   it('serializes darts for record_visit payloads', () => {
     expect(
       toPublicDartThrow({

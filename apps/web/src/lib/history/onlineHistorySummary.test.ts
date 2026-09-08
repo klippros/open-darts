@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { GameModeId } from '@open-darts/game/types/gameMode'
+import { GameModeId, GameStatus } from '@open-darts/game/types/gameMode'
 import { MatchEndingKind, MatchStatus, PlayMode } from '../matchServer/types'
 import type { OnlineMatchHistoryRow } from '../matchServer/types'
 import {
   getOnlineMatchEndingLabel,
   getOnlineMatchModeLabel,
   getOnlineMatchResultSummary,
+  getOnlineMatchSummaryTitle,
+  readOnlineMatchHistorySession,
 } from './onlineHistorySummary'
 
 const sampleMatch = (overrides: Partial<OnlineMatchHistoryRow> = {}): OnlineMatchHistoryRow => ({
@@ -21,6 +23,7 @@ const sampleMatch = (overrides: Partial<OnlineMatchHistoryRow> = {}): OnlineMatc
   completedAt: '2026-09-08T12:00:00.000Z',
   createdAt: '2026-09-08T11:00:00.000Z',
   opponentUserId: 'opponent',
+  session: null,
   ...overrides,
 })
 
@@ -59,5 +62,40 @@ describe('onlineHistorySummary', () => {
         'Alex',
       ),
     ).toBe('Draw vs Alex · Mutual cancel · 3 legs')
+  })
+
+  it('titles online match summaries for the viewer', () => {
+    expect(getOnlineMatchSummaryTitle(sampleMatch(), 'viewer')).toBe('Match won!')
+    expect(getOnlineMatchSummaryTitle(sampleMatch({ winnerUserId: 'opponent' }), 'viewer')).toBe(
+      'Match lost',
+    )
+    expect(
+      getOnlineMatchSummaryTitle(
+        sampleMatch({
+          endingKind: MatchEndingKind.MutualCancel,
+          winnerUserId: null,
+        }),
+        'viewer',
+      ),
+    ).toBe('Draw')
+  })
+
+  it('reads a stored game session from result_payload', () => {
+    const session = {
+      id: 'session-1',
+      mode: GameModeId.X01,
+      config: { startScore: 501, doubleIn: false, doubleOut: true },
+      players: [],
+      visits: [],
+      status: GameStatus.Completed,
+      startedAt: '2026-09-08T11:00:00.000Z',
+    }
+
+    expect(readOnlineMatchHistorySession({ session, winnerUserId: 'viewer' })).toEqual(session)
+    expect(
+      readOnlineMatchHistorySession(JSON.stringify({ session, winnerUserId: 'viewer' })),
+    ).toEqual(session)
+    expect(readOnlineMatchHistorySession({ asyncPlay: {}, visits: [] })).toBeNull()
+    expect(readOnlineMatchHistorySession(null)).toBeNull()
   })
 })

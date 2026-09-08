@@ -1,5 +1,6 @@
 import { GameModeId } from '@open-darts/game/types/gameMode'
 import type { GameConfig } from '@open-darts/game/types/gameMode'
+import { readOnlineMatchHistorySession } from '../history/onlineHistorySummary'
 import { supabaseClient } from '../supabase/client'
 import { isMatchServerConfigured, matchServerUrl } from './config'
 import type {
@@ -371,6 +372,7 @@ const mapHistoryRow = (
     completedAt: typeof row.completed_at === 'string' ? row.completed_at : null,
     createdAt: readString(row.created_at),
     opponentUserId: opponentByMatchId[row.id] ?? null,
+    session: readOnlineMatchHistorySession(row.result_payload),
   }
 }
 

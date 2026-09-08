@@ -923,7 +923,16 @@ export class MatchObject extends DurableObject<Env> {
 
     const now = Date.now()
     sql.exec('UPDATE match_players SET abandoned_at = ? WHERE user_id = ?', now, userId)
-    this.persistCompleted(MatchEndingKind.Abandon, opponent.userId, null)
+
+    const sessionJson = loadPlayStateJson(sql)
+    const play = sessionJson === null ? null : parsePlayState(sessionJson)
+    this.persistCompleted(
+      MatchEndingKind.Abandon,
+      opponent.userId,
+      play === null
+        ? { winnerUserId: opponent.userId }
+        : { session: play.session, winnerUserId: opponent.userId },
+    )
 
     const abandoned = await this.finishMutation()
     return abandoned
@@ -1105,6 +1114,7 @@ export class MatchObject extends DurableObject<Env> {
       sql.exec('UPDATE match_players SET abandoned_at = ? WHERE user_id = ?', now, loserUserId)
       writePlayState(sql, playStateToSessionJson(play), play.turnIndex, false)
       this.persistCompleted(MatchEndingKind.AsyncTimeout, winnerUserId, {
+        session: play.session,
         asyncPlay,
         winnerUserId,
       })
@@ -1123,6 +1133,7 @@ export class MatchObject extends DurableObject<Env> {
     }
 
     const resultPayload = {
+      session: play.session,
       asyncPlay: play.asyncPlay,
       winnerUserId: resolved.winnerUserId,
       visits: resolved.visits,

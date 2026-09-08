@@ -15,6 +15,7 @@ import { formatLegWinLine } from '@open-darts/game/game/matchLegDisplay'
 import { formatX01StartScore } from '@open-darts/game/x01/x01Presets'
 import { GameModeId, GameStatus } from '@open-darts/game/types/gameMode'
 import type { GameSession } from '@open-darts/game/types/gameSession'
+import { PlayerKind } from '@open-darts/game/types/player'
 
 export interface MatchSummary {
   title: string
@@ -104,11 +105,13 @@ export const getMatchSummary = (session: GameSession): MatchSummary => {
       details.push(`Left on ${lastVisit.scoreAfter}`)
     }
 
+    const humanPlayer =
+      session.players.find((player) => player.kind === PlayerKind.Human) ?? session.players[0]
     const humanWon =
-      matchWinner?.id === session.players[0]?.id ||
+      matchWinner?.id === humanPlayer?.id ||
       (matchWinner === undefined &&
         checkoutVisit?.checkout === true &&
-        (session.players.length === 1 || legWinner?.id === session.players[0]?.id) &&
+        (session.players.length === 1 || legWinner?.id === humanPlayer?.id) &&
         !isChallengeMode(matchProgress))
 
     let title = 'Session complete'

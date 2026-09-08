@@ -1,4 +1,5 @@
 import type { GameConfig, GameModeId } from '@open-darts/game/types/gameMode'
+import type { GameSession } from '@open-darts/game/types/gameSession'
 
 export enum MatchStatus {
   Waiting = 'waiting',
@@ -200,6 +201,8 @@ export interface OnlineMatchHistoryRow {
   completedAt: string | null
   createdAt: string
   opponentUserId: string | null
+  /** Present when the match server stored a full session in result_payload. */
+  session: GameSession | null
 }
 
 export interface ClientCommandMessage {
