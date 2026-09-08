@@ -13,8 +13,6 @@ export const OnlineMatchCancelBanner = ({
   onWithdraw,
 }: OnlineMatchCancelBannerProps) => (
   <Box
-    mx={6}
-    mt={3}
     borderWidth="1px"
     borderColor="orange.300"
     borderRadius="lg"

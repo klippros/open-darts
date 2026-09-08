@@ -813,8 +813,8 @@ export const OnlineMatchPlayBoard = ({
     return (
       <Flex direction="column" h="100%" minH={0} w="full" maxW={mainContentMaxWidth} mx="auto">
         {dialogs}
-        {cancelBanner}
         <Box flexShrink={0} px={6} pt={3} pb={showMobileVisitHistory ? 3 : 4}>
+          {cancelBanner !== null ? <Box mb={3}>{cancelBanner}</Box> : null}
           {scoreboard}
         </Box>
         {showMobileVisitHistory ? (
@@ -851,7 +851,6 @@ export const OnlineMatchPlayBoard = ({
       className="hide-scrollbar"
     >
       {dialogs}
-      {cancelBanner}
       <Flex direction="column" h="100%" minH={0} flex="1" pt={{ base: 3, md: 4 }} pb={10}>
         <GameBoardLayout
           players={boardController.session.players}
@@ -863,7 +862,10 @@ export const OnlineMatchPlayBoard = ({
           waitingPlayerId={waitingPlayerId}
         >
           <Flex direction="column" justify="space-between" gap={8} flex="1" minH="100%">
-            {scoreboard}
+            <Box>
+              {cancelBanner !== null ? <Box mb={3}>{cancelBanner}</Box> : null}
+              {scoreboard}
+            </Box>
             {picker}
           </Flex>
         </GameBoardLayout>
