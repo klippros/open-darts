@@ -10,6 +10,7 @@ import {
 } from '../components/StatsPageSections/StatsPageSections'
 import { TotalDartsHero } from '../components/StatsPageSections/TotalDartsHero'
 import { computeAnalytics } from '../lib/analytics/computeAnalytics'
+import { mergeSessionsForStats } from '../lib/analytics/mergeSessionsForStats'
 import type { DateRangePreset } from '../lib/analytics/sessionFilters'
 import { filterSessions } from '../lib/analytics/sessionFilters'
 import { buildStatTimeline } from '../lib/analytics/statTimelines'
@@ -19,6 +20,9 @@ import type {
   StatTimelineSelection,
 } from '../lib/analytics/statTimelines'
 import { getSessionIdFromTimelinePointId } from '../lib/analytics/x01LegSlices'
+import { listMyOnlineMatchHistory } from '../lib/matchServer/api'
+import { isOnlineMatchesEnabled } from '../lib/matchServer/config'
+import { decorateOnlineSessionForViewer } from '../lib/matchServer/onlinePlay'
 import { loadStoredSessions } from '../lib/storage/gameStore'
 import { useAuth } from '../hooks/authContext'
 import { AuthStatus, SyncStatus } from '../types/auth'
@@ -44,11 +48,15 @@ const isDateRangePreset = (value: string): value is DateRangePreset =>
   value === 'all' || value === '7d' || value === '30d'
 
 export const StatsPage = () => {
-  const { authStatus, syncStatus } = useAuth()
+  const { authStatus, syncStatus, user, profile } = useAuth()
   const [dateRange, setDateRange] = useState<DateRangePreset>('all')
   const [timelineSelection, setTimelineSelection] = useState<StatTimelineSelection | null>(null)
   const [selectedSession, setSelectedSession] = useState<GameSession | null>(null)
   const [storedSessions, setStoredSessions] = useState(() => loadStoredSessions())
+  const [onlineSessions, setOnlineSessions] = useState<GameSession[]>([])
+
+  const isSignedIn = authStatus === AuthStatus.Authenticated && user !== null
+  const shouldLoadOnlineStats = isSignedIn && isOnlineMatchesEnabled
 
   useEffect(() => {
     if (authStatus === AuthStatus.Anonymous || authStatus === AuthStatus.Authenticated) {
@@ -62,14 +70,59 @@ export const StatsPage = () => {
     }
   }, [syncStatus])
 
+  useEffect(() => {
+    if (!shouldLoadOnlineStats || user === null) {
+      setOnlineSessions([])
+      return undefined
+    }
+
+    let cancelled = false
+    const viewerUserId = user.id
+    const viewerDisplayName = profile?.displayName
+
+    const loadOnlineStats = async () => {
+      try {
+        const matches = await listMyOnlineMatchHistory(viewerUserId)
+
+        if (cancelled) {
+          return
+        }
+
+        setOnlineSessions(
+          matches
+            .map((match) => match.session)
+            .filter((session): session is GameSession => session !== null)
+            .map((session) =>
+              decorateOnlineSessionForViewer(session, viewerUserId, viewerDisplayName),
+            ),
+        )
+      } catch {
+        if (!cancelled) {
+          setOnlineSessions([])
+        }
+      }
+    }
+
+    void loadOnlineStats()
+
+    return () => {
+      cancelled = true
+    }
+  }, [profile?.displayName, shouldLoadOnlineStats, user])
+
+  const allSessions = useMemo(
+    () => mergeSessionsForStats(storedSessions, onlineSessions),
+    [onlineSessions, storedSessions],
+  )
+
   const filteredSessions = useMemo(
-    () => filterSessions(storedSessions, { dateRange }),
-    [storedSessions, dateRange],
+    () => filterSessions(allSessions, { dateRange }),
+    [allSessions, dateRange],
   )
 
   const analytics = useMemo(
-    () => computeAnalytics(storedSessions, { dateRange }),
-    [storedSessions, dateRange],
+    () => computeAnalytics(allSessions, { dateRange }),
+    [allSessions, dateRange],
   )
 
   const activeTimeline = useMemo((): StatTimeline | null => {
@@ -93,14 +146,14 @@ export const StatsPage = () => {
       const sessionId = getSessionIdFromTimelinePointId(point.sessionId)
       const session =
         filteredSessions.find((candidate) => candidate.id === sessionId) ??
-        storedSessions.find((candidate) => candidate.id === sessionId) ??
+        allSessions.find((candidate) => candidate.id === sessionId) ??
         null
 
       if (session !== null) {
         setSelectedSession(session)
       }
     },
-    [filteredSessions, storedSessions],
+    [allSessions, filteredSessions],
   )
 
   const hasAnyData =
@@ -117,7 +170,9 @@ export const StatsPage = () => {
               Stats
             </Heading>
             <Text color="whiteAlpha.800" fontSize="md" lineHeight="1.65">
-              Progress from your completed games, grouped by game type.
+              {shouldLoadOnlineStats
+                ? 'Progress from your completed local and online games, grouped by game type.'
+                : 'Progress from your completed games, grouped by game type.'}
             </Text>
           </Stack>
 

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
+import { GameModeId, GameStatus } from '@open-darts/game/types/gameMode'
 import { PlayerKind } from '@open-darts/game/types/player'
 import type { Visit } from '@open-darts/game/types/visit'
-import { getVisitAverages, getLegAndMatchAverages } from './visitStats'
+import { getLegAndMatchAverages, getPrimaryPlayerVisits, getVisitAverages } from './visitStats'
 
 const player = { id: 'p1', name: 'Player 1', kind: PlayerKind.Human }
 
@@ -15,6 +16,32 @@ const visit = (overrides: Partial<Visit>): Visit => ({
   bust: false,
   checkout: false,
   ...overrides,
+})
+
+describe('getPrimaryPlayerVisits', () => {
+  it('prefers the human player when they are not first in the roster', () => {
+    const sessionsVisits = [
+      visit({ visitIndex: 0, playerId: 'remote', visitScore: 20 }),
+      visit({ visitIndex: 1, playerId: 'p1', visitScore: 60 }),
+    ]
+
+    const visits = getPrimaryPlayerVisits({
+      id: 'match-1',
+      mode: GameModeId.X01,
+      config: { startScore: 501, doubleIn: false, doubleOut: true },
+      players: [
+        { id: 'remote', name: 'Opponent', kind: PlayerKind.Remote },
+        { id: 'p1', name: 'You', kind: PlayerKind.Human },
+      ],
+      visits: sessionsVisits,
+      status: GameStatus.Completed,
+      startedAt: '2026-01-01T00:00:00.000Z',
+      completedAt: '2026-01-01T00:10:00.000Z',
+    })
+
+    expect(visits).toHaveLength(1)
+    expect(visits[0]?.playerId).toBe('p1')
+  })
 })
 
 describe('getVisitAverages', () => {
