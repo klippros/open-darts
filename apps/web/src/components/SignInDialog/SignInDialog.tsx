@@ -9,9 +9,18 @@ import { darkDialogContentProps } from '../darkDialogContentProps'
 export interface SignInDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  returnTo?: string
+  title?: string
+  description?: string
 }
 
-export const SignInDialog = ({ open, onOpenChange }: SignInDialogProps) => {
+export const SignInDialog = ({
+  open,
+  onOpenChange,
+  returnTo,
+  title = 'Save progress across devices',
+  description = 'Sign in optionally to back up completed games and use your History and Stats on another device.',
+}: SignInDialogProps) => {
   const { signInWithGoogle, signInWithEmail } = useAuth()
   const [email, setEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -21,7 +30,7 @@ export const SignInDialog = ({ open, onOpenChange }: SignInDialogProps) => {
   const handleGoogleSignIn = async () => {
     setError(null)
     setSubmitting(true)
-    const signInError = await signInWithGoogle()
+    const signInError = await signInWithGoogle(returnTo)
     setSubmitting(false)
     setError(signInError)
   }
@@ -30,7 +39,7 @@ export const SignInDialog = ({ open, onOpenChange }: SignInDialogProps) => {
     event.preventDefault()
     setError(null)
     setSubmitting(true)
-    const signInError = await signInWithEmail(email)
+    const signInError = await signInWithEmail(email, returnTo)
     setSubmitting(false)
 
     if (signInError === null) {
@@ -61,13 +70,12 @@ export const SignInDialog = ({ open, onOpenChange }: SignInDialogProps) => {
             maxW="28rem"
           >
             <Dialog.Header>
-              <Dialog.Title color="white">Save progress across devices</Dialog.Title>
+              <Dialog.Title color="white">{title}</Dialog.Title>
             </Dialog.Header>
             <Dialog.Body>
               <Stack gap={4}>
                 <Text fontSize="sm" color="whiteAlpha.800">
-                  Sign in optionally to back up completed games and use your History and Stats on
-                  another device.
+                  {description}
                 </Text>
 
                 <Button

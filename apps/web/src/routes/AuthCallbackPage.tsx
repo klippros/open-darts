@@ -1,19 +1,22 @@
 import { Box, Button, Heading, Spinner, Stack, Text } from '@chakra-ui/react'
 import { useEffect } from 'react'
-import { Link as RouterLink, useNavigate } from 'react-router-dom'
+import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom'
 import { ContentContainer } from '../components/ContentContainer'
 import { useAuth } from '../hooks/authContext'
+import { resolveAuthReturnPath } from '../lib/auth/authRedirect'
 import { AuthStatus } from '../types/auth'
 
 export const AuthCallbackPage = () => {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { authStatus } = useAuth()
+  const returnTo = resolveAuthReturnPath(searchParams.get('next')) ?? '/history'
 
   useEffect(() => {
     if (authStatus === AuthStatus.Authenticated) {
-      void navigate('/history', { replace: true })
+      void navigate(returnTo, { replace: true })
     }
-  }, [authStatus, navigate])
+  }, [authStatus, navigate, returnTo])
 
   return (
     <ContentContainer>
@@ -25,12 +28,12 @@ export const AuthCallbackPage = () => {
           </Heading>
           <Text color="whiteAlpha.700">
             {authStatus === AuthStatus.Anonymous
-              ? 'The link may have expired. Return to History and request a new one.'
+              ? 'The link may have expired. Return home and request a new one.'
               : 'Your local completed games will be merged after sign-in.'}
           </Text>
           {authStatus === AuthStatus.Anonymous && (
             <Button asChild variant="cta">
-              <RouterLink to="/history">Return to History</RouterLink>
+              <RouterLink to="/">Return home</RouterLink>
             </Button>
           )}
         </Stack>

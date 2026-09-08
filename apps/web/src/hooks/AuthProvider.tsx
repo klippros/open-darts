@@ -1,6 +1,7 @@
 import type { User } from '@supabase/supabase-js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
+import { buildAuthRedirectUrl } from '../lib/auth/authRedirect'
 import { isSupabaseConfigured, supabaseClient } from '../lib/supabase/client'
 import {
   clearSyncedLocalSessionData,
@@ -12,13 +13,6 @@ import {
 import { AuthStatus, SyncStatus } from '../types/auth'
 import type { UserProfile } from '../types/auth'
 import { AuthContext } from './authContext'
-
-const getAuthRedirectUrl = (): string => {
-  const baseUrlValue: unknown = import.meta.env.BASE_URL
-  const baseUrl = typeof baseUrlValue === 'string' ? baseUrlValue : '/tools/open-darts/'
-
-  return new URL(`${baseUrl}auth/callback`, window.location.origin).toString()
-}
 
 const getFallbackDisplayName = (user: User): string => {
   const fullName: unknown = user.user_metadata.full_name
@@ -119,37 +113,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [])
 
-  const signInWithGoogle = useCallback(async (): Promise<string | null> => {
+  const signInWithGoogle = useCallback(async (returnTo?: string): Promise<string | null> => {
     if (supabaseClient === null) {
       return 'Sign-in is not configured.'
     }
 
     const { error } = await supabaseClient.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: getAuthRedirectUrl() },
+      options: { redirectTo: buildAuthRedirectUrl(returnTo) },
     })
 
     return error?.message ?? null
   }, [])
 
-  const signInWithEmail = useCallback(async (email: string): Promise<string | null> => {
-    if (supabaseClient === null) {
-      return 'Sign-in is not configured.'
-    }
+  const signInWithEmail = useCallback(
+    async (email: string, returnTo?: string): Promise<string | null> => {
+      if (supabaseClient === null) {
+        return 'Sign-in is not configured.'
+      }
 
-    const normalizedEmail = email.trim()
+      const normalizedEmail = email.trim()
 
-    if (normalizedEmail === '' || !normalizedEmail.includes('@')) {
-      return 'Enter a valid email address.'
-    }
+      if (normalizedEmail === '' || !normalizedEmail.includes('@')) {
+        return 'Enter a valid email address.'
+      }
 
-    const { error } = await supabaseClient.auth.signInWithOtp({
-      email: normalizedEmail,
-      options: { emailRedirectTo: getAuthRedirectUrl() },
-    })
+      const { error } = await supabaseClient.auth.signInWithOtp({
+        email: normalizedEmail,
+        options: { emailRedirectTo: buildAuthRedirectUrl(returnTo) },
+      })
 
-    return error?.message ?? null
-  }, [])
+      return error?.message ?? null
+    },
+    [],
+  )
 
   const signOut = useCallback(async (): Promise<string | null> => {
     if (supabaseClient === null) {

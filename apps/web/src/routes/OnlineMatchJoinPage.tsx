@@ -3,10 +3,12 @@ import { useEffect, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { SetupPageHeader } from '../components/SetupPageLayout/SetupPageHeader'
 import { SetupPageLayout } from '../components/SetupPageLayout/SetupPageLayout'
+import { SignInDialog } from '../components/SignInDialog/SignInDialog'
 import { useAuth } from '../hooks/authContext'
 import { useInProgressOnlineMatch } from '../hooks/useInProgressOnlineMatch'
 import { AuthStatus } from '../types/auth'
 import {
+  buildInvitePath,
   buildMatchPath,
   joinMatch,
   lookupOnlineMatchInvite,
@@ -24,6 +26,7 @@ export const OnlineMatchJoinPage = () => {
   const [loading, setLoading] = useState(true)
   const [joining, setJoining] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [signInOpen, setSignInOpen] = useState(false)
 
   useEffect(() => {
     if (!isOnlineMatchesEnabled || authStatus !== AuthStatus.Authenticated || token === undefined) {
@@ -84,12 +87,50 @@ export const OnlineMatchJoinPage = () => {
     )
   }
 
-  if (authStatus !== AuthStatus.Authenticated || user === null) {
+  if (token === undefined) {
     return <Navigate to="/" replace />
   }
 
-  if (token === undefined) {
-    return <Navigate to="/" replace />
+  if (authStatus !== AuthStatus.Authenticated || user === null) {
+    return (
+      <SetupPageLayout>
+        <Stack gap={8}>
+          <SetupPageHeader
+            title="Join online match"
+            description="Sign in to accept this invite and play 501 against another player."
+          />
+          <Text color="whiteAlpha.700" fontSize="sm" lineHeight="1.55">
+            Online matches need a signed-in account. After you sign in, you will return here to
+            join.
+          </Text>
+          <Stack direction="row" justify="space-between" gap={3}>
+            <Button
+              variant="cancel"
+              onClick={() => {
+                void navigate('/')
+              }}
+            >
+              Back
+            </Button>
+            <Button
+              variant="emphasis"
+              onClick={() => {
+                setSignInOpen(true)
+              }}
+            >
+              Sign in to join
+            </Button>
+          </Stack>
+        </Stack>
+        <SignInDialog
+          open={signInOpen}
+          onOpenChange={setSignInOpen}
+          returnTo={buildInvitePath(token)}
+          title="Sign in to join"
+          description="Sign in with Google or a magic link. You will return to this invite after signing in."
+        />
+      </SetupPageLayout>
+    )
   }
 
   if (

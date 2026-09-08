@@ -3,8 +3,8 @@ import type { AuthState } from '../types/auth'
 
 export interface AuthContextValue extends AuthState {
   isConfigured: boolean
-  signInWithGoogle: () => Promise<string | null>
-  signInWithEmail: (email: string) => Promise<string | null>
+  signInWithGoogle: (returnTo?: string) => Promise<string | null>
+  signInWithEmail: (email: string, returnTo?: string) => Promise<string | null>
   signOut: () => Promise<string | null>
   clearSyncedSessions: () => Promise<string | null>
 }
