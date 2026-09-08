@@ -109,6 +109,11 @@ export interface MatchDeadlineSnapshot {
   fireAt: number
 }
 
+/** Creator / Joiner seat, or Random until begin_match resolves it. */
+export type StartingPlayerSlot = 0 | 1 | 2
+
+export const STARTING_PLAYER_SLOT_RANDOM = 2 as const
+
 export interface PublicMatchState {
   matchId: string
   inviteToken: string
@@ -118,7 +123,7 @@ export interface PublicMatchState {
   mode: GameModeId
   config: JsonObject
   legsToWin: number
-  startingPlayerSlot: 0 | 1
+  startingPlayerSlot: StartingPlayerSlot
   players: MatchPlayerSnapshot[]
   deadlines: MatchDeadlineSnapshot[]
   endingKind: MatchEndingKind | null
@@ -152,7 +157,7 @@ export interface InitMatchInput {
   mode: GameModeId
   config: GameConfig
   legsToWin: number
-  startingPlayerSlot: 0 | 1
+  startingPlayerSlot: StartingPlayerSlot
 }
 
 export interface JoinMatchInput {

@@ -3,14 +3,19 @@ import { LEGS_TO_WIN_MAX, LEGS_TO_WIN_MIN } from '@open-darts/game/types/match'
 import type { X01Config } from '@open-darts/game/types/x01'
 import { defaultX01Config } from '@open-darts/game/x01/x01Presets'
 import { isJsonObject, isRecord } from '../json'
+import type { StartingPlayerSlot } from '../match/types'
+import { STARTING_PLAYER_SLOT_RANDOM } from '../match/types'
 import { isV1OnlineMatchSetup } from '../match/v1Rules'
 
 export interface CreateMatchRequest {
   mode: GameModeId
   config: X01Config
   legsToWin: number
-  startingPlayerSlot: 0 | 1
+  startingPlayerSlot: StartingPlayerSlot
 }
+
+const isStartingPlayerSlot = (value: unknown): value is StartingPlayerSlot =>
+  value === 0 || value === 1 || value === STARTING_PLAYER_SLOT_RANDOM
 
 export const parseCreateMatchRequest = (value: unknown): CreateMatchRequest | null => {
   if (!isRecord(value) || !isJsonObject(value.config)) {
@@ -30,7 +35,7 @@ export const parseCreateMatchRequest = (value: unknown): CreateMatchRequest | nu
     return null
   }
 
-  if (value.startingPlayerSlot !== 0 && value.startingPlayerSlot !== 1) {
+  if (!isStartingPlayerSlot(value.startingPlayerSlot)) {
     return null
   }
 

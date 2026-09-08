@@ -2,8 +2,19 @@ import { GameModeId } from '@open-darts/game/types/gameMode'
 import type { JsonObject } from '../json'
 import { isJsonObject } from '../json'
 import { parsePlayState } from './sessionPlay'
-import { MatchEndingKind, MatchStatus, PlayMode, isDeadlineKind } from './types'
-import type { MatchDeadlineSnapshot, MatchPlayerSnapshot, PublicMatchState } from './types'
+import {
+  MatchEndingKind,
+  MatchStatus,
+  PlayMode,
+  STARTING_PLAYER_SLOT_RANDOM,
+  isDeadlineKind,
+} from './types'
+import type {
+  MatchDeadlineSnapshot,
+  MatchPlayerSnapshot,
+  PublicMatchState,
+  StartingPlayerSlot,
+} from './types'
 
 interface MatchRow {
   id: string
@@ -136,6 +147,9 @@ const isEndingKind = (value: string): value is MatchEndingKind =>
 
 const isSlot = (value: number): value is 0 | 1 => value === 0 || value === 1
 
+const isStartingPlayerSlot = (value: number): value is StartingPlayerSlot =>
+  value === 0 || value === 1 || value === STARTING_PLAYER_SLOT_RANDOM
+
 const parseConfig = (configJson: string): JsonObject => {
   const parsed: unknown = JSON.parse(configJson)
 
@@ -157,7 +171,7 @@ export const loadPublicMatchState = (sql: SqlStorage): PublicMatchState | null =
     throw new Error('Stored match has an invalid mode or status')
   }
 
-  if (!isSlot(match.starting_player_slot)) {
+  if (!isStartingPlayerSlot(match.starting_player_slot)) {
     throw new Error('Stored match has an invalid starting slot')
   }
 

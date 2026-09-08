@@ -18,6 +18,15 @@ describe('matchServer api helpers', () => {
     })
   })
 
+  it('builds v1 create-match bodies with random first throw', () => {
+    expect(buildV1CreateMatchBody(2, MatchPlayerSlot.Random)).toEqual({
+      mode: GameModeId.X01,
+      config: { ...V1_ONLINE_X01_CONFIG },
+      legsToWin: 2,
+      startingPlayerSlot: MatchPlayerSlot.Random,
+    })
+  })
+
   it('builds invite and match paths under the app router', () => {
     const token = '11111111-1111-1111-1111-111111111111'
     const matchId = '22222222-2222-2222-2222-222222222222'

@@ -27,7 +27,7 @@ export const OnlineMatchNewPage = () => {
   const { authStatus, profile, user } = useAuth()
   const inProgress = useInProgressOnlineMatch()
   const [legsToWin, setLegsToWin] = useState(DEFAULT_LEGS_TO_WIN)
-  const [startingPlayerSlot, setStartingPlayerSlot] = useState(MatchPlayerSlot.Creator)
+  const [startingPlayerSlot, setStartingPlayerSlot] = useState(MatchPlayerSlot.Random)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -133,6 +133,14 @@ export const OnlineMatchNewPage = () => {
 
         <SetupSection title="First throw">
           <Stack gap={2}>
+            <SetupOptionCard
+              label="Random"
+              description="Coin flip who throws first when the match starts"
+              selected={startingPlayerSlot === MatchPlayerSlot.Random}
+              onSelect={() => {
+                setStartingPlayerSlot(MatchPlayerSlot.Random)
+              }}
+            />
             <SetupOptionCard
               label={primaryPlayerLabel}
               description={`${primaryPlayerLabel} throws first in leg 1`}

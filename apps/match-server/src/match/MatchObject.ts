@@ -56,6 +56,7 @@ import {
   parsePlayState,
   playStateToSessionJson,
   resolveMatchWinnerUserId,
+  resolveStartingPlayerSlot,
 } from './sessionPlay'
 import type { StoredPlayState } from './sessionPlay'
 import {
@@ -127,8 +128,15 @@ export class MatchObject extends DurableObject<Env> {
       return commandFailure(CommandErrorCode.Invalid, 'legsToWin is out of range')
     }
 
-    if (input.startingPlayerSlot !== 0 && input.startingPlayerSlot !== 1) {
-      return commandFailure(CommandErrorCode.Invalid, 'startingPlayerSlot must be 0 or 1')
+    if (
+      input.startingPlayerSlot !== 0 &&
+      input.startingPlayerSlot !== 1 &&
+      input.startingPlayerSlot !== 2
+    ) {
+      return commandFailure(
+        CommandErrorCode.Invalid,
+        'startingPlayerSlot must be 0, 1, or 2 (random)',
+      )
     }
 
     if (!isJsonObject(input.config)) {
@@ -590,12 +598,13 @@ export class MatchObject extends DurableObject<Env> {
 
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- online config is GameConfig shaped
     const config = state.config as unknown as GameConfig
+    const startingPlayerSlot = resolveStartingPlayerSlot(state.startingPlayerSlot)
     const play = createOnlineSession({
       matchId: state.matchId,
       mode: state.mode,
       config,
       legsToWin: state.legsToWin,
-      startingPlayerSlot: state.startingPlayerSlot,
+      startingPlayerSlot,
       players: state.players,
     })
 
@@ -604,13 +613,15 @@ export class MatchObject extends DurableObject<Env> {
       `
         UPDATE match_state
         SET status = ?, started_at = ?, session_json = ?, turn_index = ?,
-            pending_finalization = 0, updated_at = ?, version = version + 1
+            starting_player_slot = ?, pending_finalization = 0, updated_at = ?,
+            version = version + 1
         WHERE id IS NOT NULL
       `,
       MatchStatus.Active,
       now,
       playStateToSessionJson(play),
       play.turnIndex,
+      startingPlayerSlot,
       now,
     )
     deleteDeadline(sql, DeadlineKind.WaitingExpiresAt)

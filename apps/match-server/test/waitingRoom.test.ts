@@ -1,11 +1,18 @@
-import { exports } from 'cloudflare:workers'
+import { env, exports } from 'cloudflare:workers'
 import { runDurableObjectAlarm, runInDurableObject } from 'cloudflare:test'
 import { GameModeId } from '@open-darts/game/types/gameMode'
 import { defaultX01Config } from '@open-darts/game/x01/x01Presets'
 import { describe, expect, it } from 'vitest'
 import type { MatchObject } from '../src/match/MatchObject'
-import { CommandErrorCode, DeadlineKind, MatchCommandName, MatchStatus } from '../src/match/types'
 import {
+  CommandErrorCode,
+  DeadlineKind,
+  MatchCommandName,
+  MatchStatus,
+  STARTING_PLAYER_SLOT_RANDOM,
+} from '../src/match/types'
+import {
+  createMatchId,
   creatorUserId,
   initWaitingMatch,
   otherUserId,
@@ -156,6 +163,32 @@ describe('waiting room', () => {
     expect(started.state?.status).toBe(MatchStatus.Active)
     expect(started.state?.startedAt).toBeTypeOf('number')
     expect(started.state?.deadlines).toEqual([])
+  })
+
+  it('resolves a random first-throw preference when the match begins', async () => {
+    const matchId = createMatchId()
+    const stub = env.MATCH.getByName(matchId)
+    const created = await stub.init({
+      matchId,
+      inviteToken: crypto.randomUUID(),
+      creatorUserId,
+      mode: GameModeId.X01,
+      config: defaultX01Config(),
+      legsToWin: 2,
+      startingPlayerSlot: STARTING_PLAYER_SLOT_RANDOM,
+    })
+
+    expect(created.ok).toBe(true)
+    expect(created.state?.startingPlayerSlot).toBe(STARTING_PLAYER_SLOT_RANDOM)
+
+    await joinGuest(stub)
+    const started = await stub.applyCommand(creatorUserId, { name: MatchCommandName.BeginMatch })
+
+    expect(started.ok).toBe(true)
+    expect([0, 1]).toContain(started.state?.startingPlayerSlot)
+    expect(started.state?.activePlayerId).toBe(
+      started.state?.startingPlayerSlot === 0 ? creatorUserId : otherUserId,
+    )
   })
 
   it('clears the waiting alarm when the match becomes active', async () => {

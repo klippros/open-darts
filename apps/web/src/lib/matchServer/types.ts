@@ -68,6 +68,8 @@ export enum ServerMessageType {
 export enum MatchPlayerSlot {
   Creator = 0,
   Joiner = 1,
+  /** Resolved to Creator or Joiner when the match begins. */
+  Random = 2,
 }
 
 export interface PublicDartThrow {

@@ -15,13 +15,29 @@ import { PlayerKind } from '@open-darts/game/types/player'
 import { isRecord } from '../json'
 import { isAsyncPlayState } from './asyncPlay'
 import type { AsyncPlayState } from './asyncPlay'
-import type { MatchPlayerSnapshot } from './types'
+import type { MatchPlayerSnapshot, StartingPlayerSlot } from './types'
+import { STARTING_PLAYER_SLOT_RANDOM } from './types'
 
 export interface StoredPlayState {
   session: GameSession
   turnIndex: number
   pendingFinalization: boolean
   asyncPlay?: AsyncPlayState
+}
+
+export const resolveStartingPlayerSlot = (
+  preference: StartingPlayerSlot,
+  randomBit: () => 0 | 1 = () => {
+    const bytes = new Uint8Array(1)
+    crypto.getRandomValues(bytes)
+    return ((bytes[0] ?? 0) & 1) === 0 ? 0 : 1
+  },
+): 0 | 1 => {
+  if (preference === STARTING_PLAYER_SLOT_RANDOM) {
+    return randomBit()
+  }
+
+  return preference
 }
 
 export const createOnlineSession = (input: {
