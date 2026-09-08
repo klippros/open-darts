@@ -1,6 +1,5 @@
-import { Box, Button, Dialog, Flex, Stack, Text, useBreakpointValue } from '@chakra-ui/react'
+import { Box, Flex, Stack, Text, useBreakpointValue } from '@chakra-ui/react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link as RouterLink } from 'react-router-dom'
 import type { AppGameController } from '@open-darts/game/game/createSession'
 import type { DartThrow } from '@open-darts/game/types/dart'
 import {
@@ -13,10 +12,6 @@ import { GameModeDartPicker } from '../DartPicker/GameModeDartPicker'
 import { GameBoardLayout } from '../GameBoardLayout'
 import { MobileVisitHistory } from '../Scoreboard/MobileVisitHistory'
 import { Scoreboard } from '../Scoreboard/Scoreboard'
-import { darkDialogContentProps } from '../darkDialogContentProps'
-import { MatchSummaryBody } from '../SessionSummary/MatchSummaryBody'
-import { MatchSummaryTitle } from '../SessionSummary/MatchSummaryTitle'
-import { getMatchSummary } from '../../lib/history/sessionSummary'
 import {
   getDartPickerHelpContent,
   getGameModePickerTargets,
@@ -49,9 +44,11 @@ import type { VoiceIntent } from '../../lib/voice/parseVoiceCommand'
 import { useSetGameChrome } from '../../hooks/gameChromeContext'
 import { useSettings } from '../../hooks/settingsContext'
 import { useVoiceRecognition } from '../../hooks/useVoiceRecognition'
+import { OnlineMatchAbandonDialog } from './OnlineMatchAbandonDialog'
 import { OnlineMatchAsyncDeadlineBanner } from './OnlineMatchAsyncDeadlineBanner'
 import { OnlineMatchAsyncPrompt } from './OnlineMatchAsyncPrompt'
 import { OnlineMatchCancelBanner } from './OnlineMatchCancelBanner'
+import { OnlineMatchCompletedDialog } from './OnlineMatchCompletedDialog'
 import { OnlineMatchFinishPrompt } from './OnlineMatchFinishPrompt'
 
 export interface OnlineMatchPlayBoardProps {
@@ -666,7 +663,6 @@ export const OnlineMatchPlayBoard = ({
   }
 
   const completed = state.status === MatchStatus.Completed
-  const summary = completed ? getMatchSummary(boardController.session) : null
   const waitingPlayerId =
     !isMyTurn && !isCorrecting && state.status === MatchStatus.Active && !state.pendingFinalization
       ? state.activePlayerId
@@ -733,88 +729,14 @@ export const OnlineMatchPlayBoard = ({
           setAsyncPromptDismissed(true)
         }}
       />
-      <Dialog.Root
+      <OnlineMatchAbandonDialog
         open={abandonOpen}
-        onOpenChange={(details) => {
-          setAbandonOpen(details.open)
+        onOpenChange={setAbandonOpen}
+        onConfirm={() => {
+          sendCommand({ name: MatchCommandName.AbandonMatch })
         }}
-        placement="center"
-      >
-        <Dialog.Backdrop />
-        <Dialog.Positioner>
-          <Dialog.Content
-            bg={darkDialogContentProps.bg}
-            borderWidth={darkDialogContentProps.borderWidth}
-            borderColor={darkDialogContentProps.borderColor}
-            color={darkDialogContentProps.color}
-            shadow={darkDialogContentProps.shadow}
-            w="full"
-            maxW={{ base: 'calc(100vw - 2rem)', sm: '28rem' }}
-          >
-            <Dialog.Header>
-              <Dialog.Title color="white">Abandon match?</Dialog.Title>
-            </Dialog.Header>
-            <Dialog.Body>
-              <Text color="whiteAlpha.800" lineHeight="1.55">
-                Leaving now counts as a loss for you and a win for your opponent.
-              </Text>
-            </Dialog.Body>
-            <Dialog.Footer>
-              <Stack direction="row" gap={3} w="full">
-                <Button
-                  variant="cancel"
-                  flex="1"
-                  onClick={() => {
-                    setAbandonOpen(false)
-                  }}
-                >
-                  Keep playing
-                </Button>
-                <Button
-                  variant="destructive"
-                  flex="1"
-                  onClick={() => {
-                    sendCommand({ name: MatchCommandName.AbandonMatch })
-                    setAbandonOpen(false)
-                  }}
-                >
-                  Abandon
-                </Button>
-              </Stack>
-            </Dialog.Footer>
-          </Dialog.Content>
-        </Dialog.Positioner>
-      </Dialog.Root>
-      {completed && summary !== null && (
-        <Dialog.Root open placement="center" closeOnInteractOutside={false} closeOnEscape={false}>
-          <Dialog.Backdrop />
-          <Dialog.Positioner>
-            <Dialog.Content
-              bg={darkDialogContentProps.bg}
-              borderWidth={darkDialogContentProps.borderWidth}
-              borderColor={darkDialogContentProps.borderColor}
-              color={darkDialogContentProps.color}
-              shadow={darkDialogContentProps.shadow}
-              w="full"
-              maxW={{ base: 'calc(100vw - 2rem)', sm: '28rem', md: '36rem' }}
-            >
-              <Dialog.Header>
-                <Dialog.Title color="white">
-                  <MatchSummaryTitle title={summary.title} />
-                </Dialog.Title>
-              </Dialog.Header>
-              <Dialog.Body>
-                <MatchSummaryBody session={boardController.session} />
-              </Dialog.Body>
-              <Dialog.Footer>
-                <Button asChild variant="emphasis" w="full">
-                  <RouterLink to="/">Back home</RouterLink>
-                </Button>
-              </Dialog.Footer>
-            </Dialog.Content>
-          </Dialog.Positioner>
-        </Dialog.Root>
-      )}
+      />
+      <OnlineMatchCompletedDialog open={completed} session={boardController.session} />
     </>
   )
 
