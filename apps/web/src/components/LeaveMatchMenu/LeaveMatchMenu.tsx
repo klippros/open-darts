@@ -7,12 +7,20 @@ import { darkDialogContentProps } from '../darkDialogContentProps'
 import { SettingsDismissBackdrop } from '../SettingsMenu/SettingsDismissBackdrop'
 
 export interface LeaveMatchMenuProps {
+  abortLabel: string
   canFinish: boolean
   onAbort: () => void
   onFinish: () => void
+  onProposeCancel?: () => void
 }
 
-export const LeaveMatchMenu = ({ canFinish, onAbort, onFinish }: LeaveMatchMenuProps) => {
+export const LeaveMatchMenu = ({
+  abortLabel,
+  canFinish,
+  onAbort,
+  onFinish,
+  onProposeCancel,
+}: LeaveMatchMenuProps) => {
   const [open, setOpen] = useState(false)
 
   return (
@@ -63,8 +71,21 @@ export const LeaveMatchMenu = ({ canFinish, onAbort, onFinish }: LeaveMatchMenuP
                     onAbort()
                   }}
                 >
-                  Abort match
+                  {abortLabel}
                 </Button>
+                {onProposeCancel !== undefined && (
+                  <Button
+                    variant="cancel"
+                    w="full"
+                    justifyContent="flex-start"
+                    onClick={() => {
+                      setOpen(false)
+                      onProposeCancel()
+                    }}
+                  >
+                    Propose cancel
+                  </Button>
+                )}
                 <Button
                   variant="emphasis"
                   w="full"

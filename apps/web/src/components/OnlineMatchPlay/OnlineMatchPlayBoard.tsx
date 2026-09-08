@@ -207,19 +207,34 @@ export const OnlineMatchPlayBoard = ({
       active: true,
       canFinish: state.pendingFinalization,
       voiceInputAvailable: false,
+      abortLabel: 'Abandon',
       onAbort: () => {
         setAbandonOpen(true)
       },
       onFinish: () => {
         sendCommand({ name: MatchCommandName.FinishMatch })
       },
+      onProposeCancel:
+        state.cancelProposalUserId === null
+          ? () => {
+              sendCommand({ name: MatchCommandName.ProposeCancel })
+            }
+          : undefined,
       help,
     })
 
     return () => {
       setGameChrome(null)
     }
-  }, [controller, help, sendCommand, setGameChrome, state.pendingFinalization, state.status])
+  }, [
+    controller,
+    help,
+    sendCommand,
+    setGameChrome,
+    state.cancelProposalUserId,
+    state.pendingFinalization,
+    state.status,
+  ])
 
   if (controller === null) {
     return (
@@ -382,13 +397,9 @@ export const OnlineMatchPlayBoard = ({
   )
 
   const cancelBanner =
-    state.status === MatchStatus.Active ? (
+    state.status === MatchStatus.Active && state.cancelProposalUserId !== null ? (
       <OnlineMatchCancelBanner
-        proposalOpen={state.cancelProposalUserId !== null}
         proposedByYou={state.cancelProposalUserId === currentUserId}
-        onPropose={() => {
-          sendCommand({ name: MatchCommandName.ProposeCancel })
-        }}
         onWithdraw={() => {
           sendCommand({ name: MatchCommandName.WithdrawCancel })
         }}

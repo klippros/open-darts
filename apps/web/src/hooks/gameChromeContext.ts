@@ -6,8 +6,12 @@ export interface GameChromeState {
   canFinish: boolean
   /** False when voice scoring is not supported for the active mode. */
   voiceInputAvailable: boolean
+  /** Label for the leave/abort action (e.g. "Abort match" vs "Abandon"). */
+  abortLabel: string
   onAbort: () => void
   onFinish: () => void
+  /** Online only: propose a mutual cancel (no loss). */
+  onProposeCancel?: () => void
   help: DartPickerHelpContent
 }
 

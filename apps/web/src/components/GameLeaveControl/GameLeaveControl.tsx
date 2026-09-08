@@ -11,12 +11,15 @@ export const GameLeaveControl = () => {
 
   const handleAbort = gameChrome.onAbort
   const handleFinish = gameChrome.onFinish
+  const handleProposeCancel = gameChrome.onProposeCancel
 
   return (
     <LeaveMatchMenu
+      abortLabel={gameChrome.abortLabel}
       canFinish={gameChrome.canFinish}
       onAbort={handleAbort}
       onFinish={handleFinish}
+      onProposeCancel={handleProposeCancel}
     />
   )
 }

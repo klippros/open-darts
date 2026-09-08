@@ -104,6 +104,7 @@ export const useGamePage = () => {
       active: true,
       canFinish,
       voiceInputAvailable,
+      abortLabel: 'Abort match',
       onAbort: requestAbortMatch,
       onFinish: game.finishMatch,
       help,
