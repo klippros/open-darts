@@ -8,7 +8,7 @@ import { PlayerKind } from '@open-darts/game/types/player'
 import type { Visit } from '@open-darts/game/types/visit'
 import type { X01Config, X01State } from '@open-darts/game/types/x01'
 import { isRecord } from '../json'
-import { loadController } from './sessionPlay'
+import { loadController, rejectDoubleOutVisitScoreCheckout } from './sessionPlay'
 import type { StoredPlayState } from './sessionPlay'
 
 export interface AsyncPlayerStream {
@@ -279,6 +279,12 @@ export const applyAsyncRecordVisitScore = (
   }
 
   const controller = rebuildAsyncController(play, actorUserId, stream, false)
+
+  const checkoutBlocked = rejectDoubleOutVisitScoreCheckout(controller, score)
+
+  if (checkoutBlocked !== null) {
+    return checkoutBlocked
+  }
 
   return afterAsyncCommit(
     play,

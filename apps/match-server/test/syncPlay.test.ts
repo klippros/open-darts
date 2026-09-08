@@ -286,4 +286,54 @@ describe('sync play', () => {
     const readable = await stub.applyCommand(creatorUserId, { name: MatchCommandName.GetState })
     expect(readable.ok).toBe(true)
   })
+
+  it('rejects forged dart points on record_visit', async () => {
+    const stub = await startCheckoutMatch()
+    const [checkoutDart] = toPublicDarts(checkoutDouble20())
+
+    if (checkoutDart === undefined) {
+      throw new Error('expected checkout dart')
+    }
+
+    const result = await stub.applyCommand(creatorUserId, {
+      name: MatchCommandName.RecordVisit,
+      darts: [
+        {
+          segment: checkoutDart.segment,
+          multiplier: checkoutDart.multiplier,
+          points: 180,
+          timestamp: checkoutDart.timestamp,
+        },
+      ],
+    })
+
+    expect(result).toMatchObject({ ok: false, code: CommandErrorCode.Invalid })
+  })
+
+  it('rejects double-out checkout via record_visit_score', async () => {
+    const stub = await startCheckoutMatch()
+
+    const result = await stub.applyCommand(creatorUserId, {
+      name: MatchCommandName.RecordVisitScore,
+      score: 40,
+    })
+
+    expect(result).toMatchObject({ ok: false, code: CommandErrorCode.Forbidden })
+
+    const state = await stub.applyCommand(creatorUserId, { name: MatchCommandName.GetState })
+    expect(state.state?.pendingFinalization).toBe(false)
+    expect(state.state?.status).toBe(MatchStatus.Active)
+  })
+
+  it('allows non-checkout visit scores on double-out matches', async () => {
+    const stub = await startCheckoutMatch()
+
+    const result = await stub.applyCommand(creatorUserId, {
+      name: MatchCommandName.RecordVisitScore,
+      score: 20,
+    })
+
+    expect(result.ok).toBe(true)
+    expect(result.state?.activePlayerId).toBe(otherUserId)
+  })
 })

@@ -1,3 +1,4 @@
+import { isX01Config } from '@open-darts/game/game/gameConfigGuards'
 import {
   createGameController,
   getInitialTurnIndex,
@@ -177,7 +178,39 @@ export const applyRecordVisitScore = (
     return { ok: false, reason: 'Not your turn' }
   }
 
+  const checkoutBlocked = rejectDoubleOutVisitScoreCheckout(controller, score)
+
+  if (checkoutBlocked !== null) {
+    return checkoutBlocked
+  }
+
   return afterCommit(controller, controller.recordVisitScore(score))
+}
+
+export const rejectDoubleOutVisitScoreCheckout = (
+  controller: AppGameController,
+  score: number,
+): { ok: false; reason: string } | null => {
+  if (!isX01Config(controller.session.mode, controller.session.config)) {
+    return null
+  }
+
+  if (!controller.session.config.doubleOut) {
+    return null
+  }
+
+  const remaining = controller.scoreboard.players.find(
+    (player) => player.playerId === controller.activePlayerId,
+  )?.primaryScore
+
+  if (remaining === undefined || score !== remaining) {
+    return null
+  }
+
+  return {
+    ok: false,
+    reason: 'Double-out checkout requires dart-by-dart entry',
+  }
 }
 
 const getCountingVisitCount = (session: GameSession): number =>

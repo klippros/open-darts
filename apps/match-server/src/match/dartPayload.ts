@@ -1,59 +1,68 @@
+import { calculateDartPoints, createDartThrow } from '@open-darts/game/dartScoring'
 import { DartMultiplier, DartSegmentType } from '@open-darts/game/types/dart'
-import type { DartThrow } from '@open-darts/game/types/dart'
+import type { DartSegment, DartThrow } from '@open-darts/game/types/dart'
 import { isRecord } from '../json'
 import type { PublicDartThrow } from './types'
 
 const isMultiplier = (value: string): value is DartMultiplier =>
   (Object.values(DartMultiplier) as string[]).includes(value)
 
+const parseSegment = (value: Record<string, unknown>): DartSegment | null => {
+  const segmentType = value.type
+
+  if (segmentType === DartSegmentType.Number || segmentType === 'number') {
+    if (typeof value.value !== 'number' || !Number.isInteger(value.value)) {
+      return null
+    }
+
+    if (value.value < 1 || value.value > 20) {
+      return null
+    }
+
+    return { type: DartSegmentType.Number, value: value.value }
+  }
+
+  if (segmentType === DartSegmentType.OuterBull || segmentType === 'outerBull') {
+    return { type: DartSegmentType.OuterBull }
+  }
+
+  if (segmentType === DartSegmentType.Bull || segmentType === 'bull') {
+    return { type: DartSegmentType.Bull }
+  }
+
+  return null
+}
+
 export const parsePublicDartThrow = (value: unknown): DartThrow | null => {
   if (!isRecord(value) || !isRecord(value.segment)) {
     return null
   }
 
+  if (typeof value.multiplier !== 'string' || !isMultiplier(value.multiplier)) {
+    return null
+  }
+
+  if (typeof value.timestamp !== 'string') {
+    return null
+  }
+
+  const segment = parseSegment(value.segment)
+
+  if (segment === null) {
+    return null
+  }
+
+  // Always recompute points from segment + multiplier. Never trust client points.
+  const dart = createDartThrow(segment, value.multiplier, value.timestamp)
+
   if (
-    typeof value.multiplier !== 'string' ||
-    !isMultiplier(value.multiplier) ||
-    typeof value.points !== 'number' ||
-    typeof value.timestamp !== 'string'
+    typeof value.points === 'number' &&
+    value.points !== calculateDartPoints(segment, value.multiplier)
   ) {
     return null
   }
 
-  const segmentType = value.segment.type
-
-  if (segmentType === DartSegmentType.Number || segmentType === 'number') {
-    if (typeof value.segment.value !== 'number') {
-      return null
-    }
-
-    return {
-      segment: { type: DartSegmentType.Number, value: value.segment.value },
-      multiplier: value.multiplier,
-      points: value.points,
-      timestamp: value.timestamp,
-    }
-  }
-
-  if (segmentType === DartSegmentType.OuterBull || segmentType === 'outerBull') {
-    return {
-      segment: { type: DartSegmentType.OuterBull },
-      multiplier: value.multiplier,
-      points: value.points,
-      timestamp: value.timestamp,
-    }
-  }
-
-  if (segmentType === DartSegmentType.Bull || segmentType === 'bull') {
-    return {
-      segment: { type: DartSegmentType.Bull },
-      multiplier: value.multiplier,
-      points: value.points,
-      timestamp: value.timestamp,
-    }
-  }
-
-  return null
+  return dart
 }
 
 export const parsePublicDartThrows = (value: unknown): DartThrow[] | null => {
