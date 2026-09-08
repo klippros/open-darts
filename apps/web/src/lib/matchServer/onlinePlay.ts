@@ -72,13 +72,19 @@ export const restoreOnlineController = (
   viewerUserId: string,
   viewerDisplayName: string | null | undefined,
   pendingDarts: DartThrow[] = [],
+  opponentDisplayName?: string | null,
 ): AppGameController | null => {
   if (matchState.sessionJson === null) {
     return null
   }
 
   const snapshot = parseOnlinePlaySnapshot(matchState.sessionJson)
-  const session = decorateOnlineSessionForViewer(snapshot.session, viewerUserId, viewerDisplayName)
+  const session = decorateOnlineSessionForViewer(
+    snapshot.session,
+    viewerUserId,
+    viewerDisplayName,
+    opponentDisplayName,
+  )
   const turnIndex = matchState.turnIndex ?? snapshot.turnIndex
 
   return restoreGameController({

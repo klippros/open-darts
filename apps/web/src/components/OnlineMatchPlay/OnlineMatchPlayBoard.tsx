@@ -56,6 +56,7 @@ export interface OnlineMatchPlayBoardProps {
   state: PublicMatchState
   currentUserId: string
   viewerDisplayName: string | null | undefined
+  opponentDisplayName: string | null | undefined
   sendCommand: (command: MatchCommand) => void
 }
 
@@ -63,6 +64,7 @@ export const OnlineMatchPlayBoard = ({
   state,
   currentUserId,
   viewerDisplayName,
+  opponentDisplayName,
   sendCommand,
 }: OnlineMatchPlayBoardProps) => {
   const { singleDartScoring } = useSettings()
@@ -78,8 +80,8 @@ export const OnlineMatchPlayBoard = ({
   const [hasFullyUndoneVisitThisTurn, setHasFullyUndoneVisitThisTurn] = useState(false)
 
   const boardController = useMemo(
-    () => restoreOnlineController(state, currentUserId, viewerDisplayName, []),
-    [currentUserId, state, viewerDisplayName],
+    () => restoreOnlineController(state, currentUserId, viewerDisplayName, [], opponentDisplayName),
+    [currentUserId, opponentDisplayName, state, viewerDisplayName],
   )
 
   const opponent = state.players.find((player) => player.userId !== currentUserId)
@@ -109,12 +111,19 @@ export const OnlineMatchPlayBoard = ({
       return boardController
     }
 
-    return restoreOnlineController(state, currentUserId, viewerDisplayName, pendingDarts)
+    return restoreOnlineController(
+      state,
+      currentUserId,
+      viewerDisplayName,
+      pendingDarts,
+      opponentDisplayName,
+    )
   }, [
     boardController,
     correctingVisitIndex,
     currentUserId,
     isMyTurn,
+    opponentDisplayName,
     pendingDarts,
     state,
     viewerDisplayName,
@@ -598,8 +607,13 @@ export const OnlineMatchPlayBoard = ({
     // amend that steals the turn does not paint our draft onto their column.
     const scoreboardPending = isMyTurn ? pendingDarts : []
     const restored =
-      restoreOnlineController(state, currentUserId, viewerDisplayName, scoreboardPending) ??
-      boardController
+      restoreOnlineController(
+        state,
+        currentUserId,
+        viewerDisplayName,
+        scoreboardPending,
+        opponentDisplayName,
+      ) ?? boardController
 
     return {
       session: restored.session,
@@ -613,6 +627,7 @@ export const OnlineMatchPlayBoard = ({
     entryController,
     isCorrecting,
     isMyTurn,
+    opponentDisplayName,
     pendingDarts,
     state,
     viewerDisplayName,

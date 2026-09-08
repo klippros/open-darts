@@ -175,6 +175,8 @@ export const OnlineMatchPage = () => {
     )
   }
 
+  const opponentUserId = state.players.find((player) => player.userId !== user.id)?.userId
+
   return (
     <>
       <MatchConnectionNotice
@@ -189,6 +191,9 @@ export const OnlineMatchPage = () => {
         state={state}
         currentUserId={user.id}
         viewerDisplayName={profile?.displayName}
+        opponentDisplayName={
+          opponentUserId !== undefined ? resolveDisplayName(opponentUserId) : undefined
+        }
         sendCommand={sendCommand}
       />
     </>
