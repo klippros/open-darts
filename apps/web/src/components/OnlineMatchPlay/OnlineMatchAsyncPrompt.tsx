@@ -35,7 +35,7 @@ export const OnlineMatchAsyncPrompt = ({
         </Dialog.Body>
         <Dialog.Footer>
           <Stack direction={{ base: 'column', sm: 'row' }} gap={3} w="full">
-            <Button variant="ghost" flex="1" onClick={onWait}>
+            <Button variant="cancel" flex="1" onClick={onWait}>
               Wait
             </Button>
             <Button variant="emphasis" flex="1" onClick={onContinueAsync}>

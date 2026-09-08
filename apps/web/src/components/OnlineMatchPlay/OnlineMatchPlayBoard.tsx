@@ -723,7 +723,7 @@ export const OnlineMatchPlayBoard = ({
             <Dialog.Footer>
               <Stack direction="row" gap={3} w="full">
                 <Button
-                  variant="ghost"
+                  variant="cancel"
                   flex="1"
                   onClick={() => {
                     setAbandonOpen(false)
@@ -732,7 +732,7 @@ export const OnlineMatchPlayBoard = ({
                   Keep playing
                 </Button>
                 <Button
-                  variant="cancel"
+                  variant="destructive"
                   flex="1"
                   onClick={() => {
                     sendCommand({ name: MatchCommandName.AbandonMatch })

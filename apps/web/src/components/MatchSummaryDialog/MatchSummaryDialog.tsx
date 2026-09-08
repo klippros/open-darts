@@ -56,7 +56,7 @@ export const MatchSummaryDialog = ({
           <Dialog.Footer>
             <Stack gap={3} w="full">
               <Stack direction={{ base: 'column', sm: 'row' }} gap={3} w="full">
-                <Button variant="ghost" flex="1" onClick={onUndoLastDart}>
+                <Button variant="cancel" flex="1" onClick={onUndoLastDart}>
                   Undo last dart
                 </Button>
                 <Button variant="emphasis" flex="1" onClick={onPlayAgain}>

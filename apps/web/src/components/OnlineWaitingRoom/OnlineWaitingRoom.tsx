@@ -3,7 +3,6 @@ import { SetupPageHeader } from '../SetupPageLayout/SetupPageHeader'
 import { SetupPageLayout } from '../SetupPageLayout/SetupPageLayout'
 import type { PublicMatchState } from '../../lib/matchServer/types'
 import { OnlineWaitingActions } from './OnlineWaitingActions'
-import { OnlineWaitingInviteLink } from './OnlineWaitingInviteLink'
 import { OnlineWaitingPlayers } from './OnlineWaitingPlayers'
 
 export interface OnlineWaitingRoomProps {
@@ -24,9 +23,7 @@ export const OnlineWaitingRoom = ({
   onLeaveOrCancel,
 }: OnlineWaitingRoomProps) => {
   const isCreator = state.creatorUserId === currentUserId
-  const opponent = state.players.find((player) => player.userId !== currentUserId)
   const canBegin = state.players.length === 2
-  const canKick = opponent !== undefined
 
   return (
     <SetupPageLayout>
@@ -35,8 +32,6 @@ export const OnlineWaitingRoom = ({
           title="Waiting room"
           description="Share the invite link. The host can start once both players are here."
         />
-
-        {isCreator && <OnlineWaitingInviteLink inviteToken={state.inviteToken} />}
 
         {!isCreator && (
           <Text color="whiteAlpha.700" fontSize="sm" lineHeight="1.55">
@@ -49,18 +44,14 @@ export const OnlineWaitingRoom = ({
           creatorUserId={state.creatorUserId}
           currentUserId={currentUserId}
           resolveDisplayName={resolveDisplayName}
+          inviteToken={isCreator ? state.inviteToken : undefined}
+          onKick={isCreator ? onKick : undefined}
         />
 
         <OnlineWaitingActions
           isCreator={isCreator}
           canBegin={canBegin}
-          canKick={canKick}
           onBegin={onBegin}
-          onKick={() => {
-            if (opponent !== undefined) {
-              onKick(opponent.userId)
-            }
-          }}
           onLeaveOrCancel={onLeaveOrCancel}
           leaveLabel={isCreator ? 'Cancel match' : 'Leave waiting room'}
         />

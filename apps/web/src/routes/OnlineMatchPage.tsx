@@ -115,7 +115,7 @@ export const OnlineMatchPage = () => {
               {error}
             </Text>
           )}
-          <Button variant="ghost" onClick={reconnect}>
+          <Button variant="cancel" onClick={reconnect}>
             Retry connection
           </Button>
         </Stack>

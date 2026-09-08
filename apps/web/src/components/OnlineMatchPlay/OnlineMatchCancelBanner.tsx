@@ -34,7 +34,7 @@ export const OnlineMatchCancelBanner = ({
           : 'Your opponent proposed cancelling this match.'}
       </Text>
       {proposedByYou ? (
-        <Button variant="ghost" size="sm" onClick={onWithdraw}>
+        <Button variant="cancel" size="sm" onClick={onWithdraw}>
           Withdraw
         </Button>
       ) : (
