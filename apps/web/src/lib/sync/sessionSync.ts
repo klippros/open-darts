@@ -114,6 +114,10 @@ export const createSupabaseSessionGateway = (client: SupabaseClient): SessionSyn
         })
 
         if (result.error !== null) {
+          if (isOnlineMatchIdUpsertRejection(result.error)) {
+            return
+          }
+
           throw result.error
         }
 
@@ -135,6 +139,11 @@ export const createSupabaseSessionGateway = (client: SupabaseClient): SessionSyn
     }
   },
 })
+
+const isOnlineMatchIdUpsertRejection = (error: { message?: string; code?: string }): boolean => {
+  const message = error.message ?? ''
+  return message.includes('online_match_id_not_allowed') || error.code === '23514'
+}
 
 export const synchronizeSessions = async (
   gateway: SessionSyncGateway,

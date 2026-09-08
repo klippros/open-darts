@@ -225,4 +225,25 @@ describe('Supabase ownership boundary', () => {
       `Database did not confirm session upload: ${completed.id}`,
     )
   })
+
+  it('skips sessions rejected as online match ids without failing the batch', async () => {
+    const rpc = vi.fn(async (_name: string, arguments_: Record<string, unknown>) => {
+      if (arguments_.session_id === 'online-1') {
+        return {
+          data: null,
+          error: { message: 'online_match_id_not_allowed', code: '23514' },
+        }
+      }
+
+      return { data: arguments_.session_id, error: null }
+    })
+    const client = { rpc } as unknown as SupabaseClient
+    const gateway = createSupabaseSessionGateway(client)
+
+    await expect(
+      gateway.upsertSessions([session({ id: 'online-1' }), session({ id: 'local-1' })]),
+    ).resolves.toBeUndefined()
+
+    expect(rpc).toHaveBeenCalledTimes(2)
+  })
 })
