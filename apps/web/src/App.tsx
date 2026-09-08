@@ -9,7 +9,7 @@ import { VoiceControlProvider } from './hooks/VoiceControlProvider'
 
 export const App = () => {
   const { pathname } = useLocation()
-  const isGameRoute = pathname === '/game'
+  const isGameRoute = pathname === '/game' || /^\/match\/[^/]+$/u.test(pathname)
 
   return (
     <AuthProvider>

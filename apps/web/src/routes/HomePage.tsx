@@ -2,7 +2,11 @@ import { Box, Button, Heading, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { Link as RouterLink } from 'react-router-dom'
 import { ContentContainer } from '../components/ContentContainer'
 import { ResumeGameBanner } from '../components/ResumeGameBanner/ResumeGameBanner'
+import { ResumeOnlineMatchBanner } from '../components/ResumeOnlineMatchBanner/ResumeOnlineMatchBanner'
+import { useAuth } from '../hooks/authContext'
+import { AuthStatus } from '../types/auth'
 import { buildPracticeGamePath } from '../lib/game/gameRoute'
+import { isOnlineMatchesEnabled } from '../lib/matchServer/config'
 import { explicitGameLaunchState } from '../lib/routing/gameNavigation'
 import { GameModeId } from '@open-darts/game/types/gameMode'
 import { buildX01PresetPath, X01PresetId } from '@open-darts/game/x01/x01Presets'
@@ -107,11 +111,56 @@ const ModeGrid = ({
   </SimpleGrid>
 )
 
+const OnlineSection = () => {
+  const { authStatus } = useAuth()
+
+  if (!isOnlineMatchesEnabled || authStatus !== AuthStatus.Authenticated) {
+    return null
+  }
+
+  return (
+    <Stack gap={4}>
+      <ResumeOnlineMatchBanner />
+      <Stack gap={1}>
+        <Heading as="h2" size="lg" color="white" fontFamily="Archivo Black, sans-serif">
+          Online
+        </Heading>
+        <Text color="whiteAlpha.700" fontSize="sm" lineHeight="1.55">
+          Two-player 501 over the internet. Invite a signed-in opponent.
+        </Text>
+      </Stack>
+      <SimpleGrid columns={{ base: 1, sm: 2, lg: 3 }} gap={4}>
+        <Button
+          asChild
+          variant="cta"
+          h="auto"
+          py={5}
+          px={5}
+          flexDirection="column"
+          alignItems="flex-start"
+          gap={1}
+          textAlign="left"
+        >
+          <RouterLink to="/match/new">
+            <Text fontSize="lg" fontWeight="semibold" color="white">
+              Online 501
+            </Text>
+            <Text fontSize="sm" color="whiteAlpha.700" fontWeight="normal">
+              Create a match and share an invite
+            </Text>
+          </RouterLink>
+        </Button>
+      </SimpleGrid>
+    </Stack>
+  )
+}
+
 export const HomePage = () => (
   <ContentContainer>
     <Box py={{ base: 6, md: 10 }} pb={10}>
       <Stack gap={8}>
         <ResumeGameBanner />
+        <OnlineSection />
 
         <Stack gap={4}>
           <Stack gap={1}>
