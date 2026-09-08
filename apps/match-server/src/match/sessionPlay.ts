@@ -13,12 +13,15 @@ import type { DartThrow } from '@open-darts/game/types/dart'
 import type { GameSession } from '@open-darts/game/types/gameSession'
 import { PlayerKind } from '@open-darts/game/types/player'
 import { isRecord } from '../json'
+import { isAsyncPlayState } from './asyncPlay'
+import type { AsyncPlayState } from './asyncPlay'
 import type { MatchPlayerSnapshot } from './types'
 
 export interface StoredPlayState {
   session: GameSession
   turnIndex: number
   pendingFinalization: boolean
+  asyncPlay?: AsyncPlayState
 }
 
 export const createOnlineSession = (input: {
@@ -67,6 +70,7 @@ export const serializePlayState = (play: StoredPlayState): string =>
     session: play.session,
     turnIndex: play.turnIndex,
     pendingFinalization: play.pendingFinalization,
+    ...(play.asyncPlay === undefined ? {} : { asyncPlay: play.asyncPlay }),
   })
 
 export const parsePlayState = (serialized: string): StoredPlayState => {
@@ -75,11 +79,13 @@ export const parsePlayState = (serialized: string): StoredPlayState => {
   if (isRecord(envelope) && 'session' in envelope && typeof envelope.turnIndex === 'number') {
     const session = parseGameSession(JSON.stringify(envelope.session))
     const pendingFinalization = envelope.pendingFinalization === true
+    const asyncPlay = isAsyncPlayState(envelope.asyncPlay) ? envelope.asyncPlay : undefined
 
     return {
       session,
       turnIndex: envelope.turnIndex,
       pendingFinalization,
+      ...(asyncPlay === undefined ? {} : { asyncPlay }),
     }
   }
 

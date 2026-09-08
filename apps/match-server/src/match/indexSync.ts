@@ -112,6 +112,7 @@ const upsertIndexedMatch = async (env: Env, state: PublicMatchState): Promise<vo
       created_at: toIso(state.createdAt),
       started_at: state.startedAt === null ? null : toIso(state.startedAt),
       completed_at: state.completedAt === null ? null : toIso(state.completedAt),
+      async_started_at: state.asyncStartedAt === null ? null : toIso(state.asyncStartedAt),
       ending_kind: state.endingKind,
       winner_user_id: state.winnerUserId,
       result_payload: resultPayload,

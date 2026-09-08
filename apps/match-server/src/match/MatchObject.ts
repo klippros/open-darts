@@ -10,9 +10,28 @@ import {
   scheduleEarliestAlarm,
   upsertDeadline,
 } from './alarms'
+import {
+  anyAsyncPendingFinalization,
+  applyAsyncRecordDarts,
+  applyAsyncRecordVisitScore,
+  applyAsyncUndoVisit,
+  asyncPlayerIdsByFinalized,
+  autoFinalizeDueAsyncPlayers,
+  bothAsyncPlayersFinalized,
+  createAsyncPlayFromSync,
+  earliestAsyncFinalizeAt,
+  finalizeAsyncPlayer,
+  markPendingAsyncPlayersFinalized,
+  resolveAsyncCompletion,
+} from './asyncPlay'
 import { broadcast, serializeErrorMessage, serializeStateMessage } from './broadcast'
 import { commandFailure, commandSuccess, parseMatchCommand } from './commands'
-import { FINALIZE_TIMEOUT_MS, MATCH_USER_HEADER, WAITING_TIMEOUT_MS } from './constants'
+import {
+  ASYNC_DEADLINE_MS,
+  FINALIZE_TIMEOUT_MS,
+  MATCH_USER_HEADER,
+  WAITING_TIMEOUT_MS,
+} from './constants'
 import { parsePublicDartThrows } from './dartPayload'
 import { publishMatchIndex } from './indexSync'
 import {
@@ -38,6 +57,7 @@ import {
   playStateToSessionJson,
   resolveMatchWinnerUserId,
 } from './sessionPlay'
+import type { StoredPlayState } from './sessionPlay'
 import {
   ClientMessageType,
   CommandErrorCode,
@@ -290,6 +310,26 @@ export class MatchObject extends DurableObject<Env> {
         const finishResult = await this.persistFinishMatch(userId)
         return finishResult
       }
+      case MatchCommandName.StartAsync: {
+        const startAsyncResult = await this.persistStartAsync(userId)
+        return startAsyncResult
+      }
+      case MatchCommandName.AbandonMatch: {
+        const abandonResult = await this.persistAbandonMatch(userId)
+        return abandonResult
+      }
+      case MatchCommandName.ProposeCancel: {
+        const proposeResult = await this.persistProposeCancel(userId)
+        return proposeResult
+      }
+      case MatchCommandName.WithdrawCancel: {
+        const withdrawResult = await this.persistWithdrawCancel(userId)
+        return withdrawResult
+      }
+      case MatchCommandName.AcceptCancel: {
+        const acceptResult = await this.persistAcceptCancel(userId)
+        return acceptResult
+      }
       default:
         return commandFailure(CommandErrorCode.Invalid, 'Unknown command')
     }
@@ -406,6 +446,8 @@ export class MatchObject extends DurableObject<Env> {
     const dueKinds = dueDeadlineKinds(sql, now)
 
     for (const kind of dueKinds) {
+      deleteDeadline(sql, kind)
+
       if (kind === DeadlineKind.WaitingExpiresAt) {
         const state = loadPublicMatchState(sql)
 
@@ -417,12 +459,20 @@ export class MatchObject extends DurableObject<Env> {
       if (kind === DeadlineKind.FinalizeAt) {
         const state = loadPublicMatchState(sql)
 
-        if (state?.status === MatchStatus.Active && state.pendingFinalization) {
+        if (state?.status === MatchStatus.Active && state.playMode === PlayMode.Asynchronous) {
+          this.processAsyncFinalizeAlarm(now)
+        } else if (state?.status === MatchStatus.Active && state.pendingFinalization) {
           this.completeFromPendingFinalization()
         }
       }
 
-      deleteDeadline(sql, kind)
+      if (kind === DeadlineKind.AsyncDeadlineAt) {
+        const state = loadPublicMatchState(sql)
+
+        if (state?.status === MatchStatus.Active && state.playMode === PlayMode.Asynchronous) {
+          this.resolveAsyncDeadline(now)
+        }
+      }
     }
 
     await this.afterPersist()
@@ -601,6 +651,20 @@ export class MatchObject extends DurableObject<Env> {
       return required.result
     }
 
+    const state = loadPublicMatchState(this.ctx.storage.sql)
+
+    if (state?.playMode === PlayMode.Asynchronous) {
+      const applied = applyAsyncRecordDarts(required.play, userId, darts, FINALIZE_TIMEOUT_MS)
+
+      if (!applied.ok) {
+        return commandFailure(CommandErrorCode.Forbidden, applied.reason)
+      }
+
+      this.persistAsyncPlayMutation(userId, applied.play)
+      const result = await this.finishMutation()
+      return result
+    }
+
     const applied = applyRecordDarts(required.play, userId, darts)
 
     if (!applied.ok) {
@@ -619,6 +683,20 @@ export class MatchObject extends DurableObject<Env> {
       return required.result
     }
 
+    const state = loadPublicMatchState(this.ctx.storage.sql)
+
+    if (state?.playMode === PlayMode.Asynchronous) {
+      const applied = applyAsyncRecordVisitScore(required.play, userId, score, FINALIZE_TIMEOUT_MS)
+
+      if (!applied.ok) {
+        return commandFailure(CommandErrorCode.Forbidden, applied.reason)
+      }
+
+      this.persistAsyncPlayMutation(userId, applied.play)
+      const result = await this.finishMutation()
+      return result
+    }
+
     const applied = applyRecordVisitScore(required.play, userId, score)
 
     if (!applied.ok) {
@@ -635,6 +713,20 @@ export class MatchObject extends DurableObject<Env> {
 
     if (!required.ok) {
       return required.result
+    }
+
+    const state = loadPublicMatchState(this.ctx.storage.sql)
+
+    if (state?.playMode === PlayMode.Asynchronous) {
+      const applied = applyAsyncUndoVisit(required.play, userId)
+
+      if (!applied.ok) {
+        return commandFailure(CommandErrorCode.Forbidden, applied.reason)
+      }
+
+      this.persistAsyncPlayMutation(userId, applied.play)
+      const result = await this.finishMutation()
+      return result
     }
 
     const applied = applyUndoVisit(required.play, userId)
@@ -659,6 +751,15 @@ export class MatchObject extends DurableObject<Env> {
 
     if (!required.ok) {
       return required.result
+    }
+
+    const state = loadPublicMatchState(this.ctx.storage.sql)
+
+    if (state?.playMode === PlayMode.Asynchronous) {
+      return commandFailure(
+        CommandErrorCode.Invalid,
+        'Visit correction is not available in async play',
+      )
     }
 
     if (command.darts !== undefined) {
@@ -703,6 +804,27 @@ export class MatchObject extends DurableObject<Env> {
       return required.result
     }
 
+    const state = loadPublicMatchState(this.ctx.storage.sql)
+
+    if (state?.playMode === PlayMode.Asynchronous) {
+      const applied = finalizeAsyncPlayer(required.play, userId)
+
+      if (!applied.ok) {
+        return commandFailure(CommandErrorCode.Invalid, applied.reason)
+      }
+
+      const asyncPlay = applied.play.asyncPlay
+
+      if (asyncPlay !== undefined && bothAsyncPlayersFinalized(asyncPlay)) {
+        this.completeAsyncMatch(applied.play, MatchEndingKind.AsyncResult)
+      } else {
+        this.persistAsyncPlayMutation(userId, applied.play)
+      }
+
+      const result = await this.finishMutation()
+      return result
+    }
+
     if (!required.play.pendingFinalization) {
       return commandFailure(CommandErrorCode.Invalid, 'Match is not waiting to be finalized')
     }
@@ -719,7 +841,161 @@ export class MatchObject extends DurableObject<Env> {
     return result
   }
 
-  private persistPlayMutation(actorUserId: string, play: ReturnType<typeof parsePlayState>): void {
+  private async persistStartAsync(_userId: string): Promise<CommandResult> {
+    const sql = this.ctx.storage.sql
+    const state = loadPublicMatchState(sql)
+
+    if (state?.status !== MatchStatus.Active) {
+      return commandFailure(CommandErrorCode.Invalid, 'Match is not active')
+    }
+
+    if (state.playMode !== PlayMode.Synchronous) {
+      return commandFailure(CommandErrorCode.Invalid, 'Match is already asynchronous')
+    }
+
+    if (state.pendingFinalization) {
+      return commandFailure(CommandErrorCode.Invalid, 'Cannot start async during finalization')
+    }
+
+    const required = this.requireActivePlay()
+
+    if (!required.ok) {
+      return required.result
+    }
+
+    const asyncPlay = createAsyncPlayFromSync(required.play)
+    const nextPlay: StoredPlayState = {
+      ...required.play,
+      pendingFinalization: false,
+      asyncPlay,
+    }
+    const now = Date.now()
+    const asyncDeadlineAt = now + ASYNC_DEADLINE_MS
+
+    sql.exec(
+      `
+        UPDATE match_state
+        SET play_mode = ?, async_started_at = ?, darts_owner_user_id = ?,
+            session_json = ?, turn_index = ?, pending_finalization = 0,
+            updated_at = ?, version = version + 1
+        WHERE id IS NOT NULL
+      `,
+      PlayMode.Asynchronous,
+      now,
+      asyncPlay.dartsOwnerId,
+      playStateToSessionJson(nextPlay),
+      nextPlay.turnIndex,
+      now,
+    )
+    deleteDeadline(sql, DeadlineKind.FinalizeAt)
+    upsertDeadline(sql, DeadlineKind.AsyncDeadlineAt, asyncDeadlineAt)
+
+    const started = await this.finishMutation()
+    return started
+  }
+
+  private async persistAbandonMatch(userId: string): Promise<CommandResult> {
+    const sql = this.ctx.storage.sql
+    const state = loadPublicMatchState(sql)
+
+    if (state?.status !== MatchStatus.Active) {
+      return commandFailure(CommandErrorCode.Invalid, 'Match is not active')
+    }
+
+    const opponent = state.players.find((player) => player.userId !== userId)
+
+    if (opponent === undefined) {
+      return commandFailure(CommandErrorCode.Invalid, 'Match needs an opponent to abandon')
+    }
+
+    const now = Date.now()
+    sql.exec('UPDATE match_players SET abandoned_at = ? WHERE user_id = ?', now, userId)
+    this.persistCompleted(MatchEndingKind.Abandon, opponent.userId, null)
+
+    const abandoned = await this.finishMutation()
+    return abandoned
+  }
+
+  private async persistProposeCancel(userId: string): Promise<CommandResult> {
+    const sql = this.ctx.storage.sql
+    const state = loadPublicMatchState(sql)
+
+    if (state?.status !== MatchStatus.Active) {
+      return commandFailure(CommandErrorCode.Invalid, 'Match is not active')
+    }
+
+    if (state.cancelProposalUserId !== null) {
+      return commandFailure(CommandErrorCode.Conflict, 'A cancel proposal is already open')
+    }
+
+    const now = Date.now()
+    sql.exec(
+      `
+        UPDATE match_state
+        SET cancel_proposal_user_id = ?, updated_at = ?, version = version + 1
+        WHERE id IS NOT NULL
+      `,
+      userId,
+      now,
+    )
+
+    const proposed = await this.finishMutation()
+    return proposed
+  }
+
+  private async persistWithdrawCancel(userId: string): Promise<CommandResult> {
+    const sql = this.ctx.storage.sql
+    const state = loadPublicMatchState(sql)
+
+    if (state?.status !== MatchStatus.Active) {
+      return commandFailure(CommandErrorCode.Invalid, 'Match is not active')
+    }
+
+    if (state.cancelProposalUserId === null) {
+      return commandFailure(CommandErrorCode.Invalid, 'No cancel proposal to withdraw')
+    }
+
+    if (state.cancelProposalUserId !== userId) {
+      return commandFailure(CommandErrorCode.Forbidden, 'Only the proposer can withdraw')
+    }
+
+    const now = Date.now()
+    sql.exec(
+      `
+        UPDATE match_state
+        SET cancel_proposal_user_id = NULL, updated_at = ?, version = version + 1
+        WHERE id IS NOT NULL
+      `,
+      now,
+    )
+
+    const withdrawn = await this.finishMutation()
+    return withdrawn
+  }
+
+  private async persistAcceptCancel(userId: string): Promise<CommandResult> {
+    const sql = this.ctx.storage.sql
+    const state = loadPublicMatchState(sql)
+
+    if (state?.status !== MatchStatus.Active) {
+      return commandFailure(CommandErrorCode.Invalid, 'Match is not active')
+    }
+
+    if (state.cancelProposalUserId === null) {
+      return commandFailure(CommandErrorCode.Invalid, 'No cancel proposal to accept')
+    }
+
+    if (state.cancelProposalUserId === userId) {
+      return commandFailure(CommandErrorCode.Forbidden, 'Cannot accept your own cancel proposal')
+    }
+
+    this.persistCancelled(MatchEndingKind.MutualCancel)
+
+    const accepted = await this.finishMutation()
+    return accepted
+  }
+
+  private persistPlayMutation(actorUserId: string, play: StoredPlayState): void {
     const sql = this.ctx.storage.sql
     const now = Date.now()
     writePlayState(sql, playStateToSessionJson(play), play.turnIndex, play.pendingFinalization)
@@ -730,6 +1006,117 @@ export class MatchObject extends DurableObject<Env> {
     } else {
       deleteDeadline(sql, DeadlineKind.FinalizeAt)
     }
+  }
+
+  private persistAsyncPlayMutation(actorUserId: string, play: StoredPlayState): void {
+    const sql = this.ctx.storage.sql
+    const now = Date.now()
+    const pending = play.asyncPlay !== undefined && anyAsyncPendingFinalization(play.asyncPlay)
+    writePlayState(sql, playStateToSessionJson(play), play.turnIndex, pending)
+    setPlayerLastVisitAt(sql, actorUserId, now)
+    this.scheduleAsyncFinalizeDeadline(play)
+  }
+
+  private scheduleAsyncFinalizeDeadline(play: StoredPlayState): void {
+    const sql = this.ctx.storage.sql
+
+    if (play.asyncPlay === undefined) {
+      deleteDeadline(sql, DeadlineKind.FinalizeAt)
+      return
+    }
+
+    const next = earliestAsyncFinalizeAt(play.asyncPlay)
+
+    if (next === null) {
+      deleteDeadline(sql, DeadlineKind.FinalizeAt)
+      return
+    }
+
+    upsertDeadline(sql, DeadlineKind.FinalizeAt, next)
+  }
+
+  private processAsyncFinalizeAlarm(now: number): void {
+    const sql = this.ctx.storage.sql
+    const sessionJson = loadPlayStateJson(sql)
+
+    if (sessionJson === null) {
+      return
+    }
+
+    const play = autoFinalizeDueAsyncPlayers(parsePlayState(sessionJson), now)
+
+    if (play.asyncPlay !== undefined && bothAsyncPlayersFinalized(play.asyncPlay)) {
+      this.completeAsyncMatch(play, MatchEndingKind.AsyncResult)
+      return
+    }
+
+    writePlayState(
+      sql,
+      playStateToSessionJson(play),
+      play.turnIndex,
+      play.asyncPlay !== undefined && anyAsyncPendingFinalization(play.asyncPlay),
+    )
+    this.scheduleAsyncFinalizeDeadline(play)
+  }
+
+  private resolveAsyncDeadline(now: number): void {
+    const sql = this.ctx.storage.sql
+    const sessionJson = loadPlayStateJson(sql)
+
+    if (sessionJson === null) {
+      return
+    }
+
+    const play = markPendingAsyncPlayersFinalized(parsePlayState(sessionJson))
+    const asyncPlay = play.asyncPlay
+
+    if (asyncPlay === undefined) {
+      return
+    }
+
+    const { finalized, unfinished } = asyncPlayerIdsByFinalized(asyncPlay)
+
+    if (finalized.length === 2) {
+      this.completeAsyncMatch(play, MatchEndingKind.AsyncResult)
+      return
+    }
+
+    if (finalized.length === 1 && unfinished.length === 1) {
+      const winnerUserId = finalized[0]
+      const loserUserId = unfinished[0]
+
+      if (winnerUserId === undefined || loserUserId === undefined) {
+        return
+      }
+
+      sql.exec('UPDATE match_players SET abandoned_at = ? WHERE user_id = ?', now, loserUserId)
+      writePlayState(sql, playStateToSessionJson(play), play.turnIndex, false)
+      this.persistCompleted(MatchEndingKind.AsyncTimeout, winnerUserId, {
+        asyncPlay,
+        winnerUserId,
+      })
+      return
+    }
+
+    writePlayState(sql, playStateToSessionJson(play), play.turnIndex, false)
+    this.persistCancelled(MatchEndingKind.MutualCancel)
+  }
+
+  private completeAsyncMatch(play: StoredPlayState, endingKind: MatchEndingKind): void {
+    const resolved = resolveAsyncCompletion(play)
+
+    if (resolved === null) {
+      return
+    }
+
+    const resultPayload = {
+      asyncPlay: play.asyncPlay,
+      winnerUserId: resolved.winnerUserId,
+      visits: resolved.visits,
+    }
+
+    writePlayState(this.ctx.storage.sql, playStateToSessionJson(play), play.turnIndex, false)
+    this.persistCompleted(endingKind, resolved.winnerUserId, resultPayload)
   }
 
   private completeFromPendingFinalization(): void {
@@ -774,6 +1161,50 @@ export class MatchObject extends DurableObject<Env> {
         socket.close(4000, 'left')
       }
     }
+  }
+
+  private persistCompleted(
+    endingKind: MatchEndingKind,
+    winnerUserId: string,
+    resultPayload: Record<string, unknown> | null,
+  ): void {
+    const sql = this.ctx.storage.sql
+    const now = Date.now()
+    sql.exec(
+      `
+        UPDATE match_state
+        SET status = ?, ending_kind = ?, winner_user_id = ?, completed_at = ?,
+            cancel_proposal_user_id = NULL, pending_finalization = 0,
+            result_payload_json = ?, updated_at = ?, version = version + 1
+        WHERE id IS NOT NULL
+      `,
+      MatchStatus.Completed,
+      endingKind,
+      winnerUserId,
+      now,
+      resultPayload === null ? null : JSON.stringify(resultPayload),
+      now,
+    )
+    deleteAllDeadlines(sql)
+  }
+
+  private persistCancelled(endingKind: MatchEndingKind): void {
+    const sql = this.ctx.storage.sql
+    const now = Date.now()
+    sql.exec(
+      `
+        UPDATE match_state
+        SET status = ?, ending_kind = ?, winner_user_id = NULL, completed_at = ?,
+            cancel_proposal_user_id = NULL, pending_finalization = 0,
+            updated_at = ?, version = version + 1
+        WHERE id IS NOT NULL
+      `,
+      MatchStatus.Cancelled,
+      endingKind,
+      now,
+      now,
+    )
+    deleteAllDeadlines(sql)
   }
 
   private persistTerminal(status: MatchStatus, endingKind: MatchEndingKind): void {

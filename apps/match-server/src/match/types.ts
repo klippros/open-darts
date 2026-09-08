@@ -41,6 +41,11 @@ export enum MatchCommandName {
   UndoVisit = 'undo_visit',
   CorrectVisit = 'correct_visit',
   FinishMatch = 'finish_match',
+  StartAsync = 'start_async',
+  AbandonMatch = 'abandon_match',
+  ProposeCancel = 'propose_cancel',
+  WithdrawCancel = 'withdraw_cancel',
+  AcceptCancel = 'accept_cancel',
 }
 
 export enum CommandErrorCode {
@@ -78,6 +83,11 @@ export type MatchCommand =
       visitScore?: number
     }
   | { name: MatchCommandName.FinishMatch }
+  | { name: MatchCommandName.StartAsync }
+  | { name: MatchCommandName.AbandonMatch }
+  | { name: MatchCommandName.ProposeCancel }
+  | { name: MatchCommandName.WithdrawCancel }
+  | { name: MatchCommandName.AcceptCancel }
 
 export interface PublicDartThrow {
   segment: { type: string; value?: number }
@@ -121,6 +131,10 @@ export interface PublicMatchState {
   activePlayerId: string | null
   pendingFinalization: boolean
   resultPayloadJson: string | null
+  cancelProposalUserId: string | null
+  asyncStartedAt: number | null
+  dartsOwnerUserId: string | null
+  asyncStateJson: string | null
   version: number
 }
 

@@ -25,6 +25,9 @@ interface MatchRow {
   winner_user_id: string | null
   result_payload_json: string | null
   invite_token: string
+  async_started_at: number | null
+  cancel_proposal_user_id: string | null
+  darts_owner_user_id: string | null
   version: number
   [column: string]: string | number | null
 }
@@ -110,6 +113,13 @@ export const migrateMatchSchema = (sql: SqlStorage): void => {
     sql.exec('ALTER TABLE match_players ADD COLUMN last_visit_at INTEGER')
     sql.exec('INSERT INTO _sql_schema_migrations (id, applied_at) VALUES (3, ?)', Date.now())
   }
+
+  if (version < 4) {
+    sql.exec('ALTER TABLE match_state ADD COLUMN async_started_at INTEGER')
+    sql.exec('ALTER TABLE match_state ADD COLUMN cancel_proposal_user_id TEXT')
+    sql.exec('ALTER TABLE match_state ADD COLUMN darts_owner_user_id TEXT')
+    sql.exec('INSERT INTO _sql_schema_migrations (id, applied_at) VALUES (4, ?)', Date.now())
+  }
 }
 
 const isGameModeId = (value: string): value is GameModeId =>
@@ -182,12 +192,19 @@ export const loadPublicMatchState = (sql: SqlStorage): PublicMatchState | null =
   let turnIndex = match.turn_index
   let activePlayerId: string | null = null
   const pendingFinalization = match.pending_finalization === 1
+  let asyncStateJson: string | null = null
 
   if (match.session_json !== null) {
     const play = parsePlayState(match.session_json)
     turnIndex = play.turnIndex
-    const active = play.session.players[play.turnIndex]
-    activePlayerId = active?.id ?? null
+
+    if (play.asyncPlay !== undefined) {
+      asyncStateJson = JSON.stringify(play.asyncPlay)
+      activePlayerId = null
+    } else {
+      const active = play.session.players[play.turnIndex]
+      activePlayerId = active?.id ?? null
+    }
   }
 
   return {
@@ -213,6 +230,10 @@ export const loadPublicMatchState = (sql: SqlStorage): PublicMatchState | null =
     activePlayerId,
     pendingFinalization,
     resultPayloadJson: match.result_payload_json,
+    cancelProposalUserId: match.cancel_proposal_user_id ?? null,
+    asyncStartedAt: match.async_started_at ?? null,
+    dartsOwnerUserId: match.darts_owner_user_id ?? null,
+    asyncStateJson,
     version: match.version,
   }
 }

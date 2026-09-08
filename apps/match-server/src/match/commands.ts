@@ -12,6 +12,11 @@ const SIMPLE_COMMANDS: Record<string, MatchCommand> = {
   [MatchCommandName.BeginMatch]: { name: MatchCommandName.BeginMatch },
   [MatchCommandName.UndoVisit]: { name: MatchCommandName.UndoVisit },
   [MatchCommandName.FinishMatch]: { name: MatchCommandName.FinishMatch },
+  [MatchCommandName.StartAsync]: { name: MatchCommandName.StartAsync },
+  [MatchCommandName.AbandonMatch]: { name: MatchCommandName.AbandonMatch },
+  [MatchCommandName.ProposeCancel]: { name: MatchCommandName.ProposeCancel },
+  [MatchCommandName.WithdrawCancel]: { name: MatchCommandName.WithdrawCancel },
+  [MatchCommandName.AcceptCancel]: { name: MatchCommandName.AcceptCancel },
 }
 
 const toPublicDartsFromParsed = (
