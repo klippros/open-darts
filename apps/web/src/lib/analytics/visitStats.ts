@@ -1,0 +1,139 @@
+import type { Player } from '@open-darts/game/types/player'
+import { PlayerKind } from '@open-darts/game/types/player'
+import type { GameSession } from '@open-darts/game/types/gameSession'
+import type { Visit } from '@open-darts/game/types/visit'
+import { getVisitDartCount, isCountingVisit } from '@open-darts/game/types/visit'
+import { MAX_CHECKOUT_SCORE } from '@open-darts/game/checkout/checkoutSuggestions'
+import { getVisitsForLeg } from '@open-darts/game/game/matchLegs'
+
+export const getPrimaryPlayerVisits = (session: GameSession): Visit[] => {
+  const humanPlayer = session.players.find((player) => player.kind === PlayerKind.Human)
+  const playerId = humanPlayer?.id ?? session.players[0]?.id
+
+  if (playerId === undefined) {
+    return session.visits.filter(isCountingVisit)
+  }
+
+  return session.visits.filter((visit) => visit.playerId === playerId && isCountingVisit(visit))
+}
+
+export const getPlayerVisits = (visits: Visit[], playerId: string): Visit[] =>
+  visits.filter((visit) => visit.playerId === playerId && isCountingVisit(visit))
+
+export const getSessionFinalScore = (session: GameSession): number | null => {
+  const lastVisit = getPrimaryPlayerVisits(session).at(-1)
+
+  return lastVisit?.scoreAfter ?? null
+}
+
+export const countDartsInSession = (session: GameSession): number =>
+  getPrimaryPlayerVisits(session).reduce((sum, visit) => sum + getVisitDartCount(visit), 0)
+
+export const countTotalDartsThrown = (sessions: GameSession[]): number =>
+  sessions.reduce((total, session) => total + countDartsInSession(session), 0)
+
+export const getThreeDartAverage = (visits: Visit[]): number | null => {
+  if (visits.length === 0) {
+    return null
+  }
+
+  const total = visits.reduce((sum, visit) => sum + visit.visitScore, 0)
+
+  return total / visits.length
+}
+
+export const getMaxThreeDartAverage = (visitGroups: Visit[][]): number | null => {
+  const averages = visitGroups
+    .map((visits) => getThreeDartAverage(visits))
+    .filter((average): average is number => average !== null)
+
+  if (averages.length === 0) {
+    return null
+  }
+
+  return Math.max(...averages)
+}
+
+export const getScoringVisits = (visits: Visit[]): Visit[] =>
+  visits.filter((visit) => visit.scoreBefore > MAX_CHECKOUT_SCORE)
+
+export const countCheckoutVisits = (visits: Visit[]): number =>
+  visits.filter((visit) => visit.checkout).length
+
+export const getSessionCheckoutRate = (session: GameSession): number | null => {
+  const visits = getPrimaryPlayerVisits(session)
+
+  if (visits.length === 0) {
+    return null
+  }
+
+  return (countCheckoutVisits(visits) / visits.length) * 100
+}
+
+export const countThrown180 = (visits: Visit[]): number =>
+  visits.filter((visit) => visit.visitScore === 180).length
+
+export const countThrown140Plus = (visits: Visit[]): number =>
+  visits.filter((visit) => visit.visitScore >= 140 && visit.visitScore < 180).length
+
+export const countThrown100Plus = (visits: Visit[]): number =>
+  visits.filter((visit) => visit.visitScore >= 100 && visit.visitScore < 140).length
+
+export const getHighestCheckout = (visits: Visit[]): number | null => {
+  const checkoutScores = visits.filter((visit) => visit.checkout).map((visit) => visit.scoreBefore)
+
+  if (checkoutScores.length === 0) {
+    return null
+  }
+
+  return Math.max(...checkoutScores)
+}
+
+export const getHighestVisit = (visits: Visit[]): number | null => {
+  if (visits.length === 0) {
+    return null
+  }
+
+  return Math.max(...visits.map((visit) => visit.visitScore))
+}
+
+export const countCheckouts100Plus = (visits: Visit[]): number =>
+  visits.filter((visit) => visit.checkout && visit.scoreBefore >= 100).length
+
+export const sessionFinishedWithCheckout = (session: GameSession): boolean =>
+  getPrimaryPlayerVisits(session).some((visit) => visit.checkout)
+
+export interface LegAndMatchAverages {
+  leg: number | null
+  match: number | null
+}
+
+export const getVisitAverages = (
+  players: Player[],
+  visits: Visit[],
+): Record<string, number | null> =>
+  Object.fromEntries(
+    players.map((player) => [player.id, getThreeDartAverage(getPlayerVisits(visits, player.id))]),
+  )
+
+export const getLegAndMatchAverages = (
+  players: Player[],
+  visits: Visit[],
+  currentLeg?: number,
+): Record<string, LegAndMatchAverages> =>
+  Object.fromEntries(
+    players.map((player) => {
+      const playerVisits = getPlayerVisits(visits, player.id)
+      const matchAverage = getThreeDartAverage(playerVisits)
+      const legVisits =
+        currentLeg === undefined ? playerVisits : getVisitsForLeg(playerVisits, currentLeg)
+
+      return [
+        player.id,
+        {
+          leg: currentLeg === undefined ? matchAverage : getThreeDartAverage(legVisits),
+          match: matchAverage,
+        },
+      ]
+    }),
+  )

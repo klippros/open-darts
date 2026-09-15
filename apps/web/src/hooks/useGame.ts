@@ -1,0 +1,310 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
+import type { AppGameController, CreateSessionParams } from '@open-darts/game/game/createSession'
+import { createGameController, restoreGameController } from '@open-darts/game/game/createSession'
+import { shouldCreateFreshControllerOnStartFresh } from '../lib/routing/shouldCreateFreshControllerOnStartFresh'
+import { clearActiveSnapshot } from '../lib/storage/gameStore'
+import { getResumableSnapshot, persistControllerState } from '../lib/storage/visitPersistence'
+import type { ActiveGameSnapshot } from '@open-darts/game/types/activeGameSnapshot'
+import type { DartThrow } from '@open-darts/game/types/dart'
+import type { Visit } from '@open-darts/game/types/visit'
+import { useUiSounds } from './useUiSounds'
+import type { ScoreCallerCallbacks } from './useVisitScoreCaller'
+
+export interface UseGameOptions extends ScoreCallerCallbacks {
+  routeKey?: string
+  startFresh?: boolean
+  shouldRestoreOnLoad?: boolean
+  autoSaveCompletedSessions?: boolean
+}
+
+const notifyAfterVisitCommit = (
+  current: AppGameController,
+  next: AppGameController,
+  visit: Visit,
+  callbacks: ScoreCallerCallbacks,
+): void => {
+  callbacks.onVisitCommitted?.(visit, next)
+
+  const legAdvanced =
+    next.session.matchProgress?.currentLeg !== current.session.matchProgress?.currentLeg
+
+  if (legAdvanced) {
+    callbacks.onLegStarted?.(next)
+    return
+  }
+
+  const turnAdvanced = next.turnIndex !== current.turnIndex
+
+  if (turnAdvanced) {
+    callbacks.onTurnStarted?.(next)
+  }
+}
+
+export const useGame = (launchParams: CreateSessionParams, options: UseGameOptions = {}) => {
+  const {
+    routeKey = '',
+    startFresh = false,
+    shouldRestoreOnLoad = false,
+    autoSaveCompletedSessions = false,
+    onVisitCommitted,
+    onTurnStarted,
+    onLegStarted,
+    onUndo,
+  } = options
+
+  const { playUndo } = useUiSounds()
+  const playUndoRef = useRef(playUndo)
+  playUndoRef.current = playUndo
+
+  const scoreCallerCallbacksRef = useRef<ScoreCallerCallbacks>({
+    onVisitCommitted,
+    onTurnStarted,
+    onLegStarted,
+  })
+
+  scoreCallerCallbacksRef.current = {
+    onVisitCommitted,
+    onTurnStarted,
+    onLegStarted,
+  }
+
+  const createFreshController = useCallback(
+    () => createGameController(launchParams),
+    [launchParams],
+  )
+
+  const createControllerForRoute = useCallback(() => {
+    if (shouldRestoreOnLoad) {
+      const snapshot = getResumableSnapshot()
+
+      if (snapshot !== null) {
+        return restoreGameController(snapshot)
+      }
+    }
+
+    return createFreshController()
+  }, [shouldRestoreOnLoad, createFreshController])
+
+  const [controller, setController] = useState(() => createControllerForRoute())
+  const routeSyncRef = useRef<{ routeKey: string; startFresh: boolean } | null>(null)
+
+  useEffect(() => {
+    const previous = routeSyncRef.current
+    routeSyncRef.current = { routeKey, startFresh }
+
+    if (startFresh) {
+      clearActiveSnapshot()
+
+      if (shouldCreateFreshControllerOnStartFresh(previous, routeKey)) {
+        setController(createFreshController())
+      }
+
+      return
+    }
+
+    if (previous === null) {
+      return
+    }
+
+    if (previous.routeKey === routeKey && previous.startFresh === startFresh) {
+      return
+    }
+
+    setController((current) => {
+      if (current.isComplete) {
+        return current
+      }
+
+      return createControllerForRoute()
+    })
+  }, [routeKey, startFresh, createFreshController, createControllerForRoute])
+
+  const persist = useCallback(
+    (nextController: typeof controller) => {
+      persistControllerState(nextController, { autoSaveCompletedSessions })
+    },
+    [autoSaveCompletedSessions],
+  )
+
+  const recordDart = useCallback(
+    (dart: DartThrow) => {
+      setController((current) => {
+        const next = current.recordDart(dart)
+        const visitCommitted = next.session.visits.length > current.session.visits.length
+
+        if (visitCommitted) {
+          const visit = next.session.visits.at(-1)
+
+          if (visit !== undefined) {
+            notifyAfterVisitCommit(current, next, visit, scoreCallerCallbacksRef.current)
+          }
+        }
+
+        persist(next)
+        return next
+      })
+    },
+    [persist],
+  )
+
+  const recordDarts = useCallback(
+    (darts: DartThrow[]) => {
+      if (darts.length === 0) {
+        return
+      }
+
+      setController((current) => {
+        const next = darts.reduce(
+          (currentController, dart) => currentController.recordDart(dart),
+          current,
+        )
+        const visitCommitted = next.session.visits.length > current.session.visits.length
+
+        if (visitCommitted) {
+          const visit = next.session.visits.at(-1)
+
+          if (visit !== undefined) {
+            notifyAfterVisitCommit(current, next, visit, scoreCallerCallbacksRef.current)
+          }
+        }
+
+        persist(next)
+        return next
+      })
+    },
+    [persist],
+  )
+
+  const recordVisitScore = useCallback(
+    (score: number) => {
+      setController((current) => {
+        const next = current.recordVisitScore(score)
+        const visitCommitted = next.session.visits.length > current.session.visits.length
+
+        if (visitCommitted) {
+          const visit = next.session.visits.at(-1)
+
+          if (visit !== undefined) {
+            notifyAfterVisitCommit(current, next, visit, scoreCallerCallbacksRef.current)
+          }
+        }
+
+        persist(next)
+        return next
+      })
+    },
+    [persist],
+  )
+
+  const undoDart = useCallback(() => {
+    setController((current) => {
+      const next = current.undoDart()
+
+      if (next === current) {
+        return current
+      }
+
+      playUndoRef.current()
+      onUndo?.(current.session.id)
+
+      persist(next)
+      return next
+    })
+  }, [persist, onUndo])
+
+  const finishMatch = useCallback(() => {
+    setController((current) => {
+      const next = current.finishMatch()
+      const visitCommitted = next.session.visits.length > current.session.visits.length
+
+      if (visitCommitted) {
+        const visit = next.session.visits.at(-1)
+
+        if (visit !== undefined) {
+          notifyAfterVisitCommit(current, next, visit, scoreCallerCallbacksRef.current)
+        }
+      }
+
+      persist(next)
+      return next
+    })
+  }, [persist])
+
+  const restart = useCallback(() => {
+    clearActiveSnapshot()
+    setController(createFreshController())
+  }, [createFreshController])
+
+  const discardSavedGame = useCallback(() => {
+    clearActiveSnapshot()
+    setController(createFreshController())
+  }, [createFreshController])
+
+  const restoreFromSnapshot = useCallback((snapshot: ActiveGameSnapshot) => {
+    setController(restoreGameController(snapshot))
+  }, [])
+
+  const applyControllerTransaction = useCallback(
+    (
+      updater: (current: AppGameController) => {
+        next: AppGameController
+        scoreCallerBase?: AppGameController
+        didUndo?: boolean
+      } | null,
+    ): void => {
+      let effectsFor: AppGameController | null = null
+
+      setController((current) => {
+        const result = updater(current)
+
+        if (result === null || result.next === current) {
+          return current
+        }
+
+        // Strict Mode may run this updater twice with the same `next` reference.
+        if (effectsFor !== result.next) {
+          effectsFor = result.next
+
+          if (result.didUndo === true) {
+            onUndo?.(current.session.id)
+          }
+
+          const scoreCallerBase = result.scoreCallerBase ?? current
+          const visitCommitted =
+            result.next.session.visits.length > scoreCallerBase.session.visits.length
+
+          if (visitCommitted) {
+            const visit = result.next.session.visits.at(-1)
+
+            if (visit !== undefined) {
+              notifyAfterVisitCommit(
+                scoreCallerBase,
+                result.next,
+                visit,
+                scoreCallerCallbacksRef.current,
+              )
+            }
+          }
+
+          persist(result.next)
+        }
+
+        return result.next
+      })
+    },
+    [persist, onUndo],
+  )
+
+  return {
+    controller,
+    recordDart,
+    recordDarts,
+    recordVisitScore,
+    undoDart,
+    finishMatch,
+    restart,
+    discardSavedGame,
+    restoreFromSnapshot,
+    applyControllerTransaction,
+  }
+}

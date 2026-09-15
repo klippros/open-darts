@@ -1,0 +1,109 @@
+import { describe, expect, it } from 'vitest'
+import { GameModeId, GameStatus } from '@open-darts/game/types/gameMode'
+import type { GameSession } from '@open-darts/game/types/gameSession'
+import { PlayerKind } from '@open-darts/game/types/player'
+import {
+  buildGamePathFromSession,
+  configsMatch,
+  sessionMatchesLaunchParams,
+} from './sessionMatching'
+
+describe('sessionMatching', () => {
+  it('matches x01 sessions by config', () => {
+    const session: GameSession = {
+      id: 'session-1',
+      mode: GameModeId.X01,
+      config: { startScore: 501, doubleIn: false, doubleOut: true },
+      players: [{ id: 'player-1', name: 'You', kind: PlayerKind.Human }],
+      visits: [],
+      status: GameStatus.InProgress,
+      startedAt: '2026-01-01T00:00:00.000Z',
+    }
+
+    expect(
+      sessionMatchesLaunchParams(session, {
+        mode: GameModeId.X01,
+        config: { startScore: 501, doubleIn: false, doubleOut: true },
+        players: session.players,
+      }),
+    ).toBe(true)
+
+    expect(
+      sessionMatchesLaunchParams(session, {
+        mode: GameModeId.X01,
+        config: { startScore: 301, doubleIn: false, doubleOut: true },
+        players: session.players,
+      }),
+    ).toBe(false)
+  })
+
+  it('matches in-progress sessions for a logged-in primary human name', () => {
+    const human = { id: 'player-1', name: 'Alex', kind: PlayerKind.Human }
+    const guest = { id: 'player-2', name: 'Guest', kind: PlayerKind.Human }
+    const session: GameSession = {
+      id: 'session-1',
+      mode: GameModeId.X01,
+      config: { startScore: 501, doubleIn: false, doubleOut: true },
+      players: [human, guest],
+      visits: [
+        {
+          visitIndex: 0,
+          playerId: human.id,
+          darts: [],
+          visitScore: 60,
+          scoreBefore: 501,
+          scoreAfter: 441,
+          bust: false,
+          checkout: false,
+        },
+      ],
+      status: GameStatus.InProgress,
+      startedAt: '2026-01-01T00:00:00.000Z',
+      matchProgress: {
+        legsToWin: 2,
+        startingPlayerIndex: 0,
+        currentLeg: 1,
+        legWins: { [human.id]: 0, [guest.id]: 0 },
+      },
+    }
+
+    expect(
+      sessionMatchesLaunchParams(session, {
+        mode: GameModeId.X01,
+        config: session.config,
+        players: [human, guest],
+        matchFormat: { legsToWin: 2, startingPlayerIndex: 0 },
+      }),
+    ).toBe(true)
+  })
+
+  it('builds preset and custom x01 paths', () => {
+    expect(
+      buildGamePathFromSession({
+        id: 'session-1',
+        mode: GameModeId.X01,
+        config: { startScore: 501, doubleIn: false, doubleOut: true },
+        players: [],
+        visits: [],
+        status: GameStatus.InProgress,
+        startedAt: '2026-01-01T00:00:00.000Z',
+      }),
+    ).toBe('/game?preset=501')
+
+    expect(
+      buildGamePathFromSession({
+        id: 'session-1',
+        mode: GameModeId.X01,
+        config: { startScore: 333, doubleIn: true, doubleOut: false },
+        players: [],
+        visits: [],
+        status: GameStatus.InProgress,
+        startedAt: '2026-01-01T00:00:00.000Z',
+      }),
+    ).toBe('/game?start=333&doubleIn=1&doubleOut=0')
+  })
+
+  it('compares practice mode configs', () => {
+    expect(configsMatch(GameModeId.Bob27, { startScore: 27 }, { startScore: 27 })).toBe(true)
+  })
+})

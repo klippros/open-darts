@@ -1,0 +1,55 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  overscroll-behavior-x: none;
+}
+
+#root {
+  min-height: 100%;
+}
+
+:root {
+  --main-content-max-width: 1200px;
+}
+
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes online-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.85);
+  }
+}
+
+.online-pulse-dot {
+  animation: online-pulse 1.6s ease-in-out infinite;
+}

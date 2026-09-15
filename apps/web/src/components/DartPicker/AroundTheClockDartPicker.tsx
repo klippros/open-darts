@@ -1,0 +1,123 @@
+import { Button, Grid, Stack } from '@chakra-ui/react'
+import { VisitDartSlotCard } from '../Scoreboard/VisitDartSlotCard'
+import { useUiSounds } from '../../hooks/useUiSounds'
+import { getAroundTheClockConfig } from '@open-darts/game/aroundTheClock/aroundTheClockConfig'
+import {
+  buildDartsForMissAll,
+  buildDartsForOrdinalHit,
+  getAroundTheClockAvailableOrdinals,
+  getAroundTheClockCurrentTargetIndex,
+  getAroundTheClockDartsLeft,
+  getAroundTheClockThrownSlotLabel,
+} from '@open-darts/game/aroundTheClock/buildAroundTheClockDarts'
+import type { AroundTheClockDartOrdinal } from '@open-darts/game/aroundTheClock/buildAroundTheClockDarts'
+import { getAroundTheClockTargetAimLabel } from '@open-darts/game/aroundTheClock/aroundTheClockRules'
+import type { AroundTheClockConfig } from '@open-darts/game/types/aroundTheClock'
+import type { DartThrow } from '@open-darts/game/types/dart'
+
+export interface AroundTheClockDartPickerProps {
+  committedTargetIndex: number
+  pendingDarts: DartThrow[]
+  config: AroundTheClockConfig
+  onDarts: (darts: DartThrow[]) => void
+  onUndo: () => void
+  inputDisabled?: boolean
+  undoDisabled?: boolean
+}
+
+const ORDINAL_LABELS: Record<AroundTheClockDartOrdinal, string> = {
+  1: '1st',
+  2: '2nd',
+  3: '3rd',
+}
+
+const SLOT_ORDINALS: AroundTheClockDartOrdinal[] = [1, 2, 3]
+
+export const AroundTheClockDartPicker = ({
+  committedTargetIndex,
+  pendingDarts,
+  config,
+  onDarts,
+  onUndo,
+  inputDisabled = false,
+  undoDisabled = inputDisabled,
+}: AroundTheClockDartPickerProps) => {
+  const { playHit, playMiss } = useUiSounds()
+  const { aimMode } = getAroundTheClockConfig(config)
+  const dartsLeft = getAroundTheClockDartsLeft(pendingDarts)
+  const availableOrdinals = new Set(getAroundTheClockAvailableOrdinals(pendingDarts))
+  const currentTargetLabel = getAroundTheClockTargetAimLabel(
+    getAroundTheClockCurrentTargetIndex(committedTargetIndex, pendingDarts, aimMode),
+    aimMode,
+  )
+
+  return (
+    <Stack gap={3}>
+      <Grid templateColumns="repeat(3, 1fr)" gap={3}>
+        {SLOT_ORDINALS.map((ordinal, slotIndex) => {
+          const isThrown = slotIndex < pendingDarts.length
+          const isSelectable = !isThrown && availableOrdinals.has(ordinal)
+
+          if (isThrown) {
+            return (
+              <VisitDartSlotCard
+                key={ordinal}
+                label={getAroundTheClockThrownSlotLabel(
+                  committedTargetIndex,
+                  pendingDarts,
+                  aimMode,
+                  slotIndex,
+                )}
+                variant="thrown"
+                size="comfortable"
+              />
+            )
+          }
+
+          if (isSelectable) {
+            return (
+              <VisitDartSlotCard
+                key={ordinal}
+                label={currentTargetLabel}
+                variant="selectable"
+                tone="green"
+                size="comfortable"
+                disabled={inputDisabled}
+                ariaLabel={`Hit ${currentTargetLabel} on ${ORDINAL_LABELS[ordinal]} dart`}
+                onClick={() => {
+                  playHit()
+                  onDarts(
+                    buildDartsForOrdinalHit(ordinal, committedTargetIndex, pendingDarts, aimMode),
+                  )
+                }}
+              />
+            )
+          }
+
+          return <VisitDartSlotCard key={ordinal} label={null} variant="empty" size="comfortable" />
+        })}
+      </Grid>
+
+      <VisitDartSlotCard
+        label={dartsLeft === 1 ? 'Miss' : 'No hits'}
+        variant={dartsLeft === 0 || inputDisabled ? 'empty' : 'selectable'}
+        tone="red"
+        size="comfortable"
+        disabled={inputDisabled || dartsLeft === 0}
+        ariaLabel={dartsLeft === 1 ? 'Miss' : `No hits — miss ${dartsLeft} darts`}
+        onClick={
+          dartsLeft === 0 || inputDisabled
+            ? undefined
+            : () => {
+                playMiss()
+                onDarts(buildDartsForMissAll(dartsLeft))
+              }
+        }
+      />
+
+      <Button variant="cta" disabled={undoDisabled} onClick={onUndo}>
+        Undo last dart
+      </Button>
+    </Stack>
+  )
+}
