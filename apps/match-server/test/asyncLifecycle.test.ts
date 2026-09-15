@@ -325,6 +325,21 @@ describe('async lifecycle', () => {
     expect(finished.state?.status).toBe(MatchStatus.Completed)
     expect(finished.state?.endingKind).toBe(MatchEndingKind.AsyncResult)
     expect(finished.state?.winnerUserId).toBe(creatorUserId)
+
+    const payload = JSON.parse(finished.state?.resultPayloadJson ?? 'null') as {
+      session: {
+        status: string
+        visits: { playerId: string; checkout: boolean; voided?: boolean }[]
+      }
+    }
+    const countingVisits = payload.session.visits.filter((entry) => entry.voided !== true)
+
+    expect(payload.session.status).toBe('completed')
+    expect(countingVisits.filter((entry) => entry.playerId === creatorUserId)).toHaveLength(1)
+    expect(countingVisits.filter((entry) => entry.playerId === otherUserId)).toHaveLength(0)
+    expect(countingVisits.some((entry) => entry.playerId === otherUserId && entry.checkout)).toBe(
+      false,
+    )
   })
 
   it('schedules FinalizeAt after checkout in async', async () => {

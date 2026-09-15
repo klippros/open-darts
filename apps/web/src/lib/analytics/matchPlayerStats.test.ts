@@ -134,6 +134,28 @@ describe('matchPlayerStats', () => {
     expect(statsByPlayer['player-2']?.thrown100Plus).toBe(1)
   })
 
+  it('ignores voided visits in match stats', () => {
+    const statsByPlayer = computeMatchPlayerStats(
+      sampleSession({
+        visits: [
+          visit({ playerId: 'player-1', visitScore: 60, scoreBefore: 501, scoreAfter: 441 }),
+          visit({
+            visitIndex: 1,
+            playerId: 'player-1',
+            visitScore: 180,
+            scoreBefore: 441,
+            scoreAfter: 261,
+            voided: true,
+          }),
+        ],
+      }),
+    )
+
+    expect(statsByPlayer['player-1']?.thrown180).toBe(0)
+    expect(statsByPlayer['player-1']?.highestVisit).toBe(60)
+    expect(statsByPlayer['player-1']?.threeDartAverage).toBe(60)
+  })
+
   it('filters stats by leg', () => {
     const statsByPlayer = computeLegPlayerStats(
       sampleSession({

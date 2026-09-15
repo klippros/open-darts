@@ -1,4 +1,5 @@
-import { resolveAsyncMatchResult } from '@open-darts/game'
+import { applyAsyncMatchResultToSession, resolveAsyncMatchResult } from '@open-darts/game'
+import type { GameSession } from '@open-darts/game/types/gameSession'
 import { createGameController, restoreGameController } from '@open-darts/game/game/createSession'
 import type { AppGameController } from '@open-darts/game/game/createSession'
 import type { DartThrow } from '@open-darts/game/types/dart'
@@ -451,7 +452,7 @@ export const markPendingAsyncPlayersFinalized = (play: StoredPlayState): StoredP
 
 export const resolveAsyncCompletion = (
   play: StoredPlayState,
-): { winnerUserId: string; visits: Visit[] } | null => {
+): { winnerUserId: string; session: GameSession } | null => {
   const asyncPlay = play.asyncPlay
 
   if (asyncPlay === undefined || !bothAsyncPlayersFinalized(asyncPlay)) {
@@ -486,7 +487,10 @@ export const resolveAsyncCompletion = (
     ],
   })
 
-  return { winnerUserId: result.winnerId, visits: result.visits }
+  return {
+    winnerUserId: result.winnerId,
+    session: applyAsyncMatchResultToSession(play.session, result, new Date().toISOString()),
+  }
 }
 
 export const asyncPlayerIdsByFinalized = (

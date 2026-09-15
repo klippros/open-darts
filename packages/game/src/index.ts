@@ -8,7 +8,7 @@ export { correctVisit, CorrectVisitError } from './game/correctVisit'
 export type { CorrectVisitResult, VisitCorrection } from './game/correctVisit'
 export { replaySession } from './game/replaySession'
 export type { ReplaySessionResult } from './game/replaySession'
-export { resolveAsyncMatchResult } from './game/asyncMatchResult'
+export { applyAsyncMatchResultToSession, resolveAsyncMatchResult } from './game/asyncMatchResult'
 export type { AsyncMatchResult, AsyncMatchResultInput } from './game/asyncMatchResult'
 export {
   parseActiveGameSnapshot,

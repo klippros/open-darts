@@ -1,12 +1,7 @@
 import { useMemo, useState } from 'react'
 import { GameModeId } from '@open-darts/game/types/gameMode'
 import type { GameSession } from '@open-darts/game/types/gameSession'
-import { buildLegVisitRows } from '../../lib/analytics/legVisitRows'
-import { getVisibleMatchStatRows } from '../../lib/analytics/matchStatRows'
-import {
-  computeLegPlayerStats,
-  computeMatchPlayerStats,
-} from '../../lib/analytics/matchPlayerStats'
+import { getCountingVisits } from '@open-darts/game/types/visit'
 import {
   getLegWinnerIdFromVisits,
   getLegStartingPlayerIndex,
@@ -14,6 +9,12 @@ import {
   getPlayedLegNumbers,
   getVisitsForLeg,
 } from '@open-darts/game/game/matchLegs'
+import { buildLegVisitRows } from '../../lib/analytics/legVisitRows'
+import { getVisibleMatchStatRows } from '../../lib/analytics/matchStatRows'
+import {
+  computeLegPlayerStats,
+  computeMatchPlayerStats,
+} from '../../lib/analytics/matchPlayerStats'
 import { StatsTable } from '../StatsTable/StatsTable'
 import { MatchStatsScopeSelector } from './MatchStatsScopeSelector'
 import type { MatchStatsScope } from './MatchStatsScopeSelector'
@@ -74,7 +75,10 @@ export const MatchStatsPanel = ({ session }: MatchStatsPanelProps) => {
       return []
     }
 
-    return buildLegVisitRows(getVisitsForLeg(session.visits, legScopeForVisits), playerIds)
+    return buildLegVisitRows(
+      getCountingVisits(getVisitsForLeg(session.visits, legScopeForVisits)),
+      playerIds,
+    )
   }, [legScopeForVisits, playerIds, session.visits])
 
   const highlightedPlayerId = useMemo(() => {

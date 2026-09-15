@@ -11,6 +11,7 @@ import {
   countThrown180,
   getHighestCheckout,
   getHighestVisit,
+  getPlayerVisits,
   getScoringVisits,
   getThreeDartAverage,
 } from './visitStats'
@@ -63,7 +64,7 @@ export const computeMatchPlayerStats = (session: GameSession): Record<string, Pl
     session.players.map((player) => [
       player.id,
       computePlayerStatsForVisits(
-        session.visits.filter((visit) => visit.playerId === player.id),
+        getPlayerVisits(session.visits, player.id),
         rules,
         config.doubleIn,
       ),

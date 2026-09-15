@@ -199,10 +199,9 @@ export const completeAsyncMatch = (
   }
 
   const resultPayload = {
-    session: play.session,
+    session: resolved.session,
     asyncPlay: play.asyncPlay,
     winnerUserId: resolved.winnerUserId,
-    visits: resolved.visits,
   }
 
   writePlayState(sql, playStateToSessionJson(play), play.turnIndex, false)

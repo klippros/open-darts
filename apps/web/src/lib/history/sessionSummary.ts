@@ -16,6 +16,7 @@ import { formatX01StartScore } from '@open-darts/game/x01/x01Presets'
 import { GameModeId, GameStatus } from '@open-darts/game/types/gameMode'
 import type { GameSession } from '@open-darts/game/types/gameSession'
 import { PlayerKind } from '@open-darts/game/types/player'
+import { isCountingVisit } from '@open-darts/game/types/visit'
 
 export interface MatchSummary {
   title: string
@@ -48,7 +49,9 @@ export const getMatchSummary = (session: GameSession): MatchSummary => {
   if (session.mode === GameModeId.X01) {
     const details: string[] = []
     const { matchProgress } = session
-    const checkoutVisit = [...session.visits].reverse().find((visit) => visit.checkout)
+    const checkoutVisit = [...session.visits]
+      .reverse()
+      .find((visit) => visit.checkout && isCountingVisit(visit))
     const legWinner =
       checkoutVisit === undefined
         ? undefined
