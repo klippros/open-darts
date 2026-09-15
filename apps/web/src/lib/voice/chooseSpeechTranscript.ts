@@ -15,6 +15,8 @@ const intentFingerprint = (intent: VoiceIntent): string => {
       return intent.command.type === 'missed-all'
         ? 'atc:missed-all'
         : `atc:${intent.command.outcomes.join(',')}`
+    case VoiceIntentKind.NinetyNineDarts:
+      return `99-darts:${intent.outcomes.join(',')}`
     case VoiceIntentKind.VisitScore:
       return `visit-score:${intent.score}`
     case VoiceIntentKind.TenUpOneDown:

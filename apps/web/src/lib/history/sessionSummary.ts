@@ -1,11 +1,17 @@
 import { getVisitAverages, getPrimaryPlayerVisits } from '../analytics/visitStats'
 import { computeAroundTheClockSingleSessionStats } from '../analytics/aroundTheClockStats'
+import { computeNinetyNineDartsSingleSessionStats } from '../ninetyNineDarts/ninetyNineVisitStats'
 import { gameModeDefinitions } from '@open-darts/game/game/gameModeDefinitions'
-import { isX01Config, isAroundTheClockConfig } from '@open-darts/game/game/gameConfigGuards'
+import {
+  isX01Config,
+  isAroundTheClockConfig,
+  isNinetyNineDartsConfig,
+} from '@open-darts/game/game/gameConfigGuards'
 import {
   getAroundTheClockAimModeLabel,
   getAroundTheClockConfig,
 } from '@open-darts/game/aroundTheClock/aroundTheClockConfig'
+import { getNinetyNineDartsConfigLabel } from '@open-darts/game/ninetyNineDarts/ninetyNineDartsConfig'
 import { formatChallengeMatchScore, isChallengeMode } from '@open-darts/game/game/challenge'
 import { getOneTwentyOneRoundTargetFromVisit } from '@open-darts/game/oneTwentyOne/oneTwentyOneVisitMetadata'
 import { getHighestOneTwentyOneCheckoutTarget } from '../oneTwentyOne/oneTwentyOneVisitStats'
@@ -32,6 +38,10 @@ export const getSessionModeLabel = (session: GameSession): string => {
     const { aimMode } = getAroundTheClockConfig(session.config)
 
     return `${gameModeDefinitions[session.mode].label} · ${getAroundTheClockAimModeLabel(aimMode)}`
+  }
+
+  if (isNinetyNineDartsConfig(session.mode, session.config)) {
+    return `${gameModeDefinitions[session.mode].label} · ${getNinetyNineDartsConfigLabel(session.config)}`
   }
 
   return gameModeDefinitions[session.mode].label
@@ -218,6 +228,29 @@ export const getMatchSummary = (session: GameSession): MatchSummary => {
 
     return {
       title,
+      details,
+    }
+  }
+
+  if (session.mode === GameModeId.NinetyNineDarts) {
+    const stats = computeNinetyNineDartsSingleSessionStats(session)
+    const modeLabel = getSessionModeLabel(session)
+    const details: string[] = []
+
+    if (stats?.score !== undefined && stats.score !== null) {
+      details.push(`${stats.score} pts`)
+    }
+
+    if (stats?.hitRate !== undefined && stats.hitRate !== null) {
+      details.push(`${Math.round(stats.hitRate)}%`)
+    }
+
+    if (details.length === 0) {
+      details.push(`${visitCount} visit${visitCount === 1 ? '' : 's'}`)
+    }
+
+    return {
+      title: finishedEarly ? `${modeLabel} session ended` : `${modeLabel} complete`,
       details,
     }
   }

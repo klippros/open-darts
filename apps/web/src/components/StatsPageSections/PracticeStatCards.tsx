@@ -3,6 +3,7 @@ import type {
   AroundTheClockPracticeStats,
   Bob27PracticeStats,
   CheckoutPracticeStats,
+  NinetyNineDartsPracticeStats,
 } from '../../lib/analytics/computeAnalytics'
 import type { StatTimelineSelection } from '../../lib/analytics/statTimelines'
 import {
@@ -14,6 +15,10 @@ import {
 import { getAroundTheClockAimModeLabel } from '@open-darts/game/aroundTheClock/aroundTheClockConfig'
 import { gameModeDefinitions } from '@open-darts/game/game/gameModeDefinitions'
 import { GameModeId } from '@open-darts/game/types/gameMode'
+import {
+  getNinetyNineDartsStatGroupLabel,
+  NinetyNineDartsStatGroup,
+} from '../../lib/ninetyNineDarts/ninetyNineVisitStats'
 import { AroundTheClockHeatmap } from './AroundTheClockHeatmap/AroundTheClockHeatmap'
 import { PracticeModeCard } from './PracticeModeCard'
 import { StatCard } from './StatCard'
@@ -291,6 +296,133 @@ export const AroundTheClockPracticeCard = ({
         </SimpleGrid>
         <AroundTheClockHeatmap targets={selected.targets} />
       </Stack>
+    </PracticeModeCard>
+  )
+}
+
+const getNinetyNineDartsVariantKey = (stats: NinetyNineDartsPracticeStats): string => stats.group
+const getNinetyNineDartsLastPlayedAt = (stats: NinetyNineDartsPracticeStats): string =>
+  stats.lastPlayedAt
+
+export const NinetyNineDartsPracticeCard = ({
+  variants,
+  onStatSelect,
+}: {
+  variants: NinetyNineDartsPracticeStats[]
+  onStatSelect: (selection: StatTimelineSelection) => void
+}) => {
+  const { selectedKey, setSelectedKey, selected } = useLastPlayedVariantSelection(
+    variants,
+    getNinetyNineDartsVariantKey,
+    getNinetyNineDartsLastPlayedAt,
+  )
+
+  if (selected === undefined) {
+    return null
+  }
+
+  const scopeLabel = `${gameModeDefinitions[GameModeId.NinetyNineDarts].label} · ${getNinetyNineDartsStatGroupLabel(selected.group)}`
+  const isBull = selected.group === NinetyNineDartsStatGroup.Bull
+
+  return (
+    <PracticeModeCard
+      title={gameModeDefinitions[GameModeId.NinetyNineDarts].label}
+      trailing={
+        <StatsVariantToggle
+          items={variants.map((stats) => ({
+            value: stats.group,
+            label: getNinetyNineDartsStatGroupLabel(stats.group),
+            count: stats.gameCount,
+          }))}
+          value={selectedKey}
+          onChange={setSelectedKey}
+        />
+      }
+    >
+      <SimpleGrid columns={{ base: 1, sm: 2 }} gap={3}>
+        <StatCard
+          label="Hit rate"
+          value={formatPercent(selected.hitRate)}
+          onClick={() => {
+            onStatSelect({
+              scope: { type: 'practice-99-darts', group: selected.group },
+              metric: 'hitRate',
+              metricLabel: 'Hit rate',
+              scopeLabel,
+            })
+          }}
+        />
+        {selected.avgFinalScore !== null && (
+          <StatCard
+            label="Avg score"
+            value={formatInteger(selected.avgFinalScore)}
+            onClick={() => {
+              onStatSelect({
+                scope: { type: 'practice-99-darts', group: selected.group },
+                metric: 'avgFinalScore',
+                metricLabel: 'Score',
+                scopeLabel,
+              })
+            }}
+          />
+        )}
+        {selected.bestFinalScore !== null && (
+          <StatCard
+            label="Best score"
+            value={formatInteger(selected.bestFinalScore)}
+            onClick={() => {
+              onStatSelect({
+                scope: { type: 'practice-99-darts', group: selected.group },
+                metric: 'bestFinalScore',
+                metricLabel: 'Score',
+                scopeLabel,
+              })
+            }}
+          />
+        )}
+        {selected.avgSinglesPerGame !== null && (
+          <StatCard
+            label="Avg singles / game"
+            value={formatAverage(selected.avgSinglesPerGame)}
+            onClick={() => {
+              onStatSelect({
+                scope: { type: 'practice-99-darts', group: selected.group },
+                metric: 'avgSinglesPerGame',
+                metricLabel: 'Singles / game',
+                scopeLabel,
+              })
+            }}
+          />
+        )}
+        {selected.avgDoublesPerGame !== null && (
+          <StatCard
+            label="Avg doubles / game"
+            value={formatAverage(selected.avgDoublesPerGame)}
+            onClick={() => {
+              onStatSelect({
+                scope: { type: 'practice-99-darts', group: selected.group },
+                metric: 'avgDoublesPerGame',
+                metricLabel: 'Doubles / game',
+                scopeLabel,
+              })
+            }}
+          />
+        )}
+        {!isBull && selected.avgTreblesPerGame !== null && (
+          <StatCard
+            label="Avg trebles / game"
+            value={formatAverage(selected.avgTreblesPerGame)}
+            onClick={() => {
+              onStatSelect({
+                scope: { type: 'practice-99-darts', group: selected.group },
+                metric: 'avgTreblesPerGame',
+                metricLabel: 'Trebles / game',
+                scopeLabel,
+              })
+            }}
+          />
+        )}
+      </SimpleGrid>
     </PracticeModeCard>
   )
 }

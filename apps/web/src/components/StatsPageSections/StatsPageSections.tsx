@@ -16,6 +16,7 @@ import {
 import {
   isAroundTheClockPracticeStats,
   isBob27PracticeStats,
+  isNinetyNineDartsPracticeStats,
 } from '../../lib/analytics/practiceStats'
 import { X01StatsFilterId } from '../../lib/analytics/x01Stats'
 import { StatsTable } from '../StatsTable/StatsTable'
@@ -23,6 +24,7 @@ import {
   AroundTheClockPracticeCard,
   Bob27PracticeCard,
   CheckoutPracticeCard,
+  NinetyNineDartsPracticeCard,
 } from './PracticeStatCards'
 import { PracticeModeCard } from './PracticeModeCard'
 import { EmptySection, SectionHeading } from './StatCard'
@@ -226,6 +228,7 @@ export const PracticeSection = ({ checkout, other, onStatSelect }: PracticeSecti
 
   const bob27 = other.find(isBob27PracticeStats)
   const aroundTheClock = other.filter(isAroundTheClockPracticeStats)
+  const ninetyNineDarts = other.filter(isNinetyNineDartsPracticeStats)
 
   return (
     <Stack gap={4}>
@@ -237,6 +240,9 @@ export const PracticeSection = ({ checkout, other, onStatSelect }: PracticeSecti
         {bob27 !== undefined && <Bob27PracticeCard stats={bob27} onStatSelect={onStatSelect} />}
         {aroundTheClock.length > 0 && (
           <AroundTheClockPracticeCard variants={aroundTheClock} onStatSelect={onStatSelect} />
+        )}
+        {ninetyNineDarts.length > 0 && (
+          <NinetyNineDartsPracticeCard variants={ninetyNineDarts} onStatSelect={onStatSelect} />
         )}
       </Stack>
     </Stack>

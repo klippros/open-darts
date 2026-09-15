@@ -2,8 +2,9 @@ import { GameModeId } from '@open-darts/game/types/gameMode'
 import type { GameConfig } from '@open-darts/game/types/gameMode'
 import type { GameSession } from '@open-darts/game/types/gameSession'
 import type { CreateSessionParams } from '@open-darts/game/game/createSession'
-import { isX01Config } from '@open-darts/game/game/gameConfigGuards'
+import { isNinetyNineDartsConfig, isX01Config } from '@open-darts/game/game/gameConfigGuards'
 import { getDefaultConfig } from '@open-darts/game/game/gameModeDefinitions'
+import { buildNinetyNineDartsGamePath } from '@open-darts/game/ninetyNineDarts/ninetyNineDartsConfig'
 import { buildPracticeGamePath, isPracticeGameMode } from '../game/gameRoute'
 import {
   appendOpponentSetupParams,
@@ -86,6 +87,10 @@ export const buildGamePathFromSession = (session: GameSession): string => {
     appendOpponentSetupParams(params, opponentSetup, session.config.startScore)
 
     return `/game?${params.toString()}`
+  }
+
+  if (isNinetyNineDartsConfig(session.mode, session.config)) {
+    return buildNinetyNineDartsGamePath(session.config)
   }
 
   if (isPracticeGameMode(session.mode)) {

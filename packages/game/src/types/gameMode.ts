@@ -1,5 +1,6 @@
 import type { AroundTheClockConfig } from './aroundTheClock'
 import type { Bob27Config } from './bob27'
+import type { NinetyNineDartsConfig } from './ninetyNineDarts'
 import type { OneTwentyOneConfig } from './oneTwentyOne'
 import type { TenUpOneDownConfig } from './tenUpOneDown'
 import type { X01Config } from './x01'
@@ -10,6 +11,7 @@ export enum GameModeId {
   OneTwentyOne = '121',
   AroundTheClock = 'around-the-clock',
   TenUpOneDown = '10-up-1-down',
+  NinetyNineDarts = '99-darts',
 }
 
 export enum GameStatus {
@@ -19,4 +21,9 @@ export enum GameStatus {
 }
 
 export type GameConfig =
-  X01Config | Bob27Config | OneTwentyOneConfig | AroundTheClockConfig | TenUpOneDownConfig
+  | X01Config
+  | Bob27Config
+  | OneTwentyOneConfig
+  | AroundTheClockConfig
+  | TenUpOneDownConfig
+  | NinetyNineDartsConfig

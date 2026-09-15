@@ -137,6 +137,15 @@ const dedupePhrases = (phrases: VoicePhraseHint[]): VoicePhraseHint[] => {
   return [...byPhrase.values()]
 }
 
+const NINETY_NINE_DARTS_PHRASES: VoicePhraseHint[] = [
+  { phrase: 'single', boost: 9 },
+  { phrase: 'double', boost: 9 },
+  { phrase: 'treble', boost: 9 },
+  { phrase: 'triple', boost: 8 },
+  { phrase: 'miss', boost: 9 },
+  { phrase: 'missed', boost: 6 },
+]
+
 /** Contextual biasing phrases for the active voice game mode. */
 export const getVoiceRecognitionPhrases = (mode: GameModeId): VoicePhraseHint[] => {
   if (mode === GameModeId.Bob27) {
@@ -145,6 +154,10 @@ export const getVoiceRecognitionPhrases = (mode: GameModeId): VoicePhraseHint[] 
 
   if (mode === GameModeId.AroundTheClock) {
     return dedupePhrases([...META_PHRASES, ...AROUND_THE_CLOCK_PHRASES])
+  }
+
+  if (mode === GameModeId.NinetyNineDarts) {
+    return dedupePhrases([...META_PHRASES, ...NINETY_NINE_DARTS_PHRASES])
   }
 
   if (mode === GameModeId.TenUpOneDown) {

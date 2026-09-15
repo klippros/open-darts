@@ -79,6 +79,17 @@ export const getDartPickerHelpContent = (
     }
   }
 
+  if (mode === GameModeId.NinetyNineDarts) {
+    return {
+      title: 'How to score',
+      paragraphs: [
+        'Use the three dart columns left to right. Bottom to top: Miss, Single, Triple, Double (no Triple on bull).',
+        'Enter one outcome per dart in order. Undo removes the last dart.',
+      ],
+      voice,
+    }
+  }
+
   if (mode === GameModeId.TenUpOneDown) {
     if (visitEntryMode === VisitInputMode.VisitScore) {
       return {

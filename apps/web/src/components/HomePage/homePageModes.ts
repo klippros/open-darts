@@ -61,4 +61,10 @@ export const PRACTICE_MODES: readonly HomePageModeLink[] = [
     description: 'Checkout up or down',
     to: buildPracticeGamePath(GameModeId.TenUpOneDown),
   },
+  {
+    id: '99-darts',
+    label: '99 Darts',
+    description: '99 darts at a chosen target',
+    to: '/game/99-darts/setup',
+  },
 ]

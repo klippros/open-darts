@@ -1,10 +1,14 @@
 import { AroundTheClockDartPicker } from './AroundTheClockDartPicker'
 import { Bob27DartPicker } from './Bob27DartPicker'
 import { DartPicker } from './DartPicker'
+import { NinetyNineDartsDartPicker } from './NinetyNineDartsDartPicker'
 import { ScoringInputCard } from './ScoringInputCard/ScoringInputCard'
 import { TenUpOneDownDartPicker } from './TenUpOneDownDartPicker'
 import { VisitScorePicker } from './VisitScorePicker/VisitScorePicker'
-import { isAroundTheClockConfig } from '@open-darts/game/game/gameConfigGuards'
+import {
+  isAroundTheClockConfig,
+  isNinetyNineDartsConfig,
+} from '@open-darts/game/game/gameConfigGuards'
 import { supportsVisitScoreInput } from '@open-darts/game/game/gameModeDefinitions'
 import type { DartThrow } from '@open-darts/game/types/dart'
 import type { GameConfig } from '@open-darts/game/types/gameMode'
@@ -66,6 +70,19 @@ export const GameModeDartPicker = ({
     return (
       <Bob27DartPicker
         targetIndex={bob27TargetIndex}
+        onDarts={onDarts}
+        onUndo={onUndo}
+        inputDisabled={inputDisabled}
+        undoDisabled={undoDisabled}
+      />
+    )
+  }
+
+  if (mode === GameModeId.NinetyNineDarts && isNinetyNineDartsConfig(mode, config)) {
+    return (
+      <NinetyNineDartsDartPicker
+        target={config.target}
+        pendingDarts={pendingDarts}
         onDarts={onDarts}
         onUndo={onUndo}
         inputDisabled={inputDisabled}

@@ -2,7 +2,11 @@ import { GameModeId } from '@open-darts/game/types/gameMode'
 import { VisitInputMode } from '@open-darts/game/types/visit'
 
 /** Modes where browser speech recognition is reliable enough for scoring. */
-const ALWAYS_VOICE_INPUT_MODES = new Set<GameModeId>([GameModeId.Bob27, GameModeId.AroundTheClock])
+const ALWAYS_VOICE_INPUT_MODES = new Set<GameModeId>([
+  GameModeId.Bob27,
+  GameModeId.AroundTheClock,
+  GameModeId.NinetyNineDarts,
+])
 
 const VISIT_SCORE_VOICE_MODES = new Set<GameModeId>([
   GameModeId.X01,

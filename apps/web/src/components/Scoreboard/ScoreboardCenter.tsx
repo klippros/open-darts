@@ -5,6 +5,10 @@ import {
   formatAroundTheClockLiveStatsLabel,
   getAroundTheClockLiveStats,
 } from '../../lib/analytics/aroundTheClockStats'
+import {
+  getNinetyNineDartsLiveScoreMetrics,
+  getNinetyNineDartsLiveStats,
+} from '../../lib/ninetyNineDarts/ninetyNineVisitStats'
 import { getAroundTheClockConfig } from '@open-darts/game/aroundTheClock/aroundTheClockConfig'
 import type { ScoreboardPlayerEntry } from '@open-darts/game/game/GameEngine'
 import {
@@ -16,6 +20,7 @@ import {
 import { formatOneTwentyOneVisitProgressLabel } from '../../lib/oneTwentyOne/formatOneTwentyOneVisitProgress'
 import {
   isAroundTheClockConfig,
+  isNinetyNineDartsConfig,
   isOneTwentyOneConfig,
   isX01Config,
   toCheckoutSuggestionRules,
@@ -26,6 +31,7 @@ import type { MatchProgress } from '@open-darts/game/types/match'
 import type { DartThrow } from '@open-darts/game/types/dart'
 import type { GameConfig, GameModeId as GameModeIdType } from '@open-darts/game/types/gameMode'
 import type { Visit } from '@open-darts/game/types/visit'
+import { NinetyNineDartsScorePanel } from './NinetyNineDartsScorePanel'
 import { PlayerScorePanels } from './PlayerScorePanel'
 import { VisitDartSlots } from './VisitDartSlots'
 
@@ -88,7 +94,10 @@ export const ScoreboardCenter = ({
 }: ScoreboardCenterProps) => {
   const checkoutRules = toCheckoutSuggestionRules(mode, config)
   const showVisitDartSlots =
-    !hideVisitDartSlots && mode !== GameModeId.AroundTheClock && mode !== GameModeId.Bob27
+    !hideVisitDartSlots &&
+    mode !== GameModeId.AroundTheClock &&
+    mode !== GameModeId.Bob27 &&
+    mode !== GameModeId.NinetyNineDarts
   const scoreBeforeVisit =
     activePlayer === undefined ? 0 : activePlayer.primaryScore + sumDartPoints(pendingDarts)
   const legStartingPlayerIndex =
@@ -177,18 +186,39 @@ export const ScoreboardCenter = ({
     })
   }, [activePlayer, config, matchProgress, mode, pendingDarts, players, visits])
 
+  const ninetyNineDartsMetrics = useMemo(() => {
+    if (
+      mode !== GameModeId.NinetyNineDarts ||
+      !isNinetyNineDartsConfig(mode, config) ||
+      activePlayer === undefined
+    ) {
+      return null
+    }
+
+    return getNinetyNineDartsLiveScoreMetrics(
+      getNinetyNineDartsLiveStats(visits, activePlayer.playerId, config.target, pendingDarts),
+    )
+  }, [activePlayer, config, mode, pendingDarts, visits])
+
   return (
     <Stack gap={5}>
-      <PlayerScorePanels
-        players={playersForDisplay}
-        legAndMatchAverages={legAndMatchAverages}
-        currentLeg={matchProgress?.currentLeg}
-        legsToWin={matchProgress?.legsToWin}
-        legWins={matchProgress?.legWins}
-        challengeLegStatuses={challengeLegStatuses}
-        legStartingPlayerIndex={legStartingPlayerIndex}
-        checkoutRules={checkoutRules}
-      />
+      {ninetyNineDartsMetrics !== null ? (
+        <NinetyNineDartsScorePanel
+          metrics={ninetyNineDartsMetrics}
+          isActive={activePlayer?.isActive ?? true}
+        />
+      ) : (
+        <PlayerScorePanels
+          players={playersForDisplay}
+          legAndMatchAverages={legAndMatchAverages}
+          currentLeg={matchProgress?.currentLeg}
+          legsToWin={matchProgress?.legsToWin}
+          legWins={matchProgress?.legWins}
+          challengeLegStatuses={challengeLegStatuses}
+          legStartingPlayerIndex={legStartingPlayerIndex}
+          checkoutRules={checkoutRules}
+        />
+      )}
 
       {activePlayer !== undefined && showVisitDartSlots && (
         <VisitDartSlots

@@ -1,9 +1,11 @@
 import { GameModeId } from '@open-darts/game/types/gameMode'
 import type { VisitInputMode } from '@open-darts/game/types/visit'
 import type { Bob27HitCount } from '@open-darts/game/bob27/buildBob27Darts'
+import type { NinetyNineDartsOutcome } from '@open-darts/game/types/ninetyNineDarts'
 import { parseAroundTheClockCommand } from './grammars/aroundTheClockGrammar'
 import type { AroundTheClockCommand } from './grammars/aroundTheClockGrammar'
 import { parseBob27Command } from './grammars/bob27Grammar'
+import { parseNinetyNineDartsCommand } from './grammars/ninetyNineDartsGrammar'
 import { parseTenUpOneDownCommand } from './grammars/tenUpOneDownGrammar'
 import type { TenUpOneDownVoiceOutcome } from './grammars/tenUpOneDownGrammar'
 import { parseVisitScoreCommand } from './grammars/visitScoreGrammar'
@@ -16,6 +18,7 @@ export enum VoiceIntentKind {
   Fix = 'fix',
   Bob27HitCount = 'bob27-hit-count',
   AroundTheClock = 'around-the-clock',
+  NinetyNineDarts = '99-darts',
   VisitScore = 'visit-score',
   TenUpOneDown = 'ten-up-one-down',
 }
@@ -23,6 +26,7 @@ export enum VoiceIntentKind {
 export type VoiceGameplayIntent =
   | { kind: VoiceIntentKind.Bob27HitCount; hitCount: Bob27HitCount }
   | { kind: VoiceIntentKind.AroundTheClock; command: AroundTheClockCommand }
+  | { kind: VoiceIntentKind.NinetyNineDarts; outcomes: NinetyNineDartsOutcome[] }
   | { kind: VoiceIntentKind.VisitScore; score: number }
   | { kind: VoiceIntentKind.TenUpOneDown; outcome: TenUpOneDownVoiceOutcome }
 
@@ -54,6 +58,16 @@ const parseGameplayTokens = (mode: GameModeId, tokens: string[]): VoiceGameplayI
     }
 
     return { kind: VoiceIntentKind.AroundTheClock, command }
+  }
+
+  if (mode === GameModeId.NinetyNineDarts) {
+    const outcomes = parseNinetyNineDartsCommand(tokens)
+
+    if (outcomes === null) {
+      return null
+    }
+
+    return { kind: VoiceIntentKind.NinetyNineDarts, outcomes }
   }
 
   if (mode === GameModeId.TenUpOneDown) {

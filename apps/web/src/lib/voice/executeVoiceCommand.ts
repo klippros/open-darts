@@ -7,11 +7,17 @@ import {
 } from '@open-darts/game/aroundTheClock/buildAroundTheClockDarts'
 import type { AroundTheClockDartOrdinal } from '@open-darts/game/aroundTheClock/buildAroundTheClockDarts'
 import { buildBob27DartsForHitCount } from '@open-darts/game/bob27/buildBob27Darts'
+import { buildNinetyNineDartsThrow } from '@open-darts/game/ninetyNineDarts/buildNinetyNineDarts'
+import { isNinetyNineDartsTripleAllowed } from '@open-darts/game/ninetyNineDarts/ninetyNineDartsRules'
 import type { AppGameController } from '@open-darts/game/game/createSession'
-import { isAroundTheClockConfig } from '@open-darts/game/game/gameConfigGuards'
+import {
+  isAroundTheClockConfig,
+  isNinetyNineDartsConfig,
+} from '@open-darts/game/game/gameConfigGuards'
 import { getGameModePickerTargets } from '../game/getGameModePickerTargets'
 import type { DartThrow } from '@open-darts/game/types/dart'
 import { GameModeId } from '@open-darts/game/types/gameMode'
+import { NinetyNineDartsOutcome } from '@open-darts/game/types/ninetyNineDarts'
 import type { AroundTheClockOutcome } from './grammars/aroundTheClockGrammar'
 import { VoiceIntentKind } from './parseVoiceCommand'
 import type { VoiceGameplayIntent, VoiceIntent } from './parseVoiceCommand'
@@ -209,6 +215,38 @@ const buildGameplayDarts = (
     return {
       darts: buildBob27DartsForHitCount(intent.hitCount, targetIndex),
       playback: [intent.hitCount === 0 ? 'miss' : 'hit'],
+    }
+  }
+
+  if (intent.kind === VoiceIntentKind.NinetyNineDarts) {
+    const { mode, config } = controller.session
+
+    if (!isNinetyNineDartsConfig(mode, config)) {
+      return null
+    }
+
+    const dartsLeft = 3 - controller.pendingDarts.length
+
+    if (dartsLeft <= 0 || intent.outcomes.length === 0 || intent.outcomes.length > dartsLeft) {
+      return null
+    }
+
+    const { target } = config
+
+    if (
+      intent.outcomes.some(
+        (outcome) =>
+          outcome === NinetyNineDartsOutcome.Triple && !isNinetyNineDartsTripleAllowed(target),
+      )
+    ) {
+      return null
+    }
+
+    return {
+      darts: intent.outcomes.map((outcome) => buildNinetyNineDartsThrow(outcome, target)),
+      playback: intent.outcomes.map((outcome) =>
+        outcome === NinetyNineDartsOutcome.Miss ? 'miss' : 'hit',
+      ),
     }
   }
 

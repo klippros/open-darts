@@ -7,6 +7,7 @@ import { GamePage } from './routes/GamePage'
 import { HistoryPage } from './routes/HistoryPage'
 import { HomePage } from './routes/HomePage'
 import { MatchSetupPage } from './routes/MatchSetupPage'
+import { NinetyNineDartsSetupPage } from './routes/NinetyNineDartsSetupPage'
 import { OnlineMatchJoinPage } from './routes/OnlineMatchJoinPage'
 import { OnlineMatchNewPage } from './routes/OnlineMatchNewPage'
 import { OnlineMatchPage } from './routes/OnlineMatchPage'
@@ -23,6 +24,7 @@ export const router = createBrowserRouter(
         { path: 'game/match-setup', element: <MatchSetupPage /> },
         { path: 'game/setup', element: <X01SetupPage /> },
         { path: 'game/around-the-clock/setup', element: <AroundTheClockSetupPage /> },
+        { path: 'game/99-darts/setup', element: <NinetyNineDartsSetupPage /> },
         { path: 'match/new', element: <OnlineMatchNewPage /> },
         { path: 'match/join/:token', element: <OnlineMatchJoinPage /> },
         { path: 'match/:id', element: <OnlineMatchPage /> },

@@ -8,6 +8,14 @@ import {
   getBob27SessionDoublesHit,
   getBob27VisitHitRate,
 } from '../bob27/bob27VisitStats'
+import {
+  computeNinetyNineDartsSingleSessionStats,
+  getNinetyNineDartsHitRateFromCounts,
+  getNinetyNineDartsStatGroupLabel,
+  mergeNinetyNineDartsOutcomeCounts,
+  NinetyNineDartsStatGroup,
+} from '../ninetyNineDarts/ninetyNineVisitStats'
+import type { NinetyNineDartsOutcomeCounts } from '../ninetyNineDarts/ninetyNineVisitStats'
 import { getSessionModeLabel } from '../history/sessionSummary'
 import {
   getHighestOneTwentyOneCheckoutTarget,
@@ -17,7 +25,7 @@ import {
 import { aggregateAroundTheClockSessionStats } from './aroundTheClockStats'
 import type { AroundTheClockPerTargetStats } from './aroundTheClockStats'
 import { getLatestSessionStartedAt } from './pickLastPlayedVariant'
-import { filterAroundTheClockSessions } from './sessionScope'
+import { filterAroundTheClockSessions, filterNinetyNineDartsSessions } from './sessionScope'
 import {
   countCheckoutVisits,
   getHighestCheckout,
@@ -67,7 +75,23 @@ export interface AroundTheClockPracticeStats {
   lastPlayedAt: string
 }
 
-export type OtherPracticeStats = Bob27PracticeStats | AroundTheClockPracticeStats
+export interface NinetyNineDartsPracticeStats {
+  mode: GameModeId.NinetyNineDarts
+  group: NinetyNineDartsStatGroup
+  label: string
+  gameCount: number
+  completedCount: number
+  avgFinalScore: number | null
+  bestFinalScore: number | null
+  hitRate: number | null
+  avgSinglesPerGame: number | null
+  avgDoublesPerGame: number | null
+  avgTreblesPerGame: number | null
+  lastPlayedAt: string
+}
+
+export type OtherPracticeStats =
+  Bob27PracticeStats | AroundTheClockPracticeStats | NinetyNineDartsPracticeStats
 
 export interface PracticeStats {
   checkout: CheckoutPracticeStats[]
@@ -83,6 +107,12 @@ const AROUND_THE_CLOCK_AIM_MODES = [
   AroundTheClockAimMode.Any,
 ] as const
 
+const NINETY_NINE_DARTS_STAT_GROUPS = [
+  NinetyNineDartsStatGroup.Twenty,
+  NinetyNineDartsStatGroup.Bull,
+  NinetyNineDartsStatGroup.Other,
+] as const
+
 const getSessionLabel = (sessions: GameSession[], mode: GameModeId): string => {
   const [firstSession] = sessions
 
@@ -90,6 +120,9 @@ const getSessionLabel = (sessions: GameSession[], mode: GameModeId): string => {
     ? gameModeDefinitions[mode].label
     : getSessionModeLabel(firstSession)
 }
+
+const averageOrNull = (values: number[]): number | null =>
+  values.length === 0 ? null : values.reduce((sum, value) => sum + value, 0) / values.length
 
 const computeCheckoutPracticeStats = (
   mode: GameModeId.OneTwentyOne | GameModeId.TenUpOneDown,
@@ -204,6 +237,62 @@ const computeAroundTheClockStatsForAimMode = (
   }
 }
 
+const emptyCounts = (): NinetyNineDartsOutcomeCounts => ({
+  singles: 0,
+  doubles: 0,
+  trebles: 0,
+  misses: 0,
+})
+
+const computeNinetyNineDartsStatsForGroup = (
+  sessions: GameSession[],
+  group: NinetyNineDartsStatGroup,
+): NinetyNineDartsPracticeStats | null => {
+  const groupSessions = filterNinetyNineDartsSessions(sessions, group)
+
+  if (groupSessions.length === 0) {
+    return null
+  }
+
+  const completedSessions = groupSessions.filter((session) => session.finishedEarly !== true)
+  const lastPlayedAt = getLatestSessionStartedAt(groupSessions)
+
+  if (lastPlayedAt === null) {
+    return null
+  }
+
+  const sessionStats = groupSessions
+    .map((session) => computeNinetyNineDartsSingleSessionStats(session))
+    .filter((stats): stats is NonNullable<typeof stats> => stats !== null)
+
+  const finalScores = sessionStats
+    .map((stats) => stats.score)
+    .filter((score): score is number => score !== null)
+
+  const totals = sessionStats.reduce(
+    (counts, stats) => mergeNinetyNineDartsOutcomeCounts(counts, stats.counts),
+    emptyCounts(),
+  )
+
+  return {
+    mode: GameModeId.NinetyNineDarts,
+    group,
+    label: `${gameModeDefinitions[GameModeId.NinetyNineDarts].label} · ${getNinetyNineDartsStatGroupLabel(group)}`,
+    gameCount: groupSessions.length,
+    completedCount: completedSessions.length,
+    avgFinalScore: averageOrNull(finalScores),
+    bestFinalScore: finalScores.length === 0 ? null : Math.max(...finalScores),
+    hitRate: getNinetyNineDartsHitRateFromCounts(totals),
+    avgSinglesPerGame: averageOrNull(sessionStats.map((stats) => stats.counts.singles)),
+    avgDoublesPerGame: averageOrNull(sessionStats.map((stats) => stats.counts.doubles)),
+    avgTreblesPerGame:
+      group === NinetyNineDartsStatGroup.Bull
+        ? null
+        : averageOrNull(sessionStats.map((stats) => stats.counts.trebles)),
+    lastPlayedAt,
+  }
+}
+
 export const computePracticeStats = (sessions: GameSession[]): PracticeStats => ({
   checkout: CHECKOUT_PRACTICE_MODES.flatMap((mode) => {
     const stats = computeCheckoutPracticeStats(mode, sessions)
@@ -215,6 +304,9 @@ export const computePracticeStats = (sessions: GameSession[]): PracticeStats => 
     ...AROUND_THE_CLOCK_AIM_MODES.map((aimMode) =>
       computeAroundTheClockStatsForAimMode(sessions, aimMode),
     ),
+    ...NINETY_NINE_DARTS_STAT_GROUPS.map((group) =>
+      computeNinetyNineDartsStatsForGroup(sessions, group),
+    ),
   ].flatMap((stats) => (stats === null ? [] : [stats])),
 })
 
@@ -224,3 +316,7 @@ export const isBob27PracticeStats = (stats: OtherPracticeStats): stats is Bob27P
 export const isAroundTheClockPracticeStats = (
   stats: OtherPracticeStats,
 ): stats is AroundTheClockPracticeStats => stats.mode === GameModeId.AroundTheClock
+
+export const isNinetyNineDartsPracticeStats = (
+  stats: OtherPracticeStats,
+): stats is NinetyNineDartsPracticeStats => stats.mode === GameModeId.NinetyNineDarts

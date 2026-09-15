@@ -2,7 +2,14 @@ import type { AroundTheClockAimMode } from '@open-darts/game/types/aroundTheCloc
 import { GameModeId } from '@open-darts/game/types/gameMode'
 import type { GameSession } from '@open-darts/game/types/gameSession'
 import { getAroundTheClockConfig } from '@open-darts/game/aroundTheClock/aroundTheClockConfig'
-import { isAroundTheClockConfig, isX01Config } from '@open-darts/game/game/gameConfigGuards'
+import { getNinetyNineDartsConfig } from '@open-darts/game/ninetyNineDarts/ninetyNineDartsConfig'
+import {
+  isAroundTheClockConfig,
+  isNinetyNineDartsConfig,
+  isX01Config,
+} from '@open-darts/game/game/gameConfigGuards'
+import { getNinetyNineDartsStatGroup } from '../ninetyNineDarts/ninetyNineVisitStats'
+import type { NinetyNineDartsStatGroup } from '../ninetyNineDarts/ninetyNineVisitStats'
 import { x01PresetConfigs, X01PresetId } from '@open-darts/game/x01/x01Presets'
 
 const FIVE_OH_ONE_START_SCORE = x01PresetConfigs[X01PresetId.FiveOhOne].startScore
@@ -57,4 +64,22 @@ export const filterAroundTheClockSessions = (
     }
 
     return getAroundTheClockConfig(session.config).aimMode === aimMode
+  })
+
+export const filterNinetyNineDartsSessions = (
+  sessions: GameSession[],
+  group?: NinetyNineDartsStatGroup,
+): GameSession[] =>
+  sessions.filter((session) => {
+    if (!isNinetyNineDartsConfig(session.mode, session.config)) {
+      return false
+    }
+
+    if (group === undefined) {
+      return true
+    }
+
+    const { target } = getNinetyNineDartsConfig(session.config)
+
+    return getNinetyNineDartsStatGroup(target) === group
   })
