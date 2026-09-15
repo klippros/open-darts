@@ -356,6 +356,20 @@ describe('async lifecycle', () => {
     ).toBe(true)
   })
 
+  it('schedules FinalizeAt after visit-score checkout in async', async () => {
+    const stub = await startAsyncMatch()
+    const checkedOut = await stub.applyCommand(creatorUserId, {
+      name: MatchCommandName.RecordVisitScore,
+      score: 40,
+    })
+
+    expect(checkedOut.ok).toBe(true)
+    expect(checkedOut.state?.pendingFinalization).toBe(true)
+    expect(
+      checkedOut.state?.deadlines.some((deadline) => deadline.kind === DeadlineKind.FinalizeAt),
+    ).toBe(true)
+  })
+
   it('auto-finalizes only the due async player and stays Active', async () => {
     const stub = await startAsyncMatch()
     const checkedOut = await stub.applyCommand(creatorUserId, {

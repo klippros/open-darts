@@ -310,7 +310,7 @@ describe('sync play', () => {
     expect(result).toMatchObject({ ok: false, code: CommandErrorCode.Invalid })
   })
 
-  it('rejects double-out checkout via record_visit_score', async () => {
+  it('allows double-out checkout via record_visit_score', async () => {
     const stub = await startCheckoutMatch()
 
     const result = await stub.applyCommand(creatorUserId, {
@@ -318,11 +318,9 @@ describe('sync play', () => {
       score: 40,
     })
 
-    expect(result).toMatchObject({ ok: false, code: CommandErrorCode.Forbidden })
-
-    const state = await stub.applyCommand(creatorUserId, { name: MatchCommandName.GetState })
-    expect(state.state?.pendingFinalization).toBe(false)
-    expect(state.state?.status).toBe(MatchStatus.Active)
+    expect(result.ok).toBe(true)
+    expect(result.state?.pendingFinalization).toBe(true)
+    expect(result.state?.status).toBe(MatchStatus.Active)
   })
 
   it('allows non-checkout visit scores on double-out matches', async () => {
