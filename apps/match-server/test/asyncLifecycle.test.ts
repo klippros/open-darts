@@ -340,6 +340,22 @@ describe('async lifecycle', () => {
     expect(countingVisits.some((entry) => entry.playerId === otherUserId && entry.checkout)).toBe(
       false,
     )
+
+    const playEnvelope = JSON.parse(finished.state?.sessionJson ?? 'null') as {
+      session: {
+        status: string
+        visits: { playerId: string; checkout: boolean; voided?: boolean }[]
+      }
+    }
+    const sessionCountingVisits = playEnvelope.session.visits.filter(
+      (entry) => entry.voided !== true,
+    )
+
+    expect(playEnvelope.session.status).toBe('completed')
+    expect(sessionCountingVisits.filter((entry) => entry.playerId === creatorUserId)).toHaveLength(
+      1,
+    )
+    expect(sessionCountingVisits.filter((entry) => entry.playerId === otherUserId)).toHaveLength(0)
   })
 
   it('schedules FinalizeAt after checkout in async', async () => {

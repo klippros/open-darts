@@ -20,7 +20,11 @@ import {
 } from '../../lib/game/getGameModePickerTargets'
 import { resolveVisitEntryMode } from '../../lib/game/resolveVisitEntryMode'
 import { mainContentMaxWidth } from '../../layout'
-import { dartsToPublicPayload, restoreOnlineController } from '../../lib/matchServer/onlinePlay'
+import {
+  dartsToPublicPayload,
+  restoreOnlineController,
+  resolveCompletedOnlineSession,
+} from '../../lib/matchServer/onlinePlay'
 import {
   buildAsyncScoreboardOverlay,
   canAmendAsyncVisit,
@@ -820,6 +824,15 @@ export const OnlineMatchPlayBoard = ({
   }
 
   const completed = state.status === MatchStatus.Completed
+  const completedSession = completed
+    ? resolveCompletedOnlineSession(
+        state,
+        boardController.session,
+        currentUserId,
+        viewerDisplayName,
+        opponentDisplayName,
+      )
+    : boardController.session
   const waitingPlayerId = (() => {
     if (state.status !== MatchStatus.Active || isCorrecting) {
       return null
@@ -908,7 +921,7 @@ export const OnlineMatchPlayBoard = ({
           sendCommand({ name: MatchCommandName.AbandonMatch })
         }}
       />
-      <OnlineMatchCompletedDialog open={completed} session={boardController.session} />
+      <OnlineMatchCompletedDialog open={completed} session={completedSession} />
     </>
   )
 

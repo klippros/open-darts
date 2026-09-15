@@ -5,6 +5,7 @@ import type { DartThrow } from '@open-darts/game/types/dart'
 import { PlayerKind } from '@open-darts/game/types/player'
 import type { GameSession } from '@open-darts/game/types/gameSession'
 import { resolveHumanPlayerName } from '@open-darts/game/game/playerFactory'
+import { readOnlineMatchHistorySession } from '../history/onlineHistorySummary'
 import { toPublicDartThrow } from './toPublicDartThrow'
 import type { PublicDartThrow, PublicMatchState } from './types'
 
@@ -93,6 +94,24 @@ export const restoreOnlineController = (
     pendingDarts,
     savedAt: new Date().toISOString(),
   })
+}
+
+/** Prefer the result-payload session (async reconstructed visits) over the live snapshot. */
+export const resolveCompletedOnlineSession = (
+  matchState: PublicMatchState,
+  fallbackSession: GameSession,
+  viewerUserId: string,
+  viewerDisplayName?: string | null,
+  opponentDisplayName?: string | null,
+): GameSession => {
+  const fromPayload = readOnlineMatchHistorySession(matchState.resultPayloadJson)
+
+  return decorateOnlineSessionForViewer(
+    fromPayload ?? fallbackSession,
+    viewerUserId,
+    viewerDisplayName,
+    opponentDisplayName,
+  )
 }
 
 export const dartsToPublicPayload = (darts: DartThrow[]): PublicDartThrow[] =>

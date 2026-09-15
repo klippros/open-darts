@@ -204,6 +204,11 @@ export const completeAsyncMatch = (
     winnerUserId: resolved.winnerUserId,
   }
 
-  writePlayState(sql, playStateToSessionJson(play), play.turnIndex, false)
+  writePlayState(
+    sql,
+    playStateToSessionJson({ ...play, session: resolved.session }),
+    play.turnIndex,
+    false,
+  )
   persistCompleted(sql, endingKind, resolved.winnerUserId, resultPayload)
 }
