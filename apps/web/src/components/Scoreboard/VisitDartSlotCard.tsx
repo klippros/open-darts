@@ -55,11 +55,19 @@ const TONE_STYLES: Record<
 
 const getVariantStyles = (variant: VisitDartSlotCardVariant) => VARIANT_STYLES[variant]
 
+export type VisitDartSlotCardSize = 'default' | 'comfortable' | 'comfortableHalf'
+
+const SIZE_STYLES: Record<VisitDartSlotCardSize, { py: number; minH?: string }> = {
+  default: { py: 4 },
+  comfortable: { py: 14, minH: '13rem' },
+  comfortableHalf: { py: 7, minH: '6.5rem' },
+}
+
 export interface VisitDartSlotCardProps {
   label: string | null
   variant: VisitDartSlotCardVariant
   tone?: VisitDartSlotCardTone
-  size?: 'default' | 'comfortable'
+  size?: VisitDartSlotCardSize
   showArrow?: boolean
   onClick?: () => void
   disabled?: boolean
@@ -79,7 +87,7 @@ export const VisitDartSlotCard = ({
   const styles = getVariantStyles(variant)
   const toneStyles = tone === 'neutral' ? null : TONE_STYLES[tone]
   const isInteractive = onClick !== undefined && !disabled && variant === 'selectable'
-  const isComfortable = size === 'comfortable'
+  const sizeStyles = SIZE_STYLES[size]
   const labelColor = toneStyles?.color ?? 'white'
   const borderColor = toneStyles?.borderColor ?? styles.borderColor
 
@@ -101,8 +109,8 @@ export const VisitDartSlotCard = ({
 
   const slotStyles = {
     px: 3,
-    py: isComfortable ? 14 : 4,
-    minH: isComfortable ? '13rem' : undefined,
+    py: sizeStyles.py,
+    minH: sizeStyles.minH,
     borderRadius: '14px',
     borderWidth: '1px',
     borderColor,

@@ -26,4 +26,8 @@ export const computeAnalytics = (
 
 export type { X01LegStats, X01Stats } from './x01Stats'
 export type { CheckoutPracticeStats, OtherPracticeStats, PracticeStats } from './practiceStats'
-export type { Bob27PracticeStats, AroundTheClockPracticeStats } from './practiceStats'
+export type {
+  Bob27PracticeStats,
+  AroundTheClockPracticeStats,
+  NinetyNineDartsPracticeStats,
+} from './practiceStats'

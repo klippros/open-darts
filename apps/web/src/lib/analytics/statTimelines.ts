@@ -8,6 +8,8 @@ import {
   getBob27SessionDoublesHit,
   getBob27VisitHitRate,
 } from '../bob27/bob27VisitStats'
+import { computeNinetyNineDartsSingleSessionStats } from '../ninetyNineDarts/ninetyNineVisitStats'
+import type { NinetyNineDartsStatGroup } from '../ninetyNineDarts/ninetyNineVisitStats'
 import {
   getSessionCheckoutCount,
   getHighestOneTwentyOneCheckoutTarget,
@@ -24,6 +26,7 @@ import {
   filterCheckoutPracticeSessions,
   filterFiveOhOneSessions,
   filterFourOhOneSessions,
+  filterNinetyNineDartsSessions,
   filterThreeOhOneSessions,
 } from './sessionScope'
 import {
@@ -64,6 +67,8 @@ export type StatMetricId =
   | 'avgHitsPerVisit'
   | 'avgDoublesPerGame'
   | 'bestDoublesPerGame'
+  | 'avgSinglesPerGame'
+  | 'avgTreblesPerGame'
   | 'bestDarts'
   | 'completionRate'
 
@@ -75,6 +80,7 @@ export type StatTimelineScope =
   | { type: 'practice-checkout'; mode: GameModeId.OneTwentyOne | GameModeId.TenUpOneDown }
   | { type: 'practice-bob27' }
   | { type: 'practice-around-the-clock'; aimMode?: AroundTheClockAimMode }
+  | { type: 'practice-99-darts'; group: NinetyNineDartsStatGroup }
 
 export interface StatTimelineSelection {
   scope: StatTimelineScope
@@ -150,6 +156,8 @@ const getX01LegMetric = (slice: X01LegSlice, metric: StatMetricId): number | nul
     case 'avgHitsPerVisit':
     case 'avgDoublesPerGame':
     case 'bestDoublesPerGame':
+    case 'avgSinglesPerGame':
+    case 'avgTreblesPerGame':
     case 'bestDarts':
     case 'completionRate':
       return null
@@ -201,6 +209,8 @@ const getCheckoutPracticeSessionMetric = (
     case 'avgHitsPerVisit':
     case 'avgDoublesPerGame':
     case 'bestDoublesPerGame':
+    case 'avgSinglesPerGame':
+    case 'avgTreblesPerGame':
     case 'bestDarts':
     case 'completionRate':
       return null
@@ -231,13 +241,14 @@ const getBob27SessionMetric = (session: GameSession, metric: StatMetricId): numb
     case 'doubleCheckoutRate':
     case 'checkouts100Plus':
     case 'highestCheckout':
-      return null
     case 'avgDarts':
     case 'bestDarts':
     case 'completionRate':
     case 'checkoutRate':
     case 'avgCheckoutsPerGame':
     case 'bestCheckoutsPerGame':
+    case 'avgSinglesPerGame':
+    case 'avgTreblesPerGame':
       return null
   }
 
@@ -286,6 +297,54 @@ const getAroundTheClockSessionMetric = (
     case 'avgHitsPerVisit':
     case 'avgDoublesPerGame':
     case 'bestDoublesPerGame':
+    case 'avgSinglesPerGame':
+    case 'avgTreblesPerGame':
+      return null
+  }
+
+  return null
+}
+
+const getNinetyNineDartsSessionMetric = (
+  session: GameSession,
+  metric: StatMetricId,
+): number | null => {
+  const stats = computeNinetyNineDartsSingleSessionStats(session)
+
+  if (stats === null) {
+    return null
+  }
+
+  switch (metric) {
+    case 'hitRate':
+      return stats.hitRate
+    case 'avgFinalScore':
+    case 'bestFinalScore':
+      return stats.score
+    case 'avgSinglesPerGame':
+      return stats.counts.singles
+    case 'avgDoublesPerGame':
+      return stats.counts.doubles
+    case 'avgTreblesPerGame':
+      return stats.isBull ? null : stats.counts.trebles
+    case 'threeDartAverage':
+    case 'threeDartAverageUntil170':
+    case 'bestLegAverage':
+    case 'thrown180':
+    case 'thrown140Plus':
+    case 'thrown100Plus':
+    case 'highestVisit':
+    case 'doubleCheckoutRate':
+    case 'checkouts100Plus':
+    case 'highestCheckout':
+    case 'checkoutRate':
+    case 'avgCheckoutsPerGame':
+    case 'bestCheckoutsPerGame':
+    case 'avgDarts':
+    case 'bestDarts':
+    case 'completionRate':
+    case 'avgHitsPerVisit':
+    case 'bestDoublesPerGame':
       return null
   }
 
@@ -318,6 +377,8 @@ export const getStatTimelineFormat = (metric: StatMetricId): StatTimelineFormat 
     case 'avgDoublesPerGame':
     case 'avgCheckoutsPerGame':
     case 'avgHitsPerVisit':
+    case 'avgSinglesPerGame':
+    case 'avgTreblesPerGame':
       return 'average'
   }
 
@@ -343,6 +404,8 @@ const filterSessionsForScope = (
       return filterBob27Sessions(sessions)
     case 'practice-around-the-clock':
       return filterAroundTheClockSessions(sessions, scope.aimMode)
+    case 'practice-99-darts':
+      return filterNinetyNineDartsSessions(sessions, scope.group)
     default:
       return []
   }
@@ -402,6 +465,10 @@ const getPracticeSessionMetricValue = (
 
   if (selection.scope.type === 'practice-around-the-clock') {
     return getAroundTheClockSessionMetric(session, selection.metric, selection.scope.aimMode)
+  }
+
+  if (selection.scope.type === 'practice-99-darts') {
+    return getNinetyNineDartsSessionMetric(session, selection.metric)
   }
 
   return null

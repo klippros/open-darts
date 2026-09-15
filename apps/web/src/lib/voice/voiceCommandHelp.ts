@@ -68,6 +68,22 @@ export const getVoiceCommandHelpSection = (
     }
   }
 
+  if (mode === GameModeId.NinetyNineDarts) {
+    return {
+      title: VOICE_COMMANDS_SECTION_TITLE,
+      intro: VOICE_COMMANDS_SECTION_INTRO,
+      note: 'Say one or more outcomes for the remaining darts. Treble is not available on bull.',
+      rows: [
+        { say: 'Single', means: 'Score a single on the target' },
+        { say: 'Double', means: 'Score a double on the target' },
+        { say: 'Treble', means: 'Score a treble on a number target' },
+        { say: 'Miss', means: 'Miss the target' },
+        { say: 'Single double treble', means: 'Example full visit' },
+        { say: 'Undo', means: 'Remove the last dart' },
+      ],
+    }
+  }
+
   if (mode === GameModeId.TenUpOneDown) {
     return {
       title: VOICE_COMMANDS_SECTION_TITLE,

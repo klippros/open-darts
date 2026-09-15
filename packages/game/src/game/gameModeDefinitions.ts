@@ -5,6 +5,7 @@ import { AroundTheClockAimMode } from '../types/aroundTheClock'
 import type { Bob27Config } from '../types/bob27'
 import type { TenUpOneDownConfig } from '../types/tenUpOneDown'
 import { DEFAULT_ONE_TWENTY_ONE_CONFIG } from '../oneTwentyOne/oneTwentyOneConfig'
+import { DEFAULT_NINETY_NINE_DARTS_CONFIG } from '../ninetyNineDarts/ninetyNineDartsConfig'
 import { x01PresetConfigs, X01PresetId } from '../x01/x01Presets'
 
 export interface GameModeDefinition {
@@ -56,6 +57,12 @@ export const gameModeDefinitions: Record<GameModeId, GameModeDefinition> = {
     label: '10 Up 1 Down',
     description: 'Checkout up or down',
   },
+  [GameModeId.NinetyNineDarts]: {
+    mode: GameModeId.NinetyNineDarts,
+    defaultConfig: DEFAULT_NINETY_NINE_DARTS_CONFIG,
+    label: '99 Darts',
+    description: '99 darts at a chosen target',
+  },
 }
 
 export const getDefaultConfig = (mode: GameModeId): GameConfig =>
@@ -63,7 +70,8 @@ export const getDefaultConfig = (mode: GameModeId): GameConfig =>
 
 export const showsVisitHistory = (_mode: GameModeId): boolean => true
 
-export const supportsScoreCaller = (mode: GameModeId): boolean => mode !== GameModeId.AroundTheClock
+export const supportsScoreCaller = (mode: GameModeId): boolean =>
+  mode !== GameModeId.AroundTheClock && mode !== GameModeId.NinetyNineDarts
 
 export const supportsVisitScoreInput = (mode: GameModeId): boolean =>
   mode === GameModeId.X01 || mode === GameModeId.OneTwentyOne || mode === GameModeId.TenUpOneDown
