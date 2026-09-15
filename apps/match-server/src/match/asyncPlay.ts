@@ -2,6 +2,7 @@ import { applyAsyncMatchResultToSession, resolveAsyncMatchResult } from '@open-d
 import type { GameSession } from '@open-darts/game/types/gameSession'
 import { createGameController, restoreGameController } from '@open-darts/game/game/createSession'
 import type { AppGameController } from '@open-darts/game/game/createSession'
+import { replaySoloVisits } from '@open-darts/game/game/replaySoloVisits'
 import type { DartThrow } from '@open-darts/game/types/dart'
 import type { GameConfig } from '@open-darts/game/types/gameMode'
 import { GameStatus } from '@open-darts/game/types/gameMode'
@@ -110,31 +111,21 @@ const rebuildAsyncController = (
     ...asX01Config(play.session.config),
     startScore: stream.startScore,
   }
-  let controller = createGameController({
-    mode: play.session.mode,
-    config,
-    players: [
-      {
-        id: playerId,
-        name: 'Player',
-        kind: PlayerKind.Remote,
-      },
-    ],
-    sessionId: `${play.session.id}:${playerId}`,
-  })
-
-  for (const visit of countingVisits(stream.visits)) {
-    const next =
-      visit.darts.length > 0
-        ? controller.recordDarts(visit.darts)
-        : controller.recordVisitScore(visit.visitScore)
-
-    if (next.session.visits.length === controller.session.visits.length) {
-      return controller
-    }
-
-    controller = next
-  }
+  const controller = replaySoloVisits(
+    createGameController({
+      mode: play.session.mode,
+      config,
+      players: [
+        {
+          id: playerId,
+          name: 'Player',
+          kind: PlayerKind.Remote,
+        },
+      ],
+      sessionId: `${play.session.id}:${playerId}`,
+    }),
+    stream.visits,
+  )
 
   if (treatPendingAsCompleted && stream.pendingFinalization) {
     return restoreGameController({

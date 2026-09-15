@@ -1,11 +1,13 @@
 import { Box, Flex, Stack, Text, useBreakpointValue } from '@chakra-ui/react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { AppGameController } from '@open-darts/game/game/createSession'
+import { resolveHumanPlayerName } from '@open-darts/game/game/playerFactory'
 import type { DartThrow } from '@open-darts/game/types/dart'
 import {
   showsVisitHistory,
   supportsVisitScoreInput,
 } from '@open-darts/game/game/gameModeDefinitions'
+import type { Visit } from '@open-darts/game/types/visit'
 import { VisitInputMode } from '@open-darts/game/types/visit'
 import { ContentContainer } from '../ContentContainer'
 import { GameModeDartPicker } from '../DartPicker/GameModeDartPicker'
@@ -19,6 +21,19 @@ import {
 import { resolveVisitEntryMode } from '../../lib/game/resolveVisitEntryMode'
 import { mainContentMaxWidth } from '../../layout'
 import { dartsToPublicPayload, restoreOnlineController } from '../../lib/matchServer/onlinePlay'
+import {
+  buildAsyncScoreboardOverlay,
+  canAmendAsyncVisit,
+  canPressAsyncUndo,
+  canThrowInAsyncStream,
+  getAsyncPlayerStream,
+  getAsyncRemainingByPlayerId,
+  getLastOwnAsyncVisit,
+  mergeAsyncVisitHistory,
+  parseAsyncPlayState,
+  restoreAsyncEntryController,
+  shouldClearAsyncLocalDraft,
+} from '../../lib/matchServer/onlineAsyncPlay'
 import {
   AmendOwnVisitKind,
   AmendOwnVisitVoiceActionKind,
@@ -84,15 +99,58 @@ export const OnlineMatchPlayBoard = ({
   )
 
   const opponent = state.players.find((player) => player.userId !== currentUserId)
+  const isAsync = state.playMode === PlayMode.Asynchronous
+  const asyncPlay = useMemo(() => parseAsyncPlayState(state.asyncStateJson), [state.asyncStateJson])
+  const ownStream = getAsyncPlayerStream(asyncPlay, currentUserId)
+  const ownPendingFinalization = ownStream?.pendingFinalization === true
 
-  const isMyTurn =
+  const isMyTurnSync =
     state.status === MatchStatus.Active &&
     !state.pendingFinalization &&
     state.activePlayerId === currentUserId
 
-  const isCorrecting = correctingVisitIndex !== null
+  const canThrow = isAsync
+    ? canThrowInAsyncStream({
+        matchActive: state.status === MatchStatus.Active,
+        stream: ownStream,
+      })
+    : isMyTurnSync
+
+  const isCorrecting = !isAsync && correctingVisitIndex !== null
+
+  const asyncEntryController = useMemo(() => {
+    if (!isAsync || ownStream === undefined) {
+      return null
+    }
+
+    return restoreAsyncEntryController({
+      matchId: state.matchId,
+      mode: state.mode,
+      config: state.config,
+      playerId: currentUserId,
+      playerName: resolveHumanPlayerName(viewerDisplayName),
+      stream: ownStream,
+      pendingDarts: canThrow ? pendingDarts : [],
+      treatPendingAsCompleted: ownPendingFinalization,
+    })
+  }, [
+    canThrow,
+    currentUserId,
+    isAsync,
+    ownPendingFinalization,
+    ownStream,
+    pendingDarts,
+    state.config,
+    state.matchId,
+    state.mode,
+    viewerDisplayName,
+  ])
 
   const entryController = useMemo(() => {
+    if (isAsync) {
+      return asyncEntryController
+    }
+
     if (boardController === null) {
       return null
     }
@@ -106,7 +164,7 @@ export const OnlineMatchPlayBoard = ({
       )
     }
 
-    if (!isMyTurn) {
+    if (!canThrow) {
       return boardController
     }
 
@@ -118,10 +176,12 @@ export const OnlineMatchPlayBoard = ({
       opponentDisplayName,
     )
   }, [
+    asyncEntryController,
     boardController,
+    canThrow,
     correctingVisitIndex,
     currentUserId,
-    isMyTurn,
+    isAsync,
     opponentDisplayName,
     pendingDarts,
     state,
@@ -131,6 +191,22 @@ export const OnlineMatchPlayBoard = ({
   const controller = entryController ?? boardController
 
   useEffect(() => {
+    if (isAsync) {
+      if (
+        shouldClearAsyncLocalDraft({
+          matchActive: state.status === MatchStatus.Active,
+          ownPendingFinalization,
+        })
+      ) {
+        setPendingDarts([])
+        setVisitEntryModeOverride(null)
+        setCorrectingVisitIndex(null)
+        setCorrectionStartedEmpty(false)
+      }
+
+      return
+    }
+
     const visits = boardController?.session.visits ?? []
     const clear = shouldClearOnlineLocalDraft({
       correctingVisitIndex,
@@ -148,10 +224,22 @@ export const OnlineMatchPlayBoard = ({
   }, [
     boardController?.session.visits,
     correctingVisitIndex,
+    isAsync,
+    ownPendingFinalization,
     state.pendingFinalization,
     state.status,
     state.version,
   ])
+
+  useEffect(() => {
+    if (!isAsync) {
+      return
+    }
+
+    setCorrectingVisitIndex(null)
+    setCorrectionStartedEmpty(false)
+    setHasFullyUndoneVisitThisTurn(false)
+  }, [isAsync])
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -191,10 +279,15 @@ export const OnlineMatchPlayBoard = ({
   const finalizeDeadline = state.deadlines.find(
     (deadline) => deadline.kind === DeadlineKind.FinalizeAt,
   )
-  const secondsLeft =
+  const syncSecondsLeft =
     finalizeDeadline === undefined
       ? null
       : Math.max(0, Math.ceil((finalizeDeadline.fireAt - nowMs) / 1000))
+  const asyncOwnFinalizeSecondsLeft =
+    ownPendingFinalization && ownStream?.finalizeAt !== null && ownStream !== undefined
+      ? Math.max(0, Math.ceil((ownStream.finalizeAt - nowMs) / 1000))
+      : null
+  const finishSecondsLeft = isAsync ? asyncOwnFinalizeSecondsLeft : syncSecondsLeft
 
   const asyncDeadline = state.deadlines.find(
     (deadline) => deadline.kind === DeadlineKind.AsyncDeadlineAt,
@@ -206,35 +299,50 @@ export const OnlineMatchPlayBoard = ({
       ? Math.max(0, Math.ceil((asyncDeadline.fireAt - nowMs) / 1000))
       : null
 
-  const lastOwnVisit =
+  const lastOwnSyncVisit =
     boardController === null
       ? undefined
       : getLastOwnCountingVisit(boardController.session.visits, currentUserId)
+  const lastOwnAsyncVisit = getLastOwnAsyncVisit(ownStream)
 
-  const canAmendLastVisit = canAmendLastOwnVisit({
-    isActiveMatch: state.status === MatchStatus.Active,
-    pendingFinalization: state.pendingFinalization,
-    pendingDartCount: pendingDarts.length,
-    lastOwnVisit,
-    hasFullyUndoneVisitThisTurn,
-  })
+  const canAmendLastVisit = isAsync
+    ? canAmendAsyncVisit({
+        matchActive: state.status === MatchStatus.Active,
+        stream: ownStream,
+        pendingDartCount: pendingDarts.length,
+        lastOwnVisit: lastOwnAsyncVisit,
+      })
+    : canAmendLastOwnVisit({
+        isActiveMatch: state.status === MatchStatus.Active,
+        pendingFinalization: state.pendingFinalization,
+        pendingDartCount: pendingDarts.length,
+        lastOwnVisit: lastOwnSyncVisit,
+        hasFullyUndoneVisitThisTurn,
+      })
 
-  const undoAvailable = canPressOnlineUndo({
-    pendingDartCount: pendingDarts.length,
-    isCorrecting,
-    correctionStartedEmpty,
-    canAmendLastVisit,
-    pendingFinalization: state.pendingFinalization,
-    hasLastOwnVisit: lastOwnVisit !== undefined,
-  })
+  const undoAvailable = isAsync
+    ? canPressAsyncUndo({
+        pendingDartCount: pendingDarts.length,
+        canAmend: canAmendLastVisit,
+        ownPendingFinalization,
+        hasLastOwnVisit: lastOwnAsyncVisit !== undefined,
+      })
+    : canPressOnlineUndo({
+        pendingDartCount: pendingDarts.length,
+        isCorrecting,
+        correctionStartedEmpty,
+        canAmendLastVisit,
+        pendingFinalization: state.pendingFinalization,
+        hasLastOwnVisit: lastOwnSyncVisit !== undefined,
+      })
 
   useEffect(() => {
-    if (isMyTurn) {
+    if (isAsync || canThrow) {
       return
     }
 
     setHasFullyUndoneVisitThisTurn(false)
-  }, [isMyTurn])
+  }, [canThrow, isAsync])
 
   const visitEntryMode =
     controller !== null && supportsVisitScoreInput(controller.session.mode)
@@ -283,7 +391,7 @@ export const OnlineMatchPlayBoard = ({
         return
       }
 
-      if (!isMyTurn && correctingVisitIndex === null) {
+      if (!canThrow && correctingVisitIndex === null) {
         return
       }
 
@@ -299,7 +407,7 @@ export const OnlineMatchPlayBoard = ({
 
       setPendingDarts(next.pendingDarts)
     },
-    [commitVisit, controller, correctingVisitIndex, isMyTurn],
+    [canThrow, commitVisit, controller, correctingVisitIndex],
   )
 
   const recordDarts = useCallback(
@@ -320,7 +428,7 @@ export const OnlineMatchPlayBoard = ({
         return
       }
 
-      if (!isMyTurn) {
+      if (!canThrow) {
         return
       }
 
@@ -328,7 +436,7 @@ export const OnlineMatchPlayBoard = ({
       setHasFullyUndoneVisitThisTurn(false)
       setPendingDarts([])
     },
-    [correctingVisitIndex, finishCorrection, isMyTurn, sendCommand],
+    [canThrow, correctingVisitIndex, finishCorrection, sendCommand],
   )
 
   const startCorrection = useCallback((visitIndex: number, seedPending: DartThrow[] = []) => {
@@ -338,12 +446,14 @@ export const OnlineMatchPlayBoard = ({
   }, [])
 
   const peelLastOwnVisitDart = useCallback(
-    (ownVisit: NonNullable<typeof lastOwnVisit>) => {
+    (ownVisit: Visit, options?: { limitToOnePerTurn?: boolean }) => {
       const remaining = remainingDartsAfterPeelingLast(ownVisit)
       sendCommand({ name: MatchCommandName.UndoVisit })
       setPendingDarts(remaining)
-      // One server visit undo per turn — further undos only peel local pending.
-      setHasFullyUndoneVisitThisTurn(true)
+      if (options?.limitToOnePerTurn !== false) {
+        // One server visit undo per sync turn — further undos only peel local pending.
+        setHasFullyUndoneVisitThisTurn(true)
+      }
     },
     [sendCommand],
   )
@@ -351,6 +461,15 @@ export const OnlineMatchPlayBoard = ({
   const undo = useCallback(() => {
     if (pendingDarts.length > 0) {
       setPendingDarts((current) => current.slice(0, -1))
+      return
+    }
+
+    if (isAsync) {
+      if (lastOwnAsyncVisit === undefined) {
+        return
+      }
+
+      peelLastOwnVisitDart(lastOwnAsyncVisit, { limitToOnePerTurn: false })
       return
     }
 
@@ -362,28 +481,28 @@ export const OnlineMatchPlayBoard = ({
     }
 
     if (state.pendingFinalization) {
-      if (lastOwnVisit !== undefined) {
-        peelLastOwnVisitDart(lastOwnVisit)
+      if (lastOwnSyncVisit !== undefined) {
+        peelLastOwnVisitDart(lastOwnSyncVisit)
       }
       return
     }
 
-    if (!canAmendLastVisit || lastOwnVisit === undefined || boardController === null) {
+    if (!canAmendLastVisit || lastOwnSyncVisit === undefined || boardController === null) {
       return
     }
 
     const kind = resolveAmendOwnVisitKind(
       boardController.session.visits,
-      lastOwnVisit,
+      lastOwnSyncVisit,
       currentUserId,
     )
 
     if (kind === AmendOwnVisitKind.UndoVisit) {
-      peelLastOwnVisitDart(lastOwnVisit)
+      peelLastOwnVisitDart(lastOwnSyncVisit)
       return
     }
 
-    startCorrection(lastOwnVisit.visitIndex, remainingDartsAfterPeelingLast(lastOwnVisit))
+    startCorrection(lastOwnSyncVisit.visitIndex, remainingDartsAfterPeelingLast(lastOwnSyncVisit))
   }, [
     boardController,
     canAmendLastVisit,
@@ -391,7 +510,9 @@ export const OnlineMatchPlayBoard = ({
     correctionStartedEmpty,
     currentUserId,
     finishCorrection,
-    lastOwnVisit,
+    isAsync,
+    lastOwnAsyncVisit,
+    lastOwnSyncVisit,
     peelLastOwnVisitDart,
     pendingDarts.length,
     startCorrection,
@@ -409,16 +530,16 @@ export const OnlineMatchPlayBoard = ({
         return true
       }
 
-      if (correctingVisitIndex !== null) {
+      if (isAsync || correctingVisitIndex !== null) {
         return false
       }
 
-      if (canAmendLastVisit && boardController !== null && lastOwnVisit !== undefined) {
+      if (canAmendLastVisit && boardController !== null && lastOwnSyncVisit !== undefined) {
         const action = resolveAmendOwnVisitVoiceAction({
           intent,
           visits: boardController.session.visits,
           playerId: currentUserId,
-          lastOwnVisit,
+          lastOwnVisit: lastOwnSyncVisit,
         })
 
         if (action === null) {
@@ -426,12 +547,15 @@ export const OnlineMatchPlayBoard = ({
         }
 
         if (action.kind === AmendOwnVisitVoiceActionKind.UndoVisit) {
-          peelLastOwnVisitDart(lastOwnVisit)
+          peelLastOwnVisitDart(lastOwnSyncVisit)
           return true
         }
 
         if (action.kind === AmendOwnVisitVoiceActionKind.EnterCorrection) {
-          startCorrection(lastOwnVisit.visitIndex, remainingDartsAfterPeelingLast(lastOwnVisit))
+          startCorrection(
+            lastOwnSyncVisit.visitIndex,
+            remainingDartsAfterPeelingLast(lastOwnSyncVisit),
+          )
           return true
         }
 
@@ -447,7 +571,8 @@ export const OnlineMatchPlayBoard = ({
       canAmendLastVisit,
       correctingVisitIndex,
       currentUserId,
-      lastOwnVisit,
+      isAsync,
+      lastOwnSyncVisit,
       peelLastOwnVisitDart,
       sendCommand,
       startCorrection,
@@ -528,7 +653,8 @@ export const OnlineMatchPlayBoard = ({
     isVoiceInputSupportedForMode(controller.session.mode, { visitEntryMode })
 
   const inputDisabled =
-    state.status !== MatchStatus.Active || state.pendingFinalization || (!isMyTurn && !isCorrecting)
+    state.status !== MatchStatus.Active ||
+    (isAsync ? !canThrow : state.pendingFinalization || (!canThrow && !isCorrecting))
 
   const undoDisabled = state.status !== MatchStatus.Active || !undoAvailable
 
@@ -562,6 +688,8 @@ export const OnlineMatchPlayBoard = ({
     [controller, pickerTargets.bob27TargetIndex, visitEntryMode],
   )
 
+  const canFinish = isAsync ? ownPendingFinalization : state.pendingFinalization
+
   useEffect(() => {
     if (controller === null || state.status !== MatchStatus.Active) {
       setGameChrome(null)
@@ -572,7 +700,7 @@ export const OnlineMatchPlayBoard = ({
 
     setGameChrome({
       active: true,
-      canFinish: state.pendingFinalization,
+      canFinish,
       voiceInputAvailable,
       abortLabel: 'Abandon',
       onAbort: () => {
@@ -594,12 +722,12 @@ export const OnlineMatchPlayBoard = ({
       setGameChrome(null)
     }
   }, [
+    canFinish,
     controller,
     help,
     sendCommand,
     setGameChrome,
     state.cancelProposalUserId,
-    state.pendingFinalization,
     state.status,
     voiceInputAvailable,
   ])
@@ -607,6 +735,33 @@ export const OnlineMatchPlayBoard = ({
   const scoreboardController = useMemo(() => {
     if (boardController === null) {
       return null
+    }
+
+    if (isAsync && asyncPlay !== null) {
+      const remainingByPlayerId = getAsyncRemainingByPlayerId({
+        matchId: state.matchId,
+        mode: state.mode,
+        config: state.config,
+        asyncPlay,
+      })
+      const visits = mergeAsyncVisitHistory(
+        boardController.session.visits,
+        asyncPlay,
+        boardController.session.matchProgress?.currentLeg,
+      )
+
+      return {
+        session: {
+          ...boardController.session,
+          visits,
+        },
+        scoreboard: buildAsyncScoreboardOverlay(
+          boardController.scoreboard,
+          remainingByPlayerId,
+          canThrow ? currentUserId : null,
+        ),
+        pendingDarts: canThrow ? pendingDarts : [],
+      }
     }
 
     if (isCorrecting && entryController !== null && correctingVisitIndex !== null) {
@@ -626,7 +781,7 @@ export const OnlineMatchPlayBoard = ({
 
     // Only attach uncommitted darts while it is still our turn so an opponent
     // amend that steals the turn does not paint our draft onto their column.
-    const scoreboardPending = isMyTurn ? pendingDarts : []
+    const scoreboardPending = canThrow ? pendingDarts : []
     const restored =
       restoreOnlineController(
         state,
@@ -642,12 +797,14 @@ export const OnlineMatchPlayBoard = ({
       pendingDarts: restored.pendingDarts,
     }
   }, [
+    asyncPlay,
     boardController,
+    canThrow,
     correctingVisitIndex,
     currentUserId,
     entryController,
+    isAsync,
     isCorrecting,
-    isMyTurn,
     opponentDisplayName,
     pendingDarts,
     state,
@@ -663,10 +820,25 @@ export const OnlineMatchPlayBoard = ({
   }
 
   const completed = state.status === MatchStatus.Completed
-  const waitingPlayerId =
-    !isMyTurn && !isCorrecting && state.status === MatchStatus.Active && !state.pendingFinalization
-      ? state.activePlayerId
-      : null
+  const waitingPlayerId = (() => {
+    if (state.status !== MatchStatus.Active || isCorrecting) {
+      return null
+    }
+
+    if (isAsync) {
+      if (ownStream?.finalized === true && opponent !== undefined) {
+        return opponent.userId
+      }
+
+      return null
+    }
+
+    if (!canThrow && !state.pendingFinalization) {
+      return state.activePlayerId
+    }
+
+    return null
+  })()
 
   const scoreboard = (
     <Scoreboard
@@ -710,8 +882,8 @@ export const OnlineMatchPlayBoard = ({
   const dialogs = (
     <>
       <OnlineMatchFinishPrompt
-        open={state.pendingFinalization}
-        secondsLeft={secondsLeft}
+        open={canFinish}
+        secondsLeft={finishSecondsLeft}
         onFinish={() => {
           sendCommand({ name: MatchCommandName.FinishMatch })
         }}
