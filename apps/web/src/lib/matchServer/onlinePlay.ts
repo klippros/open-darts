@@ -114,12 +114,7 @@ export const resolveCompletedOnlineSession = (
   )
 }
 
-/** Player who threw the visit that ended the match — they confirm or undo. */
-export const resolvePendingFinishPlayerId = (session: GameSession): string | null => {
-  const lastVisit = [...session.visits].reverse().find((visit) => visit.voided !== true)
-
-  return lastVisit?.playerId ?? null
-}
+export { resolvePendingFinishPlayerId } from '@open-darts/game/game/resolvePendingFinishPlayerId'
 
 export const dartsToPublicPayload = (darts: DartThrow[]): PublicDartThrow[] =>
   darts.map(toPublicDartThrow)

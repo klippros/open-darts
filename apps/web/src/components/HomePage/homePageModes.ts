@@ -39,7 +39,7 @@ export const MATCH_MODES: readonly HomePageModeLink[] = [
   {
     id: 'claim-the-board',
     label: 'Claim the Board',
-    description: 'Shared targets · finish on 25/bull or bull',
+    description: 'Shared targets · highest score wins · finish hits break ties',
     to: '/game/claim-the-board/setup',
     onlineCapable: true,
   },

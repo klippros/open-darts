@@ -1,5 +1,4 @@
 import { GameModeId } from '@open-darts/game/types/gameMode'
-import type { GameConfig } from '@open-darts/game/types/gameMode'
 import { readOnlineMatchHistorySession } from '../history/onlineHistorySummary'
 import { supabaseClient } from '../supabase/client'
 import { isMatchServerConfigured, matchServerUrl } from './config'
@@ -15,10 +14,10 @@ import type {
   PublicMatchState,
 } from './types'
 import { MatchEndingKind, MatchStatus, PlayMode, V1_ONLINE_X01_CONFIG } from './types'
-import { AroundTheClockAimMode } from '@open-darts/game/types/aroundTheClock'
 import { DEFAULT_CLAIM_THE_BOARD_CONFIG } from '@open-darts/game/claimTheBoard/claimTheBoardConfig'
 import type { ClaimTheBoardConfig } from '@open-darts/game/types/claimTheBoard'
 import type { X01Config } from '@open-darts/game/types/x01'
+import { readOnlineGameConfig } from '@open-darts/game/game/onlineMatchSetup'
 
 export class MatchServerApiError extends Error {
   readonly status: number
@@ -259,45 +258,13 @@ export const buildInviteAbsoluteUrl = (
 
 export const buildMatchPath = (matchId: string): string => `/match/${matchId}`
 
-const parseAimMode = (value: unknown): AroundTheClockAimMode => {
-  for (const aimMode of Object.values(AroundTheClockAimMode)) {
-    if (aimMode === value) {
-      return aimMode
-    }
-  }
-
-  return AroundTheClockAimMode.Any
-}
-
-const readGameConfig = (value: unknown, mode?: string): GameConfig => {
-  if (!isRecord(value)) {
-    return mode === GameModeId.ClaimTheBoard
-      ? { ...DEFAULT_CLAIM_THE_BOARD_CONFIG }
-      : { ...V1_ONLINE_X01_CONFIG }
-  }
-
-  if (mode === GameModeId.ClaimTheBoard || typeof value.aimMode === 'string') {
-    return { aimMode: parseAimMode(value.aimMode) }
-  }
-
-  if (typeof value.startScore !== 'number') {
-    return { ...V1_ONLINE_X01_CONFIG }
-  }
-
-  return {
-    startScore: value.startScore,
-    doubleIn: value.doubleIn === true,
-    doubleOut: value.doubleOut !== false,
-  }
-}
-
 const mapInviteRow = (row: Record<string, unknown>): OnlineMatchInvite => ({
   matchId: readString(row.match_id),
   status: readString(row.status),
   creatorUserId: readString(row.creator_user_id),
   creatorDisplayName: readString(row.creator_display_name, 'Opponent'),
   mode: readString(row.mode),
-  config: readGameConfig(row.config, readString(row.mode)),
+  config: readOnlineGameConfig(row.config, readString(row.mode)),
   legsToWin: readNumber(row.legs_to_win),
   startingPlayerSlot: readNumber(row.starting_player_slot),
   playerCount: readNumber(row.player_count),
@@ -410,7 +377,7 @@ const mapHistoryRow = (
     status: statusRaw,
     playMode: playModeRaw,
     mode: modeRaw,
-    config: readGameConfig(row.config, modeRaw),
+    config: readOnlineGameConfig(row.config, modeRaw),
     legsToWin: readNumber(row.legs_to_win, 1),
     endingKind: endingKindRaw,
     winnerUserId: typeof row.winner_user_id === 'string' ? row.winner_user_id : null,

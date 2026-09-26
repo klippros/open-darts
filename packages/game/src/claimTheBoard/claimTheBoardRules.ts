@@ -84,6 +84,10 @@ export const resolveClaimTheBoardVisit = (
   }
 }
 
+/**
+ * Highest score wins after someone hits the final target.
+ * On a tied score, the player who hit that finishing target wins.
+ */
 export const resolveClaimTheBoardWinnerId = (
   players: Record<string, { score: number }>,
   finishingPlayerId: string,

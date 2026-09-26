@@ -1,3 +1,4 @@
+import { parseAroundTheClockAimMode } from '../aroundTheClock/aroundTheClockConfig'
 import { AroundTheClockAimMode } from '../types/aroundTheClock'
 import type { ClaimTheBoardConfig } from '../types/claimTheBoard'
 import { GameModeId } from '../types/gameMode'
@@ -17,19 +18,8 @@ const AIM_MODE_PARAMS: Record<AroundTheClockAimMode, string> = {
   [AroundTheClockAimMode.Any]: 'any',
 }
 
-export const parseClaimTheBoardAimMode = (value: string | null): AroundTheClockAimMode => {
-  if (value === null) {
-    return AroundTheClockAimMode.Any
-  }
-
-  for (const aimMode of Object.values(AroundTheClockAimMode)) {
-    if (AIM_MODE_PARAMS[aimMode] === value) {
-      return aimMode
-    }
-  }
-
-  return AroundTheClockAimMode.Any
-}
+export const parseClaimTheBoardAimMode = (value: string | null): AroundTheClockAimMode =>
+  parseAroundTheClockAimMode(value)
 
 export const parseClaimTheBoardConfigFromSearchParams = (
   params: URLSearchParams,

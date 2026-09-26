@@ -51,7 +51,7 @@ export const gameModeDefinitions: Record<GameModeId, GameModeDefinition> = {
     mode: GameModeId.ClaimTheBoard,
     defaultConfig: DEFAULT_CLAIM_THE_BOARD_CONFIG satisfies ClaimTheBoardConfig,
     label: 'Claim the Board',
-    description: 'Shared targets · finish on 25/bull or bull',
+    description: 'Shared targets · highest score wins · finish hits break ties',
   },
   [GameModeId.TenUpOneDown]: {
     mode: GameModeId.TenUpOneDown,

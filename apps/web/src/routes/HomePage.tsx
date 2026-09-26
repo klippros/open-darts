@@ -20,7 +20,7 @@ export const HomePage = () => {
             <ResumeOnlineMatchBanner
               match={resumeMatch}
               onCancelled={() => {
-                void inProgress.refetch()
+                inProgress.dismissCancelledMatch(resumeMatch.id)
               }}
             />
           ) : null}

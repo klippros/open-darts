@@ -95,7 +95,7 @@ export const MatchSetupPage = () => {
     signInOpen,
     setSignInOpen,
     inProgressMatch,
-    refetchInProgressMatch,
+    dismissCancelledMatch,
     isAuthLoading,
     authReady,
     isAuthenticated,
@@ -201,7 +201,7 @@ export const MatchSetupPage = () => {
             match={inProgressMatch}
             stacked
             onCancelled={() => {
-              void refetchInProgressMatch()
+              dismissCancelledMatch(inProgressMatch.id)
             }}
           />
         ) : null}

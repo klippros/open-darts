@@ -313,12 +313,7 @@ export const resolveMatchWinnerUserId = (session: GameSession): string | null =>
   return checkout?.playerId ?? null
 }
 
-/** Player who threw the visit that ended the match — they confirm or undo. */
-export const resolvePendingFinishPlayerId = (session: GameSession): string | null => {
-  const lastVisit = [...session.visits].reverse().find((visit) => visit.voided !== true)
-
-  return lastVisit?.playerId ?? null
-}
+export { resolvePendingFinishPlayerId } from '@open-darts/game/game/resolvePendingFinishPlayerId'
 
 export const finalizeSession = (play: StoredPlayState): StoredPlayState => ({
   session: {

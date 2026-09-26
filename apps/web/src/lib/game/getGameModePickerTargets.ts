@@ -95,6 +95,7 @@ export const getDartPickerHelpContent = (
       title: 'How to score',
       paragraphs: [
         `Record how many times you hit ${targetLabel}. Each hit scores the face value of that target. A miss keeps the target for the next player.`,
+        'Highest score wins when someone hits the finish. On a tie, the player who hits that finishing target wins.',
       ],
       voice,
     }

@@ -87,7 +87,7 @@ export const useCreateOnlineMatch = () => {
     signInOpen,
     setSignInOpen,
     inProgressMatch,
-    refetchInProgressMatch: inProgress.refetch,
+    dismissCancelledMatch: inProgress.dismissCancelledMatch,
     isAuthLoading,
     authReady,
     isAuthenticated,
