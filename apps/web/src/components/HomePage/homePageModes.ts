@@ -7,6 +7,7 @@ export interface HomePageModeLink {
   label: string
   description: string
   to: string
+  onlineCapable?: boolean
 }
 
 export const MATCH_MODES: readonly HomePageModeLink[] = [
@@ -15,6 +16,7 @@ export const MATCH_MODES: readonly HomePageModeLink[] = [
     label: '501',
     description: 'Classic double-out',
     to: buildX01PresetPath(X01PresetId.FiveOhOne),
+    onlineCapable: true,
   },
   {
     id: X01PresetId.FourOhOne,
@@ -39,21 +41,7 @@ export const MATCH_MODES: readonly HomePageModeLink[] = [
     label: 'Claim the Board',
     description: 'Shared targets · finish on 25/bull or bull',
     to: '/game/claim-the-board/setup',
-  },
-]
-
-export const ONLINE_MODES: readonly HomePageModeLink[] = [
-  {
-    id: GameModeId.X01,
-    label: '501',
-    description: 'Classic double-out',
-    to: `/match/new?mode=${GameModeId.X01}`,
-  },
-  {
-    id: GameModeId.ClaimTheBoard,
-    label: 'Claim the Board',
-    description: 'Shared targets · finish on 25/bull or bull',
-    to: `/match/new?mode=${GameModeId.ClaimTheBoard}`,
+    onlineCapable: true,
   },
 ]
 

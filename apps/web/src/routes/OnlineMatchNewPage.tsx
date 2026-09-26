@@ -1,43 +1,12 @@
-import { Box, Stack, Text } from '@chakra-ui/react'
-import { useState } from 'react'
-import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
-import { SetupPageActions } from '../components/SetupPageLayout/SetupPageActions'
-import { SetupPageHeader } from '../components/SetupPageLayout/SetupPageHeader'
-import { SetupPageLayout } from '../components/SetupPageLayout/SetupPageLayout'
-import { SetupOptionCard } from '../components/SetupPageLayout/SetupOptionCard'
-import { SetupSection } from '../components/SetupPageLayout/SetupSection'
-import { useAuth } from '../hooks/authContext'
-import { useInProgressOnlineMatch } from '../hooks/useInProgressOnlineMatch'
-import { AuthStatus } from '../types/auth'
-import { buildMatchPath, createMatch, MatchServerApiError } from '../lib/matchServer/api'
-import { isOnlineMatchesEnabled } from '../lib/matchServer/config'
-import { MatchPlayerSlot, V1_ONLINE_X01_CONFIG } from '../lib/matchServer/types'
-import { clampLegsToWin } from '@open-darts/game/game/matchLegs'
-import { resolveHumanPlayerName } from '@open-darts/game/game/playerFactory'
-import { DEFAULT_LEGS_TO_WIN, LEGS_TO_WIN_MAX, LEGS_TO_WIN_MIN } from '@open-darts/game/types/match'
+import { Navigate, useSearchParams } from 'react-router-dom'
 import { GameModeId } from '@open-darts/game/types/gameMode'
-import { AroundTheClockAimMode } from '@open-darts/game/types/aroundTheClock'
-import {
-  getAroundTheClockAimModeDescription,
-  getAroundTheClockAimModeLabel,
-} from '@open-darts/game/aroundTheClock/aroundTheClockConfig'
+import { buildX01PresetPath, X01PresetId } from '@open-darts/game/x01/x01Presets'
+import { isOnlineMatchesEnabled } from '../lib/matchServer/config'
+import { buildOnlineSetupPath } from '../lib/matchServer/onlineSetup'
 
-const rangeInputStyle = {
-  width: '100%',
-  accentColor: '#f6ad55',
-  cursor: 'pointer',
-} as const
-
-const AIM_MODES = [
-  AroundTheClockAimMode.Singles,
-  AroundTheClockAimMode.Doubles,
-  AroundTheClockAimMode.Trebles,
-  AroundTheClockAimMode.Any,
-] as const
-
-type OnlineMatchMode = GameModeId.X01 | GameModeId.ClaimTheBoard
-
-const parseOnlineMatchMode = (raw: string | null): OnlineMatchMode | null => {
+const parseOnlineMatchMode = (
+  raw: string | null,
+): GameModeId.X01 | GameModeId.ClaimTheBoard | null => {
   if (raw === GameModeId.X01 || raw === GameModeId.ClaimTheBoard) {
     return raw
   }
@@ -46,211 +15,16 @@ const parseOnlineMatchMode = (raw: string | null): OnlineMatchMode | null => {
 }
 
 export const OnlineMatchNewPage = () => {
-  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { authStatus, profile, user } = useAuth()
-  const inProgress = useInProgressOnlineMatch()
   const matchMode = parseOnlineMatchMode(searchParams.get('mode'))
-  const [aimMode, setAimMode] = useState<AroundTheClockAimMode>(AroundTheClockAimMode.Any)
-  const [legsToWin, setLegsToWin] = useState(DEFAULT_LEGS_TO_WIN)
-  const [startingPlayerSlot, setStartingPlayerSlot] = useState(MatchPlayerSlot.Random)
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
-  if (!isOnlineMatchesEnabled) {
+  if (!isOnlineMatchesEnabled || matchMode === null) {
     return <Navigate to="/" replace />
   }
 
-  if (matchMode === null) {
-    return <Navigate to="/" replace />
+  if (matchMode === GameModeId.ClaimTheBoard) {
+    return <Navigate to={buildOnlineSetupPath('/game/claim-the-board/setup')} replace />
   }
 
-  if (
-    authStatus === AuthStatus.Loading ||
-    inProgress.status === 'idle' ||
-    inProgress.status === 'loading'
-  ) {
-    return (
-      <SetupPageLayout>
-        <Text color="whiteAlpha.700">Loading…</Text>
-      </SetupPageLayout>
-    )
-  }
-
-  if (authStatus !== AuthStatus.Authenticated || user === null) {
-    return <Navigate to="/" replace />
-  }
-
-  if (inProgress.status === 'ready' && inProgress.match !== null) {
-    return <Navigate to={buildMatchPath(inProgress.match.id)} replace />
-  }
-
-  const primaryPlayerLabel = resolveHumanPlayerName(profile?.displayName)
-  const isClaimTheBoard = matchMode === GameModeId.ClaimTheBoard
-  const title = isClaimTheBoard ? 'Claim the Board' : '501'
-
-  const handleCreate = async () => {
-    setSubmitting(true)
-    setError(null)
-
-    try {
-      const created = await createMatch(
-        isClaimTheBoard ? 1 : clampLegsToWin(legsToWin),
-        startingPlayerSlot,
-        {
-          mode: matchMode,
-          config: isClaimTheBoard ? { aimMode } : { ...V1_ONLINE_X01_CONFIG },
-        },
-      )
-      void navigate(buildMatchPath(created.matchId), { replace: true })
-    } catch (createError) {
-      if (createError instanceof MatchServerApiError && createError.code === 'conflict') {
-        setError(
-          'You already have an in-progress online match. Return to it before creating another.',
-        )
-      } else {
-        const message =
-          createError instanceof MatchServerApiError
-            ? createError.message
-            : 'Unable to create online match'
-        setError(message)
-      }
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  return (
-    <SetupPageLayout>
-      <Stack gap={8}>
-        <SetupPageHeader
-          title={title}
-          description="Create a two-player online match and invite an opponent."
-        />
-
-        {isClaimTheBoard && (
-          <SetupSection title="Aim mode">
-            <Stack gap={2}>
-              {AIM_MODES.map((mode) => (
-                <SetupOptionCard
-                  key={mode}
-                  label={getAroundTheClockAimModeLabel(mode)}
-                  description={getAroundTheClockAimModeDescription(mode)}
-                  selected={aimMode === mode}
-                  onSelect={() => {
-                    setAimMode(mode)
-                  }}
-                />
-              ))}
-            </Stack>
-          </SetupSection>
-        )}
-
-        {!isClaimTheBoard && (
-          <SetupSection
-            title="First to"
-            description="Win the match by taking this many legs first."
-          >
-            <Box
-              borderWidth="1px"
-              borderColor="whiteAlpha.200"
-              borderRadius="lg"
-              bg="whiteAlpha.50"
-              px={4}
-              py={4}
-            >
-              <Stack gap={3}>
-                <Stack direction="row" justify="space-between" align="center">
-                  <Text color="whiteAlpha.700" fontSize="sm">
-                    {LEGS_TO_WIN_MIN} leg
-                  </Text>
-                  <Text
-                    color="white"
-                    fontFamily="Archivo Black, sans-serif"
-                    fontSize="2xl"
-                    lineHeight="1"
-                  >
-                    {legsToWin}
-                  </Text>
-                  <Text color="whiteAlpha.700" fontSize="sm">
-                    {LEGS_TO_WIN_MAX} legs
-                  </Text>
-                </Stack>
-                <input
-                  type="range"
-                  min={LEGS_TO_WIN_MIN}
-                  max={LEGS_TO_WIN_MAX}
-                  step={1}
-                  value={legsToWin}
-                  style={rangeInputStyle}
-                  aria-label="Legs to win"
-                  onChange={(event) => {
-                    setLegsToWin(clampLegsToWin(Number(event.target.value)))
-                  }}
-                />
-              </Stack>
-            </Box>
-          </SetupSection>
-        )}
-
-        <SetupSection title="First throw">
-          <Stack gap={2}>
-            <SetupOptionCard
-              label="Random"
-              description="Coin flip who throws first when the match starts"
-              selected={startingPlayerSlot === MatchPlayerSlot.Random}
-              onSelect={() => {
-                setStartingPlayerSlot(MatchPlayerSlot.Random)
-              }}
-            />
-            <SetupOptionCard
-              label={primaryPlayerLabel}
-              description={
-                isClaimTheBoard
-                  ? `${primaryPlayerLabel} throws first`
-                  : `${primaryPlayerLabel} throws first in leg 1`
-              }
-              selected={startingPlayerSlot === MatchPlayerSlot.Creator}
-              onSelect={() => {
-                setStartingPlayerSlot(MatchPlayerSlot.Creator)
-              }}
-            />
-            <SetupOptionCard
-              label="Opponent"
-              description={
-                isClaimTheBoard ? 'Opponent throws first' : 'Opponent throws first in leg 1'
-              }
-              selected={startingPlayerSlot === MatchPlayerSlot.Joiner}
-              onSelect={() => {
-                setStartingPlayerSlot(MatchPlayerSlot.Joiner)
-              }}
-            />
-          </Stack>
-          {!isClaimTheBoard && (
-            <Text fontSize="sm" color="whiteAlpha.600" lineHeight="1.55">
-              Starters alternate each leg after the first.
-            </Text>
-          )}
-        </SetupSection>
-
-        {error !== null && (
-          <Text color="red.300" fontSize="sm">
-            {error}
-          </Text>
-        )}
-
-        <SetupPageActions
-          primaryLabel={submitting ? 'Creating…' : 'Create match'}
-          onBack={() => {
-            void navigate('/')
-          }}
-          onPrimary={() => {
-            if (!submitting) {
-              void handleCreate()
-            }
-          }}
-        />
-      </Stack>
-    </SetupPageLayout>
-  )
+  return <Navigate to={buildOnlineSetupPath(buildX01PresetPath(X01PresetId.FiveOhOne))} replace />
 }

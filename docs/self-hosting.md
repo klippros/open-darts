@@ -50,8 +50,8 @@ http://localhost:5173/tools/open-darts/auth/callback
 https://klippros.com/tools/open-darts/auth/callback
 ```
 
-Post-sign-in destinations (for example `/match/new`) are stored in the browser
-and are not part of the redirect URL.
+Post-sign-in destinations (for example `/game/match-setup`) are stored in the
+browser and are not part of the redirect URL.
 
 For another deployment, replace the production origin and keep the
 `/tools/open-darts/auth/callback` path.
