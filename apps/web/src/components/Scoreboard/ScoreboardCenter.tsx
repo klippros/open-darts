@@ -96,6 +96,7 @@ export const ScoreboardCenter = ({
   const showVisitDartSlots =
     !hideVisitDartSlots &&
     mode !== GameModeId.AroundTheClock &&
+    mode !== GameModeId.ClaimTheBoard &&
     mode !== GameModeId.Bob27 &&
     mode !== GameModeId.NinetyNineDarts
   const scoreBeforeVisit =

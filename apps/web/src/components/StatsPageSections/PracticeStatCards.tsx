@@ -3,6 +3,7 @@ import type {
   AroundTheClockPracticeStats,
   Bob27PracticeStats,
   CheckoutPracticeStats,
+  ClaimTheBoardPracticeStats,
   NinetyNineDartsPracticeStats,
 } from '../../lib/analytics/computeAnalytics'
 import type { StatTimelineSelection } from '../../lib/analytics/statTimelines'
@@ -206,6 +207,24 @@ export const Bob27PracticeCard = ({
             })
           }}
         />
+      )}
+    </SimpleGrid>
+  </PracticeModeCard>
+)
+
+export const ClaimTheBoardPracticeCard = ({ stats }: { stats: ClaimTheBoardPracticeStats }) => (
+  <PracticeModeCard title={stats.label} trailing={<StatsCountLabel count={stats.gameCount} />}>
+    <SimpleGrid columns={{ base: 1, sm: 2 }} gap={3}>
+      <StatCard label="Avg hits / visit" value={formatAverage(stats.avgHitsPerVisit)} />
+      <StatCard
+        label="Fields claimed / game"
+        value={formatAverage(stats.avgFieldsClaimedPerGame)}
+      />
+      <StatCard label="1 hit / game" value={formatAverage(stats.avgFieldsHitOncePerGame)} />
+      <StatCard label="2 hits / game" value={formatAverage(stats.avgFieldsHitTwicePerGame)} />
+      <StatCard label="3 hits / game" value={formatAverage(stats.avgFieldsHitThricePerGame)} />
+      {stats.avgFinalScore !== null && (
+        <StatCard label="Avg final score" value={formatInteger(stats.avgFinalScore)} />
       )}
     </SimpleGrid>
   </PracticeModeCard>

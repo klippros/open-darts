@@ -34,6 +34,27 @@ export const MATCH_MODES: readonly HomePageModeLink[] = [
     description: 'Choose start score and rules',
     to: '/game/setup',
   },
+  {
+    id: 'claim-the-board',
+    label: 'Claim the Board',
+    description: 'Shared targets · finish on 25/bull or bull',
+    to: '/game/claim-the-board/setup',
+  },
+]
+
+export const ONLINE_MODES: readonly HomePageModeLink[] = [
+  {
+    id: GameModeId.X01,
+    label: '501',
+    description: 'Classic double-out',
+    to: `/match/new?mode=${GameModeId.X01}`,
+  },
+  {
+    id: GameModeId.ClaimTheBoard,
+    label: 'Claim the Board',
+    description: 'Shared targets · finish on 25/bull or bull',
+    to: `/match/new?mode=${GameModeId.ClaimTheBoard}`,
+  },
 ]
 
 export const PRACTICE_MODES: readonly HomePageModeLink[] = [
@@ -52,7 +73,7 @@ export const PRACTICE_MODES: readonly HomePageModeLink[] = [
   {
     id: 'around-the-clock',
     label: 'Around the Clock',
-    description: 'Hit 1 to 20 and bull',
+    description: 'Hit 1 to 20; finish on 25/bull or bull',
     to: '/game/around-the-clock/setup',
   },
   {

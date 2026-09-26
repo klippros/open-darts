@@ -37,7 +37,7 @@ export const getVoiceCommandHelpSection = (
     return null
   }
 
-  if (mode === GameModeId.Bob27) {
+  if (mode === GameModeId.Bob27 || mode === GameModeId.ClaimTheBoard) {
     return {
       title: VOICE_COMMANDS_SECTION_TITLE,
       intro: VOICE_COMMANDS_SECTION_INTRO,

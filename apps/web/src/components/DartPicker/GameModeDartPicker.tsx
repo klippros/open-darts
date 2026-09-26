@@ -1,4 +1,5 @@
 import { AroundTheClockDartPicker } from './AroundTheClockDartPicker'
+import { ClaimTheBoardDartPicker } from './ClaimTheBoardDartPicker'
 import { Bob27DartPicker } from './Bob27DartPicker'
 import { DartPicker } from './DartPicker'
 import { NinetyNineDartsDartPicker } from './NinetyNineDartsDartPicker'
@@ -7,6 +8,7 @@ import { TenUpOneDownDartPicker } from './TenUpOneDownDartPicker'
 import { VisitScorePicker } from './VisitScorePicker/VisitScorePicker'
 import {
   isAroundTheClockConfig,
+  isClaimTheBoardConfig,
   isNinetyNineDartsConfig,
 } from '@open-darts/game/game/gameConfigGuards'
 import { supportsVisitScoreInput } from '@open-darts/game/game/gameModeDefinitions'
@@ -19,6 +21,7 @@ export interface GameModeDartPickerProps {
   mode: GameModeId
   config: GameConfig
   aroundTheClockTargetIndex?: number
+  claimTheBoardTargetIndex?: number
   bob27TargetIndex?: number
   checkoutTarget?: number
   pendingDarts: DartThrow[]
@@ -36,6 +39,7 @@ export const GameModeDartPicker = ({
   mode,
   config,
   aroundTheClockTargetIndex,
+  claimTheBoardTargetIndex,
   bob27TargetIndex,
   checkoutTarget,
   pendingDarts,
@@ -58,6 +62,23 @@ export const GameModeDartPicker = ({
         committedTargetIndex={aroundTheClockTargetIndex}
         pendingDarts={pendingDarts}
         config={config}
+        onDarts={onDarts}
+        onUndo={onUndo}
+        inputDisabled={inputDisabled}
+        undoDisabled={undoDisabled}
+      />
+    )
+  }
+
+  if (
+    mode === GameModeId.ClaimTheBoard &&
+    isClaimTheBoardConfig(mode, config) &&
+    claimTheBoardTargetIndex !== undefined
+  ) {
+    return (
+      <ClaimTheBoardDartPicker
+        targetIndex={claimTheBoardTargetIndex}
+        aimMode={config.aimMode}
         onDarts={onDarts}
         onUndo={onUndo}
         inputDisabled={inputDisabled}

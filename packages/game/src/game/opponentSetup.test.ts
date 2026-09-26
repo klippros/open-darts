@@ -7,6 +7,7 @@ import {
   parseOpponentSetup,
   playersMatchLaunchSetup,
 } from './opponentSetup'
+import { STARTING_PLAYER_INDEX_RANDOM } from './matchLegs'
 import { createSoloHumanPlayer } from './playerFactory'
 
 describe('opponentSetup', () => {
@@ -116,5 +117,19 @@ describe('opponentSetup', () => {
     })
 
     expect(params.get('guestName')).toBe('Guest')
+  })
+
+  it('resolves a random starter when serializing guest mode', () => {
+    const params = appendOpponentSetupParams(new URLSearchParams(), {
+      mode: 'guest',
+      guestName: 'Alex',
+      maxVisits: 9,
+      legEndMode: ChallengeLegEndMode.PlayToCheckout,
+      legsToWin: 1,
+      startingPlayerIndex: STARTING_PLAYER_INDEX_RANDOM,
+    })
+
+    const starter = params.get('starter')
+    expect(starter === null || starter === '1').toBe(true)
   })
 })

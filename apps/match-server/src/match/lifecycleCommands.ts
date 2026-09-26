@@ -9,12 +9,17 @@ import { parsePlayState, playStateToSessionJson } from './sessionPlay'
 import type { StoredPlayState } from './sessionPlay'
 import { CommandErrorCode, DeadlineKind, MatchEndingKind, MatchStatus, PlayMode } from './types'
 import type { PreparedMutation } from './playCommands'
+import { supportsOnlineAsyncPlay } from './v1Rules'
 
 export const startAsync = (sql: SqlStorage, userId: string): PreparedMutation => {
   const state = loadPublicMatchState(sql)
 
   if (state?.status !== MatchStatus.Active) {
     return commandFailure(CommandErrorCode.Invalid, 'Match is not active')
+  }
+
+  if (!supportsOnlineAsyncPlay(state.mode)) {
+    return commandFailure(CommandErrorCode.Invalid, 'Async play is not available for this mode')
   }
 
   if (state.playMode !== PlayMode.Synchronous) {

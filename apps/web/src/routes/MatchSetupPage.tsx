@@ -15,6 +15,7 @@ import {
 } from '@open-darts/game/game/challenge'
 import { appendOpponentSetupParams, parseOpponentSetup } from '@open-darts/game/game/opponentSetup'
 import type { OpponentMode, OpponentSetup } from '@open-darts/game/game/opponentSetup'
+import { STARTING_PLAYER_INDEX_RANDOM } from '@open-darts/game/game/matchLegs'
 import {
   formatX01StartScore,
   parseX01ConfigFromSearchParams,
@@ -59,9 +60,10 @@ export const MatchSetupPage = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const x01Config = useMemo(() => parseX01ConfigFromSearchParams(searchParams), [searchParams])
-  const [setup, setSetup] = useState<OpponentSetup>(() =>
-    parseOpponentSetup(searchParams, 2, x01Config.startScore),
-  )
+  const [setup, setSetup] = useState<OpponentSetup>(() => ({
+    ...parseOpponentSetup(searchParams, 2, x01Config.startScore),
+    startingPlayerIndex: STARTING_PLAYER_INDEX_RANDOM,
+  }))
 
   const modeLabel = formatX01StartScore(x01Config)
   const minVisits = getMinVisits(x01Config.startScore)

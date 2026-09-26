@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { GameModeId } from '@open-darts/game/types/gameMode'
+import { AroundTheClockAimMode } from '@open-darts/game/types/aroundTheClock'
 import {
   buildInviteAbsoluteUrl,
   buildInvitePath,
   buildMatchPath,
+  buildOnlineCreateMatchBody,
   buildV1CreateMatchBody,
 } from './api'
 import { MatchPlayerSlot, V1_ONLINE_X01_CONFIG } from './types'
@@ -24,6 +26,22 @@ describe('matchServer api helpers', () => {
       config: { ...V1_ONLINE_X01_CONFIG },
       legsToWin: 2,
       startingPlayerSlot: MatchPlayerSlot.Random,
+    })
+  })
+
+  it('builds claim-the-board create-match bodies', () => {
+    expect(
+      buildOnlineCreateMatchBody(
+        GameModeId.ClaimTheBoard,
+        { aimMode: AroundTheClockAimMode.Doubles },
+        2,
+        MatchPlayerSlot.Creator,
+      ),
+    ).toEqual({
+      mode: GameModeId.ClaimTheBoard,
+      config: { aimMode: AroundTheClockAimMode.Doubles },
+      legsToWin: 2,
+      startingPlayerSlot: MatchPlayerSlot.Creator,
     })
   })
 

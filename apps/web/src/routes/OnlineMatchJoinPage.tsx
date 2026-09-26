@@ -16,6 +16,33 @@ import {
 } from '../lib/matchServer/api'
 import { isOnlineMatchesEnabled } from '../lib/matchServer/config'
 import type { OnlineMatchInvite } from '../lib/matchServer/types'
+import { GameModeId } from '@open-darts/game/types/gameMode'
+import { isClaimTheBoardConfig, isX01Config } from '@open-darts/game/game/gameConfigGuards'
+import { formatX01StartScore } from '@open-darts/game/x01/x01Presets'
+import { getAroundTheClockAimModeLabel } from '@open-darts/game/aroundTheClock/aroundTheClockConfig'
+import { gameModeDefinitions } from '@open-darts/game/game/gameModeDefinitions'
+
+const getInviteModeLabel = (invite: OnlineMatchInvite): string => {
+  const mode = invite.mode
+
+  if (mode === (GameModeId.X01 as string) && isX01Config(GameModeId.X01, invite.config)) {
+    return formatX01StartScore(invite.config)
+  }
+
+  if (
+    mode === (GameModeId.ClaimTheBoard as string) &&
+    isClaimTheBoardConfig(GameModeId.ClaimTheBoard, invite.config)
+  ) {
+    return `${gameModeDefinitions[GameModeId.ClaimTheBoard].label} · ${getAroundTheClockAimModeLabel(invite.config.aimMode)}`
+  }
+
+  const knownMode = (Object.values(GameModeId) as string[]).includes(mode)
+    ? // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- mode string checked against GameModeId values
+      (mode as GameModeId)
+    : undefined
+
+  return knownMode === undefined ? mode : (gameModeDefinitions[knownMode]?.label ?? mode)
+}
 
 export const OnlineMatchJoinPage = () => {
   const { token } = useParams<{ token: string }>()
@@ -97,7 +124,7 @@ export const OnlineMatchJoinPage = () => {
         <Stack gap={8}>
           <SetupPageHeader
             title="Join online match"
-            description="Sign in to accept this invite and play 501 against another player."
+            description="Sign in to accept this invite and play against another player."
           />
           <Text color="whiteAlpha.700" fontSize="sm" lineHeight="1.55">
             Online matches need a signed-in account. After you sign in, you will return here to
@@ -203,7 +230,7 @@ export const OnlineMatchJoinPage = () => {
       <Stack gap={8}>
         <SetupPageHeader
           title="Join online match"
-          description="Accept an invite to play 501 against another signed-in player."
+          description="Accept an invite to play against another signed-in player."
         />
 
         {loading && <Text color="whiteAlpha.700">Looking up invite…</Text>}
@@ -222,7 +249,9 @@ export const OnlineMatchJoinPage = () => {
               {invite.creatorDisplayName}
             </Text>
             <Text color="whiteAlpha.700" fontSize="sm">
-              501 · first to {invite.legsToWin} · {invite.playerCount}/2 players
+              {invite.legsToWin <= 1
+                ? `${getInviteModeLabel(invite)} · ${invite.playerCount}/2 players`
+                : `${getInviteModeLabel(invite)} · first to ${invite.legsToWin} · ${invite.playerCount}/2 players`}
             </Text>
           </Stack>
         )}

@@ -15,6 +15,10 @@ import type {
   PublicMatchState,
 } from './types'
 import { MatchEndingKind, MatchStatus, PlayMode, V1_ONLINE_X01_CONFIG } from './types'
+import { AroundTheClockAimMode } from '@open-darts/game/types/aroundTheClock'
+import { DEFAULT_CLAIM_THE_BOARD_CONFIG } from '@open-darts/game/claimTheBoard/claimTheBoardConfig'
+import type { ClaimTheBoardConfig } from '@open-darts/game/types/claimTheBoard'
+import type { X01Config } from '@open-darts/game/types/x01'
 
 export class MatchServerApiError extends Error {
   readonly status: number
@@ -125,6 +129,18 @@ export const buildV1CreateMatchBody = (
   startingPlayerSlot,
 })
 
+export const buildOnlineCreateMatchBody = (
+  mode: GameModeId.X01 | GameModeId.ClaimTheBoard,
+  config: X01Config | ClaimTheBoardConfig,
+  legsToWin: number,
+  startingPlayerSlot: MatchPlayerSlot,
+): CreateMatchRequest => ({
+  mode,
+  config,
+  legsToWin,
+  startingPlayerSlot,
+})
+
 const asCreateMatchResponse = (payload: unknown): CreateMatchResponse => {
   if (
     !isRecord(payload) ||
@@ -175,12 +191,22 @@ const asMatchTicketResponse = (payload: unknown): MatchTicketResponse => {
 export const createMatch = async (
   legsToWin: number,
   startingPlayerSlot: MatchPlayerSlot,
+  options?: {
+    mode?: GameModeId.X01 | GameModeId.ClaimTheBoard
+    config?: X01Config | ClaimTheBoardConfig
+  },
 ): Promise<CreateMatchResponse> => {
   const accessToken = await requireAccessToken()
+  const mode = options?.mode ?? GameModeId.X01
+  const config =
+    options?.config ??
+    (mode === GameModeId.ClaimTheBoard
+      ? DEFAULT_CLAIM_THE_BOARD_CONFIG
+      : { ...V1_ONLINE_X01_CONFIG })
   const payload = await matchServerFetch('/v1/matches', {
     method: 'POST',
     accessToken,
-    body: JSON.stringify(buildV1CreateMatchBody(legsToWin, startingPlayerSlot)),
+    body: JSON.stringify(buildOnlineCreateMatchBody(mode, config, legsToWin, startingPlayerSlot)),
   })
 
   return asCreateMatchResponse(payload)
@@ -233,8 +259,28 @@ export const buildInviteAbsoluteUrl = (
 
 export const buildMatchPath = (matchId: string): string => `/match/${matchId}`
 
-const readGameConfig = (value: unknown): GameConfig => {
-  if (!isRecord(value) || typeof value.startScore !== 'number') {
+const parseAimMode = (value: unknown): AroundTheClockAimMode => {
+  for (const aimMode of Object.values(AroundTheClockAimMode)) {
+    if (aimMode === value) {
+      return aimMode
+    }
+  }
+
+  return AroundTheClockAimMode.Any
+}
+
+const readGameConfig = (value: unknown, mode?: string): GameConfig => {
+  if (!isRecord(value)) {
+    return mode === GameModeId.ClaimTheBoard
+      ? { ...DEFAULT_CLAIM_THE_BOARD_CONFIG }
+      : { ...V1_ONLINE_X01_CONFIG }
+  }
+
+  if (mode === GameModeId.ClaimTheBoard || typeof value.aimMode === 'string') {
+    return { aimMode: parseAimMode(value.aimMode) }
+  }
+
+  if (typeof value.startScore !== 'number') {
     return { ...V1_ONLINE_X01_CONFIG }
   }
 
@@ -251,7 +297,7 @@ const mapInviteRow = (row: Record<string, unknown>): OnlineMatchInvite => ({
   creatorUserId: readString(row.creator_user_id),
   creatorDisplayName: readString(row.creator_display_name, 'Opponent'),
   mode: readString(row.mode),
-  config: readGameConfig(row.config),
+  config: readGameConfig(row.config, readString(row.mode)),
   legsToWin: readNumber(row.legs_to_win),
   startingPlayerSlot: readNumber(row.starting_player_slot),
   playerCount: readNumber(row.player_count),
@@ -364,7 +410,7 @@ const mapHistoryRow = (
     status: statusRaw,
     playMode: playModeRaw,
     mode: modeRaw,
-    config: readGameConfig(row.config),
+    config: readGameConfig(row.config, modeRaw),
     legsToWin: readNumber(row.legs_to_win, 1),
     endingKind: endingKindRaw,
     winnerUserId: typeof row.winner_user_id === 'string' ? row.winner_user_id : null,

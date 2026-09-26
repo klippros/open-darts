@@ -1,16 +1,21 @@
 import { Box, Button, Heading, Spinner, Stack, Text } from '@chakra-ui/react'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom'
 import { ContentContainer } from '../components/ContentContainer'
 import { useAuth } from '../hooks/authContext'
-import { resolveAuthReturnPath } from '../lib/auth/authRedirect'
+import { consumeAuthReturnPath, resolveAuthReturnPath } from '../lib/auth/authRedirect'
 import { AuthStatus } from '../types/auth'
 
 export const AuthCallbackPage = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { authStatus } = useAuth()
-  const returnTo = resolveAuthReturnPath(searchParams.get('next')) ?? '/history'
+  const returnToRef = useRef<string | null>(null)
+
+  returnToRef.current ??=
+    consumeAuthReturnPath() ?? resolveAuthReturnPath(searchParams.get('next')) ?? '/'
+
+  const returnTo = returnToRef.current
 
   useEffect(() => {
     if (authStatus === AuthStatus.Authenticated) {

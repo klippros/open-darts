@@ -28,6 +28,7 @@ export type { X01LegStats, X01Stats } from './x01Stats'
 export type { CheckoutPracticeStats, OtherPracticeStats, PracticeStats } from './practiceStats'
 export type {
   Bob27PracticeStats,
+  ClaimTheBoardPracticeStats,
   AroundTheClockPracticeStats,
   NinetyNineDartsPracticeStats,
 } from './practiceStats'

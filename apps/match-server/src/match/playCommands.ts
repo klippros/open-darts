@@ -1,3 +1,4 @@
+import { GameModeId } from '@open-darts/game/types/gameMode'
 import {
   applyAsyncRecordDarts,
   applyAsyncRecordVisitScore,
@@ -16,14 +17,14 @@ import {
   requireActivePlay,
 } from './matchPersist'
 import { deleteDeadline } from './alarms'
-import { findPlayer, loadPublicMatchState, writePlayState } from './schema'
+import { loadPublicMatchState, writePlayState } from './schema'
 import {
   applyCorrectVisit,
   applyRecordDarts,
   applyRecordVisitScore,
   applyUndoVisit,
   playStateToSessionJson,
-  resolveMatchWinnerUserId,
+  resolvePendingFinishPlayerId,
 } from './sessionPlay'
 import { CommandErrorCode, DeadlineKind, MatchEndingKind, PlayMode } from './types'
 import type { CommandResult, MatchCommand, MatchCommandName } from './types'
@@ -150,6 +151,13 @@ export const correctVisit = (
     )
   }
 
+  if (required.play.session.mode === GameModeId.ClaimTheBoard) {
+    return commandFailure(
+      CommandErrorCode.Invalid,
+      'Visit correction is not available for this game mode',
+    )
+  }
+
   if (command.darts !== undefined) {
     const darts = parsePublicDartThrows(command.darts)
 
@@ -214,13 +222,16 @@ export const finishMatch = (sql: SqlStorage, userId: string): PreparedMutation =
     return commandFailure(CommandErrorCode.Invalid, 'Match is not waiting to be finalized')
   }
 
-  const winnerUserId = resolveMatchWinnerUserId(required.play.session)
+  const finishingPlayerId = resolvePendingFinishPlayerId(required.play.session)
 
-  if (winnerUserId !== userId && findPlayer(sql, userId) === null) {
-    return commandFailure(CommandErrorCode.Forbidden, 'Not allowed to finish')
+  if (finishingPlayerId === null) {
+    return commandFailure(CommandErrorCode.Invalid, 'Unable to resolve finishing player')
   }
 
-  // Either player who is a member can confirm finish (typically the winner).
+  if (finishingPlayerId !== userId) {
+    return commandFailure(CommandErrorCode.Forbidden, 'Only the finishing player can confirm')
+  }
+
   completeFromPendingFinalization(sql)
   return { ok: true }
 }

@@ -7,11 +7,13 @@ import {
 } from '@open-darts/game/aroundTheClock/buildAroundTheClockDarts'
 import type { AroundTheClockDartOrdinal } from '@open-darts/game/aroundTheClock/buildAroundTheClockDarts'
 import { buildBob27DartsForHitCount } from '@open-darts/game/bob27/buildBob27Darts'
+import { buildClaimTheBoardDartsForHitCount } from '@open-darts/game/claimTheBoard/buildClaimTheBoardDarts'
 import { buildNinetyNineDartsThrow } from '@open-darts/game/ninetyNineDarts/buildNinetyNineDarts'
 import { isNinetyNineDartsTripleAllowed } from '@open-darts/game/ninetyNineDarts/ninetyNineDartsRules'
 import type { AppGameController } from '@open-darts/game/game/createSession'
 import {
   isAroundTheClockConfig,
+  isClaimTheBoardConfig,
   isNinetyNineDartsConfig,
 } from '@open-darts/game/game/gameConfigGuards'
 import { getGameModePickerTargets } from '../game/getGameModePickerTargets'
@@ -128,6 +130,16 @@ const resolveBob27TargetIndex = (controller: AppGameController): number | null =
   return targets.bob27TargetIndex ?? null
 }
 
+const resolveClaimTheBoardTargetIndex = (controller: AppGameController): number | null => {
+  const targets = getGameModePickerTargets(
+    controller.session.mode,
+    controller.engineState,
+    controller.activePlayerId,
+  )
+
+  return targets.claimTheBoardTargetIndex ?? null
+}
+
 const resolveAroundTheClockTargetIndex = (controller: AppGameController): number | null => {
   const targets = getGameModePickerTargets(
     controller.session.mode,
@@ -206,16 +218,40 @@ const buildGameplayDarts = (
   intent: VoiceGameplayIntent,
 ): { darts: DartThrow[]; playback: VoicePlayback } | null => {
   if (intent.kind === VoiceIntentKind.Bob27HitCount) {
-    const targetIndex = resolveBob27TargetIndex(controller)
+    if (controller.session.mode === GameModeId.Bob27) {
+      const targetIndex = resolveBob27TargetIndex(controller)
 
-    if (targetIndex === null || controller.session.mode !== GameModeId.Bob27) {
-      return null
+      if (targetIndex === null) {
+        return null
+      }
+
+      return {
+        darts: buildBob27DartsForHitCount(intent.hitCount, targetIndex),
+        playback: [intent.hitCount === 0 ? 'miss' : 'hit'],
+      }
     }
 
-    return {
-      darts: buildBob27DartsForHitCount(intent.hitCount, targetIndex),
-      playback: [intent.hitCount === 0 ? 'miss' : 'hit'],
+    if (
+      controller.session.mode === GameModeId.ClaimTheBoard &&
+      isClaimTheBoardConfig(controller.session.mode, controller.session.config)
+    ) {
+      const targetIndex = resolveClaimTheBoardTargetIndex(controller)
+
+      if (targetIndex === null) {
+        return null
+      }
+
+      return {
+        darts: buildClaimTheBoardDartsForHitCount(
+          intent.hitCount,
+          targetIndex,
+          controller.session.config.aimMode,
+        ),
+        playback: [intent.hitCount === 0 ? 'miss' : 'hit'],
+      }
     }
+
+    return null
   }
 
   if (intent.kind === VoiceIntentKind.NinetyNineDarts) {

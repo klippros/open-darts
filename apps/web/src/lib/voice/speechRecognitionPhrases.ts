@@ -152,6 +152,10 @@ export const getVoiceRecognitionPhrases = (mode: GameModeId): VoicePhraseHint[] 
     return dedupePhrases([...META_PHRASES, ...BOB27_PHRASES])
   }
 
+  if (mode === GameModeId.ClaimTheBoard) {
+    return dedupePhrases([...META_PHRASES, ...BOB27_PHRASES])
+  }
+
   if (mode === GameModeId.AroundTheClock) {
     return dedupePhrases([...META_PHRASES, ...AROUND_THE_CLOCK_PHRASES])
   }

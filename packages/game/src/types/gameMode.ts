@@ -1,4 +1,5 @@
 import type { AroundTheClockConfig } from './aroundTheClock'
+import type { ClaimTheBoardConfig } from './claimTheBoard'
 import type { Bob27Config } from './bob27'
 import type { NinetyNineDartsConfig } from './ninetyNineDarts'
 import type { OneTwentyOneConfig } from './oneTwentyOne'
@@ -10,6 +11,7 @@ export enum GameModeId {
   Bob27 = 'bob27',
   OneTwentyOne = '121',
   AroundTheClock = 'around-the-clock',
+  ClaimTheBoard = 'claim-the-board',
   TenUpOneDown = '10-up-1-down',
   NinetyNineDarts = '99-darts',
 }
@@ -25,5 +27,6 @@ export type GameConfig =
   | Bob27Config
   | OneTwentyOneConfig
   | AroundTheClockConfig
+  | ClaimTheBoardConfig
   | TenUpOneDownConfig
   | NinetyNineDartsConfig

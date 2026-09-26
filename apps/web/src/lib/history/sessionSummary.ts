@@ -1,10 +1,15 @@
 import { getVisitAverages, getPrimaryPlayerVisits } from '../analytics/visitStats'
 import { computeAroundTheClockSingleSessionStats } from '../analytics/aroundTheClockStats'
 import { computeNinetyNineDartsSingleSessionStats } from '../ninetyNineDarts/ninetyNineVisitStats'
+import {
+  computeClaimTheBoardSingleSessionStats,
+  getClaimTheBoardScoreLeaderId,
+} from '../claimTheBoard/claimTheBoardVisitStats'
 import { gameModeDefinitions } from '@open-darts/game/game/gameModeDefinitions'
 import {
   isX01Config,
   isAroundTheClockConfig,
+  isClaimTheBoardConfig,
   isNinetyNineDartsConfig,
 } from '@open-darts/game/game/gameConfigGuards'
 import {
@@ -38,6 +43,10 @@ export const getSessionModeLabel = (session: GameSession): string => {
     const { aimMode } = getAroundTheClockConfig(session.config)
 
     return `${gameModeDefinitions[session.mode].label} · ${getAroundTheClockAimModeLabel(aimMode)}`
+  }
+
+  if (isClaimTheBoardConfig(session.mode, session.config)) {
+    return `${gameModeDefinitions[session.mode].label} · ${getAroundTheClockAimModeLabel(session.config.aimMode)}`
   }
 
   if (isNinetyNineDartsConfig(session.mode, session.config)) {
@@ -157,6 +166,39 @@ export const getMatchSummary = (session: GameSession): MatchSummary => {
 
     return {
       title: finishedEarly ? "Bob's 27 session ended" : "Bob's 27 complete",
+      details,
+    }
+  }
+
+  if (session.mode === GameModeId.ClaimTheBoard) {
+    const details = [`${visitCount} visit${visitCount === 1 ? '' : 's'}`]
+    const claimStats = computeClaimTheBoardSingleSessionStats(session)
+    const scoreLine =
+      claimStats?.players
+        .map((player) => `${player.playerName} ${player.finalScore ?? 0}`)
+        .join(' · ') ?? ''
+    const statsByPlayer = Object.fromEntries(
+      (claimStats?.players ?? []).map((player) => [player.playerId, player]),
+    )
+    const winnerId =
+      getMatchWinnerId(session) ??
+      getClaimTheBoardScoreLeaderId(
+        statsByPlayer,
+        session.players.map((player) => player.id),
+      )
+    const winner =
+      winnerId === undefined ? undefined : session.players.find((player) => player.id === winnerId)
+
+    if (scoreLine.length > 0) {
+      details.push(scoreLine)
+    }
+
+    if (!finishedEarly && winner !== undefined) {
+      details.push(`${winner.name} won`)
+    }
+
+    return {
+      title: finishedEarly ? 'Claim the Board session ended' : 'Claim the Board complete',
       details,
     }
   }

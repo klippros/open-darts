@@ -1,5 +1,6 @@
 import { formatX01StartScore } from '@open-darts/game/x01/x01Presets'
-import { isX01Config } from '@open-darts/game/game/gameConfigGuards'
+import { isClaimTheBoardConfig, isX01Config } from '@open-darts/game/game/gameConfigGuards'
+import { getAroundTheClockAimModeLabel } from '@open-darts/game/aroundTheClock/aroundTheClockConfig'
 import { parseGameSession } from '@open-darts/game/game/serializeGame'
 import { GameModeId } from '@open-darts/game/types/gameMode'
 import { gameModeDefinitions } from '@open-darts/game/game/gameModeDefinitions'
@@ -43,7 +44,14 @@ export const getOnlineMatchModeLabel = (match: OnlineMatchHistoryRow): string =>
     return formatX01StartScore(match.config)
   }
 
-  return gameModeDefinitions[match.mode].label
+  if (
+    match.mode === GameModeId.ClaimTheBoard &&
+    isClaimTheBoardConfig(GameModeId.ClaimTheBoard, match.config)
+  ) {
+    return `${gameModeDefinitions[match.mode].label} · ${getAroundTheClockAimModeLabel(match.config.aimMode)}`
+  }
+
+  return gameModeDefinitions[match.mode]?.label ?? match.mode
 }
 
 export const getOnlineMatchEndingLabel = (endingKind: MatchEndingKind): string => {

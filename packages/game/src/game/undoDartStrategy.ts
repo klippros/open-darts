@@ -171,5 +171,9 @@ export const resolveUndoDartState = (
     return undoLastVisitChronological(session, turnIndex, pendingDarts)
   }
 
+  if (session.mode === GameModeId.ClaimTheBoard) {
+    return undoLastVisitChronological(session, turnIndex, pendingDarts)
+  }
+
   return undoLastDartChronological(session, turnIndex, pendingDarts)
 }

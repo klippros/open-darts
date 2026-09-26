@@ -56,3 +56,44 @@ export const OnlineMatchFinishPrompt = ({
     </Dialog.Positioner>
   </Dialog.Root>
 )
+
+export interface OnlineMatchFinishWaitingPromptProps {
+  open: boolean
+  secondsLeft: number | null
+}
+
+export const OnlineMatchFinishWaitingPrompt = ({
+  open,
+  secondsLeft,
+}: OnlineMatchFinishWaitingPromptProps) => (
+  <Dialog.Root open={open} placement="center" closeOnInteractOutside={false} closeOnEscape={false}>
+    <Dialog.Backdrop />
+    <Dialog.Positioner>
+      <Dialog.Content
+        bg={darkDialogContentProps.bg}
+        borderWidth={darkDialogContentProps.borderWidth}
+        borderColor={darkDialogContentProps.borderColor}
+        color={darkDialogContentProps.color}
+        shadow={darkDialogContentProps.shadow}
+        w="full"
+        maxW={{ base: 'calc(100vw - 2rem)', sm: '28rem' }}
+      >
+        <Dialog.Header>
+          <Dialog.Title color="white">Match finished</Dialog.Title>
+        </Dialog.Header>
+        <Dialog.Body>
+          <Stack gap={2}>
+            <Text color="whiteAlpha.800" lineHeight="1.55">
+              Waiting for your opponent to confirm the result.
+            </Text>
+            {secondsLeft !== null && (
+              <Text color="whiteAlpha.600" fontSize="sm">
+                Auto-finalizes in {secondsLeft}s
+              </Text>
+            )}
+          </Stack>
+        </Dialog.Body>
+      </Dialog.Content>
+    </Dialog.Positioner>
+  </Dialog.Root>
+)

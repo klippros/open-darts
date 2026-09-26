@@ -9,7 +9,8 @@ import { VoiceControlProvider } from './hooks/VoiceControlProvider'
 
 export const App = () => {
   const { pathname } = useLocation()
-  const isGameRoute = pathname === '/game' || /^\/match\/[^/]+$/u.test(pathname)
+  const isOnlineMatchPlayRoute = /^\/match\/[^/]+$/u.test(pathname) && pathname !== '/match/new'
+  const isGameRoute = pathname === '/game' || isOnlineMatchPlayRoute
 
   return (
     <AuthProvider>

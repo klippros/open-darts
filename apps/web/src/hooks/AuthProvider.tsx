@@ -1,7 +1,7 @@
 import type { User } from '@supabase/supabase-js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { buildAuthRedirectUrl } from '../lib/auth/authRedirect'
+import { buildAuthRedirectUrl, stashAuthReturnPath } from '../lib/auth/authRedirect'
 import { isSupabaseConfigured, supabaseClient } from '../lib/supabase/client'
 import {
   clearSyncedLocalSessionData,
@@ -118,9 +118,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return 'Sign-in is not configured.'
     }
 
+    stashAuthReturnPath(returnTo)
     const { error } = await supabaseClient.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: buildAuthRedirectUrl(returnTo) },
+      options: { redirectTo: buildAuthRedirectUrl() },
     })
 
     return error?.message ?? null
@@ -138,9 +139,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return 'Enter a valid email address.'
       }
 
+      stashAuthReturnPath(returnTo)
       const { error } = await supabaseClient.auth.signInWithOtp({
         email: normalizedEmail,
-        options: { emailRedirectTo: buildAuthRedirectUrl(returnTo) },
+        options: { emailRedirectTo: buildAuthRedirectUrl() },
       })
 
       return error?.message ?? null

@@ -8,7 +8,10 @@ export interface MatchLegScoreProps {
 }
 
 export const MatchLegScore = ({ session }: MatchLegScoreProps) => {
-  if (session.mode !== GameModeId.X01 || session.matchProgress === undefined) {
+  if (
+    (session.mode !== GameModeId.X01 && session.mode !== GameModeId.ClaimTheBoard) ||
+    session.matchProgress === undefined
+  ) {
     return null
   }
 

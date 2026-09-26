@@ -1,6 +1,6 @@
 import type { Visit } from '@open-darts/game/types/visit'
 import { VisitInputMode, isCountingVisit } from '@open-darts/game/types/visit'
-import { GameStatus } from '@open-darts/game/types/gameMode'
+import { GameModeId, GameStatus } from '@open-darts/game/types/gameMode'
 import type { GameSession } from '@open-darts/game/types/gameSession'
 import type { DartThrow } from '@open-darts/game/types/dart'
 import { restoreGameController } from '@open-darts/game/game/createSession'
@@ -24,6 +24,9 @@ export const hasLaterOpponentVisit = (
       isCountingVisit(visit) && visit.visitIndex > ownVisitIndex && visit.playerId !== playerId,
   )
 
+/** X01 can rewrite an earlier visit after the opponent replies; shared-target modes cannot. */
+export const supportsOnlineVisitCorrection = (mode: GameModeId): boolean => mode === GameModeId.X01
+
 export const canAmendLastOwnVisit = (input: {
   isActiveMatch: boolean
   pendingFinalization: boolean
@@ -31,12 +34,29 @@ export const canAmendLastOwnVisit = (input: {
   lastOwnVisit: Visit | undefined
   /** True after a full server undo this turn — do not chain into older visits. */
   hasFullyUndoneVisitThisTurn: boolean
-}): boolean =>
-  input.isActiveMatch &&
-  !input.pendingFinalization &&
-  input.pendingDartCount === 0 &&
-  input.lastOwnVisit !== undefined &&
-  !input.hasFullyUndoneVisitThisTurn
+  visits: Visit[]
+  playerId: string
+  supportsCorrection: boolean
+}): boolean => {
+  if (
+    !input.isActiveMatch ||
+    input.pendingFinalization ||
+    input.pendingDartCount !== 0 ||
+    input.lastOwnVisit === undefined ||
+    input.hasFullyUndoneVisitThisTurn
+  ) {
+    return false
+  }
+
+  if (
+    !input.supportsCorrection &&
+    hasLaterOpponentVisit(input.visits, input.lastOwnVisit.visitIndex, input.playerId)
+  ) {
+    return false
+  }
+
+  return true
+}
 
 export const canPressOnlineUndo = (input: {
   pendingDartCount: number
@@ -142,8 +162,15 @@ export const buildCorrectVisitDartsCommand = (
 })
 
 /** Match local undoDart: peel one dart from a committed per-dart visit; visit-score undoes wholly. */
-export const remainingDartsAfterPeelingLast = (visit: Visit): DartThrow[] => {
-  if (visit.inputMode === VisitInputMode.VisitScore || visit.darts.length === 0) {
+export const remainingDartsAfterPeelingLast = (
+  visit: Visit,
+  options?: { wholeVisit?: boolean },
+): DartThrow[] => {
+  if (
+    options?.wholeVisit === true ||
+    visit.inputMode === VisitInputMode.VisitScore ||
+    visit.darts.length === 0
+  ) {
     return []
   }
 

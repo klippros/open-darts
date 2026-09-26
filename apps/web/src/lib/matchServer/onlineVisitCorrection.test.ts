@@ -52,6 +52,37 @@ describe('onlineVisitCorrection helpers', () => {
 
   it('gates canAmendLastOwnVisit', () => {
     const lastOwnVisit = visit({ visitIndex: 0, playerId: 'a' })
+    const base = {
+      isActiveMatch: true,
+      pendingFinalization: false,
+      pendingDartCount: 0,
+      lastOwnVisit,
+      hasFullyUndoneVisitThisTurn: false,
+      visits: [lastOwnVisit],
+      playerId: 'a',
+      supportsCorrection: true,
+    }
+
+    expect(canAmendLastOwnVisit(base)).toBe(true)
+
+    expect(
+      canAmendLastOwnVisit({
+        ...base,
+        pendingDartCount: 1,
+      }),
+    ).toBe(false)
+
+    expect(
+      canAmendLastOwnVisit({
+        ...base,
+        hasFullyUndoneVisitThisTurn: true,
+      }),
+    ).toBe(false)
+  })
+
+  it('blocks amend without correction when the opponent has already thrown', () => {
+    const lastOwnVisit = visit({ visitIndex: 0, playerId: 'a' })
+    const visits = [lastOwnVisit, visit({ visitIndex: 1, playerId: 'b' })]
 
     expect(
       canAmendLastOwnVisit({
@@ -60,6 +91,22 @@ describe('onlineVisitCorrection helpers', () => {
         pendingDartCount: 0,
         lastOwnVisit,
         hasFullyUndoneVisitThisTurn: false,
+        visits,
+        playerId: 'a',
+        supportsCorrection: false,
+      }),
+    ).toBe(false)
+
+    expect(
+      canAmendLastOwnVisit({
+        isActiveMatch: true,
+        pendingFinalization: false,
+        pendingDartCount: 0,
+        lastOwnVisit,
+        hasFullyUndoneVisitThisTurn: false,
+        visits,
+        playerId: 'a',
+        supportsCorrection: true,
       }),
     ).toBe(true)
 
@@ -67,21 +114,14 @@ describe('onlineVisitCorrection helpers', () => {
       canAmendLastOwnVisit({
         isActiveMatch: true,
         pendingFinalization: false,
-        pendingDartCount: 1,
-        lastOwnVisit,
-        hasFullyUndoneVisitThisTurn: false,
-      }),
-    ).toBe(false)
-
-    expect(
-      canAmendLastOwnVisit({
-        isActiveMatch: true,
-        pendingFinalization: false,
         pendingDartCount: 0,
         lastOwnVisit,
-        hasFullyUndoneVisitThisTurn: true,
+        hasFullyUndoneVisitThisTurn: false,
+        visits: [lastOwnVisit],
+        playerId: 'a',
+        supportsCorrection: false,
       }),
-    ).toBe(false)
+    ).toBe(true)
   })
 
   it('only enables undo when a peel or single-visit amend is possible', () => {
@@ -266,6 +306,18 @@ describe('onlineVisitCorrection helpers', () => {
           visitScore: 60,
           inputMode: VisitInputMode.VisitScore,
         }),
+      ),
+    ).toEqual([])
+
+    expect(
+      remainingDartsAfterPeelingLast(
+        visit({
+          visitIndex: 0,
+          playerId: 'a',
+          darts,
+          inputMode: VisitInputMode.PerDart,
+        }),
+        { wholeVisit: true },
       ),
     ).toEqual([])
   })

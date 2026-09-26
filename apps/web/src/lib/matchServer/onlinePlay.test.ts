@@ -6,6 +6,7 @@ import {
   decorateOnlineSessionForViewer,
   parseOnlinePlaySnapshot,
   resolveCompletedOnlineSession,
+  resolvePendingFinishPlayerId,
 } from './onlinePlay'
 import { toPublicDartThrow } from './toPublicDartThrow'
 import { DartMultiplier, DartSegmentType } from '@open-darts/game/types/dart'
@@ -205,5 +206,41 @@ describe('onlinePlay helpers', () => {
       points: 60,
       timestamp: '2026-01-01T00:00:00.000Z',
     })
+  })
+
+  it('resolves pending finish player from the last visit', () => {
+    const session = sampleSession({
+      visits: [
+        {
+          visitIndex: 0,
+          playerId: 'user-a',
+          darts: [],
+          visitScore: 60,
+          scoreBefore: 0,
+          scoreAfter: 60,
+          bust: false,
+          checkout: false,
+        },
+        {
+          visitIndex: 1,
+          playerId: 'user-b',
+          darts: [],
+          visitScore: 40,
+          scoreBefore: 40,
+          scoreAfter: 0,
+          bust: false,
+          checkout: true,
+        },
+      ],
+      matchProgress: {
+        legsToWin: 1,
+        startingPlayerIndex: 0,
+        currentLeg: 1,
+        // Score winner can differ from the player who closed the board.
+        legWins: { 'user-a': 1, 'user-b': 0 },
+      },
+    })
+
+    expect(resolvePendingFinishPlayerId(session)).toBe('user-b')
   })
 })

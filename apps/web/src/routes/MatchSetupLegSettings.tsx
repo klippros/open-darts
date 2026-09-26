@@ -1,6 +1,10 @@
 import { Box, Stack, Text } from '@chakra-ui/react'
 import { getChallengeMaxLegs } from '@open-darts/game/game/challenge'
-import { clampLegsToWin, getMaxPossibleLegs } from '@open-darts/game/game/matchLegs'
+import {
+  clampLegsToWin,
+  getMaxPossibleLegs,
+  STARTING_PLAYER_INDEX_RANDOM,
+} from '@open-darts/game/game/matchLegs'
 import type { OpponentSetup } from '@open-darts/game/game/opponentSetup'
 import { resolveHumanPlayerName } from '@open-darts/game/game/playerFactory'
 import { useAuth } from '../hooks/authContext'
@@ -100,6 +104,17 @@ export const MatchSetupLegSettings = ({
             First throw
           </Text>
           <Stack gap={2}>
+            <SetupOptionCard
+              label="Random"
+              description="Coin flip who throws first in leg 1"
+              selected={setup.startingPlayerIndex === STARTING_PLAYER_INDEX_RANDOM}
+              onSelect={() => {
+                onSetupChange((current) => ({
+                  ...current,
+                  startingPlayerIndex: STARTING_PLAYER_INDEX_RANDOM,
+                }))
+              }}
+            />
             <SetupOptionCard
               label={primaryPlayerLabel}
               description={`${primaryPlayerLabel} throws first in leg 1`}

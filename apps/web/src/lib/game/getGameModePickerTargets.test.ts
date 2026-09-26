@@ -19,6 +19,16 @@ describe('getGameModePickerTargets', () => {
     ).toEqual({ bob27TargetIndex: 2 })
   })
 
+  it('reads shared Around the Clock Score target index', () => {
+    expect(
+      getGameModePickerTargets(
+        GameModeId.ClaimTheBoard,
+        { sharedTargetIndex: 7, players: { p1: { score: 10 } } },
+        'p1',
+      ),
+    ).toEqual({ claimTheBoardTargetIndex: 7 })
+  })
+
   it('returns empty targets for other modes', () => {
     expect(
       getGameModePickerTargets(GameModeId.X01, { players: { p1: { targetIndex: 1 } } }, 'p1'),

@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom'
 import { App } from './App'
 import { AboutPage } from './routes/AboutPage'
 import { AroundTheClockSetupPage } from './routes/AroundTheClockSetupPage'
+import { ClaimTheBoardSetupPage } from './routes/ClaimTheBoardSetupPage'
 import { AuthCallbackPage } from './routes/AuthCallbackPage'
 import { GamePage } from './routes/GamePage'
 import { HistoryPage } from './routes/HistoryPage'
@@ -24,6 +25,7 @@ export const router = createBrowserRouter(
         { path: 'game/match-setup', element: <MatchSetupPage /> },
         { path: 'game/setup', element: <X01SetupPage /> },
         { path: 'game/around-the-clock/setup', element: <AroundTheClockSetupPage /> },
+        { path: 'game/claim-the-board/setup', element: <ClaimTheBoardSetupPage /> },
         { path: 'game/99-darts/setup', element: <NinetyNineDartsSetupPage /> },
         { path: 'match/new', element: <OnlineMatchNewPage /> },
         { path: 'match/join/:token', element: <OnlineMatchJoinPage /> },

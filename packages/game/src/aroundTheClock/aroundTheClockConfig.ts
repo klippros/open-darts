@@ -31,10 +31,10 @@ const AIM_MODE_PARAMS: Record<AroundTheClockAimMode, string> = {
 }
 
 const AIM_MODE_DESCRIPTIONS: Record<AroundTheClockAimMode, string> = {
-  [AroundTheClockAimMode.Singles]: 'Hit the single segment on each number',
-  [AroundTheClockAimMode.Doubles]: 'Hit the double on each number',
-  [AroundTheClockAimMode.Trebles]: 'Hit the treble on each number',
-  [AroundTheClockAimMode.Any]: 'Any segment on the number counts',
+  [AroundTheClockAimMode.Singles]: 'Hit the single on each number; finish on 25 or bull',
+  [AroundTheClockAimMode.Doubles]: 'Hit the double on each number; finish on bull',
+  [AroundTheClockAimMode.Trebles]: 'Hit the treble on each number; finish on bull',
+  [AroundTheClockAimMode.Any]: 'Any segment on the number counts; finish on 25 or bull',
 }
 
 export const getAroundTheClockAimModeDescription = (aimMode: AroundTheClockAimMode): string =>

@@ -75,6 +75,7 @@ export const GamePage = () => {
       mode={controller.session.mode}
       config={controller.session.config}
       aroundTheClockTargetIndex={pickerTargets.aroundTheClockTargetIndex}
+      claimTheBoardTargetIndex={pickerTargets.claimTheBoardTargetIndex}
       bob27TargetIndex={pickerTargets.bob27TargetIndex}
       checkoutTarget={activeCheckoutTarget}
       pendingDarts={controller.pendingDarts}

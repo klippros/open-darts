@@ -16,6 +16,7 @@ import {
 import {
   isAroundTheClockPracticeStats,
   isBob27PracticeStats,
+  isClaimTheBoardPracticeStats,
   isNinetyNineDartsPracticeStats,
 } from '../../lib/analytics/practiceStats'
 import { X01StatsFilterId } from '../../lib/analytics/x01Stats'
@@ -24,6 +25,7 @@ import {
   AroundTheClockPracticeCard,
   Bob27PracticeCard,
   CheckoutPracticeCard,
+  ClaimTheBoardPracticeCard,
   NinetyNineDartsPracticeCard,
 } from './PracticeStatCards'
 import { PracticeModeCard } from './PracticeModeCard'
@@ -227,6 +229,7 @@ export const PracticeSection = ({ checkout, other, onStatSelect }: PracticeSecti
   }
 
   const bob27 = other.find(isBob27PracticeStats)
+  const claimTheBoard = other.find(isClaimTheBoardPracticeStats)
   const aroundTheClock = other.filter(isAroundTheClockPracticeStats)
   const ninetyNineDarts = other.filter(isNinetyNineDartsPracticeStats)
 
@@ -238,6 +241,7 @@ export const PracticeSection = ({ checkout, other, onStatSelect }: PracticeSecti
           <CheckoutPracticeCard key={stats.mode} stats={stats} onStatSelect={onStatSelect} />
         ))}
         {bob27 !== undefined && <Bob27PracticeCard stats={bob27} onStatSelect={onStatSelect} />}
+        {claimTheBoard !== undefined && <ClaimTheBoardPracticeCard stats={claimTheBoard} />}
         {aroundTheClock.length > 0 && (
           <AroundTheClockPracticeCard variants={aroundTheClock} onStatSelect={onStatSelect} />
         )}
