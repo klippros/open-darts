@@ -5,7 +5,7 @@ import {
   resolveAsyncCompletion,
 } from './asyncPlay'
 import { commandFailure } from './commands'
-import { FINALIZE_TIMEOUT_MS } from './constants'
+import { FINALIZE_TIMEOUT_MS, IDLE_TIMEOUT_MS } from './constants'
 import {
   loadPlayStateJson,
   loadPublicMatchState,
@@ -21,6 +21,11 @@ import {
 import type { StoredPlayState } from './sessionPlay'
 import { CommandErrorCode, DeadlineKind, MatchEndingKind, MatchStatus } from './types'
 import type { CommandResult } from './types'
+
+/** Keeps active sync matches from sitting forever with no visits. */
+export const touchSyncIdleDeadline = (sql: SqlStorage, now = Date.now()): void => {
+  upsertDeadline(sql, DeadlineKind.IdleExpiresAt, now + IDLE_TIMEOUT_MS)
+}
 
 export const requireActivePlay = (
   sql: SqlStorage,
@@ -54,6 +59,7 @@ export const persistPlayMutation = (
   const now = Date.now()
   writePlayState(sql, playStateToSessionJson(play), play.turnIndex, play.pendingFinalization)
   setPlayerLastVisitAt(sql, actorUserId, now)
+  touchSyncIdleDeadline(sql, now)
 
   if (play.pendingFinalization) {
     upsertDeadline(sql, DeadlineKind.FinalizeAt, now + FINALIZE_TIMEOUT_MS)

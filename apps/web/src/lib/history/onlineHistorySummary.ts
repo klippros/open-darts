@@ -70,6 +70,8 @@ export const getOnlineMatchEndingLabel = (endingKind: MatchEndingKind): string =
       return 'Lobby timeout'
     case MatchEndingKind.CreatorCancel:
       return 'Cancelled'
+    case MatchEndingKind.IdleTimeout:
+      return 'Timed out'
     default: {
       const _exhaustive: never = endingKind
       return _exhaustive
@@ -81,7 +83,11 @@ export const getOnlineMatchSummaryTitle = (
   match: OnlineMatchHistoryRow,
   viewerUserId: string,
 ): string => {
-  if (match.endingKind === MatchEndingKind.MutualCancel || match.winnerUserId === null) {
+  if (
+    match.endingKind === MatchEndingKind.MutualCancel ||
+    match.endingKind === MatchEndingKind.IdleTimeout ||
+    match.winnerUserId === null
+  ) {
     return 'Draw'
   }
 
@@ -100,7 +106,11 @@ export const getOnlineMatchResultSummary = (
   const endingLabel = getOnlineMatchEndingLabel(match.endingKind)
   const legsLabel = `${match.legsToWin} leg${match.legsToWin === 1 ? '' : 's'}`
 
-  if (match.endingKind === MatchEndingKind.MutualCancel || match.winnerUserId === null) {
+  if (
+    match.endingKind === MatchEndingKind.MutualCancel ||
+    match.endingKind === MatchEndingKind.IdleTimeout ||
+    match.winnerUserId === null
+  ) {
     return `Draw vs ${opponentName} · ${endingLabel} · ${legsLabel}`
   }
 

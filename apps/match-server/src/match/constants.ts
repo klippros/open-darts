@@ -4,6 +4,9 @@ export const FINALIZE_TIMEOUT_MS = 30 * 1000
 
 export const ASYNC_DEADLINE_MS = 24 * 60 * 60 * 1000
 
+/** Cancel active sync matches after this long with no play interaction. */
+export const IDLE_TIMEOUT_MS = 24 * 60 * 60 * 1000
+
 /** Opponent must stay disconnected this long before start_async is allowed. */
 export const ASYNC_DISCONNECT_MS = 30 * 1000
 

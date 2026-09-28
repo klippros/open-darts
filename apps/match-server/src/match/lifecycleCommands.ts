@@ -78,6 +78,7 @@ export const startAsync = (sql: SqlStorage, userId: string): PreparedMutation =>
     now,
   )
   deleteDeadline(sql, DeadlineKind.FinalizeAt)
+  deleteDeadline(sql, DeadlineKind.IdleExpiresAt)
   upsertDeadline(sql, DeadlineKind.AsyncDeadlineAt, asyncDeadlineAt)
 
   return { ok: true }

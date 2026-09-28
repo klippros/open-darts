@@ -16,7 +16,7 @@ import {
   startAsync,
   withdrawCancel,
 } from './lifecycleCommands'
-import { completeFromPendingFinalization, persistTerminal } from './matchPersist'
+import { completeFromPendingFinalization, persistCancelled, persistTerminal } from './matchPersist'
 import { correctVisit, finishMatch, recordDarts, recordVisitScore, undoVisit } from './playCommands'
 import {
   findOpenSlot,
@@ -431,6 +431,14 @@ export class MatchObject extends DurableObject<Env> {
 
         if (state?.status === MatchStatus.Waiting) {
           persistTerminal(sql, MatchStatus.Cancelled, MatchEndingKind.LobbyTimeout)
+        }
+      }
+
+      if (kind === DeadlineKind.IdleExpiresAt) {
+        const state = loadPublicMatchState(sql)
+
+        if (state?.status === MatchStatus.Active && state.playMode === PlayMode.Synchronous) {
+          persistCancelled(sql, MatchEndingKind.IdleTimeout)
         }
       }
 
