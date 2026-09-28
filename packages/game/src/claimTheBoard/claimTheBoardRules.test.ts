@@ -9,18 +9,22 @@ import {
 } from './claimTheBoardRules'
 
 describe('claimTheBoardRules', () => {
-  it('uses face values by aim mode and 25 on the last target', () => {
+  it('uses segment face values in every aim mode and 25 on the last target', () => {
     expect(getClaimTheBoardTarget(0, AroundTheClockAimMode.Any)).toEqual({
       label: '1',
       value: 1,
     })
     expect(getClaimTheBoardTarget(0, AroundTheClockAimMode.Doubles)).toEqual({
       label: 'D1',
-      value: 2,
+      value: 1,
     })
     expect(getClaimTheBoardTarget(0, AroundTheClockAimMode.Trebles)).toEqual({
       label: 'T1',
-      value: 3,
+      value: 1,
+    })
+    expect(getClaimTheBoardTarget(19, AroundTheClockAimMode.Trebles)).toEqual({
+      label: 'T20',
+      value: 20,
     })
     expect(getClaimTheBoardTarget(20, AroundTheClockAimMode.Any)).toEqual({
       label: '25/Bull',
@@ -45,16 +49,16 @@ describe('claimTheBoardRules', () => {
     )
 
     expect(twoHits).toMatchObject({
-      scoreAfter: 4,
+      scoreAfter: 2,
       sharedTargetIndexAfter: 1,
       hit: true,
       hitCount: 2,
-      visitScore: 4,
+      visitScore: 2,
       checkout: false,
     })
 
     const miss = resolveClaimTheBoardVisit(
-      4,
+      2,
       1,
       [
         numberDart(2, DartMultiplier.Single),
@@ -65,7 +69,7 @@ describe('claimTheBoardRules', () => {
     )
 
     expect(miss).toMatchObject({
-      scoreAfter: 4,
+      scoreAfter: 2,
       sharedTargetIndexAfter: 1,
       hit: false,
       hitCount: 0,
@@ -74,8 +78,8 @@ describe('claimTheBoardRules', () => {
     })
   })
 
-  it('scores any-mode hits at face value of the number', () => {
-    const visit = resolveClaimTheBoardVisit(
+  it('scores hits at segment face value even in doubles and trebles', () => {
+    const anyVisit = resolveClaimTheBoardVisit(
       0,
       4,
       [
@@ -86,11 +90,29 @@ describe('claimTheBoardRules', () => {
       AroundTheClockAimMode.Any,
     )
 
-    expect(visit).toMatchObject({
+    expect(anyVisit).toMatchObject({
       hitCount: 2,
       visitScore: 10,
       scoreAfter: 10,
       sharedTargetIndexAfter: 5,
+    })
+
+    const treblesVisit = resolveClaimTheBoardVisit(
+      0,
+      19,
+      [
+        numberDart(20, DartMultiplier.Triple),
+        numberDart(20, DartMultiplier.Triple),
+        numberDart(20, DartMultiplier.Triple),
+      ],
+      AroundTheClockAimMode.Trebles,
+    )
+
+    expect(treblesVisit).toMatchObject({
+      hitCount: 3,
+      visitScore: 60,
+      scoreAfter: 60,
+      sharedTargetIndexAfter: 20,
     })
   })
 

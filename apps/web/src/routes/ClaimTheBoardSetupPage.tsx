@@ -107,7 +107,7 @@ export const ClaimTheBoardSetupPage = () => {
       <Stack gap={8}>
         <SetupPageHeader
           title="Claim the Board"
-          description="Share one target with your opponent. Score face-value hits from 1 to the finish — 25/bull for singles or any, bull only for doubles or trebles. Highest score wins; on a tie, the player who hits the finish wins."
+          description="Share one target with your opponent. Each hit scores the segment face value (1–20), or 25 for bull — even in doubles and trebles. Highest score wins; on a tie, the player who hits the finish wins."
         />
 
         <SetupSection title="Aim mode">

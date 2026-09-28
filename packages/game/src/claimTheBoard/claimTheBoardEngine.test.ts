@@ -39,14 +39,14 @@ describe('claimTheBoardEngine', () => {
     )
 
     expect(result.visit).toMatchObject({
-      visitScore: 4,
+      visitScore: 2,
       scoreBefore: 0,
-      scoreAfter: 4,
+      scoreAfter: 2,
       checkout: false,
       metadata: { targetLabel: 'D1', hit: true, hitCount: 2 },
     })
     expect(result.state.sharedTargetIndex).toBe(1)
-    expect(result.state.players[player1.id]).toEqual({ score: 4 })
+    expect(result.state.players[player1.id]).toEqual({ score: 2 })
     expect(result.advanceTurn).toBe(true)
   })
 

@@ -1,5 +1,5 @@
 import type { DartThrow } from '../types/dart'
-import { AroundTheClockAimMode } from '../types/aroundTheClock'
+import type { AroundTheClockAimMode } from '../types/aroundTheClock'
 import {
   AROUND_THE_CLOCK_TARGET_COUNT,
   getAroundTheClockTargetAimLabel,
@@ -16,6 +16,11 @@ export interface ClaimTheBoardTarget {
   value: number
 }
 
+/**
+ * Aim mode only changes which ring counts as a hit and the target label.
+ * Score always uses the segment face value (1–20), or 25 for bull, so early
+ * targets stay meaningful next to later high numbers.
+ */
 export const getClaimTheBoardTarget = (
   targetIndex: number,
   aimMode: AroundTheClockAimMode,
@@ -29,19 +34,9 @@ export const getClaimTheBoardTarget = (
     }
   }
 
-  const segment = targetIndex + 1
-
-  switch (aimMode) {
-    case AroundTheClockAimMode.Doubles:
-      return { label, value: segment * 2 }
-    case AroundTheClockAimMode.Trebles:
-      return { label, value: segment * 3 }
-    case AroundTheClockAimMode.Singles:
-    case AroundTheClockAimMode.Any:
-      return { label, value: segment }
-    default: {
-      throw new Error(`Unhandled aim mode: ${String(aimMode)}`)
-    }
+  return {
+    label,
+    value: targetIndex + 1,
   }
 }
 
