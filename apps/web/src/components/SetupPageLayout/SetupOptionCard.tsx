@@ -1,4 +1,5 @@
-import { Box, Button, Stack, Text } from '@chakra-ui/react'
+import { Button, Stack, Text } from '@chakra-ui/react'
+import { LiveIndicator } from '../LiveIndicator/LiveIndicator'
 
 export interface SetupOptionCardProps {
   label: string
@@ -39,19 +40,7 @@ export const SetupOptionCard = ({
     }}
     _focusVisible={{ outline: '2px solid', outlineColor: 'orange.300', outlineOffset: '2px' }}
   >
-    {showLiveIndicator ? (
-      <Box
-        className="online-pulse-dot"
-        position="absolute"
-        top={3}
-        right={3}
-        w="8px"
-        h="8px"
-        borderRadius="full"
-        bg="yellow.400"
-        aria-hidden
-      />
-    ) : null}
+    <LiveIndicator show={showLiveIndicator} />
     <Stack gap={1}>
       <Text fontWeight="semibold" color="white">
         {label}
