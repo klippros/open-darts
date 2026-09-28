@@ -2,7 +2,7 @@ import { GameStatus } from '../types/gameMode'
 import type { GameSession } from '../types/gameSession'
 import type { Visit } from '../types/visit'
 import { getCountingVisits } from '../types/visit'
-import { recordLegWin } from './matchLegs'
+import { advanceToNextLeg, isMatchComplete, recordLegWin } from './matchLegs'
 
 export interface AsyncMatchPlayerVisits {
   playerId: string
@@ -74,16 +74,32 @@ export const applyAsyncMatchResultToSession = (
     })
   }
 
-  const matchProgress =
-    session.matchProgress === undefined
-      ? undefined
-      : recordLegWin(session.matchProgress, result.winnerId)
+  if (session.matchProgress === undefined) {
+    return {
+      ...session,
+      visits,
+      status: GameStatus.Completed,
+      completedAt,
+    }
+  }
+
+  const progressAfterWin = recordLegWin(session.matchProgress, result.winnerId)
+
+  if (isMatchComplete(progressAfterWin, session.players.length)) {
+    return {
+      ...session,
+      visits,
+      matchProgress: progressAfterWin,
+      status: GameStatus.Completed,
+      completedAt,
+    }
+  }
 
   return {
     ...session,
     visits,
-    status: GameStatus.Completed,
-    completedAt,
-    ...(matchProgress === undefined ? {} : { matchProgress }),
+    matchProgress: advanceToNextLeg(progressAfterWin),
+    status: GameStatus.InProgress,
+    completedAt: undefined,
   }
 }

@@ -1,3 +1,5 @@
+import { getInitialTurnIndex } from '@open-darts/game/game/createSession'
+import { GameStatus } from '@open-darts/game/types/gameMode'
 import { deleteAllDeadlines, deleteDeadline, upsertDeadline } from './alarms'
 import {
   anyAsyncPendingFinalization,
@@ -19,7 +21,7 @@ import {
   resolveMatchWinnerUserId,
 } from './sessionPlay'
 import type { StoredPlayState } from './sessionPlay'
-import { CommandErrorCode, DeadlineKind, MatchEndingKind, MatchStatus } from './types'
+import { CommandErrorCode, DeadlineKind, MatchEndingKind, MatchStatus, PlayMode } from './types'
 import type { CommandResult } from './types'
 
 /** Keeps active sync matches from sitting forever with no visits. */
@@ -201,6 +203,33 @@ export const completeAsyncMatch = (
   const resolved = resolveAsyncCompletion(play)
 
   if (resolved === null) {
+    return
+  }
+
+  if (resolved.session.status !== GameStatus.Completed) {
+    const nextPlay: StoredPlayState = {
+      session: resolved.session,
+      turnIndex: getInitialTurnIndex(resolved.session),
+      pendingFinalization: false,
+    }
+    const now = Date.now()
+
+    sql.exec(
+      `
+        UPDATE match_state
+        SET play_mode = ?, async_started_at = NULL, darts_owner_user_id = NULL,
+            session_json = ?, turn_index = ?, pending_finalization = 0,
+            updated_at = ?, version = version + 1
+        WHERE id IS NOT NULL
+      `,
+      PlayMode.Synchronous,
+      playStateToSessionJson(nextPlay),
+      nextPlay.turnIndex,
+      now,
+    )
+    deleteDeadline(sql, DeadlineKind.FinalizeAt)
+    deleteDeadline(sql, DeadlineKind.AsyncDeadlineAt)
+    touchSyncIdleDeadline(sql, now)
     return
   }
 
