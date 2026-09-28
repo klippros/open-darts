@@ -9,7 +9,7 @@ export const HomePageMatchSection = () => (
         Match
       </Heading>
       <Text color="whiteAlpha.700" fontSize="sm" lineHeight="1.55">
-        x01 legs with optional guest opponents or visit-limit challenge mode.
+        x01 legs with solo, guest, challenge, or online play where available.
       </Text>
     </Stack>
     <HomePageModeGrid modes={MATCH_MODES} />

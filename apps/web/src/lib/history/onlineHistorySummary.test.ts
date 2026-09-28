@@ -38,6 +38,7 @@ describe('onlineHistorySummary', () => {
     expect(getOnlineMatchEndingLabel(MatchEndingKind.AsyncTimeout)).toBe('Async timeout')
     expect(getOnlineMatchEndingLabel(MatchEndingKind.MutualCancel)).toBe('Mutual cancel')
     expect(getOnlineMatchEndingLabel(MatchEndingKind.AsyncResult)).toBe('Async result')
+    expect(getOnlineMatchEndingLabel(MatchEndingKind.IdleTimeout)).toBe('Timed out')
   })
 
   it('summarizes wins, losses, and mutual cancels for the viewer', () => {

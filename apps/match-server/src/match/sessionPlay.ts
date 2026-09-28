@@ -313,6 +313,8 @@ export const resolveMatchWinnerUserId = (session: GameSession): string | null =>
   return checkout?.playerId ?? null
 }
 
+export { resolvePendingFinishPlayerId } from '@open-darts/game/game/resolvePendingFinishPlayerId'
+
 export const finalizeSession = (play: StoredPlayState): StoredPlayState => ({
   session: {
     ...play.session,

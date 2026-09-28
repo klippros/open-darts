@@ -1,11 +1,13 @@
 import { Box, Input, Stack, Text } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { SetupPageActions } from '../components/SetupPageLayout/SetupPageActions'
 import { SetupPageHeader } from '../components/SetupPageLayout/SetupPageHeader'
 import { SetupPageLayout } from '../components/SetupPageLayout/SetupPageLayout'
 import { SetupOptionCard } from '../components/SetupPageLayout/SetupOptionCard'
 import { SetupSection } from '../components/SetupPageLayout/SetupSection'
+import { ResumeOnlineMatchBanner } from '../components/ResumeOnlineMatchBanner/ResumeOnlineMatchBanner'
+import { SignInDialog } from '../components/SignInDialog/SignInDialog'
 import {
   clampMaxVisits,
   formatChallengeTargetLabel,
@@ -15,11 +17,23 @@ import {
 } from '@open-darts/game/game/challenge'
 import { appendOpponentSetupParams, parseOpponentSetup } from '@open-darts/game/game/opponentSetup'
 import type { OpponentMode, OpponentSetup } from '@open-darts/game/game/opponentSetup'
+import { STARTING_PLAYER_INDEX_RANDOM } from '@open-darts/game/game/matchLegs'
 import {
   formatX01StartScore,
   parseX01ConfigFromSearchParams,
 } from '@open-darts/game/x01/x01Presets'
 import { ChallengeLegEndMode } from '@open-darts/game/types/match'
+import { GameModeId } from '@open-darts/game/types/gameMode'
+import { useCreateOnlineMatch } from '../hooks/useCreateOnlineMatch'
+import { isOnlineMatchesEnabled } from '../lib/matchServer/config'
+import {
+  isOnlineCapableX01Config,
+  isOnlinePlaySelected,
+  ONLINE_PLAY_QUERY_KEY,
+  ONLINE_PLAY_QUERY_VALUE,
+  startingPlayerIndexToMatchSlot,
+} from '../lib/matchServer/onlineSetup'
+import { V1_ONLINE_X01_CONFIG } from '../lib/matchServer/types'
 import { MatchSetupLegSettings } from './MatchSetupLegSettings'
 
 const rangeInputStyle = {
@@ -28,7 +42,9 @@ const rangeInputStyle = {
   cursor: 'pointer',
 } as const
 
-const opponentOptions: { value: OpponentMode; label: string; description: string }[] = [
+type MatchSetupPlayMode = OpponentMode | 'online'
+
+const localOpponentOptions: { value: OpponentMode; label: string; description: string }[] = [
   { value: 'solo', label: 'Solo', description: 'Play on your own' },
   { value: 'guest', label: 'Guest', description: 'Pass the device to a second player' },
   {
@@ -57,22 +73,75 @@ const legEndModeOptions: {
 
 export const MatchSetupPage = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
   const x01Config = useMemo(() => parseX01ConfigFromSearchParams(searchParams), [searchParams])
-  const [setup, setSetup] = useState<OpponentSetup>(() =>
-    parseOpponentSetup(searchParams, 2, x01Config.startScore),
-  )
+  const onlineAvailable = isOnlineMatchesEnabled && isOnlineCapableX01Config(x01Config)
+  const [playMode, setPlayMode] = useState<MatchSetupPlayMode>(() => {
+    if (onlineAvailable && isOnlinePlaySelected(searchParams)) {
+      return 'online'
+    }
+
+    return parseOpponentSetup(searchParams, 2, x01Config.startScore).mode
+  })
+  const [setup, setSetup] = useState<OpponentSetup>(() => ({
+    ...parseOpponentSetup(searchParams, 2, x01Config.startScore),
+    startingPlayerIndex: STARTING_PLAYER_INDEX_RANDOM,
+  }))
+  const {
+    createLobby,
+    submitting,
+    error,
+    signInOpen,
+    setSignInOpen,
+    inProgressMatch,
+    dismissCancelledMatch,
+    isAuthLoading,
+    authReady,
+    isAuthenticated,
+  } = useCreateOnlineMatch()
 
   const modeLabel = formatX01StartScore(x01Config)
   const minVisits = getMinVisits(x01Config.startScore)
   const maxVisitsLimit = getMaxVisits()
   const maxVisits = clampMaxVisits(setup.maxVisits, x01Config.startScore)
-  const opponentStarterLabel = setup.mode === 'guest' ? setup.guestName.trim() || 'Guest' : 'Guest'
+  const isOnline = playMode === 'online' && isAuthenticated
+  const blockedByExistingMatch = isOnline && inProgressMatch !== null
+  const activeLocalMode: OpponentMode = isOnline
+    ? 'guest'
+    : playMode === 'online'
+      ? 'solo'
+      : playMode
+  const opponentStarterLabel = isOnline
+    ? 'Opponent'
+    : activeLocalMode === 'guest'
+      ? setup.guestName.trim() || 'Guest'
+      : 'Guest'
+  const legSettingsSetup: OpponentSetup = { ...setup, mode: activeLocalMode }
+  const signInReturnTo = useMemo(() => {
+    const params = new URLSearchParams(searchParams)
+    params.set(ONLINE_PLAY_QUERY_KEY, ONLINE_PLAY_QUERY_VALUE)
+    return `${location.pathname}?${params.toString()}`
+  }, [location.pathname, searchParams])
 
   const handleStart = () => {
+    if (blockedByExistingMatch) {
+      return
+    }
+
+    if (isOnline) {
+      void createLobby({
+        mode: GameModeId.X01,
+        legsToWin: setup.legsToWin,
+        startingPlayerSlot: startingPlayerIndexToMatchSlot(setup.startingPlayerIndex),
+        config: { ...V1_ONLINE_X01_CONFIG },
+      })
+      return
+    }
+
     const params = appendOpponentSetupParams(
       new URLSearchParams(searchParams),
-      setup,
+      { ...setup, mode: activeLocalMode },
       x01Config.startScore,
     )
 
@@ -89,21 +158,55 @@ export const MatchSetupPage = () => {
 
         <SetupSection title="Opponent">
           <Stack gap={2}>
-            {opponentOptions.map((option) => (
+            {localOpponentOptions.map((option) => (
               <SetupOptionCard
                 key={option.value}
                 label={option.label}
                 description={option.description}
-                selected={setup.mode === option.value}
+                selected={activeLocalMode === option.value && !isOnline}
                 onSelect={() => {
+                  setPlayMode(option.value)
                   setSetup((current) => ({ ...current, mode: option.value }))
                 }}
               />
             ))}
+            {onlineAvailable ? (
+              authReady && !isAuthenticated ? (
+                <SetupOptionCard
+                  label="Sign in to play online"
+                  description="Create a match and share an invite"
+                  selected={false}
+                  showLiveIndicator
+                  onSelect={() => {
+                    setSignInOpen(true)
+                  }}
+                />
+              ) : (
+                <SetupOptionCard
+                  label="Online"
+                  description="Invite a signed-in opponent over the internet"
+                  selected={isOnline}
+                  showLiveIndicator
+                  onSelect={() => {
+                    setPlayMode('online')
+                  }}
+                />
+              )
+            ) : null}
           </Stack>
         </SetupSection>
 
-        {setup.mode === 'guest' && (
+        {blockedByExistingMatch && inProgressMatch !== null ? (
+          <ResumeOnlineMatchBanner
+            match={inProgressMatch}
+            stacked
+            onCancelled={() => {
+              dismissCancelledMatch(inProgressMatch.id)
+            }}
+          />
+        ) : null}
+
+        {activeLocalMode === 'guest' && !isOnline && (
           <SetupSection title="Guest name">
             <Box
               borderWidth="1px"
@@ -127,7 +230,7 @@ export const MatchSetupPage = () => {
           </SetupSection>
         )}
 
-        {setup.mode === 'challenge' && (
+        {activeLocalMode === 'challenge' && (
           <>
             <SetupSection
               title="Max visits per leg"
@@ -210,17 +313,37 @@ export const MatchSetupPage = () => {
         )}
 
         <MatchSetupLegSettings
-          setup={setup}
+          setup={legSettingsSetup}
           opponentStarterLabel={opponentStarterLabel}
           onSetupChange={setSetup}
         />
 
+        {error !== null && (
+          <Text color="red.300" fontSize="sm">
+            {error}
+          </Text>
+        )}
+
         <SetupPageActions
-          primaryLabel="Start match"
+          primaryLabel={
+            isOnline ? (submitting || isAuthLoading ? 'Creating…' : 'Create lobby') : 'Start match'
+          }
+          primaryDisabled={blockedByExistingMatch || (isOnline && (submitting || isAuthLoading))}
           onBack={() => void navigate('/')}
-          onPrimary={handleStart}
+          onPrimary={() => {
+            if (!submitting && !(isOnline && isAuthLoading) && !blockedByExistingMatch) {
+              handleStart()
+            }
+          }}
         />
       </Stack>
+      <SignInDialog
+        open={signInOpen}
+        onOpenChange={setSignInOpen}
+        returnTo={signInReturnTo}
+        title="Sign in to play online"
+        description="Online matches need a signed-in account. After you sign in, you can create a lobby and invite an opponent."
+      />
     </SetupPageLayout>
   )
 }

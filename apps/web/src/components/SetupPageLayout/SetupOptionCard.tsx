@@ -1,10 +1,12 @@
 import { Button, Stack, Text } from '@chakra-ui/react'
+import { LiveIndicator } from '../LiveIndicator/LiveIndicator'
 
 export interface SetupOptionCardProps {
   label: string
   description: string
   selected: boolean
   onSelect: () => void
+  showLiveIndicator?: boolean
 }
 
 export const SetupOptionCard = ({
@@ -12,6 +14,7 @@ export const SetupOptionCard = ({
   description,
   selected,
   onSelect,
+  showLiveIndicator = false,
 }: SetupOptionCardProps) => (
   <Button
     type="button"
@@ -29,6 +32,7 @@ export const SetupOptionCard = ({
     bg={selected ? 'rgba(246, 173, 85, 0.14)' : 'whiteAlpha.50'}
     px={4}
     py={4}
+    position="relative"
     transition="border-color 0.15s ease, background 0.15s ease"
     _hover={{
       borderColor: selected ? 'orange.200' : 'whiteAlpha.400',
@@ -36,6 +40,7 @@ export const SetupOptionCard = ({
     }}
     _focusVisible={{ outline: '2px solid', outlineColor: 'orange.300', outlineOffset: '2px' }}
   >
+    <LiveIndicator show={showLiveIndicator} />
     <Stack gap={1}>
       <Text fontWeight="semibold" color="white">
         {label}

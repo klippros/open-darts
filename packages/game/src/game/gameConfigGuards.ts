@@ -2,6 +2,7 @@ import type { CheckoutRules } from '../types/checkout'
 import { GameModeId } from '../types/gameMode'
 import type { GameConfig } from '../types/gameMode'
 import type { AroundTheClockConfig } from '../types/aroundTheClock'
+import type { ClaimTheBoardConfig } from '../types/claimTheBoard'
 import type { NinetyNineDartsConfig } from '../types/ninetyNineDarts'
 import type { OneTwentyOneConfig } from '../types/oneTwentyOne'
 import type { TenUpOneDownConfig } from '../types/tenUpOneDown'
@@ -24,6 +25,11 @@ export const isAroundTheClockConfig = (
   mode: GameModeId,
   _config: GameConfig,
 ): _config is AroundTheClockConfig => mode === GameModeId.AroundTheClock
+
+export const isClaimTheBoardConfig = (
+  mode: GameModeId,
+  _config: GameConfig,
+): _config is ClaimTheBoardConfig => mode === GameModeId.ClaimTheBoard
 
 export const isNinetyNineDartsConfig = (
   mode: GameModeId,

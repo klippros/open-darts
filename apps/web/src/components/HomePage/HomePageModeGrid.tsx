@@ -1,6 +1,8 @@
 import { Button, SimpleGrid, Text } from '@chakra-ui/react'
 import { Link as RouterLink } from 'react-router-dom'
+import { isOnlineMatchesEnabled } from '../../lib/matchServer/config'
 import { explicitGameLaunchState } from '../../lib/routing/gameNavigation'
+import { LiveIndicator } from '../LiveIndicator/LiveIndicator'
 import type { HomePageModeLink } from './homePageModes'
 
 export interface HomePageModeGridProps {
@@ -13,10 +15,11 @@ export const HomePageModeGrid = ({ modes, explicitLaunch = false }: HomePageMode
     {modes.map((mode) => {
       const link = (
         <>
-          <Text fontSize="lg" fontWeight="semibold" color="white">
+          <LiveIndicator show={isOnlineMatchesEnabled && mode.onlineCapable === true} />
+          <Text fontSize="lg" fontWeight="semibold" color="white" whiteSpace="normal">
             {mode.label}
           </Text>
-          <Text fontSize="sm" color="whiteAlpha.700" fontWeight="normal">
+          <Text fontSize="sm" color="whiteAlpha.700" fontWeight="normal" whiteSpace="normal">
             {mode.description}
           </Text>
         </>
@@ -34,13 +37,19 @@ export const HomePageModeGrid = ({ modes, explicitLaunch = false }: HomePageMode
           alignItems="flex-start"
           gap={1}
           textAlign="left"
+          whiteSpace="normal"
+          w="full"
+          minW={0}
+          position="relative"
         >
           {explicitLaunch ? (
-            <RouterLink to={mode.to} state={explicitGameLaunchState()}>
+            <RouterLink to={mode.to} state={explicitGameLaunchState()} style={{ minWidth: 0 }}>
               {link}
             </RouterLink>
           ) : (
-            <RouterLink to={mode.to}>{link}</RouterLink>
+            <RouterLink to={mode.to} style={{ minWidth: 0 }}>
+              {link}
+            </RouterLink>
           )}
         </Button>
       )

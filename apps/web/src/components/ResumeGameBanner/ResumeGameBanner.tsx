@@ -36,7 +36,7 @@ export const ResumeGameBanner = () => {
               : `${visitCount} visit${visitCount === 1 ? '' : 's'} saved locally.`}
           </Text>
         </Stack>
-        <Button asChild variant="cta" flexShrink={0}>
+        <Button asChild variant="emphasis" flexShrink={0}>
           <RouterLink to={resumePath}>Resume game</RouterLink>
         </Button>
       </Stack>

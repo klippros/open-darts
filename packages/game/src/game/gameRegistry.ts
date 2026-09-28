@@ -1,6 +1,7 @@
 import { GameModeId } from '../types/gameMode'
 import type { GameConfig } from '../types/gameMode'
 import { aroundTheClockEngine } from '../aroundTheClock/aroundTheClockEngine'
+import { claimTheBoardEngine } from '../claimTheBoard/claimTheBoardEngine'
 import { bob27Engine } from '../bob27/bob27Engine'
 import { ninetyNineDartsEngine } from '../ninetyNineDarts/ninetyNineDartsEngine'
 import { oneTwentyOneEngine } from '../oneTwentyOne/oneTwentyOneEngine'
@@ -22,6 +23,9 @@ export const getEngine = (mode: GameModeId): GameEngine<unknown, GameConfig> => 
     case GameModeId.AroundTheClock:
       // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- engine config matches session mode
       return aroundTheClockEngine as GameEngine<unknown, GameConfig>
+    case GameModeId.ClaimTheBoard:
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- engine config matches session mode
+      return claimTheBoardEngine as GameEngine<unknown, GameConfig>
     case GameModeId.TenUpOneDown:
       // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- engine config matches session mode
       return tenUpOneDownEngine as GameEngine<unknown, GameConfig>

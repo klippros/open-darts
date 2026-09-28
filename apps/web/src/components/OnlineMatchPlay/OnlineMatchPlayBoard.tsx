@@ -3,10 +3,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { AppGameController } from '@open-darts/game/game/createSession'
 import { resolveHumanPlayerName } from '@open-darts/game/game/playerFactory'
 import type { DartThrow } from '@open-darts/game/types/dart'
+import { isClaimTheBoardConfig } from '@open-darts/game/game/gameConfigGuards'
 import {
   showsVisitHistory,
   supportsVisitScoreInput,
 } from '@open-darts/game/game/gameModeDefinitions'
+import { GameModeId } from '@open-darts/game/types/gameMode'
 import type { Visit } from '@open-darts/game/types/visit'
 import { VisitInputMode } from '@open-darts/game/types/visit'
 import { ContentContainer } from '../ContentContainer'
@@ -22,6 +24,7 @@ import { resolveVisitEntryMode } from '../../lib/game/resolveVisitEntryMode'
 import { mainContentMaxWidth } from '../../layout'
 import {
   dartsToPublicPayload,
+  resolvePendingFinishPlayerId,
   restoreOnlineController,
   resolveCompletedOnlineSession,
 } from '../../lib/matchServer/onlinePlay'
@@ -52,6 +55,7 @@ import {
   resolveAmendOwnVisitKind,
   resolveAmendOwnVisitVoiceAction,
   shouldClearOnlineLocalDraft,
+  supportsOnlineVisitCorrection,
   visitsWithCorrectionRemoved,
 } from '../../lib/matchServer/onlineVisitCorrection'
 import { canStartAsyncFromInactivity } from '../../lib/matchServer/startAsyncEligibility'
@@ -68,7 +72,7 @@ import { OnlineMatchAsyncDeadlineBanner } from './OnlineMatchAsyncDeadlineBanner
 import { OnlineMatchAsyncPrompt } from './OnlineMatchAsyncPrompt'
 import { OnlineMatchCancelBanner } from './OnlineMatchCancelBanner'
 import { OnlineMatchCompletedDialog } from './OnlineMatchCompletedDialog'
-import { OnlineMatchFinishPrompt } from './OnlineMatchFinishPrompt'
+import { OnlineMatchFinishPrompt, OnlineMatchFinishWaitingPrompt } from './OnlineMatchFinishPrompt'
 
 export interface OnlineMatchPlayBoardProps {
   state: PublicMatchState
@@ -258,6 +262,7 @@ export const OnlineMatchPlayBoard = ({
   const asyncInactivityEligible =
     state.status === MatchStatus.Active &&
     state.playMode === PlayMode.Synchronous &&
+    state.mode === GameModeId.X01 &&
     !state.pendingFinalization &&
     canStartAsyncFromInactivity({
       nowMs,
@@ -322,6 +327,9 @@ export const OnlineMatchPlayBoard = ({
         pendingDartCount: pendingDarts.length,
         lastOwnVisit: lastOwnSyncVisit,
         hasFullyUndoneVisitThisTurn,
+        visits: boardController?.session.visits ?? [],
+        playerId: currentUserId,
+        supportsCorrection: supportsOnlineVisitCorrection(state.mode),
       })
 
   const undoAvailable = isAsync
@@ -416,11 +424,27 @@ export const OnlineMatchPlayBoard = ({
 
   const recordDarts = useCallback(
     (darts: DartThrow[]) => {
-      darts.forEach((dart) => {
-        recordDart(dart)
-      })
+      if (controller === null || darts.length === 0) {
+        return
+      }
+
+      if (!canThrow && correctingVisitIndex === null) {
+        return
+      }
+
+      const next = controller.recordDarts(darts)
+
+      if (next.session.visits.length > controller.session.visits.length) {
+        const committed = next.session.visits.at(-1)
+        if (committed !== undefined) {
+          commitVisit(committed.darts)
+        }
+        return
+      }
+
+      setPendingDarts(next.pendingDarts)
     },
-    [recordDart],
+    [canThrow, commitVisit, controller, correctingVisitIndex],
   )
 
   const recordVisitScore = useCallback(
@@ -451,7 +475,10 @@ export const OnlineMatchPlayBoard = ({
 
   const peelLastOwnVisitDart = useCallback(
     (ownVisit: Visit, options?: { limitToOnePerTurn?: boolean }) => {
-      const remaining = remainingDartsAfterPeelingLast(ownVisit)
+      const remaining = remainingDartsAfterPeelingLast(ownVisit, {
+        // Hit-count modes commit synthetic dart triples; undo the whole visit like local play.
+        wholeVisit: state.mode === GameModeId.ClaimTheBoard || state.mode === GameModeId.Bob27,
+      })
       sendCommand({ name: MatchCommandName.UndoVisit })
       setPendingDarts(remaining)
       if (options?.limitToOnePerTurn !== false) {
@@ -459,7 +486,7 @@ export const OnlineMatchPlayBoard = ({
         setHasFullyUndoneVisitThisTurn(true)
       }
     },
-    [sendCommand],
+    [sendCommand, state.mode],
   )
 
   const undo = useCallback(() => {
@@ -506,6 +533,10 @@ export const OnlineMatchPlayBoard = ({
       return
     }
 
+    if (!supportsOnlineVisitCorrection(state.mode)) {
+      return
+    }
+
     startCorrection(lastOwnSyncVisit.visitIndex, remainingDartsAfterPeelingLast(lastOwnSyncVisit))
   }, [
     boardController,
@@ -520,6 +551,7 @@ export const OnlineMatchPlayBoard = ({
     peelLastOwnVisitDart,
     pendingDarts.length,
     startCorrection,
+    state.mode,
     state.pendingFinalization,
   ])
 
@@ -556,10 +588,18 @@ export const OnlineMatchPlayBoard = ({
         }
 
         if (action.kind === AmendOwnVisitVoiceActionKind.EnterCorrection) {
+          if (!supportsOnlineVisitCorrection(state.mode)) {
+            return true
+          }
+
           startCorrection(
             lastOwnSyncVisit.visitIndex,
             remainingDartsAfterPeelingLast(lastOwnSyncVisit),
           )
+          return true
+        }
+
+        if (!supportsOnlineVisitCorrection(state.mode)) {
           return true
         }
 
@@ -580,6 +620,7 @@ export const OnlineMatchPlayBoard = ({
       peelLastOwnVisitDart,
       sendCommand,
       startCorrection,
+      state.mode,
       undo,
       undoAvailable,
     ],
@@ -673,12 +714,24 @@ export const OnlineMatchPlayBoard = ({
 
   const pickerTargets =
     controller === null
-      ? { aroundTheClockTargetIndex: 0, bob27TargetIndex: 0 }
+      ? {
+          aroundTheClockTargetIndex: 0,
+          claimTheBoardTargetIndex: 0,
+          bob27TargetIndex: 0,
+        }
       : getGameModePickerTargets(
           controller.session.mode,
           controller.engineState,
           controller.activePlayerId,
         )
+
+  const helpTargetIndex = pickerTargets.claimTheBoardTargetIndex ?? pickerTargets.bob27TargetIndex
+  const helpAimMode =
+    controller !== null &&
+    controller.session.mode === GameModeId.ClaimTheBoard &&
+    isClaimTheBoardConfig(controller.session.mode, controller.session.config)
+      ? controller.session.config.aimMode
+      : undefined
 
   const help = useMemo(
     () =>
@@ -686,13 +739,20 @@ export const OnlineMatchPlayBoard = ({
         ? { title: 'Online match', paragraphs: [] }
         : getDartPickerHelpContent(
             controller.session.mode,
-            pickerTargets.bob27TargetIndex,
+            helpTargetIndex,
             visitEntryMode,
+            helpAimMode,
           ),
-    [controller, pickerTargets.bob27TargetIndex, visitEntryMode],
+    [controller, helpTargetIndex, visitEntryMode, helpAimMode],
   )
 
-  const canFinish = isAsync ? ownPendingFinalization : state.pendingFinalization
+  const canFinish = isAsync
+    ? ownPendingFinalization
+    : state.pendingFinalization &&
+      boardController !== null &&
+      resolvePendingFinishPlayerId(boardController.session) === currentUserId
+  const waitingForFinishConfirm =
+    !isAsync && state.pendingFinalization && !canFinish && boardController !== null
 
   useEffect(() => {
     if (controller === null || state.status !== MatchStatus.Active) {
@@ -878,6 +938,7 @@ export const OnlineMatchPlayBoard = ({
       mode={controller.session.mode}
       config={controller.session.config}
       aroundTheClockTargetIndex={pickerTargets.aroundTheClockTargetIndex}
+      claimTheBoardTargetIndex={pickerTargets.claimTheBoardTargetIndex}
       bob27TargetIndex={pickerTargets.bob27TargetIndex}
       checkoutTarget={activeCheckoutTarget}
       pendingDarts={controller.pendingDarts}
@@ -903,6 +964,10 @@ export const OnlineMatchPlayBoard = ({
         onUndo={() => {
           sendCommand({ name: MatchCommandName.UndoVisit })
         }}
+      />
+      <OnlineMatchFinishWaitingPrompt
+        open={waitingForFinishConfirm}
+        secondsLeft={finishSecondsLeft}
       />
       <OnlineMatchAsyncPrompt
         open={asyncInactivityEligible && !asyncPromptDismissed}

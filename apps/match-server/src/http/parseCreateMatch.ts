@@ -1,28 +1,32 @@
 import { GameModeId } from '@open-darts/game/types/gameMode'
+import type { GameConfig } from '@open-darts/game/types/gameMode'
 import { LEGS_TO_WIN_MAX, LEGS_TO_WIN_MIN } from '@open-darts/game/types/match'
-import type { X01Config } from '@open-darts/game/types/x01'
-import { defaultX01Config } from '@open-darts/game/x01/x01Presets'
+import { canonicalizeOnlineMatchConfig } from '@open-darts/game/game/onlineMatchSetup'
 import { isJsonObject, isRecord } from '../json'
 import type { StartingPlayerSlot } from '../match/types'
 import { STARTING_PLAYER_SLOT_RANDOM } from '../match/types'
-import { isV1OnlineMatchSetup } from '../match/v1Rules'
 
 export interface CreateMatchRequest {
   mode: GameModeId
-  config: X01Config
+  config: GameConfig
   legsToWin: number
   startingPlayerSlot: StartingPlayerSlot
 }
+
+const x01Mode: string = GameModeId.X01
+const claimTheBoardMode: string = GameModeId.ClaimTheBoard
 
 const isStartingPlayerSlot = (value: unknown): value is StartingPlayerSlot =>
   value === 0 || value === 1 || value === STARTING_PLAYER_SLOT_RANDOM
 
 export const parseCreateMatchRequest = (value: unknown): CreateMatchRequest | null => {
-  if (!isRecord(value) || !isJsonObject(value.config)) {
+  if (!isRecord(value) || !isJsonObject(value.config) || typeof value.mode !== 'string') {
     return null
   }
 
-  if (typeof value.mode !== 'string' || !isV1OnlineMatchSetup(value.mode, value.config)) {
+  const config = canonicalizeOnlineMatchConfig(value.mode, value.config)
+
+  if (config === null) {
     return null
   }
 
@@ -39,10 +43,23 @@ export const parseCreateMatchRequest = (value: unknown): CreateMatchRequest | nu
     return null
   }
 
-  return {
-    mode: GameModeId.X01,
-    config: defaultX01Config(),
-    legsToWin: value.legsToWin,
-    startingPlayerSlot: value.startingPlayerSlot,
+  if (value.mode === x01Mode) {
+    return {
+      mode: GameModeId.X01,
+      config,
+      legsToWin: value.legsToWin,
+      startingPlayerSlot: value.startingPlayerSlot,
+    }
   }
+
+  if (value.mode === claimTheBoardMode) {
+    return {
+      mode: GameModeId.ClaimTheBoard,
+      config,
+      legsToWin: 1,
+      startingPlayerSlot: value.startingPlayerSlot,
+    }
+  }
+
+  return null
 }

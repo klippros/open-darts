@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { clearActiveSnapshot } from '../lib/storage/gameStore'
+import { isClaimTheBoardConfig } from '@open-darts/game/game/gameConfigGuards'
 import { supportsVisitScoreInput } from '@open-darts/game/game/gameModeDefinitions'
 import { parseGameLaunchParams } from '../lib/game/gameRoute'
 import {
@@ -10,6 +11,7 @@ import {
 import { matchHasProgress } from '@open-darts/game/game/matchProgress'
 import { resolveVisitEntryMode } from '../lib/game/resolveVisitEntryMode'
 import { isVoiceInputSupportedForMode } from '../lib/voice/voiceModeSupport'
+import { GameModeId } from '@open-darts/game/types/gameMode'
 import { VisitInputMode } from '@open-darts/game/types/visit'
 import { useAuth } from './authContext'
 import { useSetGameChrome } from './gameChromeContext'
@@ -87,9 +89,15 @@ export const useGamePage = () => {
     game.controller.engineState,
     game.controller.activePlayerId,
   )
+  const helpTargetIndex = pickerTargets.claimTheBoardTargetIndex ?? pickerTargets.bob27TargetIndex
+  const helpAimMode =
+    sessionMode === GameModeId.ClaimTheBoard &&
+    isClaimTheBoardConfig(sessionMode, game.controller.session.config)
+      ? game.controller.session.config.aimMode
+      : undefined
   const help = useMemo(
-    () => getDartPickerHelpContent(sessionMode, pickerTargets.bob27TargetIndex, visitEntryMode),
-    [sessionMode, pickerTargets.bob27TargetIndex, visitEntryMode],
+    () => getDartPickerHelpContent(sessionMode, helpTargetIndex, visitEntryMode, helpAimMode),
+    [sessionMode, helpTargetIndex, visitEntryMode, helpAimMode],
   )
 
   useEffect(() => {

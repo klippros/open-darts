@@ -1,6 +1,8 @@
 import { GameModeId } from '@open-darts/game/types/gameMode'
 import { VisitInputMode } from '@open-darts/game/types/visit'
 import { getBob27Target } from '@open-darts/game/bob27/bob27Rules'
+import { getClaimTheBoardTarget } from '@open-darts/game/claimTheBoard/claimTheBoardRules'
+import { AroundTheClockAimMode } from '@open-darts/game/types/aroundTheClock'
 import type { VoiceCommandHelpSection } from '../voice/voiceCommandHelp'
 import { getVoiceCommandHelpSection } from '../voice/voiceCommandHelp'
 
@@ -8,6 +10,12 @@ export interface DartPickerHelpContent {
   title: string
   paragraphs: string[]
   voice?: VoiceCommandHelpSection
+}
+
+export interface GameModePickerTargets {
+  aroundTheClockTargetIndex?: number
+  claimTheBoardTargetIndex?: number
+  bob27TargetIndex?: number
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -26,14 +34,26 @@ const readPlayerTargetIndex = (engineState: object, playerId: string): number | 
   return player.targetIndex
 }
 
+const readSharedTargetIndex = (engineState: object): number | undefined => {
+  if (!('sharedTargetIndex' in engineState) || typeof engineState.sharedTargetIndex !== 'number') {
+    return undefined
+  }
+
+  return engineState.sharedTargetIndex
+}
+
 /** Reads mode-specific dart-picker target indices from engine state. */
 export const getGameModePickerTargets = (
   mode: GameModeId,
   engineState: unknown,
   activePlayerId: string,
-): { aroundTheClockTargetIndex?: number; bob27TargetIndex?: number } => {
+): GameModePickerTargets => {
   if (!isRecord(engineState)) {
     return {}
+  }
+
+  if (mode === GameModeId.ClaimTheBoard) {
+    return { claimTheBoardTargetIndex: readSharedTargetIndex(engineState) }
   }
 
   const targetIndex = readPlayerTargetIndex(engineState, activePlayerId)
@@ -51,8 +71,9 @@ export const getGameModePickerTargets = (
 
 export const getDartPickerHelpContent = (
   mode: GameModeId,
-  bob27TargetIndex?: number,
+  targetIndex?: number,
   visitEntryMode: VisitInputMode = VisitInputMode.PerDart,
+  aimMode: AroundTheClockAimMode = AroundTheClockAimMode.Any,
 ): DartPickerHelpContent => {
   const voice = getVoiceCommandHelpSection(mode, { visitEntryMode }) ?? undefined
 
@@ -66,9 +87,22 @@ export const getDartPickerHelpContent = (
     }
   }
 
-  if (mode === GameModeId.Bob27) {
+  if (mode === GameModeId.ClaimTheBoard) {
     const targetLabel =
-      bob27TargetIndex === undefined ? 'the target' : getBob27Target(bob27TargetIndex).label
+      targetIndex === undefined ? 'the target' : getClaimTheBoardTarget(targetIndex, aimMode).label
+
+    return {
+      title: 'How to score',
+      paragraphs: [
+        `Record how many times you hit ${targetLabel}. Each hit scores the face value of that target. A miss keeps the target for the next player.`,
+        'Highest score wins when someone hits the finish. On a tie, the player who hits that finishing target wins.',
+      ],
+      voice,
+    }
+  }
+
+  if (mode === GameModeId.Bob27) {
+    const targetLabel = targetIndex === undefined ? 'the target' : getBob27Target(targetIndex).label
 
     return {
       title: 'How to score',

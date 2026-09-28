@@ -143,4 +143,59 @@ describe('applyAsyncMatchResultToSession', () => {
     expect(completed.visits[1]?.legIndex).toBe(1)
     expect(completed.visits.every((entry) => entry.voided !== true)).toBe(true)
   })
+
+  it('advances to the next leg when the match is not yet complete', () => {
+    const result = resolveAsyncMatchResult({
+      dartsOwnerId: 'p1',
+      players: [
+        { playerId: 'p1', visits: playerVisits('p1', 1) },
+        { playerId: 'p2', visits: playerVisits('p2', 2) },
+      ],
+    })
+    const next = applyAsyncMatchResultToSession(
+      session({
+        matchProgress: {
+          legsToWin: 2,
+          startingPlayerIndex: 0,
+          currentLeg: 1,
+          legWins: { p1: 0, p2: 0 },
+        },
+      }),
+      result,
+      '2026-01-01T00:20:00.000Z',
+    )
+
+    expect(next.status).toBe(GameStatus.InProgress)
+    expect(next.completedAt).toBeUndefined()
+    expect(next.matchProgress?.currentLeg).toBe(2)
+    expect(next.matchProgress?.legWins).toEqual({ p1: 1, p2: 0 })
+    expect(next.visits[1]?.legIndex).toBe(1)
+  })
+
+  it('completes the match when the async leg reaches legsToWin', () => {
+    const result = resolveAsyncMatchResult({
+      dartsOwnerId: 'p1',
+      players: [
+        { playerId: 'p1', visits: playerVisits('p1', 1) },
+        { playerId: 'p2', visits: playerVisits('p2', 2) },
+      ],
+    })
+    const completed = applyAsyncMatchResultToSession(
+      session({
+        matchProgress: {
+          legsToWin: 2,
+          startingPlayerIndex: 0,
+          currentLeg: 2,
+          legWins: { p1: 1, p2: 0 },
+        },
+      }),
+      result,
+      '2026-01-01T00:20:00.000Z',
+    )
+
+    expect(completed.status).toBe(GameStatus.Completed)
+    expect(completed.completedAt).toBe('2026-01-01T00:20:00.000Z')
+    expect(completed.matchProgress?.legWins).toEqual({ p1: 2, p2: 0 })
+    expect(completed.matchProgress?.currentLeg).toBe(2)
+  })
 })

@@ -4,7 +4,11 @@ import { getVisitsForLeg } from '@open-darts/game/game/matchLegs'
 import type { GameModeId } from '@open-darts/game/types/gameMode'
 import type { Player } from '@open-darts/game/types/player'
 import type { Visit } from '@open-darts/game/types/visit'
-import { getVisitHistoryEntryDisplay, getVisitHistoryHeadlineColor } from './visitHistoryDisplay'
+import {
+  getVisitHistoryEntryDisplay,
+  getVisitHistoryHeadlineColor,
+  showsVisitDartBreakdown,
+} from './visitHistoryDisplay'
 import { WaitingVisitHistoryCard } from './WaitingVisitHistoryCard'
 
 export type VisitHistoryLayoutVariant = 'sidebar' | 'stack'
@@ -90,7 +94,12 @@ export const VisitHistoryColumn = ({
             <Text color={headlineColor} fontWeight="bold" fontSize="lg">
               {display.headline}
             </Text>
-            {visit.darts.length > 0 && (
+            {display.detail !== undefined && (
+              <Text mt={1} color="whiteAlpha.700" fontSize="sm" lineHeight="short">
+                {display.detail}
+              </Text>
+            )}
+            {showsVisitDartBreakdown(mode) && visit.darts.length > 0 && (
               <Text mt={1} color="whiteAlpha.700" fontSize="sm" lineHeight="short">
                 {visit.darts.map((dart) => formatDart(dart)).join(' · ')}
               </Text>

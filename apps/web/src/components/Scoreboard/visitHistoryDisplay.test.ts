@@ -91,4 +91,55 @@ describe('getVisitHistoryEntryDisplay', () => {
       tone: 'failed',
     })
   })
+
+  it('shows score and hit count for Claim the Board', () => {
+    const display = getVisitHistoryEntryDisplay(
+      {
+        ...baseVisit,
+        visitScore: 40,
+        metadata: { hit: true, hitCount: 2, targetLabel: '20' },
+      },
+      GameModeId.ClaimTheBoard,
+    )
+
+    expect(display).toEqual({
+      headline: '40',
+      detail: '20 (2 hits)',
+      tone: 'default',
+    })
+  })
+
+  it('marks zero-hit Claim the Board visits as failed', () => {
+    const display = getVisitHistoryEntryDisplay(
+      {
+        ...baseVisit,
+        visitScore: 0,
+        metadata: { hit: false, hitCount: 0, targetLabel: '20' },
+      },
+      GameModeId.ClaimTheBoard,
+    )
+
+    expect(display).toEqual({
+      headline: '0',
+      detail: '20 (0 hits)',
+      tone: 'failed',
+    })
+  })
+
+  it('shows score and hit count for Bob27 visits', () => {
+    const display = getVisitHistoryEntryDisplay(
+      {
+        ...baseVisit,
+        visitScore: 40,
+        metadata: { hit: true, hitCount: 2, targetLabel: 'D20' },
+      },
+      GameModeId.Bob27,
+    )
+
+    expect(display).toEqual({
+      headline: '40',
+      detail: 'D20 (2 hits)',
+      tone: 'default',
+    })
+  })
 })

@@ -2,7 +2,7 @@ import type { GameConfig } from '@open-darts/game/types/gameMode'
 import { isUuid } from '../ids'
 import { commandFailure } from './commands'
 import { deleteDeadline } from './alarms'
-import { persistTerminal } from './matchPersist'
+import { persistTerminal, touchSyncIdleDeadline } from './matchPersist'
 import { deletePlayer, findPlayer, loadCreatorUserId, loadPublicMatchState } from './schema'
 import {
   createOnlineSession,
@@ -163,6 +163,7 @@ export const beginMatch = (sql: SqlStorage, userId: string): PreparedMutation =>
     now,
   )
   deleteDeadline(sql, DeadlineKind.WaitingExpiresAt)
+  touchSyncIdleDeadline(sql, now)
 
   return { ok: true }
 }

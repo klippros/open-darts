@@ -12,11 +12,12 @@ import {
 import type { MatchFormat } from './matchLegs'
 import {
   clampLegsToWin,
-  clampStartingPlayerIndex,
   DEFAULT_MATCH_FORMAT,
   matchFormatsEqual,
   parseLegsToWin,
   parseStartingPlayerIndex,
+  resolveStartingPlayerIndex,
+  STARTING_PLAYER_INDEX_RANDOM,
 } from './matchLegs'
 import { createGuestPlayer, createSoloHumanPlayer } from './playerFactory'
 
@@ -35,6 +36,7 @@ export const DEFAULT_OPPONENT_SETUP: OpponentSetup = {
   maxVisits: DEFAULT_MAX_VISITS,
   legEndMode: ChallengeLegEndMode.PlayToCheckout,
   ...DEFAULT_MATCH_FORMAT,
+  startingPlayerIndex: STARTING_PLAYER_INDEX_RANDOM,
 }
 
 const opponentModes = new Set<string>(['solo', 'guest', 'challenge'])
@@ -125,12 +127,12 @@ export const appendOpponentSetupParams = (
   }
 
   if (setup.mode === 'guest') {
-    const startingPlayerIndex = clampStartingPlayerIndex(setup.startingPlayerIndex, 2)
+    const startingPlayerIndex = resolveStartingPlayerIndex(setup.startingPlayerIndex, 2)
 
     if (startingPlayerIndex === 0) {
       params.delete('starter')
     } else {
-      params.set('starter', '1')
+      params.set('starter', String(startingPlayerIndex))
     }
   } else {
     params.delete('starter')

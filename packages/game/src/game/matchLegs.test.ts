@@ -15,6 +15,8 @@ import {
   parseStartingPlayerIndex,
   recordLegLoss,
   recordLegWin,
+  resolveStartingPlayerIndex,
+  STARTING_PLAYER_INDEX_RANDOM,
 } from './matchLegs'
 import { createChallengeConfig } from './challenge'
 import { createGuestPlayer, createSoloHumanPlayer } from './playerFactory'
@@ -24,7 +26,14 @@ describe('matchLegs', () => {
     expect(parseLegsToWin('5')).toBe(5)
     expect(parseLegsToWin('99')).toBe(15)
     expect(parseStartingPlayerIndex('1', 2)).toBe(1)
+    expect(parseStartingPlayerIndex('random', 2)).toBe(STARTING_PLAYER_INDEX_RANDOM)
     expect(parseStartingPlayerIndex(null, 1)).toBe(0)
+  })
+
+  it('resolves a random starter preference', () => {
+    expect(resolveStartingPlayerIndex(STARTING_PLAYER_INDEX_RANDOM, 2, () => 0.1)).toBe(0)
+    expect(resolveStartingPlayerIndex(STARTING_PLAYER_INDEX_RANDOM, 2, () => 0.9)).toBe(1)
+    expect(resolveStartingPlayerIndex(1, 2)).toBe(1)
   })
 
   it('alternates leg starters after the first leg', () => {

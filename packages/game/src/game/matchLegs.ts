@@ -1,4 +1,5 @@
 import { GameModeId } from '../types/gameMode'
+import type { ClaimTheBoardState } from '../types/claimTheBoard'
 import type { GameSession } from '../types/gameSession'
 import type { ChallengeConfig, MatchProgress } from '../types/match'
 import { DEFAULT_LEGS_TO_WIN, LEGS_TO_WIN_MAX, LEGS_TO_WIN_MIN } from '../types/match'
@@ -12,6 +13,9 @@ export interface MatchFormat {
   startingPlayerIndex: number
   challenge?: ChallengeConfig
 }
+
+/** Setup-only sentinel; resolve with `pickRandomStartingPlayerIndex` before creating a session. */
+export const STARTING_PLAYER_INDEX_RANDOM = -1
 
 export const DEFAULT_MATCH_FORMAT: MatchFormat = {
   legsToWin: DEFAULT_LEGS_TO_WIN,
@@ -36,6 +40,21 @@ export const clampStartingPlayerIndex = (index: number, playerCount: number): nu
   return 1
 }
 
+export const pickRandomStartingPlayerIndex = (random: () => number = Math.random): number =>
+  random() < 0.5 ? 0 : 1
+
+export const resolveStartingPlayerIndex = (
+  index: number,
+  playerCount: number,
+  random: () => number = Math.random,
+): number => {
+  if (index === STARTING_PLAYER_INDEX_RANDOM) {
+    return pickRandomStartingPlayerIndex(random)
+  }
+
+  return clampStartingPlayerIndex(index, playerCount)
+}
+
 export const parseLegsToWin = (value: string | null | undefined): number => {
   if (value === null || value === undefined || value.trim() === '') {
     return DEFAULT_LEGS_TO_WIN
@@ -56,6 +75,10 @@ export const parseStartingPlayerIndex = (
 ): number => {
   if (playerCount <= 1) {
     return 0
+  }
+
+  if (value === 'random') {
+    return STARTING_PLAYER_INDEX_RANDOM
   }
 
   if (value === '1' || value === 'opponent') {
@@ -257,6 +280,9 @@ export const getMatchWinnerId = (session: GameSession): string | undefined => {
 export const matchFormatsEqual = (left: MatchFormat, right: MatchFormat): boolean =>
   left.legsToWin === right.legsToWin && left.startingPlayerIndex === right.startingPlayerIndex
 
+const getLegWinnerIdFromClaimTheBoardState = (state: ClaimTheBoardState): string | undefined =>
+  state.winnerId
+
 export const getWinnerIdForCompletedLeg = (
   mode: GameModeId,
   engineState: unknown,
@@ -264,6 +290,11 @@ export const getWinnerIdForCompletedLeg = (
   if (mode === GameModeId.X01) {
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- x01 engine state is X01State when mode is X01
     return getLegWinnerIdFromX01State(engineState as X01State)
+  }
+
+  if (mode === GameModeId.ClaimTheBoard) {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- engine state matches mode
+    return getLegWinnerIdFromClaimTheBoardState(engineState as ClaimTheBoardState)
   }
 
   return undefined

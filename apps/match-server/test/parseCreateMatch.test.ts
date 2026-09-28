@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { GameModeId } from '@open-darts/game/types/gameMode'
+import { AroundTheClockAimMode } from '@open-darts/game/types/aroundTheClock'
 import { defaultX01Config } from '@open-darts/game/x01/x01Presets'
 import { parseCreateMatchRequest } from '../src/http/parseCreateMatch'
 import { STARTING_PLAYER_SLOT_RANDOM } from '../src/match/types'
@@ -24,5 +25,32 @@ describe('parseCreateMatchRequest', () => {
     expect(parseCreateMatchRequest({ ...base, startingPlayerSlot: 3 })).toBeNull()
     expect(parseCreateMatchRequest({ ...base, startingPlayerSlot: -1 })).toBeNull()
     expect(parseCreateMatchRequest({ ...base, startingPlayerSlot: '0' })).toBeNull()
+  })
+
+  it('accepts claim-the-board setups', () => {
+    expect(
+      parseCreateMatchRequest({
+        mode: GameModeId.ClaimTheBoard,
+        config: { aimMode: AroundTheClockAimMode.Doubles },
+        legsToWin: 3,
+        startingPlayerSlot: 0,
+      }),
+    ).toEqual({
+      mode: GameModeId.ClaimTheBoard,
+      config: { aimMode: AroundTheClockAimMode.Doubles },
+      legsToWin: 1,
+      startingPlayerSlot: 0,
+    })
+  })
+
+  it('rejects invalid claim-the-board aim modes', () => {
+    expect(
+      parseCreateMatchRequest({
+        mode: GameModeId.ClaimTheBoard,
+        config: { aimMode: 'invalid' },
+        legsToWin: 2,
+        startingPlayerSlot: 0,
+      }),
+    ).toBeNull()
   })
 })

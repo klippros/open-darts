@@ -254,6 +254,23 @@ describe('match security', () => {
     })
   })
 
+  it('rejects finish_match from the opponent who did not throw the last visit', async () => {
+    const { stub } = await startActiveMatch()
+    await stub.applyCommand(creatorUserId, {
+      name: MatchCommandName.RecordVisit,
+      darts: toPublicDarts(checkoutDouble20()),
+    })
+
+    const finish = await stub.applyCommand(otherUserId, {
+      name: MatchCommandName.FinishMatch,
+    })
+
+    expect(finish).toMatchObject({
+      ok: false,
+      code: CommandErrorCode.Forbidden,
+    })
+  })
+
   it('rejects abandon from a non-member', async () => {
     const { stub } = await startActiveMatch()
 

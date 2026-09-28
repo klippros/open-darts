@@ -8,6 +8,7 @@ import {
   getBob27SessionDoublesHit,
   getBob27VisitHitRate,
 } from '../bob27/bob27VisitStats'
+import { getClaimTheBoardPrimaryPlayerStats } from '../claimTheBoard/claimTheBoardVisitStats'
 import {
   computeNinetyNineDartsSingleSessionStats,
   getNinetyNineDartsHitRateFromCounts,
@@ -60,6 +61,18 @@ export interface Bob27PracticeStats {
   bestDoublesPerGame: number | null
 }
 
+export interface ClaimTheBoardPracticeStats {
+  mode: GameModeId.ClaimTheBoard
+  label: string
+  gameCount: number
+  avgHitsPerVisit: number | null
+  avgFieldsClaimedPerGame: number | null
+  avgFieldsHitOncePerGame: number | null
+  avgFieldsHitTwicePerGame: number | null
+  avgFieldsHitThricePerGame: number | null
+  avgFinalScore: number | null
+}
+
 export interface AroundTheClockPracticeStats {
   mode: GameModeId.AroundTheClock
   aimMode: AroundTheClockAimMode
@@ -91,7 +104,10 @@ export interface NinetyNineDartsPracticeStats {
 }
 
 export type OtherPracticeStats =
-  Bob27PracticeStats | AroundTheClockPracticeStats | NinetyNineDartsPracticeStats
+  | Bob27PracticeStats
+  | ClaimTheBoardPracticeStats
+  | AroundTheClockPracticeStats
+  | NinetyNineDartsPracticeStats
 
 export interface PracticeStats {
   checkout: CheckoutPracticeStats[]
@@ -203,6 +219,39 @@ const computeBob27Stats = (sessions: GameSession[]): Bob27PracticeStats | null =
   }
 }
 
+const computeClaimTheBoardStats = (sessions: GameSession[]): ClaimTheBoardPracticeStats | null => {
+  const modeSessions = sessions.filter((session) => session.mode === GameModeId.ClaimTheBoard)
+
+  if (modeSessions.length === 0) {
+    return null
+  }
+
+  const perGame = modeSessions
+    .map((session) => getClaimTheBoardPrimaryPlayerStats(session))
+    .filter((stats): stats is NonNullable<typeof stats> => stats !== null)
+
+  if (perGame.length === 0) {
+    return null
+  }
+
+  const allVisits = modeSessions.flatMap((session) => getPrimaryPlayerVisits(session))
+  const totalHits = perGame.reduce((sum, stats) => sum + stats.totalHits, 0)
+
+  return {
+    mode: GameModeId.ClaimTheBoard,
+    label: getSessionLabel(modeSessions, GameModeId.ClaimTheBoard),
+    gameCount: modeSessions.length,
+    avgHitsPerVisit: allVisits.length === 0 ? null : totalHits / allVisits.length,
+    avgFieldsClaimedPerGame: averageOrNull(perGame.map((stats) => stats.fieldsClaimed)),
+    avgFieldsHitOncePerGame: averageOrNull(perGame.map((stats) => stats.fieldsHitOnce)),
+    avgFieldsHitTwicePerGame: averageOrNull(perGame.map((stats) => stats.fieldsHitTwice)),
+    avgFieldsHitThricePerGame: averageOrNull(perGame.map((stats) => stats.fieldsHitThrice)),
+    avgFinalScore: averageOrNull(
+      perGame.map((stats) => stats.finalScore).filter((score): score is number => score !== null),
+    ),
+  }
+}
+
 const computeAroundTheClockStatsForAimMode = (
   sessions: GameSession[],
   aimMode: AroundTheClockAimMode,
@@ -301,6 +350,7 @@ export const computePracticeStats = (sessions: GameSession[]): PracticeStats => 
   }),
   other: [
     computeBob27Stats(sessions),
+    computeClaimTheBoardStats(sessions),
     ...AROUND_THE_CLOCK_AIM_MODES.map((aimMode) =>
       computeAroundTheClockStatsForAimMode(sessions, aimMode),
     ),
@@ -312,6 +362,10 @@ export const computePracticeStats = (sessions: GameSession[]): PracticeStats => 
 
 export const isBob27PracticeStats = (stats: OtherPracticeStats): stats is Bob27PracticeStats =>
   stats.mode === GameModeId.Bob27
+
+export const isClaimTheBoardPracticeStats = (
+  stats: OtherPracticeStats,
+): stats is ClaimTheBoardPracticeStats => stats.mode === GameModeId.ClaimTheBoard
 
 export const isAroundTheClockPracticeStats = (
   stats: OtherPracticeStats,

@@ -3,6 +3,7 @@ import { Button, Stack } from '@chakra-ui/react'
 export interface SetupPageActionsProps {
   backLabel?: string
   primaryLabel: string
+  primaryDisabled?: boolean
   onBack: () => void
   onPrimary: () => void
 }
@@ -10,6 +11,7 @@ export interface SetupPageActionsProps {
 export const SetupPageActions = ({
   backLabel = 'Back',
   primaryLabel,
+  primaryDisabled = false,
   onBack,
   onPrimary,
 }: SetupPageActionsProps) => (
@@ -17,7 +19,7 @@ export const SetupPageActions = ({
     <Button variant="cancel" onClick={onBack}>
       {backLabel}
     </Button>
-    <Button variant="emphasis" onClick={onPrimary}>
+    <Button variant="emphasis" disabled={primaryDisabled} onClick={onPrimary}>
       {primaryLabel}
     </Button>
   </Stack>

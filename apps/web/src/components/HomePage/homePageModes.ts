@@ -7,6 +7,7 @@ export interface HomePageModeLink {
   label: string
   description: string
   to: string
+  onlineCapable?: boolean
 }
 
 export const MATCH_MODES: readonly HomePageModeLink[] = [
@@ -15,6 +16,7 @@ export const MATCH_MODES: readonly HomePageModeLink[] = [
     label: '501',
     description: 'Classic double-out',
     to: buildX01PresetPath(X01PresetId.FiveOhOne),
+    onlineCapable: true,
   },
   {
     id: X01PresetId.FourOhOne,
@@ -34,6 +36,13 @@ export const MATCH_MODES: readonly HomePageModeLink[] = [
     description: 'Choose start score and rules',
     to: '/game/setup',
   },
+  {
+    id: 'claim-the-board',
+    label: 'Claim the Board',
+    description: 'Shared targets · highest score wins · finish hits break ties',
+    to: '/game/claim-the-board/setup',
+    onlineCapable: true,
+  },
 ]
 
 export const PRACTICE_MODES: readonly HomePageModeLink[] = [
@@ -52,7 +61,7 @@ export const PRACTICE_MODES: readonly HomePageModeLink[] = [
   {
     id: 'around-the-clock',
     label: 'Around the Clock',
-    description: 'Hit 1 to 20 and bull',
+    description: 'Hit 1 to 20; finish on 25/bull or bull',
     to: '/game/around-the-clock/setup',
   },
   {

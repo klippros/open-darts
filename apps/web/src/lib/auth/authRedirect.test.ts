@@ -1,5 +1,10 @@
-import { afterEach, describe, expect, it } from 'vitest'
-import { buildAuthRedirectUrl, resolveAuthReturnPath } from './authRedirect'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import {
+  buildAuthRedirectUrl,
+  consumeAuthReturnPath,
+  resolveAuthReturnPath,
+  stashAuthReturnPath,
+} from './authRedirect'
 
 describe('resolveAuthReturnPath', () => {
   it('accepts relative app paths', () => {
@@ -18,25 +23,59 @@ describe('buildAuthRedirectUrl', () => {
     Reflect.deleteProperty(globalThis, 'window')
   })
 
-  it('includes a safe next query when returnTo is set', () => {
+  it('builds a stable callback URL without a next query', () => {
     Object.defineProperty(globalThis, 'window', {
       value: { location: { origin: 'http://localhost:5173' } },
       configurable: true,
     })
 
-    const url = new URL(buildAuthRedirectUrl('/match/join/token'))
+    const url = new URL(buildAuthRedirectUrl())
     expect(url.origin).toBe('http://localhost:5173')
     expect(url.pathname.endsWith('/auth/callback')).toBe(true)
-    expect(url.searchParams.get('next')).toBe('/match/join/token')
+    expect(url.search).toBe('')
   })
+})
 
-  it('omits next when returnTo is unsafe', () => {
-    Object.defineProperty(globalThis, 'window', {
-      value: { location: { origin: 'http://localhost:5173' } },
+describe('stashAuthReturnPath / consumeAuthReturnPath', () => {
+  const storage = new Map<string, string>()
+
+  beforeEach(() => {
+    storage.clear()
+    Object.defineProperty(globalThis, 'sessionStorage', {
+      value: {
+        getItem: (key: string) => storage.get(key) ?? null,
+        setItem: (key: string, value: string) => {
+          storage.set(key, value)
+        },
+        removeItem: (key: string) => {
+          storage.delete(key)
+        },
+        clear: () => {
+          storage.clear()
+        },
+      },
       configurable: true,
     })
+  })
 
-    const url = new URL(buildAuthRedirectUrl('https://evil.example'))
-    expect(url.searchParams.get('next')).toBeNull()
+  afterEach(() => {
+    Reflect.deleteProperty(globalThis, 'sessionStorage')
+  })
+
+  it('round-trips a safe return path', () => {
+    stashAuthReturnPath('/match/new')
+    expect(consumeAuthReturnPath()).toBe('/match/new')
+    expect(consumeAuthReturnPath()).toBeNull()
+  })
+
+  it('clears stashed path when returnTo is missing or unsafe', () => {
+    sessionStorage.setItem('open-darts:auth-return-to', '/match/new')
+    stashAuthReturnPath('https://evil.example')
+    expect(consumeAuthReturnPath()).toBeNull()
+  })
+
+  it('ignores unsafe values left in storage', () => {
+    sessionStorage.setItem('open-darts:auth-return-to', 'https://evil.example')
+    expect(consumeAuthReturnPath()).toBeNull()
   })
 })

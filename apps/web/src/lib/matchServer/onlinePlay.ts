@@ -114,5 +114,7 @@ export const resolveCompletedOnlineSession = (
   )
 }
 
+export { resolvePendingFinishPlayerId } from '@open-darts/game/game/resolvePendingFinishPlayerId'
+
 export const dartsToPublicPayload = (darts: DartThrow[]): PublicDartThrow[] =>
   darts.map(toPublicDartThrow)

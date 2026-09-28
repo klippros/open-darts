@@ -5,6 +5,7 @@ import { VisitInputMode } from '@open-darts/game/types/visit'
 const ALWAYS_VOICE_INPUT_MODES = new Set<GameModeId>([
   GameModeId.Bob27,
   GameModeId.AroundTheClock,
+  GameModeId.ClaimTheBoard,
   GameModeId.NinetyNineDarts,
 ])
 

@@ -13,7 +13,7 @@ export interface StatsTablePlayer {
 
 export interface StatsTableProps {
   players: StatsTablePlayer[]
-  statsByPlayer: Record<string, PlayerMatchStats>
+  statsByPlayer?: Record<string, PlayerMatchStats>
   rows?: MatchStatRowDefinition[]
   formatCell?: (row: MatchStatRowDefinition, stats: PlayerMatchStats) => string
   onRowClick?: (rowId: MatchStatRowId) => void
@@ -25,7 +25,7 @@ export interface StatsTableProps {
 
 export const StatsTable = ({
   players,
-  statsByPlayer,
+  statsByPlayer = {},
   rows,
   formatCell,
   onRowClick,

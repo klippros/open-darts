@@ -227,6 +227,59 @@ describe('practiceStats', () => {
     ])
   })
 
+  it('summarizes claim the board hit and field stats', () => {
+    const stats = computePracticeStats([
+      sampleSession({
+        mode: GameModeId.ClaimTheBoard,
+        config: { aimMode: AroundTheClockAimMode.Any },
+        visits: [
+          sampleVisit({
+            visitScore: 20,
+            scoreAfter: 20,
+            metadata: { hitCount: 1, hit: true, targetLabel: '20' },
+          }),
+          sampleVisit({
+            visitIndex: 1,
+            visitScore: 40,
+            scoreAfter: 60,
+            metadata: { hitCount: 2, hit: true, targetLabel: '19' },
+          }),
+          sampleVisit({
+            visitIndex: 2,
+            visitScore: 0,
+            scoreAfter: 60,
+            metadata: { hitCount: 0, hit: false, targetLabel: '18' },
+          }),
+        ],
+      }),
+      sampleSession({
+        id: 'session-2',
+        mode: GameModeId.ClaimTheBoard,
+        config: { aimMode: AroundTheClockAimMode.Any },
+        visits: [
+          sampleVisit({
+            visitScore: 60,
+            scoreAfter: 60,
+            metadata: { hitCount: 3, hit: true, targetLabel: '20' },
+          }),
+        ],
+      }),
+    ])
+
+    expect(stats.other).toEqual([
+      expect.objectContaining({
+        mode: GameModeId.ClaimTheBoard,
+        gameCount: 2,
+        avgHitsPerVisit: 1.5,
+        avgFieldsClaimedPerGame: 1.5,
+        avgFieldsHitOncePerGame: 0.5,
+        avgFieldsHitTwicePerGame: 0.5,
+        avgFieldsHitThricePerGame: 0.5,
+        avgFinalScore: 60,
+      }),
+    ])
+  })
+
   it('summarizes around the clock per aim mode with per-target stats', () => {
     const stats = computePracticeStats([
       sampleSession({

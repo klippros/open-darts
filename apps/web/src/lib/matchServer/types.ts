@@ -17,6 +17,7 @@ export enum DeadlineKind {
   WaitingExpiresAt = 'waiting_expires_at',
   FinalizeAt = 'finalize_at',
   AsyncDeadlineAt = 'async_deadline_at',
+  IdleExpiresAt = 'idle_expires_at',
 }
 
 export enum MatchEndingKind {
@@ -27,6 +28,7 @@ export enum MatchEndingKind {
   MutualCancel = 'mutual_cancel',
   LobbyTimeout = 'lobby_timeout',
   CreatorCancel = 'creator_cancel',
+  IdleTimeout = 'idle_timeout',
 }
 
 export enum MatchCommandName {

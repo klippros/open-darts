@@ -162,7 +162,12 @@ describe('waiting room', () => {
     expect(started.ok).toBe(true)
     expect(started.state?.status).toBe(MatchStatus.Active)
     expect(started.state?.startedAt).toBeTypeOf('number')
-    expect(started.state?.deadlines).toEqual([])
+    expect(
+      started.state?.deadlines.some((deadline) => deadline.kind === DeadlineKind.IdleExpiresAt),
+    ).toBe(true)
+    expect(
+      started.state?.deadlines.some((deadline) => deadline.kind === DeadlineKind.WaitingExpiresAt),
+    ).toBe(false)
   })
 
   it('resolves a random first-throw preference when the match begins', async () => {
@@ -196,10 +201,17 @@ describe('waiting room', () => {
     await joinGuest(stub)
     await stub.applyCommand(creatorUserId, { name: MatchCommandName.BeginMatch })
 
-    expect(await runDurableObjectAlarm(stub)).toBe(false)
+    // Idle deadline keeps an alarm scheduled; waiting deadline must be gone.
+    expect(await runDurableObjectAlarm(stub)).toBe(true)
 
     const state = await stub.applyCommand(creatorUserId, { name: MatchCommandName.GetState })
     expect(state.state?.status).toBe(MatchStatus.Active)
+    expect(
+      state.state?.deadlines.some((deadline) => deadline.kind === DeadlineKind.WaitingExpiresAt),
+    ).toBe(false)
+    expect(
+      state.state?.deadlines.some((deadline) => deadline.kind === DeadlineKind.IdleExpiresAt),
+    ).toBe(true)
   })
 
   it('does not cancel an already-started match if a waiting deadline is still stored', async () => {

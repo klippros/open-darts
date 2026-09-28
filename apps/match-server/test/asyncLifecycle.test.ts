@@ -358,6 +358,103 @@ describe('async lifecycle', () => {
     expect(sessionCountingVisits.filter((entry) => entry.playerId === otherUserId)).toHaveLength(0)
   })
 
+  it('returns to sync after an async leg when the match is not yet complete', async () => {
+    const matchId = createMatchId()
+    const stub = env.MATCH.getByName(matchId)
+    const created = await stub.init({
+      matchId,
+      inviteToken: crypto.randomUUID(),
+      creatorUserId,
+      mode: GameModeId.X01,
+      config: { startScore: 40, doubleIn: false, doubleOut: true },
+      legsToWin: 2,
+      startingPlayerSlot: 0,
+    })
+
+    if (!created.ok) {
+      throw new Error(created.message ?? 'init failed')
+    }
+
+    const inviteToken = created.state?.inviteToken
+
+    if (inviteToken === undefined) {
+      throw new Error('missing invite')
+    }
+
+    await stub.join({ userId: otherUserId, inviteToken })
+    await stub.applyCommand(creatorUserId, { name: MatchCommandName.BeginMatch })
+    await markOpponentDisconnectedLongEnough(stub, otherUserId)
+    await stub.applyCommand(creatorUserId, { name: MatchCommandName.StartAsync })
+
+    await stub.applyCommand(creatorUserId, {
+      name: MatchCommandName.RecordVisit,
+      darts: toPublicDarts(checkoutDouble20()),
+    })
+    await stub.applyCommand(creatorUserId, { name: MatchCommandName.FinishMatch })
+
+    await stub.applyCommand(otherUserId, {
+      name: MatchCommandName.RecordVisit,
+      darts: toPublicDarts(missVisit()),
+    })
+    await stub.applyCommand(otherUserId, {
+      name: MatchCommandName.RecordVisit,
+      darts: toPublicDarts(checkoutDouble20()),
+    })
+    const finished = await stub.applyCommand(otherUserId, {
+      name: MatchCommandName.FinishMatch,
+    })
+
+    expect(finished.ok).toBe(true)
+    expect(finished.state?.status).toBe(MatchStatus.Active)
+    expect(finished.state?.playMode).toBe(PlayMode.Synchronous)
+    expect(finished.state?.endingKind).toBeNull()
+    expect(finished.state?.winnerUserId).toBeNull()
+    expect(finished.state?.asyncStateJson).toBeNull()
+    expect(
+      finished.state?.deadlines.some((deadline) => deadline.kind === DeadlineKind.IdleExpiresAt),
+    ).toBe(true)
+    expect(
+      finished.state?.deadlines.some((deadline) => deadline.kind === DeadlineKind.AsyncDeadlineAt),
+    ).toBe(false)
+
+    const playEnvelope = JSON.parse(finished.state?.sessionJson ?? 'null') as {
+      session: {
+        status: string
+        matchProgress: { currentLeg: number; legWins: Record<string, number> }
+      }
+      asyncPlay?: unknown
+    }
+
+    expect(playEnvelope.asyncPlay).toBeUndefined()
+    expect(playEnvelope.session.status).toBe('in-progress')
+    expect(playEnvelope.session.matchProgress.currentLeg).toBe(2)
+    expect(playEnvelope.session.matchProgress.legWins).toEqual({
+      [creatorUserId]: 1,
+      [otherUserId]: 0,
+    })
+
+    const miss = await stub.applyCommand(otherUserId, {
+      name: MatchCommandName.RecordVisit,
+      darts: toPublicDarts(missVisit()),
+    })
+    expect(miss.ok).toBe(true)
+
+    const secondLeg = await stub.applyCommand(creatorUserId, {
+      name: MatchCommandName.RecordVisit,
+      darts: toPublicDarts(checkoutDouble20()),
+    })
+    expect(secondLeg.ok).toBe(true)
+    expect(secondLeg.state?.pendingFinalization).toBe(true)
+
+    const matchDone = await stub.applyCommand(creatorUserId, {
+      name: MatchCommandName.FinishMatch,
+    })
+    expect(matchDone.ok).toBe(true)
+    expect(matchDone.state?.status).toBe(MatchStatus.Completed)
+    expect(matchDone.state?.endingKind).toBe(MatchEndingKind.Checkout)
+    expect(matchDone.state?.winnerUserId).toBe(creatorUserId)
+  })
+
   it('schedules FinalizeAt after checkout in async', async () => {
     const stub = await startAsyncMatch()
     const checkedOut = await stub.applyCommand(creatorUserId, {

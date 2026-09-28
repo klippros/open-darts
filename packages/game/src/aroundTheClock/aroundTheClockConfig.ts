@@ -31,18 +31,19 @@ const AIM_MODE_PARAMS: Record<AroundTheClockAimMode, string> = {
 }
 
 const AIM_MODE_DESCRIPTIONS: Record<AroundTheClockAimMode, string> = {
-  [AroundTheClockAimMode.Singles]: 'Hit the single segment on each number',
-  [AroundTheClockAimMode.Doubles]: 'Hit the double on each number',
-  [AroundTheClockAimMode.Trebles]: 'Hit the treble on each number',
-  [AroundTheClockAimMode.Any]: 'Any segment on the number counts',
+  [AroundTheClockAimMode.Singles]: 'Hit the single on each number; finish on 25 or bull',
+  [AroundTheClockAimMode.Doubles]: 'Hit the double on each number; finish on bull',
+  [AroundTheClockAimMode.Trebles]: 'Hit the treble on each number; finish on bull',
+  [AroundTheClockAimMode.Any]: 'Any segment on the number counts; finish on 25 or bull',
 }
 
 export const getAroundTheClockAimModeDescription = (aimMode: AroundTheClockAimMode): string =>
   AIM_MODE_DESCRIPTIONS[aimMode]
 
-export const parseAroundTheClockAimMode = (value: string | null): AroundTheClockAimMode => {
-  if (value === null) {
-    return AroundTheClockAimMode.Any
+/** Strict parse of an aim-mode enum string; null when missing or unknown. */
+export const parseAroundTheClockAimModeValue = (value: unknown): AroundTheClockAimMode | null => {
+  if (typeof value !== 'string') {
+    return null
   }
 
   for (const aimMode of Object.values(AroundTheClockAimMode)) {
@@ -51,8 +52,11 @@ export const parseAroundTheClockAimMode = (value: string | null): AroundTheClock
     }
   }
 
-  return AroundTheClockAimMode.Any
+  return null
 }
+
+export const parseAroundTheClockAimMode = (value: string | null): AroundTheClockAimMode =>
+  parseAroundTheClockAimModeValue(value) ?? AroundTheClockAimMode.Any
 
 export const buildAroundTheClockGamePath = (config: AroundTheClockConfig): string => {
   const normalized = getAroundTheClockConfig(config)
