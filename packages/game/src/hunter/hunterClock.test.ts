@@ -5,6 +5,8 @@ import {
   getHunterClockwiseDistance,
   getHunterFieldIndexForNumber,
   getHunterFieldNumber,
+  getHunterStandingFieldIndex,
+  getHunterStandingFieldNumber,
   HUNTER_CLOCK_ORDER,
   HUNTER_SECOND_FIELD,
   HUNTER_STARTER_FIELD,
@@ -26,6 +28,15 @@ describe('hunterClock', () => {
     expect(getHunterFieldNumber(advanceHunterFieldIndex(0, 1))).toBe(18)
     expect(getHunterFieldNumber(advanceHunterFieldIndex(19, 1))).toBe(1)
     expect(getHunterFieldNumber(advanceHunterFieldIndex(19, 2))).toBe(18)
+  })
+
+  it('places standing one clockwise step before the aim field', () => {
+    expect(getHunterStandingFieldNumber(1)).toBe(20)
+    expect(getHunterStandingFieldNumber(18)).toBe(1)
+    expect(getHunterStandingFieldNumber(19)).toBe(3)
+    expect(getHunterStandingFieldIndex(getHunterFieldIndexForNumber(1))).toBe(
+      getHunterFieldIndexForNumber(20),
+    )
   })
 
   it('measures clockwise distance and catch on land or pass', () => {

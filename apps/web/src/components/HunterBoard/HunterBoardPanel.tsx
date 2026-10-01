@@ -1,13 +1,8 @@
-import { Box, Flex, HStack, Stack, Text } from '@chakra-ui/react'
+import { Box, Flex } from '@chakra-ui/react'
 import type { ScoreboardPlayerEntry } from '@open-darts/game/game/GameEngine'
+import type { DartThrow } from '@open-darts/game/types/dart'
 import type { Visit } from '@open-darts/game/types/visit'
-import {
-  advanceHunterFieldIndex,
-  getHunterFieldIndexForNumber,
-  getHunterFieldNumber,
-} from '@open-darts/game/hunter/hunterClock'
-import { formatCount, formatPercent } from '../../lib/analytics/formatAnalytics'
-import { computeHunterPlayerStats } from '../../lib/hunter/hunterVisitStats'
+import { getHunterStandingFieldNumber } from '@open-darts/game/hunter/hunterClock'
 import {
   DARTBOARD_CENTER,
   DARTBOARD_FONT_FAMILY,
@@ -21,10 +16,16 @@ import {
   polarToCartesian,
   toBoardWorldPoint,
 } from '../DartPicker/dartboardLayout'
+import { HunterPlayerSideStats } from './HunterPlayerSideStats'
 
 export interface HunterBoardPanelProps {
   players: ScoreboardPlayerEntry[]
   visits: Visit[]
+  /**
+   * Uncommitted darts for the active player. Scoreboard `primaryScore` is already
+   * previewed through applyDart; pending is used for live side-stat hit%/advances.
+   */
+  pendingDarts?: DartThrow[]
 }
 
 const HUNTER_PLAYER_COLORS = ['#2dd4bf', '#fbbf24'] as const
@@ -38,101 +39,38 @@ const AIM_FLASH_ACTIVE_CLASS = 'hunter-aim-flash-active'
 const getBaseSegmentFill = (segmentIndex: number): string =>
   segmentIndex % 2 === 0 ? BASE_SEGMENT_DARK : BASE_SEGMENT_LIGHT
 
-/** Field the player stands on = one step before the number they are aiming at. */
-const getStandingFieldNumber = (aimFieldNumber: number): number =>
-  getHunterFieldNumber(advanceHunterFieldIndex(getHunterFieldIndexForNumber(aimFieldNumber), -1))
-
 /** Keep labels at the old ring mid-band, even though wedges reach the center. */
 const NUMBER_LABEL_INNER_RADIUS = 52
 const NUMBER_LABEL_RADIUS =
   NUMBER_LABEL_INNER_RADIUS + (DARTBOARD_OUTER_RADIUS - NUMBER_LABEL_INNER_RADIUS) * 0.62
 
-interface SegmentMark {
-  color: string
-  isActive: boolean
-}
-
-interface HunterPlayerSideStatsProps {
-  player: ScoreboardPlayerEntry
-  color: string
-  visits: Visit[]
-  align: 'start' | 'end'
-}
-
-const HunterPlayerSideStats = ({ player, color, visits, align }: HunterPlayerSideStatsProps) => {
-  const stats = computeHunterPlayerStats(visits, player.playerId)
-  const aimFieldNumber = player.primaryScore
-  const standingFieldNumber = getStandingFieldNumber(aimFieldNumber)
-  const textAlign = align === 'start' ? 'left' : 'right'
-
-  return (
-    <Stack
-      gap={1}
-      flex="1 1 0"
-      minW={0}
-      w={{ base: 'auto', sm: '120px' }}
-      flexGrow={{ base: 1, sm: 0 }}
-      flexShrink={{ base: 1, sm: 0 }}
-      flexBasis={{ base: 0, sm: '120px' }}
-      opacity={player.isActive ? 1 : 0.65}
-      textAlign={textAlign}
-      align={align === 'start' ? 'flex-start' : 'flex-end'}
-    >
-      <HStack gap={2} flexDirection={align === 'end' ? 'row-reverse' : 'row'}>
-        <Box w="10px" h="10px" borderRadius="full" bg={color} flexShrink={0} />
-        <Text
-          fontSize="sm"
-          fontWeight="semibold"
-          color={player.isActive ? color : 'white'}
-          truncate
-          maxW="100%"
-        >
-          {player.name}
-        </Text>
-      </HStack>
-      <Text fontSize="xs" color="whiteAlpha.700">
-        On {standingFieldNumber} · hit {aimFieldNumber}
-      </Text>
-      <Text fontSize="xs" color="whiteAlpha.800">
-        Hit {formatPercent(stats.hitRate)}
-      </Text>
-      <Text fontSize="xs" color="whiteAlpha.800">
-        {formatCount(stats.avgAdvancesPerVisit)} adv/visit
-      </Text>
-    </Stack>
-  )
-}
-
-export const HunterBoardPanel = ({ players, visits }: HunterBoardPanelProps) => {
-  const standingByNumber = new Map<number, SegmentMark>()
-  const aimByNumber = new Map<number, SegmentMark>()
+export const HunterBoardPanel = ({ players, visits, pendingDarts = [] }: HunterBoardPanelProps) => {
+  const standingByNumber = new Map<number, string>()
+  const aimByNumber = new Map<number, string>()
   const activePlayer = players.find((player) => player.isActive)
   const opponent = players.find((player) => !player.isActive)
+  // primaryScore is live aim (scoreboard preview applies pending via applyDart).
   const opponentStandingField =
-    opponent === undefined ? null : getStandingFieldNumber(opponent.primaryScore)
+    opponent === undefined ? null : getHunterStandingFieldNumber(opponent.primaryScore)
   const leftPlayer = players[0]
   const rightPlayer = players[1]
 
   players.forEach((player, index) => {
     const color =
       HUNTER_PLAYER_COLORS[index % HUNTER_PLAYER_COLORS.length] ?? HUNTER_PLAYER_COLORS[0]
-    const aimFieldNumber = player.primaryScore
-    const standingFieldNumber = getStandingFieldNumber(aimFieldNumber)
-
-    standingByNumber.set(standingFieldNumber, { color, isActive: player.isActive })
+    const standingFieldNumber = getHunterStandingFieldNumber(player.primaryScore)
+    standingByNumber.set(standingFieldNumber, color)
   })
 
   if (activePlayer !== undefined) {
     const activeIndex = players.findIndex((player) => player.playerId === activePlayer.playerId)
     const playerColor =
       HUNTER_PLAYER_COLORS[activeIndex % HUNTER_PLAYER_COLORS.length] ?? HUNTER_PLAYER_COLORS[0]
+    const liveAimField = activePlayer.primaryScore
     const aimingAtOpponent =
-      opponentStandingField !== null && activePlayer.primaryScore === opponentStandingField
+      opponentStandingField !== null && liveAimField === opponentStandingField
 
-    aimByNumber.set(activePlayer.primaryScore, {
-      color: aimingAtOpponent ? HUNTER_DANGER_FLASH_COLOR : playerColor,
-      isActive: true,
-    })
+    aimByNumber.set(liveAimField, aimingAtOpponent ? HUNTER_DANGER_FLASH_COLOR : playerColor)
   }
 
   const board = (
@@ -168,8 +106,8 @@ export const HunterBoardPanel = ({ players, visits }: HunterBoardPanelProps) => 
         >
           {DARTBOARD_NUMBERS.map((number, segmentIndex) => {
             const { start, end } = getSegmentAngles(segmentIndex)
-            const standing = standingByNumber.get(number)
-            const aim = aimByNumber.get(number)
+            const standingColor = standingByNumber.get(number)
+            const aimColor = aimByNumber.get(number)
             const path = describeRingSegment(
               DARTBOARD_CENTER,
               DARTBOARD_CENTER,
@@ -178,16 +116,16 @@ export const HunterBoardPanel = ({ players, visits }: HunterBoardPanelProps) => 
               start,
               end,
             )
-            const baseFill = standing?.color ?? getBaseSegmentFill(segmentIndex)
+            const baseFill = standingColor ?? getBaseSegmentFill(segmentIndex)
 
             return (
               <g key={number}>
                 <path d={path} fill={baseFill} />
-                {aim !== undefined && (
+                {aimColor !== undefined && (
                   <path
                     className={AIM_FLASH_ACTIVE_CLASS}
                     d={path}
-                    fill={aim.color}
+                    fill={aimColor}
                     fillOpacity={0.45}
                   />
                 )}
@@ -232,6 +170,7 @@ export const HunterBoardPanel = ({ players, visits }: HunterBoardPanelProps) => 
         player={leftPlayer}
         color={HUNTER_PLAYER_COLORS[0]}
         visits={visits}
+        pendingDarts={pendingDarts}
         align="start"
       />
     )
@@ -242,6 +181,7 @@ export const HunterBoardPanel = ({ players, visits }: HunterBoardPanelProps) => 
         player={rightPlayer}
         color={HUNTER_PLAYER_COLORS[1]}
         visits={visits}
+        pendingDarts={pendingDarts}
         align="end"
       />
     )

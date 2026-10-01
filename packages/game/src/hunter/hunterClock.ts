@@ -46,6 +46,13 @@ export const getHunterClockwiseDistance = (fromIndex: number, toIndex: number): 
 export const advanceHunterFieldIndex = (fieldIndex: number, steps: number): number =>
   (((fieldIndex + steps) % HUNTER_FIELD_COUNT) + HUNTER_FIELD_COUNT) % HUNTER_FIELD_COUNT
 
+/** Standing field = one clockwise step before the aim field. */
+export const getHunterStandingFieldIndex = (aimFieldIndex: number): number =>
+  advanceHunterFieldIndex(aimFieldIndex, -1)
+
+export const getHunterStandingFieldNumber = (aimFieldNumber: number): number =>
+  getHunterFieldNumber(getHunterStandingFieldIndex(getHunterFieldIndexForNumber(aimFieldNumber)))
+
 /**
  * True when advancing `steps` from `fromIndex` lands on or passes `opponentIndex`
  * clockwise (steps >= clockwise distance to opponent).

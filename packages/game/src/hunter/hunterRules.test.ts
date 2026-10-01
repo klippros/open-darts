@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest'
 import { HunterOutcome } from '../types/hunter'
 import { buildHunterThrow } from './buildHunterDarts'
 import { getHunterFieldIndexForNumber, getHunterFieldNumber } from './hunterClock'
-import { resolveHunterDart, resolveHunterVisit } from './hunterRules'
+import {
+  getHunterAimFieldNumberAfterDarts,
+  resolveHunterDart,
+  resolveHunterVisit,
+} from './hunterRules'
 
 describe('hunterRules', () => {
   const on1 = getHunterFieldIndexForNumber(1)
@@ -85,5 +89,16 @@ describe('hunterRules', () => {
       fieldIndexAfter: on1,
       caught: false,
     })
+  })
+
+  it('replays aim field after pending darts', () => {
+    expect(getHunterAimFieldNumberAfterDarts(1, [])).toBe(1)
+    expect(
+      getHunterAimFieldNumberAfterDarts(1, [
+        buildHunterThrow(HunterOutcome.Single, 1),
+        buildHunterThrow(HunterOutcome.Double, 18),
+      ]),
+    ).toBe(13)
+    expect(getHunterAimFieldNumberAfterDarts(1, [buildHunterThrow(HunterOutcome.Miss, 1)])).toBe(1)
   })
 })

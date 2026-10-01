@@ -3,17 +3,12 @@ import { VisitDartSlotCard } from '../Scoreboard/VisitDartSlotCard'
 import { useUiSounds } from '../../hooks/useUiSounds'
 import { buildHunterThrow } from '@open-darts/game/hunter/buildHunterDarts'
 import {
-  getHunterAdvanceForDart,
+  getHunterAimFieldNumberAfterDarts,
   getHunterPickerOutcomes,
   HUNTER_MAX_DARTS_PER_VISIT,
 } from '@open-darts/game/hunter/hunterRules'
 import { HunterOutcome } from '@open-darts/game/types/hunter'
 import type { DartThrow } from '@open-darts/game/types/dart'
-import {
-  advanceHunterFieldIndex,
-  getHunterFieldIndexForNumber,
-  getHunterFieldNumber,
-} from '@open-darts/game/hunter/hunterClock'
 import { HUNTER_OUTCOME_LABELS, getHunterThrownOutcome } from '../../lib/hunter/hunterVisitStats'
 
 export interface HunterDartPickerProps {
@@ -29,18 +24,6 @@ export interface HunterDartPickerProps {
 
 const reverseForDisplay = <T,>(items: T[]): T[] => [...items].reverse()
 
-const getAimFieldNumber = (committedFieldNumber: number, pendingDarts: DartThrow[]): number => {
-  let fieldIndex = getHunterFieldIndexForNumber(committedFieldNumber)
-
-  for (const dart of pendingDarts) {
-    const fieldNumber = getHunterFieldNumber(fieldIndex)
-    const advances = getHunterAdvanceForDart(dart, fieldNumber)
-    fieldIndex = advanceHunterFieldIndex(fieldIndex, advances)
-  }
-
-  return getHunterFieldNumber(fieldIndex)
-}
-
 export const HunterDartPicker = ({
   committedFieldNumber,
   pendingDarts,
@@ -53,7 +36,7 @@ export const HunterDartPicker = ({
   const outcomes = getHunterPickerOutcomes()
   const displayOutcomes = reverseForDisplay(outcomes)
   const pendingCount = pendingDarts.length
-  const aimFieldNumber = getAimFieldNumber(committedFieldNumber, pendingDarts)
+  const aimFieldNumber = getHunterAimFieldNumberAfterDarts(committedFieldNumber, pendingDarts)
 
   const recordOutcome = (outcome: HunterOutcome) => {
     if (inputDisabled || pendingCount >= HUNTER_MAX_DARTS_PER_VISIT) {
@@ -76,7 +59,7 @@ export const HunterDartPicker = ({
           const isThrown = slotIndex < pendingCount
           const isSelectable = slotIndex === pendingCount && !inputDisabled
           const thrownDart = pendingDarts[slotIndex]
-          const slotAimField = getAimFieldNumber(
+          const slotAimField = getHunterAimFieldNumberAfterDarts(
             committedFieldNumber,
             pendingDarts.slice(0, slotIndex),
           )

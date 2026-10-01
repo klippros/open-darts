@@ -75,12 +75,12 @@ describe('hunterEngine', () => {
     expect(scoreboard.players[0]).toMatchObject({
       primaryScore: 1,
       primaryDisplay: '1',
-      secondaryLabel: 'On 1',
+      secondaryLabel: 'On 20 · hit 1',
       isActive: true,
     })
     expect(scoreboard.players[1]).toMatchObject({
       primaryScore: 19,
-      secondaryLabel: 'On 19',
+      secondaryLabel: 'On 3 · hit 19',
       isActive: false,
     })
   })

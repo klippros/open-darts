@@ -1,11 +1,14 @@
+import type { DartThrow } from '../types/dart'
 import type { GameEngine, VisitResult } from '../game/GameEngine'
 import type { Player } from '../types/player'
 import { GameModeId } from '../types/gameMode'
 import type { HunterConfig, HunterState } from '../types/hunter'
+import type { HunterVisitOutcome } from './hunterRules'
 import { getHunterConfig } from './hunterConfig'
 import {
   getHunterFieldIndexForNumber,
   getHunterFieldNumber,
+  getHunterStandingFieldNumber,
   HUNTER_SECOND_FIELD,
   HUNTER_STARTER_FIELD,
 } from './hunterClock'
@@ -21,6 +24,16 @@ const getPlayerState = (state: HunterState, playerId: string) => {
   return playerState
 }
 
+const getOpponentId = (state: HunterState, playerId: string): string => {
+  const opponentId = Object.keys(state.players).find((id) => id !== playerId)
+
+  if (opponentId === undefined) {
+    throw new Error('Hunter requires exactly two players')
+  }
+
+  return opponentId
+}
+
 const resolveStarterPlayerId = (players: Player[], startingPlayerIndex: number): string => {
   const starter = players[startingPlayerIndex] ?? players[0]
 
@@ -30,6 +43,35 @@ const resolveStarterPlayerId = (players: Player[], startingPlayerIndex: number):
 
   return starter.id
 }
+
+const resolvePlayerVisit = (
+  state: HunterState,
+  playerId: string,
+  darts: DartThrow[],
+): { fieldIndexBefore: number; outcome: HunterVisitOutcome } => {
+  const playerState = getPlayerState(state, playerId)
+  const opponentState = getPlayerState(state, getOpponentId(state, playerId))
+  const fieldIndexBefore = playerState.fieldIndex
+
+  return {
+    fieldIndexBefore,
+    outcome: resolveHunterVisit(fieldIndexBefore, opponentState.fieldIndex, darts),
+  }
+}
+
+const withPlayerFieldIndex = (
+  state: HunterState,
+  playerId: string,
+  fieldIndex: number,
+  winnerId?: string,
+): HunterState => ({
+  ...state,
+  players: {
+    ...state.players,
+    [playerId]: { fieldIndex },
+  },
+  ...(winnerId === undefined ? {} : { winnerId }),
+})
 
 export const hunterEngine: GameEngine<HunterState, HunterConfig> = {
   mode: GameModeId.Hunter,
@@ -58,76 +100,41 @@ export const hunterEngine: GameEngine<HunterState, HunterConfig> = {
     mode: GameModeId.Hunter,
     players: players.map((player) => {
       const playerState = getPlayerState(state, player.id)
-      const fieldNumber = getHunterFieldNumber(playerState.fieldIndex)
+      const aimFieldNumber = getHunterFieldNumber(playerState.fieldIndex)
+      const standingFieldNumber = getHunterStandingFieldNumber(aimFieldNumber)
 
       return {
         playerId: player.id,
         name: player.name,
-        primaryScore: fieldNumber,
-        primaryDisplay: String(fieldNumber),
-        secondaryLabel: `On ${fieldNumber}`,
+        primaryScore: aimFieldNumber,
+        primaryDisplay: String(aimFieldNumber),
+        secondaryLabel: `On ${standingFieldNumber} · hit ${aimFieldNumber}`,
         isActive: player.id === activePlayerId,
       }
     }),
   }),
 
   applyDart: (state, playerId, pendingDarts) => {
-    const playerState = getPlayerState(state, playerId)
-    const opponentId = Object.keys(state.players).find((id) => id !== playerId)
+    const { outcome } = resolvePlayerVisit(state, playerId, pendingDarts)
 
-    if (opponentId === undefined) {
-      throw new Error('Hunter requires exactly two players')
-    }
-
-    const opponentState = getPlayerState(state, opponentId)
-    const outcome = resolveHunterVisit(
-      playerState.fieldIndex,
-      opponentState.fieldIndex,
-      pendingDarts,
+    return withPlayerFieldIndex(
+      state,
+      playerId,
+      outcome.fieldIndexAfter,
+      outcome.checkout ? playerId : undefined,
     )
-
-    const nextState: HunterState = {
-      ...state,
-      players: {
-        ...state.players,
-        [playerId]: {
-          fieldIndex: outcome.fieldIndexAfter,
-        },
-      },
-    }
-
-    if (outcome.checkout) {
-      nextState.winnerId = playerId
-    }
-
-    return nextState
   },
 
   commitVisit: (state, playerId, visitIndex, darts): VisitResult<HunterState> => {
-    const playerState = getPlayerState(state, playerId)
-    const opponentId = Object.keys(state.players).find((id) => id !== playerId)
-
-    if (opponentId === undefined) {
-      throw new Error('Hunter requires exactly two players')
-    }
-
-    const opponentState = getPlayerState(state, opponentId)
-    const fieldIndexBefore = playerState.fieldIndex
-    const outcome = resolveHunterVisit(fieldIndexBefore, opponentState.fieldIndex, darts)
-
-    const nextState: HunterState = {
-      ...state,
-      players: {
-        ...state.players,
-        [playerId]: {
-          fieldIndex: outcome.fieldIndexAfter,
-        },
-      },
-      ...(outcome.checkout ? { winnerId: playerId } : {}),
-    }
+    const { fieldIndexBefore, outcome } = resolvePlayerVisit(state, playerId, darts)
 
     return {
-      state: nextState,
+      state: withPlayerFieldIndex(
+        state,
+        playerId,
+        outcome.fieldIndexAfter,
+        outcome.checkout ? playerId : undefined,
+      ),
       visit: {
         visitIndex,
         playerId,
@@ -151,15 +158,11 @@ export const hunterEngine: GameEngine<HunterState, HunterConfig> = {
   },
 
   shouldEndVisitEarly: (state, playerId, darts) => {
-    const playerState = getPlayerState(state, playerId)
-    const opponentId = Object.keys(state.players).find((id) => id !== playerId)
-
-    if (opponentId === undefined) {
+    if (Object.keys(state.players).find((id) => id !== playerId) === undefined) {
       return false
     }
 
-    const opponentState = getPlayerState(state, opponentId)
-    return resolveHunterVisit(playerState.fieldIndex, opponentState.fieldIndex, darts).checkout
+    return resolvePlayerVisit(state, playerId, darts).outcome.checkout
   },
 
   isGameComplete: (state) => state.winnerId !== undefined,

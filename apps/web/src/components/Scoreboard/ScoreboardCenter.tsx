@@ -206,7 +206,7 @@ export const ScoreboardCenter = ({
   return (
     <Stack gap={5}>
       {mode === GameModeId.Hunter ? (
-        <HunterBoardPanel players={playersForDisplay} visits={visits} />
+        <HunterBoardPanel players={playersForDisplay} visits={visits} pendingDarts={pendingDarts} />
       ) : ninetyNineDartsMetrics !== null ? (
         <NinetyNineDartsScorePanel
           metrics={ninetyNineDartsMetrics}

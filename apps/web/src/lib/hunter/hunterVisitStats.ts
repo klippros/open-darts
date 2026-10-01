@@ -1,4 +1,5 @@
 import type { DartThrow } from '@open-darts/game/types/dart'
+import { DartSegmentType } from '@open-darts/game/types/dart'
 import { GameModeId } from '@open-darts/game/types/gameMode'
 import type { GameSession } from '@open-darts/game/types/gameSession'
 import { HunterOutcome } from '@open-darts/game/types/hunter'
@@ -56,9 +57,37 @@ const getVisitAdvances = (visit: Visit): number => {
   return visit.visitScore
 }
 
+const accumulatePendingDarts = (
+  pendingDarts: DartThrow[],
+): Pick<HunterPlayerLiveStats, 'dartsThrown' | 'hits' | 'advances'> => {
+  let dartsThrown = 0
+  let hits = 0
+  let advances = 0
+
+  for (const dart of pendingDarts) {
+    dartsThrown += 1
+
+    // Picker-built hits encode the aimed field on the dart; misses advance 0.
+    if (dart.segment.type !== DartSegmentType.Number) {
+      continue
+    }
+
+    const aimedField = dart.segment.value
+    if (!isHunterTargetHit(dart, aimedField)) {
+      continue
+    }
+
+    hits += 1
+    advances += getHunterAdvanceForDart(dart, aimedField)
+  }
+
+  return { dartsThrown, hits, advances }
+}
+
 export const computeHunterPlayerStats = (
   visits: Visit[],
   playerId: string,
+  pendingDarts: DartThrow[] = [],
 ): HunterPlayerLiveStats => {
   let dartsThrown = 0
   let hits = 0
@@ -92,6 +121,14 @@ export const computeHunterPlayerStats = (
       const step = getHunterAdvanceForDart(dart, fieldNumber)
       fieldNumber = advanceFieldNumber(fieldNumber, step)
     }
+  }
+
+  if (pendingDarts.length > 0) {
+    const pending = accumulatePendingDarts(pendingDarts)
+    dartsThrown += pending.dartsThrown
+    hits += pending.hits
+    advances += pending.advances
+    visitCount += 1
   }
 
   return {

@@ -10,6 +10,7 @@ import {
 import {
   advanceHunterFieldIndex,
   doesHunterAdvanceCatch,
+  getHunterFieldIndexForNumber,
   getHunterFieldNumber,
 } from './hunterClock'
 
@@ -58,6 +59,22 @@ export const getHunterOutcome = (dart: DartThrow, fieldNumber: number): HunterOu
 
 export const getHunterAdvanceForDart = (dart: DartThrow, fieldNumber: number): number =>
   getHunterAdvanceForOutcome(getHunterOutcome(dart, fieldNumber))
+
+/** Aim field after applying darts in order from a committed aim field number. */
+export const getHunterAimFieldNumberAfterDarts = (
+  committedFieldNumber: number,
+  darts: DartThrow[],
+): number => {
+  let fieldIndex = getHunterFieldIndexForNumber(committedFieldNumber)
+
+  for (const dart of darts) {
+    const fieldNumber = getHunterFieldNumber(fieldIndex)
+    const advances = getHunterAdvanceForDart(dart, fieldNumber)
+    fieldIndex = advanceHunterFieldIndex(fieldIndex, advances)
+  }
+
+  return getHunterFieldNumber(fieldIndex)
+}
 
 export const isHunterTargetHit = (dart: DartThrow, fieldNumber: number): boolean =>
   getHunterOutcome(dart, fieldNumber) !== HunterOutcome.Miss
