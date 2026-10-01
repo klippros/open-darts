@@ -718,6 +718,7 @@ export const OnlineMatchPlayBoard = ({
           aroundTheClockTargetIndex: 0,
           claimTheBoardTargetIndex: 0,
           bob27TargetIndex: 0,
+          hunterFieldNumber: 1,
         }
       : getGameModePickerTargets(
           controller.session.mode,
@@ -940,6 +941,7 @@ export const OnlineMatchPlayBoard = ({
       aroundTheClockTargetIndex={pickerTargets.aroundTheClockTargetIndex}
       claimTheBoardTargetIndex={pickerTargets.claimTheBoardTargetIndex}
       bob27TargetIndex={pickerTargets.bob27TargetIndex}
+      hunterFieldNumber={pickerTargets.hunterFieldNumber}
       checkoutTarget={activeCheckoutTarget}
       pendingDarts={controller.pendingDarts}
       visitEntryMode={visitEntryMode}

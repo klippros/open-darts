@@ -2,6 +2,7 @@ import { GameModeId } from '@open-darts/game/types/gameMode'
 import { VisitInputMode } from '@open-darts/game/types/visit'
 import { getBob27Target } from '@open-darts/game/bob27/bob27Rules'
 import { getClaimTheBoardTarget } from '@open-darts/game/claimTheBoard/claimTheBoardRules'
+import { getHunterFieldNumber } from '@open-darts/game/hunter/hunterClock'
 import { AroundTheClockAimMode } from '@open-darts/game/types/aroundTheClock'
 import type { VoiceCommandHelpSection } from '../voice/voiceCommandHelp'
 import { getVoiceCommandHelpSection } from '../voice/voiceCommandHelp'
@@ -16,6 +17,7 @@ export interface GameModePickerTargets {
   aroundTheClockTargetIndex?: number
   claimTheBoardTargetIndex?: number
   bob27TargetIndex?: number
+  hunterFieldNumber?: number
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -32,6 +34,19 @@ const readPlayerTargetIndex = (engineState: object, playerId: string): number | 
   }
 
   return player.targetIndex
+}
+
+const readPlayerFieldIndex = (engineState: object, playerId: string): number | undefined => {
+  if (!('players' in engineState) || !isRecord(engineState.players)) {
+    return undefined
+  }
+
+  const player = engineState.players[playerId]
+  if (!isRecord(player) || typeof player.fieldIndex !== 'number') {
+    return undefined
+  }
+
+  return player.fieldIndex
 }
 
 const readSharedTargetIndex = (engineState: object): number | undefined => {
@@ -54,6 +69,16 @@ export const getGameModePickerTargets = (
 
   if (mode === GameModeId.ClaimTheBoard) {
     return { claimTheBoardTargetIndex: readSharedTargetIndex(engineState) }
+  }
+
+  if (mode === GameModeId.Hunter) {
+    const fieldIndex = readPlayerFieldIndex(engineState, activePlayerId)
+
+    if (fieldIndex === undefined) {
+      return {}
+    }
+
+    return { hunterFieldNumber: getHunterFieldNumber(fieldIndex) }
   }
 
   const targetIndex = readPlayerTargetIndex(engineState, activePlayerId)
@@ -119,6 +144,17 @@ export const getDartPickerHelpContent = (
       paragraphs: [
         'Use the three dart columns left to right. Bottom to top: Miss, Single, Triple, Double (no Triple on bull).',
         'Enter one outcome per dart in order. Undo removes the last dart.',
+      ],
+      voice,
+    }
+  }
+
+  if (mode === GameModeId.Hunter) {
+    return {
+      title: 'How to score',
+      paragraphs: [
+        'Aim at your current number. Single advances one field, double two, treble three around the board clockwise.',
+        'Land on or pass your opponent to win. Use the three dart columns: Miss, Single, Triple, Double.',
       ],
       voice,
     }

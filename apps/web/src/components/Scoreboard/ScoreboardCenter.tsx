@@ -34,6 +34,7 @@ import type { Visit } from '@open-darts/game/types/visit'
 import { NinetyNineDartsScorePanel } from './NinetyNineDartsScorePanel'
 import { PlayerScorePanels } from './PlayerScorePanel'
 import { VisitDartSlots } from './VisitDartSlots'
+import { HunterBoardPanel } from '../HunterBoard/HunterBoardPanel'
 
 export interface ScoreboardCenterProps {
   mode: GameModeIdType
@@ -98,7 +99,8 @@ export const ScoreboardCenter = ({
     mode !== GameModeId.AroundTheClock &&
     mode !== GameModeId.ClaimTheBoard &&
     mode !== GameModeId.Bob27 &&
-    mode !== GameModeId.NinetyNineDarts
+    mode !== GameModeId.NinetyNineDarts &&
+    mode !== GameModeId.Hunter
   const scoreBeforeVisit =
     activePlayer === undefined ? 0 : activePlayer.primaryScore + sumDartPoints(pendingDarts)
   const legStartingPlayerIndex =
@@ -203,7 +205,9 @@ export const ScoreboardCenter = ({
 
   return (
     <Stack gap={5}>
-      {ninetyNineDartsMetrics !== null ? (
+      {mode === GameModeId.Hunter ? (
+        <HunterBoardPanel players={playersForDisplay} visits={visits} pendingDarts={pendingDarts} />
+      ) : ninetyNineDartsMetrics !== null ? (
         <NinetyNineDartsScorePanel
           metrics={ninetyNineDartsMetrics}
           isActive={activePlayer?.isActive ?? true}

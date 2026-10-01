@@ -6,8 +6,8 @@ import { buildOnlineSetupPath } from '../lib/matchServer/onlineSetup'
 
 const parseOnlineMatchMode = (
   raw: string | null,
-): GameModeId.X01 | GameModeId.ClaimTheBoard | null => {
-  if (raw === GameModeId.X01 || raw === GameModeId.ClaimTheBoard) {
+): GameModeId.X01 | GameModeId.ClaimTheBoard | GameModeId.Hunter | null => {
+  if (raw === GameModeId.X01 || raw === GameModeId.ClaimTheBoard || raw === GameModeId.Hunter) {
     return raw
   }
 
@@ -24,6 +24,10 @@ export const OnlineMatchNewPage = () => {
 
   if (matchMode === GameModeId.ClaimTheBoard) {
     return <Navigate to={buildOnlineSetupPath('/game/claim-the-board/setup')} replace />
+  }
+
+  if (matchMode === GameModeId.Hunter) {
+    return <Navigate to={buildOnlineSetupPath('/game/hunter/setup')} replace />
   }
 
   return <Navigate to={buildOnlineSetupPath(buildX01PresetPath(X01PresetId.FiveOhOne))} replace />

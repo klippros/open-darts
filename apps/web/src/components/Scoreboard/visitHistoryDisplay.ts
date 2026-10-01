@@ -104,6 +104,19 @@ export const getVisitHistoryEntryDisplay = (
     }
   }
 
+  if (mode === GameModeId.Hunter) {
+    const fieldAfter = visit.metadata?.fieldNumberAfter
+    const advances = visit.metadata?.advances
+    const detail =
+      typeof advances === 'number' ? `${advances} advance${advances === 1 ? '' : 's'}` : undefined
+
+    return {
+      headline: String(typeof fieldAfter === 'number' ? fieldAfter : visit.scoreAfter),
+      ...(detail === undefined ? {} : { detail }),
+      tone: visit.checkout ? 'success' : visit.visitScore === 0 ? 'failed' : 'default',
+    }
+  }
+
   if (isTenUpOneDownMode(mode)) {
     if (visit.checkout) {
       return {

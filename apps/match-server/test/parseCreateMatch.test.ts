@@ -43,6 +43,22 @@ describe('parseCreateMatchRequest', () => {
     })
   })
 
+  it('accepts hunter setups', () => {
+    expect(
+      parseCreateMatchRequest({
+        mode: GameModeId.Hunter,
+        config: {},
+        legsToWin: 3,
+        startingPlayerSlot: 1,
+      }),
+    ).toEqual({
+      mode: GameModeId.Hunter,
+      config: { startingPlayerIndex: 0 },
+      legsToWin: 1,
+      startingPlayerSlot: 1,
+    })
+  })
+
   it('rejects invalid claim-the-board aim modes', () => {
     expect(
       parseCreateMatchRequest({

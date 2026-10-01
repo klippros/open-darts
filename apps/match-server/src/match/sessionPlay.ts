@@ -6,6 +6,7 @@ import {
 import type { AppGameController } from '@open-darts/game/game/createSession'
 import { correctVisit, CorrectVisitError } from '@open-darts/game/game/correctVisit'
 import type { VisitCorrection } from '@open-darts/game/game/correctVisit'
+import { withHunterStartingPlayerIndex } from '@open-darts/game/game/onlineMatchSetup'
 import { parseGameSession, serializeGameSession } from '@open-darts/game/game/serializeGame'
 import { GameStatus } from '@open-darts/game/types/gameMode'
 import type { GameConfig, GameModeId } from '@open-darts/game/types/gameMode'
@@ -55,9 +56,10 @@ export const createOnlineSession = (input: {
     kind: PlayerKind.Remote,
   }))
 
+  const config = withHunterStartingPlayerIndex(input.mode, input.config, input.startingPlayerSlot)
   const controller = createGameController({
     mode: input.mode,
-    config: input.config,
+    config,
     players,
     sessionId: input.matchId,
     matchFormat: {

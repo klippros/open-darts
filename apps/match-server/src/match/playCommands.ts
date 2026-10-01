@@ -151,7 +151,10 @@ export const correctVisit = (
     )
   }
 
-  if (required.play.session.mode === GameModeId.ClaimTheBoard) {
+  if (
+    required.play.session.mode === GameModeId.ClaimTheBoard ||
+    required.play.session.mode === GameModeId.Hunter
+  ) {
     return commandFailure(
       CommandErrorCode.Invalid,
       'Visit correction is not available for this game mode',

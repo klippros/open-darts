@@ -2,6 +2,7 @@ import { AroundTheClockDartPicker } from './AroundTheClockDartPicker'
 import { ClaimTheBoardDartPicker } from './ClaimTheBoardDartPicker'
 import { Bob27DartPicker } from './Bob27DartPicker'
 import { DartPicker } from './DartPicker'
+import { HunterDartPicker } from './HunterDartPicker'
 import { NinetyNineDartsDartPicker } from './NinetyNineDartsDartPicker'
 import { ScoringInputCard } from './ScoringInputCard/ScoringInputCard'
 import { TenUpOneDownDartPicker } from './TenUpOneDownDartPicker'
@@ -23,6 +24,7 @@ export interface GameModeDartPickerProps {
   aroundTheClockTargetIndex?: number
   claimTheBoardTargetIndex?: number
   bob27TargetIndex?: number
+  hunterFieldNumber?: number
   checkoutTarget?: number
   pendingDarts: DartThrow[]
   visitEntryMode: VisitInputMode
@@ -41,6 +43,7 @@ export const GameModeDartPicker = ({
   aroundTheClockTargetIndex,
   claimTheBoardTargetIndex,
   bob27TargetIndex,
+  hunterFieldNumber,
   checkoutTarget,
   pendingDarts,
   visitEntryMode,
@@ -103,6 +106,19 @@ export const GameModeDartPicker = ({
     return (
       <NinetyNineDartsDartPicker
         target={config.target}
+        pendingDarts={pendingDarts}
+        onDarts={onDarts}
+        onUndo={onUndo}
+        inputDisabled={inputDisabled}
+        undoDisabled={undoDisabled}
+      />
+    )
+  }
+
+  if (mode === GameModeId.Hunter && hunterFieldNumber !== undefined) {
+    return (
+      <HunterDartPicker
+        committedFieldNumber={hunterFieldNumber}
         pendingDarts={pendingDarts}
         onDarts={onDarts}
         onUndo={onUndo}

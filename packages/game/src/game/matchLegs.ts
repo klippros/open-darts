@@ -1,5 +1,6 @@
 import { GameModeId } from '../types/gameMode'
 import type { ClaimTheBoardState } from '../types/claimTheBoard'
+import type { HunterState } from '../types/hunter'
 import type { GameSession } from '../types/gameSession'
 import type { ChallengeConfig, MatchProgress } from '../types/match'
 import { DEFAULT_LEGS_TO_WIN, LEGS_TO_WIN_MAX, LEGS_TO_WIN_MIN } from '../types/match'
@@ -283,6 +284,8 @@ export const matchFormatsEqual = (left: MatchFormat, right: MatchFormat): boolea
 const getLegWinnerIdFromClaimTheBoardState = (state: ClaimTheBoardState): string | undefined =>
   state.winnerId
 
+const getLegWinnerIdFromHunterState = (state: HunterState): string | undefined => state.winnerId
+
 export const getWinnerIdForCompletedLeg = (
   mode: GameModeId,
   engineState: unknown,
@@ -295,6 +298,11 @@ export const getWinnerIdForCompletedLeg = (
   if (mode === GameModeId.ClaimTheBoard) {
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- engine state matches mode
     return getLegWinnerIdFromClaimTheBoardState(engineState as ClaimTheBoardState)
+  }
+
+  if (mode === GameModeId.Hunter) {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- engine state matches mode
+    return getLegWinnerIdFromHunterState(engineState as HunterState)
   }
 
   return undefined

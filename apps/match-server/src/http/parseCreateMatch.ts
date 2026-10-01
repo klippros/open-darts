@@ -15,6 +15,7 @@ export interface CreateMatchRequest {
 
 const x01Mode: string = GameModeId.X01
 const claimTheBoardMode: string = GameModeId.ClaimTheBoard
+const hunterMode: string = GameModeId.Hunter
 
 const isStartingPlayerSlot = (value: unknown): value is StartingPlayerSlot =>
   value === 0 || value === 1 || value === STARTING_PLAYER_SLOT_RANDOM
@@ -55,6 +56,15 @@ export const parseCreateMatchRequest = (value: unknown): CreateMatchRequest | nu
   if (value.mode === claimTheBoardMode) {
     return {
       mode: GameModeId.ClaimTheBoard,
+      config,
+      legsToWin: 1,
+      startingPlayerSlot: value.startingPlayerSlot,
+    }
+  }
+
+  if (value.mode === hunterMode) {
+    return {
+      mode: GameModeId.Hunter,
       config,
       legsToWin: 1,
       startingPlayerSlot: value.startingPlayerSlot,
