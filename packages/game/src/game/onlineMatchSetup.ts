@@ -1,12 +1,15 @@
-import { AroundTheClockAimMode } from '../types/aroundTheClock'
 import type { ClaimTheBoardConfig } from '../types/claimTheBoard'
+import type { HunterConfig } from '../types/hunter'
 import { GameModeId } from '../types/gameMode'
 import type { GameConfig } from '../types/gameMode'
+import { AroundTheClockAimMode } from '../types/aroundTheClock'
 import { defaultX01Config } from '../x01/x01Presets'
 import { parseAroundTheClockAimModeValue } from '../aroundTheClock/aroundTheClockConfig'
+import { DEFAULT_HUNTER_CONFIG } from '../hunter/hunterConfig'
 
 const x01Mode: string = GameModeId.X01
 const claimTheBoardMode: string = GameModeId.ClaimTheBoard
+const hunterMode: string = GameModeId.Hunter
 
 const configField = (config: object, key: string): unknown => Reflect.get(config, key)
 
@@ -20,15 +23,22 @@ export const isOnlineClaimTheBoardSetup = (mode: string, config: object): boolea
   mode === claimTheBoardMode &&
   parseAroundTheClockAimModeValue(configField(config, 'aimMode')) !== null
 
+export const isOnlineHunterSetup = (mode: string, _config: object): boolean => mode === hunterMode
+
 /** Allowed online match setups (sync play). Async remains X01-only. */
 export const isAllowedOnlineMatchSetup = (mode: string, config: object): boolean =>
-  isV1OnlineX01Setup(mode, config) || isOnlineClaimTheBoardSetup(mode, config)
+  isV1OnlineX01Setup(mode, config) ||
+  isOnlineClaimTheBoardSetup(mode, config) ||
+  isOnlineHunterSetup(mode, config)
 
 export const supportsOnlineAsyncPlay = (mode: string): boolean => mode === x01Mode
 
+const parseStartingPlayerIndex = (value: unknown): number => (value === 1 ? 1 : 0)
+
 /**
  * Canonical config for a validated online create-match body.
- * X01 is always the default 501 DO preset; Claim the Board keeps only aimMode.
+ * X01 is always the default 501 DO preset; Claim the Board keeps only aimMode;
+ * Hunter keeps startingPlayerIndex (default 0; resolved slot may overwrite at start).
  */
 export const canonicalizeOnlineMatchConfig = (mode: string, config: object): GameConfig | null => {
   if (isV1OnlineX01Setup(mode, config)) {
@@ -45,12 +55,22 @@ export const canonicalizeOnlineMatchConfig = (mode: string, config: object): Gam
     return { aimMode } satisfies ClaimTheBoardConfig
   }
 
+  if (mode === hunterMode) {
+    return {
+      startingPlayerIndex: parseStartingPlayerIndex(configField(config, 'startingPlayerIndex')),
+    } satisfies HunterConfig
+  }
+
   return null
 }
 
 export const defaultOnlineGameConfigForMode = (mode: string): GameConfig => {
   if (mode === claimTheBoardMode) {
     return { aimMode: AroundTheClockAimMode.Any } satisfies ClaimTheBoardConfig
+  }
+
+  if (mode === hunterMode) {
+    return DEFAULT_HUNTER_CONFIG
   }
 
   return defaultX01Config()
@@ -71,6 +91,16 @@ export const readOnlineGameConfig = (value: unknown, mode: string): GameConfig =
     return { aimMode } satisfies ClaimTheBoardConfig
   }
 
+  if (mode === hunterMode) {
+    if (!isConfigRecord(value)) {
+      return defaultOnlineGameConfigForMode(mode)
+    }
+
+    return {
+      startingPlayerIndex: parseStartingPlayerIndex(value.startingPlayerIndex),
+    } satisfies HunterConfig
+  }
+
   if (!isConfigRecord(value) || typeof value.startScore !== 'number') {
     return defaultOnlineGameConfigForMode(mode)
   }
@@ -80,4 +110,19 @@ export const readOnlineGameConfig = (value: unknown, mode: string): GameConfig =
     doubleIn: value.doubleIn === true,
     doubleOut: value.doubleOut !== false,
   }
+}
+
+/** Apply the resolved starting slot onto Hunter config when an online match begins. */
+export const withHunterStartingPlayerIndex = (
+  mode: string,
+  config: GameConfig,
+  startingPlayerIndex: number,
+): GameConfig => {
+  if (mode !== hunterMode) {
+    return config
+  }
+
+  return {
+    startingPlayerIndex: startingPlayerIndex === 1 ? 1 : 0,
+  } satisfies HunterConfig
 }

@@ -36,6 +36,10 @@ const getInviteModeLabel = (invite: OnlineMatchInvite): string => {
     return `${gameModeDefinitions[GameModeId.ClaimTheBoard].label} · ${getAroundTheClockAimModeLabel(invite.config.aimMode)}`
   }
 
+  if (mode === (GameModeId.Hunter as string)) {
+    return gameModeDefinitions[GameModeId.Hunter].label
+  }
+
   const knownMode = (Object.values(GameModeId) as string[]).includes(mode)
     ? // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- mode string checked against GameModeId values
       (mode as GameModeId)

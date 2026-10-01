@@ -77,6 +77,7 @@ export const GamePage = () => {
       aroundTheClockTargetIndex={pickerTargets.aroundTheClockTargetIndex}
       claimTheBoardTargetIndex={pickerTargets.claimTheBoardTargetIndex}
       bob27TargetIndex={pickerTargets.bob27TargetIndex}
+      hunterFieldNumber={pickerTargets.hunterFieldNumber}
       checkoutTarget={activeCheckoutTarget}
       pendingDarts={controller.pendingDarts}
       visitEntryMode={visitEntryMode}

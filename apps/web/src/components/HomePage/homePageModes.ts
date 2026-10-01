@@ -43,6 +43,13 @@ export const MATCH_MODES: readonly HomePageModeLink[] = [
     to: '/game/claim-the-board/setup',
     onlineCapable: true,
   },
+  {
+    id: 'hunter',
+    label: 'Hunter',
+    description: 'Chase around the board · land on or pass to win',
+    to: '/game/hunter/setup',
+    onlineCapable: true,
+  },
 ]
 
 export const PRACTICE_MODES: readonly HomePageModeLink[] = [

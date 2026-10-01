@@ -5,6 +5,7 @@ import {
   computeClaimTheBoardSingleSessionStats,
   getClaimTheBoardScoreLeaderId,
 } from '../claimTheBoard/claimTheBoardVisitStats'
+import { computeHunterSingleSessionStats } from '../hunter/hunterVisitStats'
 import { gameModeDefinitions } from '@open-darts/game/game/gameModeDefinitions'
 import {
   isX01Config,
@@ -199,6 +200,34 @@ export const getMatchSummary = (session: GameSession): MatchSummary => {
 
     return {
       title: finishedEarly ? 'Claim the Board session ended' : 'Claim the Board complete',
+      details,
+    }
+  }
+
+  if (session.mode === GameModeId.Hunter) {
+    const details = [`${visitCount} visit${visitCount === 1 ? '' : 's'}`]
+    const hunterStats = computeHunterSingleSessionStats(session)
+    const winnerId = getMatchWinnerId(session)
+    const winner =
+      winnerId === undefined ? undefined : session.players.find((player) => player.id === winnerId)
+
+    if (hunterStats !== null) {
+      for (const player of hunterStats.players) {
+        const hit = player.hitRate === null ? '—' : `${player.hitRate.toFixed(0)}% hit`
+        const avg =
+          player.avgAdvancesPerVisit === null
+            ? '—'
+            : `${player.avgAdvancesPerVisit.toFixed(1)} adv/visit`
+        details.push(`${player.name}: ${hit} · ${avg}`)
+      }
+    }
+
+    if (!finishedEarly && winner !== undefined) {
+      details.push(`${winner.name} won`)
+    }
+
+    return {
+      title: finishedEarly ? 'Hunter session ended' : 'Hunter complete',
       details,
     }
   }

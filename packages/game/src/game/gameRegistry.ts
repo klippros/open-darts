@@ -3,6 +3,7 @@ import type { GameConfig } from '../types/gameMode'
 import { aroundTheClockEngine } from '../aroundTheClock/aroundTheClockEngine'
 import { claimTheBoardEngine } from '../claimTheBoard/claimTheBoardEngine'
 import { bob27Engine } from '../bob27/bob27Engine'
+import { hunterEngine } from '../hunter/hunterEngine'
 import { ninetyNineDartsEngine } from '../ninetyNineDarts/ninetyNineDartsEngine'
 import { oneTwentyOneEngine } from '../oneTwentyOne/oneTwentyOneEngine'
 import { tenUpOneDownEngine } from '../tenUpOneDown/tenUpOneDownEngine'
@@ -32,6 +33,9 @@ export const getEngine = (mode: GameModeId): GameEngine<unknown, GameConfig> => 
     case GameModeId.NinetyNineDarts:
       // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- engine config matches session mode
       return ninetyNineDartsEngine as GameEngine<unknown, GameConfig>
+    case GameModeId.Hunter:
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- engine config matches session mode
+      return hunterEngine as GameEngine<unknown, GameConfig>
     default: {
       const exhaustive: never = mode
       throw new Error(`Unknown game mode: ${String(exhaustive)}`)
