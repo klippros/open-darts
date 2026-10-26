@@ -1,70 +1,71 @@
 import { createSystem, defaultConfig, defineConfig, defineRecipe } from '@chakra-ui/react'
 
-const scaleMotion = {
+/**
+ * Hover may enlarge the whole button (visible chrome scale).
+ * Never shrink on :active here — that moves the hit target under a finger and
+ * drops taps. Press shrink lives on an inner layer (PressScaleButton).
+ */
+const pressMotion = {
   transform: 'scale(1)',
   transitionProperty: 'transform, background-color, border-color',
   transitionDuration: '0.15s',
   _hover: { transform: 'scale(1.03)' },
-  _active: { transform: 'scale(0.98)' },
 }
 
 const buttonRecipe = defineRecipe({
   variants: {
     variant: {
       cancel: {
-        ...scaleMotion,
+        ...pressMotion,
         bg: 'transparent',
         color: 'white',
         borderWidth: '1px',
         borderColor: 'whiteAlpha.600',
         _hover: {
-          ...scaleMotion._hover,
+          ...pressMotion._hover,
           bg: 'whiteAlpha.100',
           borderColor: 'whiteAlpha.800',
         },
         _active: {
-          ...scaleMotion._active,
           bg: 'whiteAlpha.150',
         },
       },
       emphasis: {
-        ...scaleMotion,
+        ...pressMotion,
         bg: 'white',
         color: 'black',
         borderColor: 'transparent',
         _hover: {
-          ...scaleMotion._hover,
+          ...pressMotion._hover,
           bg: 'whiteAlpha.900',
         },
         _active: {
-          ...scaleMotion._active,
           bg: 'whiteAlpha.800',
         },
       },
       cta: {
-        ...scaleMotion,
+        ...pressMotion,
         borderRadius: '12px',
         bg: 'transparent',
         color: 'white',
         borderWidth: '1px',
         borderColor: 'whiteAlpha.600',
         _hover: {
-          ...scaleMotion._hover,
+          ...pressMotion._hover,
           bg: 'transparent',
           borderColor: 'whiteAlpha.800',
         },
         _active: {
-          ...scaleMotion._active,
           bg: 'transparent',
         },
       },
       destructive: {
-        ...scaleMotion,
+        ...pressMotion,
         bg: 'red.500',
         color: 'white',
         borderColor: 'transparent',
         _hover: {
-          ...scaleMotion._hover,
+          ...pressMotion._hover,
           bg: 'red.600',
         },
       },

@@ -1,6 +1,8 @@
 import { Box, Button, Text } from '@chakra-ui/react'
 import { faArrowRightLong } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { PressScaleContent } from '../PressScaleButton/PressScaleContent'
+import { usePressScale } from '../PressScaleButton/usePressScale'
 import { scorePadTypeProps } from '../../scoringType'
 
 export type VisitDartSlotCardVariant = 'thrown' | 'selectable' | 'empty' | 'used'
@@ -91,6 +93,9 @@ export const VisitDartSlotCard = ({
   const sizeStyles = SIZE_STYLES[size]
   const labelColor = toneStyles?.color ?? 'white'
   const borderColor = toneStyles?.borderColor ?? styles.borderColor
+  const { scale, pressTargetProps, pointerHandlers } = usePressScale({
+    disabled: !isInteractive,
+  })
 
   const slotContent = (
     <>
@@ -130,26 +135,28 @@ export const VisitDartSlotCard = ({
         aria-label={ariaLabel}
         fontWeight="normal"
         whiteSpace="normal"
+        {...pressTargetProps}
         {...slotStyles}
+        {...pointerHandlers}
         _hover={{
           borderColor: toneStyles?.hoverBorderColor ?? 'orange.300',
           bg: toneStyles === null ? 'whiteAlpha.200' : 'transparent',
           transform: 'scale(1.02)',
         }}
-        _active={{ bg: 'transparent', transform: 'scale(0.98)' }}
+        _active={{ bg: 'transparent' }}
         _focusVisible={{
           outline: '2px solid',
           outlineColor: toneStyles?.hoverBorderColor ?? 'orange.300',
           outlineOffset: '2px',
         }}
       >
-        {slotContent}
+        <PressScaleContent scale={scale}>{slotContent}</PressScaleContent>
       </Button>
     )
   }
 
   return (
-    <Box cursor="default" {...slotStyles}>
+    <Box cursor="default" userSelect="none" {...slotStyles}>
       {slotContent}
     </Box>
   )

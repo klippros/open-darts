@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Button, Grid, Input, Stack } from '@chakra-ui/react'
+import { Grid, Input, Stack } from '@chakra-ui/react'
 import { scoreInputButtonHeight } from '../../../layout'
 import { scorePadTypeProps, scoringActionTypeProps } from '../../../scoringType'
+import { PressScaleButton } from '../../PressScaleButton/PressScaleButton'
 import {
   appendVisitScoreDigit,
   backspaceVisitScoreInput,
@@ -34,8 +35,8 @@ const padKeyLabel = (key: PadKey): string => {
 const outlinePadKeyProps = (color: 'red' | 'green') => ({
   borderColor: `${color}.400`,
   color: `${color}.200`,
-  _hover: { borderColor: `${color}.300`, bg: 'transparent', transform: 'scale(1.03)' },
-  _active: { bg: 'transparent', transform: 'scale(0.98)' },
+  _hover: { borderColor: `${color}.300`, bg: 'transparent' },
+  _active: { bg: 'transparent' },
 })
 
 const padKeyProps = (key: PadKey) => {
@@ -145,11 +146,12 @@ export const VisitScorePicker = ({
         inputMode="numeric"
         aria-label="Visit score"
         disabled={inputDisabled}
+        userSelect="none"
       />
 
       <Grid templateColumns="repeat(3, 1fr)" gap={2}>
         {PAD_KEYS.map((key) => (
-          <Button
+          <PressScaleButton
             key={key}
             variant="cta"
             h={scoreInputButtonHeight}
@@ -161,13 +163,18 @@ export const VisitScorePicker = ({
             {...padKeyProps(key)}
           >
             {padKeyLabel(key)}
-          </Button>
+          </PressScaleButton>
         ))}
       </Grid>
 
-      <Button variant="cta" {...scoringActionTypeProps} disabled={undoDisabled} onClick={onUndo}>
+      <PressScaleButton
+        variant="cta"
+        {...scoringActionTypeProps}
+        disabled={undoDisabled}
+        onClick={onUndo}
+      >
         Undo
-      </Button>
+      </PressScaleButton>
     </Stack>
   )
 }

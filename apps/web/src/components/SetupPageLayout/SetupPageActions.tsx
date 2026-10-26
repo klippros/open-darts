@@ -1,4 +1,5 @@
-import { Button, Stack } from '@chakra-ui/react'
+import { Stack } from '@chakra-ui/react'
+import { PressScaleButton } from '../PressScaleButton/PressScaleButton'
 
 export interface SetupPageActionsProps {
   backLabel?: string
@@ -16,11 +17,11 @@ export const SetupPageActions = ({
   onPrimary,
 }: SetupPageActionsProps) => (
   <Stack direction="row" justify="space-between" w="full" gap={3}>
-    <Button variant="cancel" onClick={onBack}>
+    <PressScaleButton variant="cancel" onClick={onBack}>
       {backLabel}
-    </Button>
-    <Button variant="emphasis" disabled={primaryDisabled} onClick={onPrimary}>
+    </PressScaleButton>
+    <PressScaleButton variant="emphasis" disabled={primaryDisabled} onClick={onPrimary}>
       {primaryLabel}
-    </Button>
+    </PressScaleButton>
   </Stack>
 )

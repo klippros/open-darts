@@ -50,6 +50,8 @@ export const ScoringFolderTab = ({
       zIndex={active ? 2 : 0}
       opacity={active ? 1 : 0.65}
       cursor={disabled ? 'not-allowed' : 'pointer'}
+      userSelect="none"
+      touchAction="manipulation"
       _hover={{
         bg: 'transparent',
         color: disabled ? 'whiteAlpha.400' : 'white',
