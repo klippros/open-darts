@@ -60,7 +60,7 @@ describe('ninetyNineVisitStats', () => {
       { label: 'Trebles', value: '1' },
       { label: 'Singles', value: '1' },
       { label: 'Doubles', value: '1' },
-      { label: 'Hit %', value: '75%' },
+      { label: 'Hit %', value: '75' },
     ])
   })
 
@@ -76,7 +76,7 @@ describe('ninetyNineVisitStats', () => {
       { label: 'Points', value: '3' },
       { label: 'Singles', value: '1' },
       { label: 'Doubles', value: '1' },
-      { label: 'Hit %', value: '100%' },
+      { label: 'Hit %', value: '100' },
     ])
   })
 

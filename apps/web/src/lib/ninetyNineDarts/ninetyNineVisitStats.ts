@@ -118,7 +118,7 @@ export interface NinetyNineDartsLiveScoreMetric {
 export const getNinetyNineDartsLiveScoreMetrics = (
   stats: NinetyNineDartsLiveStats,
 ): NinetyNineDartsLiveScoreMetric[] => {
-  const hitRateLabel = stats.hitRate === null ? '—' : `${Math.round(stats.hitRate)}%`
+  const hitRateLabel = stats.hitRate === null ? '—' : String(Math.round(stats.hitRate))
   const metrics: NinetyNineDartsLiveScoreMetric[] = [
     { label: 'Left', value: String(stats.dartsRemaining) },
     { label: 'Points', value: String(stats.score) },
