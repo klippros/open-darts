@@ -85,7 +85,7 @@ const sharedMatchStatRows: MatchStatRowDefinition[] = [
   },
   {
     id: MatchStatRowId.Checkouts,
-    label: 'Checkouts',
+    label: 'Checkout %',
     formatValue: (stats) => formatDoubleCheckout(stats.doubleCheckout),
     isVisible: () => true,
   },
@@ -141,6 +141,7 @@ export const x01LegStatsToPlayerMatchStats = (stats: X01LegStats): PlayerMatchSt
   thrown140Plus: stats.thrown140Plus,
   thrown100Plus: stats.thrown100Plus,
   doubleCheckout: stats.doubleCheckout,
+  doubleCheckoutUnavailable: stats.doubleCheckoutUnavailable,
   checkouts100Plus: stats.checkouts100Plus,
   highestCheckout: stats.highestCheckout,
   highestVisit: stats.highestVisit,

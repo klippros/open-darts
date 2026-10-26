@@ -10,6 +10,7 @@ const stats = (overrides: Partial<PlayerMatchStats> = {}): PlayerMatchStats => (
   thrown140Plus: 0,
   thrown100Plus: 0,
   doubleCheckout: { attempts: 0, successes: 0 },
+  doubleCheckoutUnavailable: false,
   checkouts100Plus: 0,
   highestCheckout: null,
   highestVisit: null,

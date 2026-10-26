@@ -1,9 +1,10 @@
-import { Box, Grid, Stack, Text } from '@chakra-ui/react'
-import type { MatchStatRowDefinition, MatchStatRowId } from '../../lib/analytics/matchStatRows'
-import { getVisibleMatchStatRows } from '../../lib/analytics/matchStatRows'
+import { Box, Grid, HStack, Stack, Text } from '@chakra-ui/react'
+import type { MatchStatRowDefinition } from '../../lib/analytics/matchStatRows'
+import { MatchStatRowId, getVisibleMatchStatRows } from '../../lib/analytics/matchStatRows'
 import type { LegVisitTableRow } from '../../lib/analytics/legVisitRows'
 import type { PlayerMatchStats } from '../../lib/analytics/matchPlayerStats'
 import { emptyPlayerMatchStats } from '../../lib/analytics/matchPlayerStats'
+import { CheckoutTrackingHint } from '../CheckoutTrackingHint/CheckoutTrackingHint'
 import { PlayerMatchColumnHeader } from '../PlayerMatchColumnHeader/PlayerMatchColumnHeader'
 
 export interface StatsTablePlayer {
@@ -91,6 +92,12 @@ export const StatsTable = ({
         {visibleRows.map((row, rowIndex) => {
           const clickable = rowIsClickable(row.id)
           const showTopBorder = rowIndex > 0 || showNamesRow
+          const showCheckoutHint =
+            row.id === MatchStatRowId.Checkouts &&
+            players.some(
+              (player) =>
+                (statsByPlayer[player.id] ?? emptyPlayerMatchStats()).doubleCheckoutUnavailable,
+            )
 
           return (
             <Grid
@@ -125,9 +132,18 @@ export const StatsTable = ({
                 }
               }}
             >
-              <Text fontSize="sm" color="whiteAlpha.700" alignSelf="center">
-                {row.label}
-              </Text>
+              {showCheckoutHint ? (
+                <HStack gap={1.5} alignSelf="center">
+                  <Text fontSize="sm" color="whiteAlpha.700">
+                    {row.label}
+                  </Text>
+                  <CheckoutTrackingHint />
+                </HStack>
+              ) : (
+                <Text fontSize="sm" color="whiteAlpha.700" alignSelf="center">
+                  {row.label}
+                </Text>
+              )}
               {players.map((player) => (
                 <Text
                   key={`${row.id}-${player.id}`}

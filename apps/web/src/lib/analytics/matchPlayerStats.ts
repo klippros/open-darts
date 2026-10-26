@@ -17,7 +17,7 @@ import {
   getVisitsBeforeDouble,
 } from './visitStats'
 import {
-  countDoubleCheckoutStatsSkippingVisitScoreLegs,
+  countDoubleCheckoutStatsOmittingUnresolvedLegs,
   emptyDoubleCheckoutStats,
 } from './doubleCheckoutStats'
 import type { DoubleCheckoutStats } from './doubleCheckoutStats'
@@ -30,6 +30,7 @@ export interface PlayerMatchStats {
   thrown140Plus: number
   thrown100Plus: number
   doubleCheckout: DoubleCheckoutStats
+  doubleCheckoutUnavailable: boolean
   checkouts100Plus: number
   highestCheckout: number | null
   highestVisit: number | null
@@ -39,20 +40,29 @@ export const computePlayerStatsForVisits = (
   visits: Visit[],
   rules: CheckoutRules,
   doubleIn = false,
-): PlayerMatchStats => ({
-  threeDartAverage: getThreeDartAverage(visits),
-  threeDartAverageUntil170: getThreeDartAverage(getScoringVisits(visits)),
-  threeDartAverageUntilDouble: rules.doubleOut
-    ? getThreeDartAverage(getVisitsBeforeDouble(visits))
-    : null,
-  thrown180: countThrown180(visits),
-  thrown140Plus: countThrown140Plus(visits),
-  thrown100Plus: countThrown100Plus(visits),
-  doubleCheckout: countDoubleCheckoutStatsSkippingVisitScoreLegs(visits, rules, doubleIn),
-  checkouts100Plus: countCheckouts100Plus(visits),
-  highestCheckout: getHighestCheckout(visits),
-  highestVisit: getHighestVisit(visits),
-})
+): PlayerMatchStats => {
+  const doubleCheckoutResult = countDoubleCheckoutStatsOmittingUnresolvedLegs(
+    visits,
+    rules,
+    doubleIn,
+  )
+
+  return {
+    threeDartAverage: getThreeDartAverage(visits),
+    threeDartAverageUntil170: getThreeDartAverage(getScoringVisits(visits)),
+    threeDartAverageUntilDouble: rules.doubleOut
+      ? getThreeDartAverage(getVisitsBeforeDouble(visits))
+      : null,
+    thrown180: countThrown180(visits),
+    thrown140Plus: countThrown140Plus(visits),
+    thrown100Plus: countThrown100Plus(visits),
+    doubleCheckout: doubleCheckoutResult.stats,
+    doubleCheckoutUnavailable: doubleCheckoutResult.unavailable,
+    checkouts100Plus: countCheckouts100Plus(visits),
+    highestCheckout: getHighestCheckout(visits),
+    highestVisit: getHighestVisit(visits),
+  }
+}
 
 export const computeMatchPlayerStats = (session: GameSession): Record<string, PlayerMatchStats> => {
   const { config } = session
@@ -112,6 +122,7 @@ export const emptyPlayerMatchStats = (): PlayerMatchStats => ({
   thrown140Plus: 0,
   thrown100Plus: 0,
   doubleCheckout: emptyDoubleCheckoutStats(),
+  doubleCheckoutUnavailable: false,
   checkouts100Plus: 0,
   highestCheckout: null,
   highestVisit: null,

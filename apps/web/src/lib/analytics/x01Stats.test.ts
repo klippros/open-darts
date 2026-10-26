@@ -324,7 +324,7 @@ describe('x01Stats', () => {
     expect(stats.fiveOhOne.avgDarts).toBe(4)
   })
 
-  it('excludes visit-score legs from double checkout but keeps averages and dart counts', () => {
+  it('excludes visit-score checkout legs from double checkout but keeps averages and dart counts', () => {
     const stats = computeX01Stats([
       sampleSession({
         visits: [
@@ -337,8 +337,8 @@ describe('x01Stats', () => {
           }),
           sampleVisit({
             visitIndex: 1,
-            visitScore: 401,
-            scoreBefore: 401,
+            visitScore: 100,
+            scoreBefore: 100,
             scoreAfter: 0,
             checkout: true,
             darts: [],
@@ -348,9 +348,97 @@ describe('x01Stats', () => {
       }),
     ])
 
-    expect(stats.fiveOhOne.threeDartAverage).toBe(250.5)
+    expect(stats.fiveOhOne.threeDartAverage).toBe(100)
     expect(stats.fiveOhOne.avgDarts).toBe(6)
     expect(stats.fiveOhOne.doubleCheckout).toEqual({ attempts: 0, successes: 0 })
+    expect(stats.fiveOhOne.doubleCheckoutUnavailable).toBe(true)
     expect(stats.fiveOhOne.checkoutLegCount).toBe(1)
+  })
+
+  it('averages double checkout only from legs whose finish darts were logged', () => {
+    const stats = computeX01Stats([
+      sampleSession({
+        id: 'mixed-finishes',
+        visits: [
+          sampleVisit({
+            legIndex: 1,
+            scoreBefore: 32,
+            visitScore: 32,
+            scoreAfter: 0,
+            checkout: true,
+            darts: [numberDart(16, DartMultiplier.Double)],
+          }),
+          sampleVisit({
+            legIndex: 2,
+            visitIndex: 1,
+            scoreBefore: 40,
+            visitScore: 40,
+            scoreAfter: 0,
+            checkout: true,
+            darts: [],
+            inputMode: VisitInputMode.VisitScore,
+          }),
+          sampleVisit({
+            legIndex: 3,
+            visitIndex: 2,
+            scoreBefore: 32,
+            visitScore: 32,
+            scoreAfter: 0,
+            checkout: true,
+            darts: [numberDart(16, DartMultiplier.Double)],
+          }),
+          sampleVisit({
+            legIndex: 4,
+            visitIndex: 3,
+            scoreBefore: 40,
+            visitScore: 40,
+            scoreAfter: 0,
+            checkout: true,
+            darts: [],
+            inputMode: VisitInputMode.VisitScore,
+          }),
+          sampleVisit({
+            legIndex: 5,
+            visitIndex: 4,
+            scoreBefore: 16,
+            visitScore: 16,
+            scoreAfter: 0,
+            checkout: true,
+            darts: [numberDart(8, DartMultiplier.Double)],
+          }),
+        ],
+      }),
+    ])
+
+    expect(stats.fiveOhOne.doubleCheckout).toEqual({ attempts: 3, successes: 3 })
+    expect(stats.fiveOhOne.doubleCheckoutUnavailable).toBe(false)
+    expect(stats.fiveOhOne.legCount).toBe(5)
+  })
+
+  it('keeps double checkout available after visit totals above 170', () => {
+    const stats = computeX01Stats([
+      sampleSession({
+        visits: [
+          sampleVisit({
+            visitScore: 180,
+            scoreBefore: 501,
+            scoreAfter: 321,
+            darts: [],
+            inputMode: VisitInputMode.VisitScore,
+          }),
+          sampleVisit({
+            visitIndex: 1,
+            visitScore: 40,
+            scoreBefore: 40,
+            scoreAfter: 0,
+            checkout: true,
+            darts: [numberDart(20, DartMultiplier.Double)],
+          }),
+        ],
+      }),
+    ])
+
+    expect(stats.fiveOhOne.doubleCheckout).toEqual({ attempts: 1, successes: 1 })
+    expect(stats.fiveOhOne.doubleCheckoutUnavailable).toBe(false)
   })
 })

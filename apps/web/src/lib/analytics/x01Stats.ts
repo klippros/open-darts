@@ -2,7 +2,7 @@ import type { GameSession } from '@open-darts/game/types/gameSession'
 import { isX01Config } from '@open-darts/game/game/gameConfigGuards'
 import { x01PresetConfigs, X01PresetId } from '@open-darts/game/x01/x01Presets'
 import {
-  countDoubleCheckoutStatsSkippingVisitScoreLegs,
+  countDoubleCheckoutStatsOmittingUnresolvedLegs,
   mergeDoubleCheckoutStats,
   emptyDoubleCheckoutStats,
 } from './doubleCheckoutStats'
@@ -49,6 +49,7 @@ export interface X01LegStats {
   thrown140Plus: number
   thrown100Plus: number
   doubleCheckout: DoubleCheckoutStats
+  doubleCheckoutUnavailable: boolean
   checkouts100Plus: number
   highestCheckout: number | null
   highestVisit: number | null
@@ -74,6 +75,7 @@ const emptyLegStats = (): X01LegStats => ({
   thrown140Plus: 0,
   thrown100Plus: 0,
   doubleCheckout: emptyDoubleCheckoutStats(),
+  doubleCheckoutUnavailable: false,
   checkouts100Plus: 0,
   highestCheckout: null,
   highestVisit: null,
@@ -97,12 +99,13 @@ const computeX01LegStats = (sessions: GameSession[]): X01LegStats => {
     .flatMap((leg) => getVisitsBeforeDouble(leg.visits))
   const checkoutLegs = legs.filter((leg) => legFinishedWithCheckout(leg.visits))
 
+  let doubleCheckoutUnavailable = false
   const doubleCheckout = legs.reduce<DoubleCheckoutStats>((totals, leg) => {
     if (!isX01Config(leg.session.mode, leg.session.config)) {
       return totals
     }
 
-    const sessionStats = countDoubleCheckoutStatsSkippingVisitScoreLegs(
+    const result = countDoubleCheckoutStatsOmittingUnresolvedLegs(
       leg.visits,
       {
         doubleIn: leg.session.config.doubleIn,
@@ -111,7 +114,11 @@ const computeX01LegStats = (sessions: GameSession[]): X01LegStats => {
       leg.session.config.doubleIn,
     )
 
-    return mergeDoubleCheckoutStats(totals, sessionStats)
+    if (result.unavailable) {
+      doubleCheckoutUnavailable = true
+    }
+
+    return mergeDoubleCheckoutStats(totals, result.stats)
   }, emptyDoubleCheckoutStats())
 
   return {
@@ -130,6 +137,7 @@ const computeX01LegStats = (sessions: GameSession[]): X01LegStats => {
     thrown140Plus: countThrown140Plus(allVisits),
     thrown100Plus: countThrown100Plus(allVisits),
     doubleCheckout,
+    doubleCheckoutUnavailable: doubleCheckout.attempts === 0 && doubleCheckoutUnavailable,
     checkouts100Plus: countCheckouts100Plus(allVisits),
     highestCheckout: getHighestCheckout(allVisits),
     highestVisit: getHighestVisit(allVisits),

@@ -61,7 +61,7 @@ const timelineRowConfig: Record<MatchStatRowId, { metric: StatMetricId; metricLa
   },
   [MatchStatRowId.Checkouts]: {
     metric: 'doubleCheckoutRate',
-    metricLabel: 'Checkouts',
+    metricLabel: 'Checkout %',
   },
   [MatchStatRowId.Checkouts100Plus]: {
     metric: 'checkouts100Plus',

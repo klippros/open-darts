@@ -2,18 +2,26 @@ import type { CheckoutRules } from '@open-darts/game/types/checkout'
 import { DartMultiplier, DartSegmentType } from '@open-darts/game/types/dart'
 import type { DartThrow } from '@open-darts/game/types/dart'
 import type { Visit } from '@open-darts/game/types/visit'
-import { visitsIncludeVisitScoreInput } from '@open-darts/game/types/visit'
+import { visitUsesVisitScoreInput } from '@open-darts/game/types/visit'
 import { isDoubleDart } from '@open-darts/game/dartScoring'
 import { formatDart } from '@open-darts/game/formatDart'
 import type { CheckoutDart } from '@open-darts/game/checkout/checkoutSuggestions'
 import {
   isCheckoutPossible,
+  MAX_CHECKOUT_SCORE,
   suggestCheckoutPath,
 } from '@open-darts/game/checkout/checkoutSuggestions'
+import { isSingleDartDoubleFinish } from '@open-darts/game/checkout/checkoutFallback'
+import { DOUBLE_OUT_BOGEY_SCORES } from '@open-darts/game/checkout/pdcCheckoutTable'
 
 export interface DoubleCheckoutStats {
   attempts: number
   successes: number
+}
+
+export interface DoubleCheckoutCountResult {
+  stats: DoubleCheckoutStats
+  unavailable: boolean
 }
 
 export const emptyDoubleCheckoutStats = (): DoubleCheckoutStats => ({
@@ -124,6 +132,68 @@ const applyDartToRemaining = (
   return { remaining: nextRemaining, bust: false, checkout: false }
 }
 
+/** Next finishing double (or bull) below the visit start, once the start itself is not a finish. */
+const nextFinishingDoubleBelow = (scoreBefore: number): number => {
+  if (scoreBefore > 50) {
+    return 50
+  }
+
+  for (let remaining = scoreBefore - 1; remaining >= 2; remaining -= 1) {
+    if (isSingleDartDoubleFinish(remaining)) {
+      return remaining
+    }
+  }
+
+  return 2
+}
+
+/**
+ * True when a visit total could hide a dart thrown while a finishing double
+ * (or bull) was available. Uses score-before / score-after rules instead of
+ * enumerating dart sequences.
+ */
+export const visitScoreCouldHideDoubleAttempt = (
+  visit: Visit,
+  rules: CheckoutRules,
+  _doubleIn: boolean,
+  _hasOpenedBefore: boolean,
+): boolean => {
+  if (!visitUsesVisitScoreInput(visit) || !rules.doubleOut) {
+    return false
+  }
+
+  // A recorded checkout always includes a finishing double (or bull), and that
+  // dart was not logged.
+  if (visit.checkout) {
+    return true
+  }
+
+  const scoreBefore = visit.scoreBefore
+
+  if (scoreBefore > MAX_CHECKOUT_SCORE) {
+    return false
+  }
+
+  if (isSingleDartDoubleFinish(scoreBefore)) {
+    return true
+  }
+
+  if (DOUBLE_OUT_BOGEY_SCORES.has(scoreBefore)) {
+    return false
+  }
+
+  if (visit.bust) {
+    return true
+  }
+
+  // Ended above the next double: never stood on a finish during this visit.
+  if (visit.scoreAfter > nextFinishingDoubleBelow(scoreBefore)) {
+    return false
+  }
+
+  return true
+}
+
 export const countDoubleCheckoutStatsForVisit = (
   visit: Visit,
   rules: CheckoutRules,
@@ -192,11 +262,17 @@ const computeHasOpenedBeforeVisit = (priorVisits: Visit[], doubleIn: boolean): b
   let opened = false
 
   for (const visit of priorVisits) {
+    if (visitUsesVisitScoreInput(visit)) {
+      if (!visit.bust && visit.visitScore > 0) {
+        opened = true
+      }
+
+      continue
+    }
+
     for (const dart of visit.darts) {
-      if (countsTowardScore(dart, doubleIn, opened)) {
-        if (!opened) {
-          opened = true
-        }
+      if (countsTowardScore(dart, doubleIn, opened) && !opened) {
+        opened = true
       }
     }
   }
@@ -233,16 +309,43 @@ const groupVisitsByLeg = (visits: Visit[]): Visit[][] => {
   return [...groups.values()]
 }
 
-/** Legs that used visit-score input are excluded — double attempts cannot be inferred. */
-export const countDoubleCheckoutStatsSkippingVisitScoreLegs = (
+const legHasUnresolvedVisitScoreDouble = (
+  legVisits: Visit[],
+  rules: CheckoutRules,
+  doubleIn: boolean,
+): boolean =>
+  legVisits.some((visit, index) => {
+    if (!visitUsesVisitScoreInput(visit)) {
+      return false
+    }
+
+    const hasOpenedBefore = computeHasOpenedBeforeVisit(legVisits.slice(0, index), doubleIn)
+
+    return visitScoreCouldHideDoubleAttempt(visit, rules, doubleIn, hasOpenedBefore)
+  })
+
+/**
+ * Legs with a visit total that could hide a dart at a double are omitted.
+ * Remaining legs contribute only their per-dart double attempts.
+ */
+export const countDoubleCheckoutStatsOmittingUnresolvedLegs = (
   visits: Visit[],
   rules: CheckoutRules,
   doubleIn = false,
-): DoubleCheckoutStats =>
-  groupVisitsByLeg(visits).reduce<DoubleCheckoutStats>((totals, legVisits) => {
-    if (visitsIncludeVisitScoreInput(legVisits)) {
+): DoubleCheckoutCountResult => {
+  let sawUnresolved = false
+
+  const stats = groupVisitsByLeg(visits).reduce<DoubleCheckoutStats>((totals, legVisits) => {
+    if (legHasUnresolvedVisitScoreDouble(legVisits, rules, doubleIn)) {
+      sawUnresolved = true
       return totals
     }
 
     return mergeDoubleCheckoutStats(totals, countDoubleCheckoutStats(legVisits, rules, doubleIn))
   }, emptyDoubleCheckoutStats())
+
+  return {
+    stats,
+    unavailable: stats.attempts === 0 && sawUnresolved,
+  }
+}
