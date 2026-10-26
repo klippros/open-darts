@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { getSingleDartFinish, findFallbackCheckoutPath } from './checkoutFallback'
+import {
+  getSingleDartFinish,
+  findFallbackCheckoutPath,
+  isSingleDartDoubleFinish,
+} from './checkoutFallback'
 import { suggestCheckoutPath } from './checkoutSuggestions'
 
 const doubleOutRules = {
@@ -16,6 +20,18 @@ describe('checkoutFallback', () => {
     expect(getSingleDartFinish(18, doubleOutRules)).toEqual({ label: 'D9', points: 18 })
     expect(getSingleDartFinish(22, doubleOutRules)).toEqual({ label: 'D11', points: 22 })
     expect(getSingleDartFinish(26, doubleOutRules)).toEqual({ label: 'D13', points: 26 })
+  })
+
+  it('recognises one-dart double finishes', () => {
+    expect(isSingleDartDoubleFinish(2)).toBe(true)
+    expect(isSingleDartDoubleFinish(32)).toBe(true)
+    expect(isSingleDartDoubleFinish(40)).toBe(true)
+    expect(isSingleDartDoubleFinish(50)).toBe(true)
+    expect(isSingleDartDoubleFinish(1)).toBe(false)
+    expect(isSingleDartDoubleFinish(3)).toBe(false)
+    expect(isSingleDartDoubleFinish(31)).toBe(false)
+    expect(isSingleDartDoubleFinish(41)).toBe(false)
+    expect(isSingleDartDoubleFinish(60)).toBe(false)
   })
 
   it('prefers common doubles over D1 for odd two-dart finishes', () => {

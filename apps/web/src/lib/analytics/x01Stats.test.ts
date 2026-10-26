@@ -72,6 +72,7 @@ describe('x01Stats', () => {
 
     expect(stats.fiveOhOne.threeDartAverage).toBe(85)
     expect(stats.fiveOhOne.threeDartAverageUntil170).toBe(90)
+    expect(stats.fiveOhOne.threeDartAverageUntilDouble).toBe(85)
     expect(stats.fiveOhOne.bestLegAverage).toBe(85)
     expect(stats.fiveOhOne.checkoutLegCount).toBe(1)
     expect(stats.threeOhOne.legCount).toBe(0)
@@ -126,6 +127,73 @@ describe('x01Stats', () => {
 
     expect(stats.fourOhOne.legCount).toBe(0)
     expect(stats.all.legCount).toBe(2)
+  })
+
+  it('calculates average until double excluding visits that start on a double', () => {
+    const stats = computeX01Stats([
+      sampleSession({
+        visits: [
+          sampleVisit({
+            visitScore: 100,
+            scoreBefore: 501,
+            scoreAfter: 401,
+            darts: [numberDart(20, DartMultiplier.Triple), numberDart(20, DartMultiplier.Triple)],
+          }),
+          sampleVisit({
+            visitIndex: 1,
+            visitScore: 80,
+            scoreBefore: 401,
+            scoreAfter: 321,
+            darts: [numberDart(20, DartMultiplier.Triple)],
+          }),
+          sampleVisit({
+            visitIndex: 2,
+            visitScore: 29,
+            scoreBefore: 61,
+            scoreAfter: 32,
+            darts: [numberDart(20, DartMultiplier.Single)],
+          }),
+          sampleVisit({
+            visitIndex: 3,
+            visitScore: 0,
+            scoreBefore: 32,
+            scoreAfter: 32,
+            darts: [numberDart(16, DartMultiplier.Single)],
+          }),
+          sampleVisit({
+            visitIndex: 4,
+            visitScore: 32,
+            scoreBefore: 32,
+            scoreAfter: 0,
+            checkout: true,
+            darts: [numberDart(16, DartMultiplier.Double)],
+          }),
+        ],
+      }),
+    ])
+
+    expect(stats.fiveOhOne.threeDartAverageUntil170).toBe(90)
+    expect(stats.fiveOhOne.threeDartAverageUntilDouble).toBeCloseTo(69.67, 1)
+  })
+
+  it('leaves average until double empty for straight-out legs', () => {
+    const stats = computeX01Stats([
+      sampleSession({
+        config: { startScore: 501, doubleIn: false, doubleOut: false },
+        visits: [
+          sampleVisit({ visitScore: 100, scoreBefore: 501, scoreAfter: 401 }),
+          sampleVisit({
+            visitIndex: 1,
+            checkout: true,
+            scoreAfter: 0,
+            scoreBefore: 40,
+            visitScore: 40,
+          }),
+        ],
+      }),
+    ])
+
+    expect(stats.fiveOhOne.threeDartAverageUntilDouble).toBeNull()
   })
 
   it('tracks the best single-leg 3-dart average', () => {

@@ -73,6 +73,7 @@ describe('matchPlayerStats', () => {
     expect(stats.checkouts100Plus).toBe(1)
     expect(stats.threeDartAverage).toBeCloseTo(100.33, 1)
     expect(stats.threeDartAverageUntil170).toBe(90)
+    expect(stats.threeDartAverageUntilDouble).toBeCloseTo(100.33, 1)
   })
 
   it('excludes checkout-range visits from the average until 170', () => {
@@ -94,6 +95,101 @@ describe('matchPlayerStats', () => {
 
     expect(stats.threeDartAverage).toBe(85)
     expect(stats.threeDartAverageUntil170).toBe(90)
+    expect(stats.threeDartAverageUntilDouble).toBe(85)
+  })
+
+  it('excludes visits that start on a one-dart double from the average until double', () => {
+    const stats = computePlayerStatsForVisits(
+      [
+        visit({ visitScore: 100, scoreBefore: 501, scoreAfter: 401 }),
+        visit({ visitIndex: 1, visitScore: 80, scoreBefore: 401, scoreAfter: 321 }),
+        visit({
+          visitIndex: 2,
+          visitScore: 29,
+          scoreBefore: 61,
+          scoreAfter: 32,
+          darts: [numberDart(20, DartMultiplier.Single)],
+        }),
+        visit({
+          visitIndex: 3,
+          visitScore: 0,
+          scoreBefore: 32,
+          scoreAfter: 32,
+          darts: [numberDart(16, DartMultiplier.Single)],
+        }),
+        visit({
+          visitIndex: 4,
+          visitScore: 0,
+          scoreBefore: 32,
+          scoreAfter: 32,
+          darts: [numberDart(8, DartMultiplier.Single)],
+        }),
+        visit({
+          visitIndex: 5,
+          visitScore: 32,
+          scoreBefore: 32,
+          scoreAfter: 0,
+          checkout: true,
+          darts: [numberDart(16, DartMultiplier.Double)],
+        }),
+      ],
+      { doubleIn: false, doubleOut: true },
+    )
+
+    expect(stats.threeDartAverageUntil170).toBe(90)
+    expect(stats.threeDartAverageUntilDouble).toBeCloseTo(69.67, 1)
+  })
+
+  it('includes visits after slipping off a double', () => {
+    const stats = computePlayerStatsForVisits(
+      [
+        visit({ visitScore: 100, scoreBefore: 501, scoreAfter: 401 }),
+        visit({
+          visitIndex: 1,
+          visitScore: 1,
+          scoreBefore: 32,
+          scoreAfter: 31,
+          darts: [numberDart(1, DartMultiplier.Single)],
+        }),
+        visit({
+          visitIndex: 2,
+          visitScore: 15,
+          scoreBefore: 31,
+          scoreAfter: 16,
+          darts: [numberDart(15, DartMultiplier.Single)],
+        }),
+        visit({
+          visitIndex: 3,
+          visitScore: 16,
+          scoreBefore: 16,
+          scoreAfter: 0,
+          checkout: true,
+          darts: [numberDart(8, DartMultiplier.Double)],
+        }),
+      ],
+      { doubleIn: false, doubleOut: true },
+    )
+
+    // 100 (501) + 15 (31) = 115 / 2; visits starting on 32 and 16 are excluded
+    expect(stats.threeDartAverageUntilDouble).toBe(57.5)
+  })
+
+  it('returns null average until double for straight-out', () => {
+    const stats = computePlayerStatsForVisits(
+      [
+        visit({ visitScore: 100, scoreBefore: 501, scoreAfter: 401 }),
+        visit({
+          visitIndex: 1,
+          visitScore: 40,
+          scoreBefore: 40,
+          scoreAfter: 0,
+          checkout: true,
+        }),
+      ],
+      { doubleIn: false, doubleOut: false },
+    )
+
+    expect(stats.threeDartAverageUntilDouble).toBeNull()
   })
 
   it('counts 180, 140+, and 100+ in exclusive tiers', () => {

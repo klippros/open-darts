@@ -79,6 +79,10 @@ const timelineRowConfig: Record<MatchStatRowId, { metric: StatMetricId; metricLa
     metric: 'threeDartAverageUntil170',
     metricLabel: 'Avg to 170 (3-darts)',
   },
+  [MatchStatRowId.ThreeDartAverageUntilDouble]: {
+    metric: 'threeDartAverageUntilDouble',
+    metricLabel: 'Avg to double (3-darts)',
+  },
   [MatchStatRowId.AvgDarts]: {
     metric: 'avgDarts',
     metricLabel: 'Avg darts',

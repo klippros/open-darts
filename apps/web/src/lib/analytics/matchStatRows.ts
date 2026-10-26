@@ -14,6 +14,7 @@ export enum MatchStatRowId {
   HighestCheckout = 'highestCheckout',
   BestLegAverage = 'bestLegAverage',
   ThreeDartAverageUntil170 = 'threeDartAverageUntil170',
+  ThreeDartAverageUntilDouble = 'threeDartAverageUntilDouble',
   AvgDarts = 'avgDarts',
 }
 
@@ -47,6 +48,12 @@ const sharedMatchStatRows: MatchStatRowDefinition[] = [
     id: MatchStatRowId.ThreeDartAverageUntil170,
     label: 'Avg to 170 (3-darts)',
     formatValue: (stats) => formatAverage(stats.threeDartAverageUntil170),
+    isVisible: () => true,
+  },
+  {
+    id: MatchStatRowId.ThreeDartAverageUntilDouble,
+    label: 'Avg to double (3-darts)',
+    formatValue: (stats) => formatAverage(stats.threeDartAverageUntilDouble),
     isVisible: () => true,
   },
   {
@@ -129,6 +136,7 @@ export const getVisibleStatsPageRows = (
 export const x01LegStatsToPlayerMatchStats = (stats: X01LegStats): PlayerMatchStats => ({
   threeDartAverage: stats.threeDartAverage,
   threeDartAverageUntil170: stats.threeDartAverageUntil170,
+  threeDartAverageUntilDouble: stats.threeDartAverageUntilDouble,
   thrown180: stats.thrown180,
   thrown140Plus: stats.thrown140Plus,
   thrown100Plus: stats.thrown100Plus,

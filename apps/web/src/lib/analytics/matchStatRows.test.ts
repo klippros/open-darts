@@ -5,6 +5,7 @@ import type { PlayerMatchStats } from './matchPlayerStats'
 const stats = (overrides: Partial<PlayerMatchStats> = {}): PlayerMatchStats => ({
   threeDartAverage: 85,
   threeDartAverageUntil170: 90,
+  threeDartAverageUntilDouble: 70,
   thrown180: 0,
   thrown140Plus: 0,
   thrown100Plus: 0,
@@ -28,6 +29,7 @@ describe('getVisibleMatchStatRows', () => {
     expect(rows.map((row) => row.id)).toEqual([
       MatchStatRowId.ThreeDartAverage,
       MatchStatRowId.ThreeDartAverageUntil170,
+      MatchStatRowId.ThreeDartAverageUntilDouble,
       MatchStatRowId.Thrown180,
       MatchStatRowId.Thrown100Plus,
       MatchStatRowId.HighestVisit,

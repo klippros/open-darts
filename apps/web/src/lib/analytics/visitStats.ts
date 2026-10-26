@@ -4,6 +4,7 @@ import type { GameSession } from '@open-darts/game/types/gameSession'
 import type { Visit } from '@open-darts/game/types/visit'
 import { getVisitDartCount, isCountingVisit } from '@open-darts/game/types/visit'
 import { MAX_CHECKOUT_SCORE } from '@open-darts/game/checkout/checkoutSuggestions'
+import { isSingleDartDoubleFinish } from '@open-darts/game/checkout/checkoutFallback'
 import { getVisitsForLeg } from '@open-darts/game/game/matchLegs'
 
 export const getPrimaryPlayerVisits = (session: GameSession): Visit[] => {
@@ -56,6 +57,9 @@ export const getMaxThreeDartAverage = (visitGroups: Visit[][]): number | null =>
 
 export const getScoringVisits = (visits: Visit[]): Visit[] =>
   visits.filter((visit) => visit.scoreBefore > MAX_CHECKOUT_SCORE)
+
+export const getVisitsBeforeDouble = (visits: Visit[]): Visit[] =>
+  visits.filter((visit) => !isSingleDartDoubleFinish(visit.scoreBefore))
 
 export const countCheckoutVisits = (visits: Visit[]): number =>
   visits.filter((visit) => visit.checkout).length

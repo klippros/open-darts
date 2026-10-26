@@ -49,6 +49,7 @@ import type { X01LegSlice } from './x01LegSlices'
 export type StatMetricId =
   | 'threeDartAverage'
   | 'threeDartAverageUntil170'
+  | 'threeDartAverageUntilDouble'
   | 'bestLegAverage'
   | 'thrown180'
   | 'thrown140Plus'
@@ -131,6 +132,8 @@ const getX01LegMetric = (slice: X01LegSlice, metric: StatMetricId): number | nul
       return getThreeDartAverage(visits)
     case 'threeDartAverageUntil170':
       return getThreeDartAverage(getScoringVisits(visits))
+    case 'threeDartAverageUntilDouble':
+      return playerStats?.threeDartAverageUntilDouble ?? null
     case 'thrown180':
       return playerStats?.thrown180 ?? null
     case 'thrown140Plus':
@@ -195,6 +198,7 @@ const getCheckoutPracticeSessionMetric = (
         ? getHighestOneTwentyOneCheckoutTarget(getPrimaryPlayerVisits(session))
         : getHighestCheckout(getPrimaryPlayerVisits(session))
     case 'threeDartAverageUntil170':
+    case 'threeDartAverageUntilDouble':
     case 'bestLegAverage':
     case 'thrown180':
     case 'thrown140Plus':
@@ -233,6 +237,7 @@ const getBob27SessionMetric = (session: GameSession, metric: StatMetricId): numb
       return getBob27SessionDoublesHit(session)
     case 'threeDartAverage':
     case 'threeDartAverageUntil170':
+    case 'threeDartAverageUntilDouble':
     case 'bestLegAverage':
     case 'thrown180':
     case 'thrown140Plus':
@@ -280,6 +285,7 @@ const getAroundTheClockSessionMetric = (
       return isCompleted ? dartCount : null
     case 'threeDartAverage':
     case 'threeDartAverageUntil170':
+    case 'threeDartAverageUntilDouble':
     case 'bestLegAverage':
     case 'thrown180':
     case 'thrown140Plus':
@@ -329,6 +335,7 @@ const getNinetyNineDartsSessionMetric = (
       return stats.isBull ? null : stats.counts.trebles
     case 'threeDartAverage':
     case 'threeDartAverageUntil170':
+    case 'threeDartAverageUntilDouble':
     case 'bestLegAverage':
     case 'thrown180':
     case 'thrown140Plus':
@@ -373,6 +380,7 @@ export const getStatTimelineFormat = (metric: StatMetricId): StatTimelineFormat 
       return 'integer'
     case 'threeDartAverage':
     case 'threeDartAverageUntil170':
+    case 'threeDartAverageUntilDouble':
     case 'bestLegAverage':
     case 'avgDoublesPerGame':
     case 'avgCheckoutsPerGame':

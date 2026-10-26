@@ -156,6 +156,10 @@ export const getSingleDartFinish = (
   return null
 }
 
+/** Remaining score that finishes with one dart on a double or bull (D1–D20 or bull). */
+export const isSingleDartDoubleFinish = (remaining: number): boolean =>
+  remaining === 50 || (remaining >= 2 && remaining <= 40 && remaining % 2 === 0)
+
 const collectFallbackCheckoutPaths = (
   remaining: number,
   dartsRemaining: number,

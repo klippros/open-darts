@@ -14,6 +14,7 @@ import {
   getPlayerVisits,
   getScoringVisits,
   getThreeDartAverage,
+  getVisitsBeforeDouble,
 } from './visitStats'
 import {
   countDoubleCheckoutStatsSkippingVisitScoreLegs,
@@ -24,6 +25,7 @@ import type { DoubleCheckoutStats } from './doubleCheckoutStats'
 export interface PlayerMatchStats {
   threeDartAverage: number | null
   threeDartAverageUntil170: number | null
+  threeDartAverageUntilDouble: number | null
   thrown180: number
   thrown140Plus: number
   thrown100Plus: number
@@ -40,6 +42,9 @@ export const computePlayerStatsForVisits = (
 ): PlayerMatchStats => ({
   threeDartAverage: getThreeDartAverage(visits),
   threeDartAverageUntil170: getThreeDartAverage(getScoringVisits(visits)),
+  threeDartAverageUntilDouble: rules.doubleOut
+    ? getThreeDartAverage(getVisitsBeforeDouble(visits))
+    : null,
   thrown180: countThrown180(visits),
   thrown140Plus: countThrown140Plus(visits),
   thrown100Plus: countThrown100Plus(visits),
@@ -102,6 +107,7 @@ export const computeLegPlayerStats = (
 export const emptyPlayerMatchStats = (): PlayerMatchStats => ({
   threeDartAverage: null,
   threeDartAverageUntil170: null,
+  threeDartAverageUntilDouble: null,
   thrown180: 0,
   thrown140Plus: 0,
   thrown100Plus: 0,

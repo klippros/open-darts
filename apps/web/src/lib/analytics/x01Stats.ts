@@ -24,6 +24,7 @@ import {
   getMaxThreeDartAverage,
   getScoringVisits,
   getThreeDartAverage,
+  getVisitsBeforeDouble,
 } from './visitStats'
 import { countDartsInVisits, expandX01SessionsLegs, legFinishedWithCheckout } from './x01LegSlices'
 
@@ -41,6 +42,7 @@ export interface X01LegStats {
   checkoutLegCount: number
   threeDartAverage: number | null
   threeDartAverageUntil170: number | null
+  threeDartAverageUntilDouble: number | null
   bestLegAverage: number | null
   avgDarts: number | null
   thrown180: number
@@ -65,6 +67,7 @@ const emptyLegStats = (): X01LegStats => ({
   checkoutLegCount: 0,
   threeDartAverage: null,
   threeDartAverageUntil170: null,
+  threeDartAverageUntilDouble: null,
   bestLegAverage: null,
   avgDarts: null,
   thrown180: 0,
@@ -77,6 +80,9 @@ const emptyLegStats = (): X01LegStats => ({
   lastPlayedAt: null,
 })
 
+const isDoubleOutLeg = (leg: { session: GameSession }): boolean =>
+  isX01Config(leg.session.mode, leg.session.config) && leg.session.config.doubleOut
+
 const computeX01LegStats = (sessions: GameSession[]): X01LegStats => {
   const legs = expandX01SessionsLegs(sessions)
 
@@ -86,6 +92,9 @@ const computeX01LegStats = (sessions: GameSession[]): X01LegStats => {
 
   const allVisits = legs.flatMap((leg) => leg.visits)
   const scoringVisits = legs.flatMap((leg) => getScoringVisits(leg.visits))
+  const visitsBeforeDouble = legs
+    .filter(isDoubleOutLeg)
+    .flatMap((leg) => getVisitsBeforeDouble(leg.visits))
   const checkoutLegs = legs.filter((leg) => legFinishedWithCheckout(leg.visits))
 
   const doubleCheckout = legs.reduce<DoubleCheckoutStats>((totals, leg) => {
@@ -110,6 +119,7 @@ const computeX01LegStats = (sessions: GameSession[]): X01LegStats => {
     checkoutLegCount: checkoutLegs.length,
     threeDartAverage: getThreeDartAverage(allVisits),
     threeDartAverageUntil170: getThreeDartAverage(scoringVisits),
+    threeDartAverageUntilDouble: getThreeDartAverage(visitsBeforeDouble),
     bestLegAverage: getMaxThreeDartAverage(legs.map((leg) => leg.visits)),
     avgDarts:
       checkoutLegs.length === 0
