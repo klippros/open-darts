@@ -50,15 +50,18 @@ export const StatTimelineDialog = ({
           color={darkDialogContentProps.color}
           shadow={darkDialogContentProps.shadow}
           maxW="720px"
+          w="calc(100% - 2rem)"
+          mx="auto"
+          overflow="hidden"
         >
-          <Dialog.Header>
+          <Dialog.Header px={{ base: 4, md: 6 }}>
             <Dialog.Title color="white">{timeline.metricLabel}</Dialog.Title>
             <Dialog.Description color="whiteAlpha.700">
-              {timeline.scopeLabel} · {plottablePoints.length} {unitLabel} with data · hover or
-              click points for details
+              {timeline.scopeLabel} · {plottablePoints.length} {unitLabel} with data · select a
+              point for details, then tap the card to open the session
             </Dialog.Description>
           </Dialog.Header>
-          <Dialog.Body>
+          <Dialog.Body px={{ base: 3, md: 6 }} pb={{ base: 4, md: 6 }} overflow="visible">
             {plottablePoints.length > 0 ? (
               <StatTimelineChart
                 points={timeline.points}
