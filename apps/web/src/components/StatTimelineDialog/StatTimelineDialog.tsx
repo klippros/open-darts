@@ -1,4 +1,4 @@
-import { Dialog, Text } from '@chakra-ui/react'
+import { Dialog, Portal, Text } from '@chakra-ui/react'
 import type { StatTimeline, StatTimelinePoint } from '../../lib/analytics/statTimelines'
 import { darkDialogContentProps } from '../darkDialogContentProps'
 import { StatTimelineChart } from './StatTimelineChart'
@@ -41,42 +41,44 @@ export const StatTimelineDialog = ({
         }
       }}
     >
-      <Dialog.Backdrop />
-      <Dialog.Positioner>
-        <Dialog.Content
-          bg={darkDialogContentProps.bg}
-          borderWidth={darkDialogContentProps.borderWidth}
-          borderColor={darkDialogContentProps.borderColor}
-          color={darkDialogContentProps.color}
-          shadow={darkDialogContentProps.shadow}
-          maxW="720px"
-          w="calc(100% - 2rem)"
-          mx="auto"
-          overflow="hidden"
-        >
-          <Dialog.Header px={{ base: 4, md: 6 }}>
-            <Dialog.Title color="white">{timeline.metricLabel}</Dialog.Title>
-            <Dialog.Description color="whiteAlpha.700">
-              {timeline.scopeLabel} · {plottablePoints.length} {unitLabel} with data · select a
-              point for details, then tap the card to open the session
-            </Dialog.Description>
-          </Dialog.Header>
-          <Dialog.Body px={{ base: 3, md: 6 }} pb={{ base: 4, md: 6 }} overflow="visible">
-            {plottablePoints.length > 0 ? (
-              <StatTimelineChart
-                points={timeline.points}
-                format={timeline.format}
-                onPointClick={onPointClick}
-              />
-            ) : (
-              <Text fontSize="sm" color="whiteAlpha.700" lineHeight="1.55">
-                No {formatPointUnit(timeline.pointUnitLabel, 2)} in this period have a value for
-                this stat yet.
-              </Text>
-            )}
-          </Dialog.Body>
-        </Dialog.Content>
-      </Dialog.Positioner>
+      <Portal>
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          <Dialog.Content
+            bg={darkDialogContentProps.bg}
+            borderWidth={darkDialogContentProps.borderWidth}
+            borderColor={darkDialogContentProps.borderColor}
+            color={darkDialogContentProps.color}
+            shadow={darkDialogContentProps.shadow}
+            w="calc(100vw - 2rem)"
+            maxW="none"
+            mx="auto"
+            overflow="hidden"
+          >
+            <Dialog.Header px={{ base: 4, md: 6 }}>
+              <Dialog.Title color="white">{timeline.metricLabel}</Dialog.Title>
+              <Dialog.Description color="whiteAlpha.700">
+                {timeline.scopeLabel} · {plottablePoints.length} {unitLabel} with data · select a
+                point for details, then tap the card to open the session
+              </Dialog.Description>
+            </Dialog.Header>
+            <Dialog.Body px={{ base: 3, md: 6 }} pb={{ base: 4, md: 6 }} overflow="visible">
+              {plottablePoints.length > 0 ? (
+                <StatTimelineChart
+                  points={timeline.points}
+                  format={timeline.format}
+                  onPointClick={onPointClick}
+                />
+              ) : (
+                <Text fontSize="sm" color="whiteAlpha.700" lineHeight="1.55">
+                  No {formatPointUnit(timeline.pointUnitLabel, 2)} in this period have a value for
+                  this stat yet.
+                </Text>
+              )}
+            </Dialog.Body>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Portal>
     </Dialog.Root>
   )
 }

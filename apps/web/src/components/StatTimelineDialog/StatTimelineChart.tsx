@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
+import type { PointerEvent as ReactPointerEvent } from 'react'
 import { Box } from '@chakra-ui/react'
 import type { StatTimelineFormat, StatTimelinePoint } from '../../lib/analytics/statTimelines'
 import {
@@ -13,6 +14,7 @@ import {
   getTrailingAverages,
   getTrendSampleCount,
 } from '../../lib/analytics/statTrend'
+import { findNearestIndexByX } from './findNearestIndexByX'
 
 export interface StatTimelineChartProps {
   points: StatTimelinePoint[]
@@ -20,12 +22,12 @@ export interface StatTimelineChartProps {
   onPointClick?: (point: StatTimelinePoint) => void
 }
 
-const CHART_WIDTH = 640
+const DEFAULT_CHART_WIDTH = 640
 const CHART_HEIGHT = 220
 const PADDING = { top: 16, right: 128, bottom: 28, left: 56 }
 const TOOLTIP_WIDTH = 184
 const TOOLTIP_HEIGHT = 80
-const HIT_RADIUS = 14
+const ACTIVE_DOT_RADIUS = 2.5
 const GRID_DIVISIONS = 4
 const SERIES_COLOR = '#f6ad55'
 const TREND_COLOR = '#90cdf4'
@@ -53,13 +55,17 @@ const formatTrendLabel = (sampleCount: number, value: number, format: StatTimeli
 const getPlotValues = (points: StatTimelinePoint[]): number[] =>
   points.flatMap((point) => (point.value === null ? [] : [point.value]))
 
-const getTooltipPosition = (x: number, y: number): { tooltipX: number; tooltipY: number } => {
+const getTooltipPosition = (
+  x: number,
+  y: number,
+  chartWidth: number,
+): { tooltipX: number; tooltipY: number } => {
   const tooltipX = Math.min(
     Math.max(x - TOOLTIP_WIDTH / 2, PADDING.left),
-    CHART_WIDTH - PADDING.right - TOOLTIP_WIDTH,
+    chartWidth - PADDING.right - TOOLTIP_WIDTH,
   )
-  const aboveY = y - HIT_RADIUS - 8 - TOOLTIP_HEIGHT
-  const tooltipY = aboveY >= PADDING.top ? aboveY : y + HIT_RADIUS + 8
+  const aboveY = y - ACTIVE_DOT_RADIUS - 8 - TOOLTIP_HEIGHT
+  const tooltipY = aboveY >= PADDING.top ? aboveY : y + ACTIVE_DOT_RADIUS + 8
 
   return { tooltipX, tooltipY }
 }
@@ -75,17 +81,59 @@ const getGridValues = (minValue: number, maxValue: number): number[] => {
   )
 }
 
+const getSvgPointerX = (svg: SVGSVGElement, clientX: number, clientY: number): number | null => {
+  const point = svg.createSVGPoint()
+  point.x = clientX
+  point.y = clientY
+
+  const ctm = svg.getScreenCTM()
+
+  if (ctm === null) {
+    return null
+  }
+
+  return point.matrixTransform(ctm.inverse()).x
+}
+
 export const StatTimelineChart = ({ points, format, onPointClick }: StatTimelineChartProps) => {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const svgRef = useRef<SVGSVGElement>(null)
+  const [chartWidth, setChartWidth] = useState(DEFAULT_CHART_WIDTH)
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const plotValues = getPlotValues(points)
   const trailingAverages = getTrailingAverages(points)
   const latestTrend = getLatestTrend(trailingAverages)
 
+  useLayoutEffect(() => {
+    const container = containerRef.current
+
+    if (container === null) {
+      return undefined
+    }
+
+    const updateWidth = () => {
+      const width = container.clientWidth
+
+      if (width > 0) {
+        setChartWidth(width)
+      }
+    }
+
+    updateWidth()
+
+    const observer = new ResizeObserver(updateWidth)
+    observer.observe(container)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [])
+
   if (plotValues.length === 0) {
     return null
   }
 
-  const plotWidth = CHART_WIDTH - PADDING.left - PADDING.right
+  const plotWidth = chartWidth - PADDING.left - PADDING.right
   const plotHeight = CHART_HEIGHT - PADDING.top - PADDING.bottom
   const minValue = Math.min(...plotValues)
   const maxValue = Math.max(...plotValues)
@@ -102,6 +150,28 @@ export const StatTimelineChart = ({ points, format, onPointClick }: StatTimeline
 
   const getY = (value: number): number =>
     PADDING.top + plotHeight - ((value - minValue) / valueRange) * plotHeight
+
+  const pointXs = points.map((point, index) => (point.value === null ? null : getX(index)))
+
+  const selectNearestPoint = (clientX: number, clientY: number) => {
+    const svg = svgRef.current
+
+    if (svg === null) {
+      return
+    }
+
+    const pointerX = getSvgPointerX(svg, clientX, clientY)
+
+    if (pointerX === null) {
+      return
+    }
+
+    setSelectedIndex(findNearestIndexByX(pointerX, pointXs))
+  }
+
+  const handleChartPointer = (event: ReactPointerEvent<SVGRectElement>) => {
+    selectNearestPoint(event.clientX, event.clientY)
+  }
 
   const trendSegments = trailingAverages.flatMap((average, index) => {
     if (average === null || index === 0) {
@@ -156,7 +226,7 @@ export const StatTimelineChart = ({ points, format, onPointClick }: StatTimeline
       ? (() => {
           const x = getX(selectedIndex)
           const y = getY(selectedPoint.value)
-          const { tooltipX, tooltipY } = getTooltipPosition(x, y)
+          const { tooltipX, tooltipY } = getTooltipPosition(x, y, chartWidth)
           const canOpenSummary = onPointClick !== undefined
 
           return (
@@ -231,8 +301,20 @@ export const StatTimelineChart = ({ points, format, onPointClick }: StatTimeline
       ? null
       : formatTrendLabel(latestTrend.sampleCount, latestTrend.value, format)
 
+  const activeDot =
+    selectedPoint !== null && selectedPoint.value !== null && selectedIndex !== null ? (
+      <circle
+        cx={getX(selectedIndex)}
+        cy={getY(selectedPoint.value)}
+        r={ACTIVE_DOT_RADIUS}
+        fill="#fbd38d"
+        pointerEvents="none"
+      />
+    ) : null
+
   return (
     <Box
+      ref={containerRef}
       w="full"
       overflow="visible"
       minW={0}
@@ -244,18 +326,28 @@ export const StatTimelineChart = ({ points, format, onPointClick }: StatTimeline
       }}
     >
       <svg
-        viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
-        width="100%"
+        ref={svgRef}
+        viewBox={`0 0 ${chartWidth} ${CHART_HEIGHT}`}
+        width={chartWidth}
         height={CHART_HEIGHT}
         style={{ overflow: 'visible', display: 'block', maxWidth: '100%' }}
-        preserveAspectRatio="xMidYMid meet"
         aria-label="Stat timeline chart"
       >
+        <rect
+          x={0}
+          y={0}
+          width={chartWidth}
+          height={CHART_HEIGHT}
+          fill="transparent"
+          style={{ cursor: 'crosshair' }}
+          onPointerMove={handleChartPointer}
+          onPointerDown={handleChartPointer}
+        />
         {gridValues.map((value) => {
           const y = getY(value)
 
           return (
-            <g key={`grid-${value}`}>
+            <g key={`grid-${value}`} pointerEvents="none">
               <line
                 x1={PADDING.left}
                 y1={y}
@@ -276,7 +368,7 @@ export const StatTimelineChart = ({ points, format, onPointClick }: StatTimeline
           )
         })}
         {trendReferenceY !== null && latestTrend !== null ? (
-          <g>
+          <g pointerEvents="none">
             <line
               x1={PADDING.left}
               y1={trendReferenceY}
@@ -308,6 +400,7 @@ export const StatTimelineChart = ({ points, format, onPointClick }: StatTimeline
             stroke={TREND_COLOR}
             strokeWidth="2"
             opacity={0.9}
+            pointerEvents="none"
           />
         ))}
         {lineSegments.map((segment) => (
@@ -319,43 +412,10 @@ export const StatTimelineChart = ({ points, format, onPointClick }: StatTimeline
             y2={segment.y2}
             stroke={SERIES_COLOR}
             strokeWidth="2"
+            pointerEvents="none"
           />
         ))}
-        {points.map((point, index) => {
-          if (point.value === null) {
-            return null
-          }
-
-          const x = getX(index)
-          const y = getY(point.value)
-          const isSelected = selectedIndex === index
-
-          return (
-            <g key={point.sessionId}>
-              <circle
-                cx={x}
-                cy={y}
-                r={HIT_RADIUS}
-                fill="transparent"
-                style={{ cursor: 'pointer' }}
-                onMouseEnter={() => {
-                  setSelectedIndex(index)
-                }}
-                onClick={(event) => {
-                  event.stopPropagation()
-                  setSelectedIndex((current) => (current === index ? null : index))
-                }}
-              />
-              <circle
-                cx={x}
-                cy={y}
-                r={isSelected ? 7 : 5}
-                fill={isSelected ? '#fbd38d' : SERIES_COLOR}
-                pointerEvents="none"
-              />
-            </g>
-          )
-        })}
+        {activeDot}
         {tooltip}
       </svg>
     </Box>
