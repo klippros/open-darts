@@ -72,6 +72,8 @@ export interface VisitDartSlotCardProps {
   tone?: VisitDartSlotCardTone
   size?: VisitDartSlotCardSize
   showArrow?: boolean
+  /** Live swipe preview — highlights the resolved field without committing. */
+  preview?: boolean
   onClick?: () => void
   disabled?: boolean
   ariaLabel?: string
@@ -83,6 +85,7 @@ export const VisitDartSlotCard = ({
   tone = 'neutral',
   size = 'default',
   showArrow = true,
+  preview = false,
   onClick,
   disabled = false,
   ariaLabel,
@@ -92,7 +95,9 @@ export const VisitDartSlotCard = ({
   const isInteractive = onClick !== undefined && !disabled && variant === 'selectable'
   const sizeStyles = SIZE_STYLES[size]
   const labelColor = toneStyles?.color ?? 'white'
-  const borderColor = toneStyles?.borderColor ?? styles.borderColor
+  const borderColor = preview
+    ? (toneStyles?.hoverBorderColor ?? 'orange.300')
+    : (toneStyles?.borderColor ?? styles.borderColor)
   const { scale, pressTargetProps, pointerHandlers } = usePressScale({
     disabled: !isInteractive,
   })
@@ -113,8 +118,8 @@ export const VisitDartSlotCard = ({
     borderRadius: '14px',
     borderWidth: '1px',
     borderColor,
-    bg: styles.bg,
-    opacity: styles.opacity,
+    bg: preview ? 'whiteAlpha.200' : styles.bg,
+    opacity: preview ? 1 : styles.opacity,
     textAlign: 'center' as const,
     w: 'full',
     h: 'auto',
@@ -122,7 +127,9 @@ export const VisitDartSlotCard = ({
     flexDirection: 'column' as const,
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
-    transition: 'border-color 0.15s ease, background 0.15s ease, transform 0.15s ease',
+    transition:
+      'border-color 0.15s ease, background 0.15s ease, transform 0.15s ease, opacity 0.15s ease',
+    transform: preview ? 'scale(1.02)' : undefined,
   }
 
   if (isInteractive) {
