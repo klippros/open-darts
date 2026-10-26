@@ -1,6 +1,7 @@
 import { Box, Button, Text } from '@chakra-ui/react'
 import { faArrowRightLong } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { scorePadTypeProps } from '../../scoringType'
 
 export type VisitDartSlotCardVariant = 'thrown' | 'selectable' | 'empty' | 'used'
 export type VisitDartSlotCardTone = 'neutral' | 'red' | 'green'
@@ -94,14 +95,7 @@ export const VisitDartSlotCard = ({
   const slotContent = (
     <>
       {showArrow ? <ArrowMark /> : null}
-      <Text
-        mt={showArrow ? 2 : 0}
-        color={labelColor}
-        fontFamily="Archivo Black, sans-serif"
-        fontSize="2xl"
-        lineHeight="1"
-        whiteSpace="pre-line"
-      >
+      <Text mt={showArrow ? 2 : 0} color={labelColor} {...scorePadTypeProps} whiteSpace="pre-line">
         {label ?? '—'}
       </Text>
     </>

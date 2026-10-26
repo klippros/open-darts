@@ -1,5 +1,6 @@
 import { Button, Grid, Stack } from '@chakra-ui/react'
 import { VisitDartSlotCard } from '../Scoreboard/VisitDartSlotCard'
+import { scoringActionTypeProps } from '../../scoringType'
 import { useUiSounds } from '../../hooks/useUiSounds'
 import { getAroundTheClockConfig } from '@open-darts/game/aroundTheClock/aroundTheClockConfig'
 import {
@@ -115,7 +116,7 @@ export const AroundTheClockDartPicker = ({
         }
       />
 
-      <Button variant="cta" disabled={undoDisabled} onClick={onUndo}>
+      <Button variant="cta" {...scoringActionTypeProps} disabled={undoDisabled} onClick={onUndo}>
         Undo last dart
       </Button>
     </Stack>

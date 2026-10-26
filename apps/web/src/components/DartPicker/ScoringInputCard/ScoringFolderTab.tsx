@@ -1,4 +1,5 @@
 import { Button } from '@chakra-ui/react'
+import { scoringDisplayFont } from '../../../scoringType'
 
 export interface ScoringFolderTabProps {
   label: string
@@ -36,8 +37,8 @@ export const ScoringFolderTab = ({
       minW={0}
       px={3}
       mb="-1px"
+      {...scoringDisplayFont}
       fontSize="sm"
-      fontWeight={active ? 'semibold' : 'normal'}
       color={labelColor}
       bg="transparent"
       borderWidth="1px"

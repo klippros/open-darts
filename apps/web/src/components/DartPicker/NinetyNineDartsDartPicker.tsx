@@ -1,5 +1,6 @@
 import { Button, Grid, Stack } from '@chakra-ui/react'
 import { VisitDartSlotCard } from '../Scoreboard/VisitDartSlotCard'
+import { scoringActionTypeProps } from '../../scoringType'
 import { useUiSounds } from '../../hooks/useUiSounds'
 import { buildNinetyNineDartsThrow } from '@open-darts/game/ninetyNineDarts/buildNinetyNineDarts'
 import {
@@ -130,7 +131,7 @@ export const NinetyNineDartsDartPicker = ({
         })}
       </Grid>
 
-      <Button variant="cta" disabled={undoDisabled} onClick={onUndo}>
+      <Button variant="cta" {...scoringActionTypeProps} disabled={undoDisabled} onClick={onUndo}>
         Undo last dart
       </Button>
     </Stack>

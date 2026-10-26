@@ -1,4 +1,5 @@
 import { lightenHex } from '../../lib/color/lightenHex'
+import { DISPLAY_FONT_FAMILY } from '../../scoringType'
 
 export const DARTBOARD_VIEWBOX_SIZE = 400
 export const DARTBOARD_CENTER = DARTBOARD_VIEWBOX_SIZE / 2
@@ -9,7 +10,7 @@ export const DARTBOARD_NUMBER_LABEL_RADIUS =
 export const DARTBOARD_CENTER_RADIUS = 78
 export const DARTBOARD_CORNER_INNER_RADIUS = DARTBOARD_OUTER_RADIUS + 10
 export const DARTBOARD_SEGMENT_ROTATION = -9
-export const DARTBOARD_FONT_FAMILY = 'Archivo Black, sans-serif'
+export const DARTBOARD_FONT_FAMILY = DISPLAY_FONT_FAMILY
 export const DARTBOARD_TEXT_CLASS = 'dartboard-text'
 
 export const DARTBOARD_NUMBERS = [

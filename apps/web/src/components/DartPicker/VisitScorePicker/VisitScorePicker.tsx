@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button, Grid, Input, Stack } from '@chakra-ui/react'
 import { scoreInputButtonHeight } from '../../../layout'
+import { scorePadTypeProps, scoringActionTypeProps } from '../../../scoringType'
 import {
   appendVisitScoreDigit,
   backspaceVisitScoreInput,
@@ -137,8 +138,8 @@ export const VisitScorePicker = ({
         value={value}
         placeholder="Visit score"
         textAlign="center"
-        fontSize="2xl"
-        fontWeight="semibold"
+        {...scorePadTypeProps}
+        _placeholder={{ fontSize: 'lg' }}
         h="14"
         readOnly
         inputMode="numeric"
@@ -152,6 +153,7 @@ export const VisitScorePicker = ({
             key={key}
             variant="cta"
             h={scoreInputButtonHeight}
+            {...scorePadTypeProps}
             disabled={key === 'enter' ? !canSubmit : inputDisabled}
             onClick={() => {
               onPadKey(key)
@@ -163,7 +165,7 @@ export const VisitScorePicker = ({
         ))}
       </Grid>
 
-      <Button variant="cta" disabled={undoDisabled} onClick={onUndo}>
+      <Button variant="cta" {...scoringActionTypeProps} disabled={undoDisabled} onClick={onUndo}>
         Undo
       </Button>
     </Stack>
