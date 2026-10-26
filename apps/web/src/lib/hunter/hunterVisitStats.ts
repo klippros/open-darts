@@ -161,7 +161,7 @@ export const HUNTER_OUTCOME_LABELS: Record<HunterOutcome, string> = {
   [HunterOutcome.Miss]: 'Miss',
   [HunterOutcome.Single]: 'Single',
   [HunterOutcome.Double]: 'Double',
-  [HunterOutcome.Triple]: 'Triple',
+  [HunterOutcome.Triple]: 'Treble',
 }
 
 export const getHunterThrownOutcome = (dart: DartThrow, fieldNumber: number): HunterOutcome =>

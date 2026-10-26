@@ -25,7 +25,7 @@ const OUTCOME_LABELS: Record<NinetyNineDartsOutcome, string> = {
   [NinetyNineDartsOutcome.Miss]: 'Miss',
   [NinetyNineDartsOutcome.Single]: 'Single',
   [NinetyNineDartsOutcome.Double]: 'Double',
-  [NinetyNineDartsOutcome.Triple]: 'Triple',
+  [NinetyNineDartsOutcome.Triple]: 'Treble',
 }
 
 /** Picker outcomes are bottom→top; reverse for visual column (Double at top). */

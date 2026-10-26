@@ -142,7 +142,7 @@ export const getDartPickerHelpContent = (
     return {
       title: 'How to score',
       paragraphs: [
-        'Use the three dart columns left to right. Bottom to top: Miss, Single, Triple, Double (no Triple on bull).',
+        'Use the three dart columns left to right. Bottom to top: Miss, Single, Treble, Double (no Treble on bull).',
         'Enter one outcome per dart in order. Undo removes the last dart.',
       ],
       voice,
@@ -154,7 +154,7 @@ export const getDartPickerHelpContent = (
       title: 'How to score',
       paragraphs: [
         'Aim at your current number. Single advances one field, double two, treble three around the board clockwise.',
-        'Land on or pass your opponent to win. Use the three dart columns: Miss, Single, Triple, Double.',
+        'Land on or pass your opponent to win. Use the three dart columns: Miss, Single, Treble, Double.',
       ],
       voice,
     }
@@ -175,8 +175,8 @@ export const getDartPickerHelpContent = (
     return {
       title: 'How to score',
       paragraphs: [
-        'Keyboard: D/T for double/triple, type the segment number, then Space to confirm. B bull, Tab miss, Backspace undo, Esc clear modifier.',
-        'Tap the board to score. Center arms double/triple; corners are Bull, 25, Undo, and Miss.',
+        'Keyboard: D/T for double/treble, type the segment number, then Space to confirm. B bull, Tab miss, Backspace undo, Esc clear modifier.',
+        'Tap the board to score. Center arms double/treble; corners are Bull, 25, Undo, and Miss.',
         'Use the Visit tab for a quick Failed or Checkout instead of entering each dart.',
       ],
       voice,
@@ -198,8 +198,8 @@ export const getDartPickerHelpContent = (
   return {
     title: 'How to score',
     paragraphs: [
-      'Keyboard: D/T for double/triple, type the segment number, then Space to confirm. B bull, Tab miss, Backspace undo, Esc clear modifier.',
-      'Tap the board to score. Center arms double/triple; corners are Bull, 25, Undo, and Miss.',
+      'Keyboard: D/T for double/treble, type the segment number, then Space to confirm. B bull, Tab miss, Backspace undo, Esc clear modifier.',
+      'Tap the board to score. Center arms double/treble; corners are Bull, 25, Undo, and Miss.',
       'Use the Visit tab to enter a visit total instead.',
     ],
   }

@@ -5,4 +5,5 @@
 - Define React components as **arrow functions** (`export const MyComponent = () => ...`), not `function` declarations.
 - When a component body is only a `return`, use an **implicit return** (`() => (...)`) instead of a block with `return`.
 - Prefer **string enums** over string literal union types for fixed sets of values (game modes, statuses, multipliers, etc.). Reference enum members (`GameModeId.X01`) instead of raw strings so renames and refactors stay safe.
+- In player-facing copy (labels, help, aria text, visible errors), use **treble/trebles** for the ×3 ring — the British darts term. Keep code identifiers and persisted values as **triple** (`DartMultiplier.Triple = 'triple'`, outcome enums, layout zone ids); do not rename those without a data migration.
 - Add **Vitest tests** for game logic in `packages/game/**/*.test.ts` and web-app logic in `apps/web/src/**/*.test.ts`. Each game mode engine must cover scoring, busts, checkouts, turn rules, and edge cases before the stage is considered done.

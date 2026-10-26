@@ -57,7 +57,7 @@ describe('ninetyNineVisitStats', () => {
     expect(getNinetyNineDartsLiveScoreMetrics(live)).toEqual([
       { label: 'Left', value: '95' },
       { label: 'Points', value: '6' },
-      { label: 'Triples', value: '1' },
+      { label: 'Trebles', value: '1' },
       { label: 'Singles', value: '1' },
       { label: 'Doubles', value: '1' },
       { label: 'Hit %', value: '75%' },

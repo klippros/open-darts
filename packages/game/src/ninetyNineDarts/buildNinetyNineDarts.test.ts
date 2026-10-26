@@ -36,7 +36,7 @@ describe('buildNinetyNineDartsThrow', () => {
 
   it('rejects triple on bull', () => {
     expect(() => buildNinetyNineDartsThrow(NinetyNineDartsOutcome.Triple, bull)).toThrow(
-      /Triple is not allowed/u,
+      /Treble is not allowed/u,
     )
   })
 })

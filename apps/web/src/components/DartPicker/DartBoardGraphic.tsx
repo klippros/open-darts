@@ -260,7 +260,7 @@ export const DartBoardGraphic = ({
     <path
       d={describeCenterHalf(1)}
       fill="transparent"
-      aria-label="Triple"
+      aria-label="Treble"
       style={{ cursor: inputDisabled ? 'default' : 'pointer' }}
       onPointerDown={(event) => {
         onCenterPointerDown('triple', event)

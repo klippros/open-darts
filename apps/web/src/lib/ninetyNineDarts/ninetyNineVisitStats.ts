@@ -125,7 +125,7 @@ export const getNinetyNineDartsLiveScoreMetrics = (
   ]
 
   if (!stats.isBull) {
-    metrics.push({ label: 'Triples', value: String(stats.counts.trebles) })
+    metrics.push({ label: 'Trebles', value: String(stats.counts.trebles) })
   }
 
   metrics.push(

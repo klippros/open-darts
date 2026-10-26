@@ -25,11 +25,11 @@ export const buildNinetyNineDartsThrow = (
       return createDartThrow({ type: DartSegmentType.Bull }, DartMultiplier.Single)
     }
 
-    throw new Error('Triple is not allowed on bull')
+    throw new Error('Treble is not allowed on bull')
   }
 
   if (outcome === NinetyNineDartsOutcome.Triple && !isNinetyNineDartsTripleAllowed(target)) {
-    throw new Error('Triple is not allowed for this target')
+    throw new Error('Treble is not allowed for this target')
   }
 
   const multiplier =
