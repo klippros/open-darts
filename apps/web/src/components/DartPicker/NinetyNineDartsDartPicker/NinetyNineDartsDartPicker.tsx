@@ -304,26 +304,36 @@ export const NinetyNineDartsDartPicker = ({
           const isThrown = slotIndex < pendingCount
           const isTapTarget = slotIndex === pendingCount && !inputDisabled && !isSwiping
           const previewOutcome = previewForColumn(slotIndex)
-          const isTipColumn = isSwiping && slotIndex === tipColumn
           const isAvailableColumn = availableColumn === slotIndex
-          const isLiveColumn = isTipColumn || isAvailableColumn
           const thrownDart = pendingDarts[slotIndex]
           const thrownOutcome =
             thrownDart === undefined ? null : getNinetyNineDartsOutcome(thrownDart, target)
+          /** Resolved swipe field — same chrome as a dart already entered for this column. */
+          const selectedOutcome = isThrown ? thrownOutcome : previewOutcome
 
-          if (isThrown) {
+          if (selectedOutcome !== null) {
             return (
               <Stack key={slotIndex} gap={2}>
-                {displayOutcomes.map((outcome) => (
-                  <VisitDartSlotCard
-                    key={outcome}
-                    label={outcome === thrownOutcome ? OUTCOME_LABELS[outcome] : null}
-                    variant={outcome === thrownOutcome ? 'thrown' : 'empty'}
-                    tone={outcome === thrownOutcome ? toneForOutcome(outcome) : 'neutral'}
-                    size={getOutcomeSlotSize(outcome, hasTriple)}
-                    showArrow={false}
-                  />
-                ))}
+                {displayOutcomes.map((outcome) => {
+                  const isSelected = outcome === selectedOutcome
+
+                  return (
+                    <Stack
+                      key={outcome}
+                      data-swipe-column={isThrown ? undefined : slotIndex}
+                      data-swipe-outcome={isThrown ? undefined : outcome}
+                      gap={0}
+                    >
+                      <VisitDartSlotCard
+                        label={isSelected ? OUTCOME_LABELS[outcome] : null}
+                        variant={isSelected ? 'thrown' : 'empty'}
+                        tone={isSelected ? toneForOutcome(outcome) : 'neutral'}
+                        size={getOutcomeSlotSize(outcome, hasTriple)}
+                        showArrow={false}
+                      />
+                    </Stack>
+                  )
+                })}
               </Stack>
             )
           }
@@ -331,8 +341,7 @@ export const NinetyNineDartsDartPicker = ({
           return (
             <Stack key={slotIndex} gap={2}>
               {displayOutcomes.map((outcome) => {
-                const isPreview = previewOutcome === outcome
-                const showActiveChrome = isTapTarget || isLiveColumn || isPreview
+                const showActiveChrome = isTapTarget || isAvailableColumn
 
                 return (
                   <Stack
@@ -347,7 +356,6 @@ export const NinetyNineDartsDartPicker = ({
                       tone={showActiveChrome ? toneForOutcome(outcome) : 'neutral'}
                       size={getOutcomeSlotSize(outcome, hasTriple)}
                       showArrow={false}
-                      preview={isPreview}
                       disabled={!isTapTarget}
                       ariaLabel={`${OUTCOME_LABELS[outcome]} on dart ${slotIndex + 1}`}
                       onClick={
