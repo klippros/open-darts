@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import { DartMultiplier, DartSegmentType } from '../types/dart'
-import { createDartThrow } from '../dartScoring'
 import { HunterOutcome } from '../types/hunter'
 import { buildHunterThrow } from './buildHunterDarts'
 
@@ -10,14 +9,20 @@ describe('buildHunterDarts', () => {
       multiplier: DartMultiplier.Miss,
       points: 0,
     })
-    expect(buildHunterThrow(HunterOutcome.Single, 18)).toEqual(
-      createDartThrow({ type: DartSegmentType.Number, value: 18 }, DartMultiplier.Single),
-    )
-    expect(buildHunterThrow(HunterOutcome.Double, 4)).toEqual(
-      createDartThrow({ type: DartSegmentType.Number, value: 4 }, DartMultiplier.Double),
-    )
-    expect(buildHunterThrow(HunterOutcome.Triple, 13)).toEqual(
-      createDartThrow({ type: DartSegmentType.Number, value: 13 }, DartMultiplier.Triple),
-    )
+    expect(buildHunterThrow(HunterOutcome.Single, 18)).toMatchObject({
+      segment: { type: DartSegmentType.Number, value: 18 },
+      multiplier: DartMultiplier.Single,
+      points: 18,
+    })
+    expect(buildHunterThrow(HunterOutcome.Double, 4)).toMatchObject({
+      segment: { type: DartSegmentType.Number, value: 4 },
+      multiplier: DartMultiplier.Double,
+      points: 8,
+    })
+    expect(buildHunterThrow(HunterOutcome.Triple, 13)).toMatchObject({
+      segment: { type: DartSegmentType.Number, value: 13 },
+      multiplier: DartMultiplier.Triple,
+      points: 39,
+    })
   })
 })
