@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { AppGameController, CreateSessionParams } from '@open-darts/game/game/createSession'
 import { createGameController, restoreGameController } from '@open-darts/game/game/createSession'
+import type { InputFlashLabel } from '../lib/inputFlash/buildInputFlashLabel'
+import { buildInputFlashFromTransition } from '../lib/inputFlash/buildInputFlashLabel'
+import { toInputFlashSnapshot } from '../lib/inputFlash/toInputFlashSnapshot'
 import { shouldCreateFreshControllerOnStartFresh } from '../lib/routing/shouldCreateFreshControllerOnStartFresh'
 import { clearActiveSnapshot } from '../lib/storage/gameStore'
 import { getResumableSnapshot, persistControllerState } from '../lib/storage/visitPersistence'
@@ -15,6 +18,28 @@ export interface UseGameOptions extends ScoreCallerCallbacks {
   startFresh?: boolean
   shouldRestoreOnLoad?: boolean
   autoSaveCompletedSessions?: boolean
+  onInputFlash?: (label: InputFlashLabel) => void
+}
+
+const emitInputFlash = (
+  before: AppGameController,
+  after: AppGameController,
+  onInputFlash: ((label: InputFlashLabel) => void) | undefined,
+  didUndo = false,
+): void => {
+  if (onInputFlash === undefined || after === before) {
+    return
+  }
+
+  const label = buildInputFlashFromTransition(
+    toInputFlashSnapshot(before),
+    toInputFlashSnapshot(after),
+    { didUndo },
+  )
+
+  if (label !== null) {
+    onInputFlash(label)
+  }
 }
 
 const notifyAfterVisitCommit = (
@@ -50,11 +75,15 @@ export const useGame = (launchParams: CreateSessionParams, options: UseGameOptio
     onTurnStarted,
     onLegStarted,
     onUndo,
+    onInputFlash,
   } = options
 
   const { playUndo } = useUiSounds()
   const playUndoRef = useRef(playUndo)
   playUndoRef.current = playUndo
+
+  const onInputFlashRef = useRef(onInputFlash)
+  onInputFlashRef.current = onInputFlash
 
   const scoreCallerCallbacksRef = useRef<ScoreCallerCallbacks>({
     onVisitCommitted,
@@ -140,6 +169,7 @@ export const useGame = (launchParams: CreateSessionParams, options: UseGameOptio
           }
         }
 
+        emitInputFlash(current, next, onInputFlashRef.current)
         persist(next)
         return next
       })
@@ -168,6 +198,7 @@ export const useGame = (launchParams: CreateSessionParams, options: UseGameOptio
           }
         }
 
+        emitInputFlash(current, next, onInputFlashRef.current)
         persist(next)
         return next
       })
@@ -189,6 +220,7 @@ export const useGame = (launchParams: CreateSessionParams, options: UseGameOptio
           }
         }
 
+        emitInputFlash(current, next, onInputFlashRef.current)
         persist(next)
         return next
       })
@@ -206,6 +238,7 @@ export const useGame = (launchParams: CreateSessionParams, options: UseGameOptio
 
       playUndoRef.current()
       onUndo?.(current.session.id)
+      emitInputFlash(current, next, onInputFlashRef.current, true)
 
       persist(next)
       return next
@@ -286,6 +319,12 @@ export const useGame = (launchParams: CreateSessionParams, options: UseGameOptio
             }
           }
 
+          emitInputFlash(
+            scoreCallerBase,
+            result.next,
+            onInputFlashRef.current,
+            result.didUndo === true,
+          )
           persist(result.next)
         }
 

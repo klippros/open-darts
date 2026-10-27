@@ -17,6 +17,7 @@ import { useAuth } from './authContext'
 import { useSetGameChrome } from './gameChromeContext'
 import { useSettings } from './settingsContext'
 import { useGameFromRoute } from './useGameFromRoute'
+import { useInputFlash } from './useInputFlash'
 import { useScoreCallerInitialLeg, useVisitScoreCaller } from './useVisitScoreCaller'
 import { useVoiceRecognition } from './useVoiceRecognition'
 
@@ -28,6 +29,7 @@ export const useGamePage = () => {
   const [abortDialogOpen, setAbortDialogOpen] = useState(false)
   const [visitEntryModeOverride, setVisitEntryModeOverride] = useState<VisitInputMode | null>(null)
   const setGameChrome = useSetGameChrome()
+  const { flash, showFlash } = useInputFlash()
   const mode = useMemo(
     () => parseGameLaunchParams(searchParams, profile?.displayName).mode,
     [searchParams, profile?.displayName],
@@ -36,6 +38,7 @@ export const useGamePage = () => {
   const game = useGameFromRoute({
     autoSaveCompletedSessions: true,
     ...scoreCallerCallbacks,
+    onInputFlash: showFlash,
   })
 
   useScoreCallerInitialLeg(game.controller, game.loadState.kind === 'ready')
@@ -139,5 +142,6 @@ export const useGamePage = () => {
     abortDialogOpen,
     cancelAbortMatch,
     confirmAbortMatch,
+    inputFlash: flash,
   }
 }

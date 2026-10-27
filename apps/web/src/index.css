@@ -53,3 +53,26 @@ body,
 .online-pulse-dot {
   animation: online-pulse 1.6s ease-in-out infinite;
 }
+
+@keyframes input-flash {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 12%) scale(0.82);
+  }
+  12% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+  62% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -8%) scale(1.04);
+  }
+}
+
+.input-flash {
+  animation: input-flash 0.9s ease-out forwards;
+}

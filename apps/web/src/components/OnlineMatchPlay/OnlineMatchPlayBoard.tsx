@@ -14,8 +14,11 @@ import { VisitInputMode } from '@open-darts/game/types/visit'
 import { ContentContainer } from '../ContentContainer'
 import { GameModeDartPicker } from '../DartPicker/GameModeDartPicker'
 import { GameBoardLayout } from '../GameBoardLayout'
+import { InputFlash } from '../InputFlash/InputFlash'
 import { MobileVisitHistory } from '../Scoreboard/MobileVisitHistory'
 import { Scoreboard } from '../Scoreboard/Scoreboard'
+import { buildInputFlashFromTransition } from '../../lib/inputFlash/buildInputFlashLabel'
+import { toInputFlashSnapshot } from '../../lib/inputFlash/toInputFlashSnapshot'
 import {
   getDartPickerHelpContent,
   getGameModePickerTargets,
@@ -66,6 +69,7 @@ import { VoiceIntentKind } from '../../lib/voice/parseVoiceCommand'
 import type { VoiceIntent } from '../../lib/voice/parseVoiceCommand'
 import { useSetGameChrome } from '../../hooks/gameChromeContext'
 import { useSettings } from '../../hooks/settingsContext'
+import { useInputFlash } from '../../hooks/useInputFlash'
 import { useVoiceRecognition } from '../../hooks/useVoiceRecognition'
 import { OnlineMatchAbandonDialog } from './OnlineMatchAbandonDialog'
 import { OnlineMatchAsyncDeadlineBanner } from './OnlineMatchAsyncDeadlineBanner'
@@ -91,6 +95,7 @@ export const OnlineMatchPlayBoard = ({
 }: OnlineMatchPlayBoardProps) => {
   const { singleDartScoring } = useSettings()
   const setGameChrome = useSetGameChrome()
+  const { flash: inputFlash, showFlash } = useInputFlash()
   const isMobile = useBreakpointValue({ base: true, md: false }, { ssr: false }) ?? true
   const [pendingDarts, setPendingDarts] = useState<DartThrow[]>([])
   const [visitEntryModeOverride, setVisitEntryModeOverride] = useState<VisitInputMode | null>(null)
@@ -100,6 +105,21 @@ export const OnlineMatchPlayBoard = ({
   const [abandonOpen, setAbandonOpen] = useState(false)
   const [nowMs, setNowMs] = useState(() => Date.now())
   const [hasFullyUndoneVisitThisTurn, setHasFullyUndoneVisitThisTurn] = useState(false)
+
+  const flashControllerTransition = useCallback(
+    (before: AppGameController, after: AppGameController, didUndo = false) => {
+      const label = buildInputFlashFromTransition(
+        toInputFlashSnapshot(before),
+        toInputFlashSnapshot(after),
+        { didUndo },
+      )
+
+      if (label !== null) {
+        showFlash(label)
+      }
+    },
+    [showFlash],
+  )
 
   const boardController = useMemo(
     () => restoreOnlineController(state, currentUserId, viewerDisplayName, [], opponentDisplayName),
@@ -408,6 +428,7 @@ export const OnlineMatchPlayBoard = ({
       }
 
       const next = controller.recordDart(dart)
+      flashControllerTransition(controller, next)
 
       if (next.session.visits.length > controller.session.visits.length) {
         const committed = next.session.visits[next.session.visits.length - 1]
@@ -419,7 +440,7 @@ export const OnlineMatchPlayBoard = ({
 
       setPendingDarts(next.pendingDarts)
     },
-    [canThrow, commitVisit, controller, correctingVisitIndex],
+    [canThrow, commitVisit, controller, correctingVisitIndex, flashControllerTransition],
   )
 
   const recordDarts = useCallback(
@@ -433,6 +454,7 @@ export const OnlineMatchPlayBoard = ({
       }
 
       const next = controller.recordDarts(darts)
+      flashControllerTransition(controller, next)
 
       if (next.session.visits.length > controller.session.visits.length) {
         const committed = next.session.visits.at(-1)
@@ -444,12 +466,15 @@ export const OnlineMatchPlayBoard = ({
 
       setPendingDarts(next.pendingDarts)
     },
-    [canThrow, commitVisit, controller, correctingVisitIndex],
+    [canThrow, commitVisit, controller, correctingVisitIndex, flashControllerTransition],
   )
 
   const recordVisitScore = useCallback(
     (score: number) => {
       if (correctingVisitIndex !== null) {
+        if (controller !== null) {
+          flashControllerTransition(controller, controller.recordVisitScore(score))
+        }
         sendCommand(buildCorrectVisitScoreCommand(correctingVisitIndex, score))
         setHasFullyUndoneVisitThisTurn(false)
         finishCorrection()
@@ -460,11 +485,22 @@ export const OnlineMatchPlayBoard = ({
         return
       }
 
+      if (controller !== null) {
+        flashControllerTransition(controller, controller.recordVisitScore(score))
+      }
+
       sendCommand({ name: MatchCommandName.RecordVisitScore, score })
       setHasFullyUndoneVisitThisTurn(false)
       setPendingDarts([])
     },
-    [canThrow, correctingVisitIndex, finishCorrection, sendCommand],
+    [
+      canThrow,
+      controller,
+      correctingVisitIndex,
+      finishCorrection,
+      flashControllerTransition,
+      sendCommand,
+    ],
   )
 
   const startCorrection = useCallback((visitIndex: number, seedPending: DartThrow[] = []) => {
@@ -479,6 +515,20 @@ export const OnlineMatchPlayBoard = ({
         // Hit-count modes commit synthetic dart triples; undo the whole visit like local play.
         wholeVisit: state.mode === GameModeId.ClaimTheBoard || state.mode === GameModeId.Bob27,
       })
+
+      if (boardController !== null) {
+        const before = toInputFlashSnapshot(boardController)
+        const after = {
+          ...before,
+          visits: before.visits.filter((visit) => visit.visitIndex !== ownVisit.visitIndex),
+          pendingDarts: remaining,
+        }
+        const label = buildInputFlashFromTransition(before, after, { didUndo: true })
+        if (label !== null) {
+          showFlash(label)
+        }
+      }
+
       sendCommand({ name: MatchCommandName.UndoVisit })
       setPendingDarts(remaining)
       if (options?.limitToOnePerTurn !== false) {
@@ -486,11 +536,22 @@ export const OnlineMatchPlayBoard = ({
         setHasFullyUndoneVisitThisTurn(true)
       }
     },
-    [sendCommand, state.mode],
+    [boardController, sendCommand, showFlash, state.mode],
   )
 
   const undo = useCallback(() => {
     if (pendingDarts.length > 0) {
+      if (controller !== null) {
+        const before = toInputFlashSnapshot(controller)
+        const after = {
+          ...before,
+          pendingDarts: before.pendingDarts.slice(0, -1),
+        }
+        const label = buildInputFlashFromTransition(before, after, { didUndo: true })
+        if (label !== null) {
+          showFlash(label)
+        }
+      }
       setPendingDarts((current) => current.slice(0, -1))
       return
     }
@@ -541,6 +602,7 @@ export const OnlineMatchPlayBoard = ({
   }, [
     boardController,
     canAmendLastVisit,
+    controller,
     correctingVisitIndex,
     correctionStartedEmpty,
     currentUserId,
@@ -550,6 +612,7 @@ export const OnlineMatchPlayBoard = ({
     lastOwnSyncVisit,
     peelLastOwnVisitDart,
     pendingDarts.length,
+    showFlash,
     startCorrection,
     state.mode,
     state.pendingFinalization,
@@ -1024,6 +1087,7 @@ export const OnlineMatchPlayBoard = ({
     return (
       <Flex direction="column" h="100%" minH={0} w="full" maxW={mainContentMaxWidth} mx="auto">
         {dialogs}
+        <InputFlash flash={inputFlash} />
         <Box flexShrink={0} px={6} pt={3} pb={showMobileVisitHistory ? 3 : 4}>
           {statusBanners}
           {scoreboard}
@@ -1062,6 +1126,7 @@ export const OnlineMatchPlayBoard = ({
       className="hide-scrollbar"
     >
       {dialogs}
+      <InputFlash flash={inputFlash} />
       <Flex direction="column" h="100%" minH={0} flex="1" pt={{ base: 3, md: 4 }} pb={10}>
         <GameBoardLayout
           players={boardController.session.players}

@@ -2,6 +2,7 @@ import { Box, Flex, useBreakpointValue } from '@chakra-ui/react'
 import { ContentContainer } from '../components/ContentContainer'
 import { GameModeDartPicker } from '../components/DartPicker/GameModeDartPicker'
 import { GameBoardLayout } from '../components/GameBoardLayout'
+import { InputFlash } from '../components/InputFlash/InputFlash'
 import { MobileVisitHistory } from '../components/Scoreboard/MobileVisitHistory'
 import { Scoreboard } from '../components/Scoreboard/Scoreboard'
 import { useGamePage } from '../hooks/useGamePage'
@@ -27,6 +28,7 @@ export const GamePage = () => {
     pickerTargets,
     visitEntryMode,
     setVisitEntryMode,
+    inputFlash,
   } = useGamePage()
   const isMobile = useBreakpointValue({ base: true, md: false }, { ssr: false }) ?? true
 
@@ -50,6 +52,8 @@ export const GamePage = () => {
       onUndoLastDart={undoDart}
     />
   )
+
+  const flashOverlay = <InputFlash flash={inputFlash} />
 
   const scoreboard = (
     <Scoreboard
@@ -96,6 +100,7 @@ export const GamePage = () => {
     return (
       <Flex direction="column" h="100%" minH={0} w="full" maxW={mainContentMaxWidth} mx="auto">
         {dialogs}
+        {flashOverlay}
         <Box flexShrink={0} px={6} pt={3} pb={showMobileVisitHistory ? 3 : 4}>
           {scoreboard}
         </Box>
@@ -132,6 +137,7 @@ export const GamePage = () => {
       className="hide-scrollbar"
     >
       {dialogs}
+      {flashOverlay}
       <Flex direction="column" h="100%" minH={0} flex="1" pt={{ base: 3, md: 4 }} pb={10}>
         <GameBoardLayout
           players={controller.session.players}

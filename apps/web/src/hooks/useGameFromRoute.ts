@@ -15,7 +15,12 @@ export type GameLoadState =
 
 export type UseGameFromRouteOptions = Pick<
   UseGameOptions,
-  'autoSaveCompletedSessions' | 'onVisitCommitted' | 'onTurnStarted' | 'onLegStarted' | 'onUndo'
+  | 'autoSaveCompletedSessions'
+  | 'onVisitCommitted'
+  | 'onTurnStarted'
+  | 'onLegStarted'
+  | 'onUndo'
+  | 'onInputFlash'
 >
 
 export const useGameFromRoute = (options: UseGameFromRouteOptions = {}) => {
@@ -25,6 +30,7 @@ export const useGameFromRoute = (options: UseGameFromRouteOptions = {}) => {
     onTurnStarted,
     onLegStarted,
     onUndo,
+    onInputFlash,
   } = options
   const navigate = useNavigate()
   const location = useLocation()
@@ -81,6 +87,7 @@ export const useGameFromRoute = (options: UseGameFromRouteOptions = {}) => {
     onTurnStarted,
     onLegStarted,
     onUndo,
+    onInputFlash,
   })
 
   const { shouldShowResumePrompt } = useMemo(
