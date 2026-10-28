@@ -1,4 +1,4 @@
-import { Box, Text } from '@chakra-ui/react'
+import { Box, Stack, Text } from '@chakra-ui/react'
 import { DISPLAY_FONT_FAMILY } from '../../scoringType'
 import type { InputFlashState } from '../../hooks/useInputFlash'
 
@@ -18,14 +18,15 @@ const flashTypeProps = {
   userSelect: 'none',
 } as const
 
-const undoActionLabel = (text: string): string => {
-  const separator = text.indexOf(' ')
+/** Last line sits at the default score position; earlier lines stack above it. */
+const splitFlashLines = (text: string): { prefixes: string[]; action: string } => {
+  const lines = text.split('\n').filter((line) => line.length > 0)
+  const action = lines.at(-1) ?? text
 
-  if (separator < 0) {
-    return text
+  return {
+    prefixes: lines.slice(0, -1),
+    action,
   }
-
-  return text.slice(separator + 1)
 }
 
 export const InputFlash = ({ flash }: InputFlashProps) => {
@@ -33,7 +34,7 @@ export const InputFlash = ({ flash }: InputFlashProps) => {
     return null
   }
 
-  const actionText = flash.kind === 'undo' ? undoActionLabel(flash.text) : flash.text
+  const { prefixes, action } = splitFlashLines(flash.text)
 
   return (
     <Box
@@ -46,19 +47,24 @@ export const InputFlash = ({ flash }: InputFlashProps) => {
       className="input-flash"
     >
       <Box position="relative">
-        {flash.kind === 'undo' ? (
-          <Text
-            {...flashTypeProps}
+        {prefixes.length > 0 ? (
+          <Stack
             position="absolute"
             left="50%"
             bottom="100%"
             mb={1}
             transform="translateX(-50%)"
+            align="center"
+            gap={1}
           >
-            Undo
-          </Text>
+            {prefixes.map((line) => (
+              <Text key={line} {...flashTypeProps}>
+                {line}
+              </Text>
+            ))}
+          </Stack>
         ) : null}
-        <Text {...flashTypeProps}>{actionText}</Text>
+        <Text {...flashTypeProps}>{action}</Text>
       </Box>
     </Box>
   )

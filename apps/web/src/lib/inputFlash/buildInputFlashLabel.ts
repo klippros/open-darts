@@ -37,15 +37,20 @@ export interface InputFlashTransitionSnapshot {
   aroundTheClockTargetIndex?: number
 }
 
-const GAME_SHOT = 'Game Shot'
+const GAME_SHOT = 'Game\nShot'
+const GAME_OVER = 'Game\nOver'
 const BUST = 'Bust'
-const LIFE_LOST = 'Life lost'
+const LIFE_LOST = 'Life\nlost'
 const MISS = 'Miss'
 const FAILED = 'Failed'
 
+/** Modes where checkout means clearing a remaining score in that visit. */
+const isScoreCheckoutMode = (mode: GameModeId): boolean =>
+  mode === GameModeId.X01 || mode === GameModeId.OneTwentyOne || mode === GameModeId.TenUpOneDown
+
 const isMissDart = (dart: DartThrow): boolean => dart.multiplier === DartMultiplier.Miss
 
-const formatUndo = (label: string): string => `Undo ${label}`
+const formatUndo = (label: string): string => `Undo\n${label}`
 
 const readHitCount = (visit: Visit): number | null => {
   const hitCount = visit.metadata?.hitCount
@@ -57,13 +62,27 @@ const readHitCount = (visit: Visit): number | null => {
   return null
 }
 
+const readLivesAfter = (visit: Visit): number | undefined => {
+  const livesAfter = visit.metadata?.livesAfter
+
+  return typeof livesAfter === 'number' && Number.isFinite(livesAfter) ? livesAfter : undefined
+}
+
+const labelForOneTwentyOneRoundFailed = (visit: Visit): string => {
+  if (readLivesAfter(visit) === 0) {
+    return GAME_OVER
+  }
+
+  return LIFE_LOST
+}
+
 const applyVisitOutcomeOverride = (mode: GameModeId, visit: Visit, inputLabel: string): string => {
-  if (visit.checkout) {
+  if (isScoreCheckoutMode(mode) && visit.checkout) {
     return GAME_SHOT
   }
 
   if (mode === GameModeId.OneTwentyOne && isOneTwentyOneRoundFailedVisit(visit)) {
-    return LIFE_LOST
+    return labelForOneTwentyOneRoundFailed(visit)
   }
 
   if (visit.bust) {
@@ -236,12 +255,12 @@ const labelForRemovedDart = (
 }
 
 const labelForRemovedVisit = (mode: GameModeId, visit: Visit): string => {
-  if (visit.checkout) {
+  if (isScoreCheckoutMode(mode) && visit.checkout) {
     return GAME_SHOT
   }
 
   if (mode === GameModeId.OneTwentyOne && isOneTwentyOneRoundFailedVisit(visit)) {
-    return LIFE_LOST
+    return labelForOneTwentyOneRoundFailed(visit)
   }
 
   if (visit.bust) {
@@ -360,6 +379,7 @@ export const buildInputFlashFromTransition = (
 /** Narrow helpers kept for unit tests of outcome label strings. */
 export const inputFlashLabels = {
   gameShot: GAME_SHOT,
+  gameOver: GAME_OVER,
   bust: BUST,
   lifeLost: LIFE_LOST,
   miss: MISS,

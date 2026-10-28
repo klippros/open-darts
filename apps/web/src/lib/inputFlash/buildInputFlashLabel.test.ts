@@ -124,6 +124,25 @@ describe('buildInputFlashFromTransition', () => {
     ).toEqual({ text: '+4', kind: 'input' })
   })
 
+  it("never flashes Game Shot for Bob's 27 finishing bull visit", () => {
+    let controller = createGameController({ mode: GameModeId.Bob27, players: [solo] })
+
+    for (let targetIndex = 0; targetIndex < 20; targetIndex += 1) {
+      controller = controller.recordDarts(buildBob27DartsForHitCount(1, targetIndex))
+    }
+
+    const beforeBull = controller
+    const afterBull = controller.recordDarts(buildBob27DartsForHitCount(1, 20))
+
+    expect(afterBull.session.visits.at(-1)?.checkout).toBe(true)
+    expect(
+      buildInputFlashFromTransition(
+        toInputFlashSnapshot(beforeBull),
+        toInputFlashSnapshot(afterBull),
+      ),
+    ).toEqual({ text: '+50', kind: 'input' })
+  })
+
   it('flashes Claim the Board points or Miss', () => {
     const before = createGameController({
       mode: GameModeId.ClaimTheBoard,
@@ -245,6 +264,31 @@ describe('buildInputFlashFromTransition', () => {
     })
   })
 
+  it('flashes Game Over when 121 loses the last life', () => {
+    let controller = createGameController({
+      mode: GameModeId.OneTwentyOne,
+      players: [solo],
+      config: {
+        startScore: 121,
+        increment: 1,
+        maxVisitsPerTarget: 3,
+        doubleOut: true,
+        startingLives: 1,
+      },
+    })
+    controller = controller.recordVisitScore(0).recordVisitScore(0)
+    const before = controller
+    const after = controller.recordVisitScore(0)
+
+    expect(after.session.visits.at(-1)?.metadata?.livesAfter).toBe(0)
+    expect(
+      buildInputFlashFromTransition(toInputFlashSnapshot(before), toInputFlashSnapshot(after)),
+    ).toEqual({
+      text: inputFlashLabels.gameOver,
+      kind: 'input',
+    })
+  })
+
   it('prefixes Undo for dart and visit undos', () => {
     const withDart = createGameController({ mode: GameModeId.X01, players: [solo] }).recordDart(
       numberDart(20, DartMultiplier.Triple),
@@ -258,7 +302,7 @@ describe('buildInputFlashFromTransition', () => {
           didUndo: true,
         },
       ),
-    ).toEqual({ text: 'Undo T20', kind: 'undo' })
+    ).toEqual({ text: 'Undo\nT20', kind: 'undo' })
 
     const bob = createGameController({ mode: GameModeId.Bob27, players: [solo] }).recordDarts(
       buildBob27DartsForHitCount(1, 0),
@@ -272,7 +316,7 @@ describe('buildInputFlashFromTransition', () => {
           didUndo: true,
         },
       ),
-    ).toEqual({ text: 'Undo +2', kind: 'undo' })
+    ).toEqual({ text: 'Undo\n+2', kind: 'undo' })
 
     const claimMiss = createGameController({
       mode: GameModeId.ClaimTheBoard,
@@ -284,7 +328,7 @@ describe('buildInputFlashFromTransition', () => {
         toInputFlashSnapshot(claimMiss.undoDart()),
         { didUndo: true },
       ),
-    ).toEqual({ text: 'Undo Miss', kind: 'undo' })
+    ).toEqual({ text: 'Undo\nMiss', kind: 'undo' })
   })
 
   it('undos a single 99 Darts dart by its points', () => {
@@ -312,7 +356,7 @@ describe('buildInputFlashFromTransition', () => {
         toInputFlashSnapshot(withTwo.undoDart()),
         { didUndo: true },
       ),
-    ).toEqual({ text: 'Undo +2', kind: 'undo' })
+    ).toEqual({ text: 'Undo\n+2', kind: 'undo' })
   })
 
   it('returns null when nothing changed', () => {
