@@ -7,8 +7,11 @@ import {
   formatChallengeVisitProgressLabel,
   getChallengeLegStatuses,
   getChallengeMaxLegs,
+  getChallengeVisitInProgress,
   getMinVisits,
   getTargetThreeDartAverage,
+  isChallengeVisitProgressOverLimit,
+  isOnChallengeAveragePace,
   parseChallengeLegEndMode,
   parseMaxVisits,
   resolveChallengeLegOutcome,
@@ -69,9 +72,26 @@ describe('challenge', () => {
     expect(countPlayerVisitsInLeg(visits, 1, 'human')).toBe(2)
   })
 
-  it('shows over limit only after exceeding max visits', () => {
-    expect(formatChallengeVisitProgressLabel(5, 5, 82)).toBe('Visit 5 / 5')
-    expect(formatChallengeVisitProgressLabel(6, 5, 82)).toBe('Visit 6 / 5 · over limit')
+  it('counts the visit in progress for the whole visit', () => {
+    expect(getChallengeVisitInProgress(0)).toBe(1)
+    expect(getChallengeVisitInProgress(10)).toBe(11)
+  })
+
+  it('formats visit progress as current over max', () => {
+    expect(formatChallengeVisitProgressLabel(5, 5)).toBe('5/5')
+    expect(formatChallengeVisitProgressLabel(6, 5)).toBe('6/5')
+  })
+
+  it('marks visit progress over limit only with score remaining', () => {
+    expect(isChallengeVisitProgressOverLimit(5, 5, 82)).toBe(false)
+    expect(isChallengeVisitProgressOverLimit(6, 5, 82)).toBe(true)
+    expect(isChallengeVisitProgressOverLimit(6, 5, 0)).toBe(false)
+  })
+
+  it('treats equal averages as on pace', () => {
+    expect(isOnChallengeAveragePace(45, 45.5)).toBe(false)
+    expect(isOnChallengeAveragePace(45.5, 45.5)).toBe(true)
+    expect(isOnChallengeAveragePace(50, 45.5)).toBe(true)
   })
 
   it('resolves challenge leg outcomes for checkout and stop-at-limit', () => {

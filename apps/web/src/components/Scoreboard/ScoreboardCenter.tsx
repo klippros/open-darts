@@ -1,10 +1,7 @@
 import { useMemo } from 'react'
 import { Stack } from '@chakra-ui/react'
 import { sumDartPoints } from '@open-darts/game/dartScoring'
-import {
-  formatAroundTheClockLiveStatsLabel,
-  getAroundTheClockLiveStats,
-} from '../../lib/analytics/aroundTheClockStats'
+import { getAroundTheClockLiveStats } from '../../lib/analytics/aroundTheClockStats'
 import {
   getNinetyNineDartsLiveScoreMetrics,
   getNinetyNineDartsLiveStats,
@@ -15,9 +12,11 @@ import {
   countPlayerVisitsInLeg,
   formatChallengeVisitProgressLabel,
   getChallengeLegStatuses,
+  getChallengeVisitInProgress,
+  getTargetThreeDartAverage,
   isChallengeMode,
+  isChallengeVisitProgressOverLimit,
 } from '@open-darts/game/game/challenge'
-import { formatOneTwentyOneVisitProgressLabel } from '../../lib/oneTwentyOne/formatOneTwentyOneVisitProgress'
 import {
   isAroundTheClockConfig,
   isNinetyNineDartsConfig,
@@ -32,7 +31,10 @@ import type { DartThrow } from '@open-darts/game/types/dart'
 import type { GameConfig, GameModeId as GameModeIdType } from '@open-darts/game/types/gameMode'
 import type { Visit } from '@open-darts/game/types/visit'
 import { NinetyNineDartsScorePanel } from './NinetyNineDartsScorePanel'
+import type { ScoreboardDisplayPlayer } from './PlayerScorePanel'
 import { PlayerScorePanels } from './PlayerScorePanel'
+import type { ChallengeScoreDetails } from './scoreMetrics'
+import { buildAroundTheClockScoreMetrics, buildVisitScoreMetric } from './scoreMetrics'
 import { VisitDartSlots } from './VisitDartSlots'
 import { HunterBoardPanel } from '../HunterBoard/HunterBoardPanel'
 
@@ -48,38 +50,31 @@ export interface ScoreboardCenterProps {
   hideVisitDartSlots?: boolean
 }
 
-const buildChallengeSecondaryLabel = (
+const buildChallengeScoreDetails = (
   visits: Visit[],
   matchProgress: MatchProgress,
   activePlayer: ScoreboardPlayerEntry,
-  pendingDarts: DartThrow[],
-): string | undefined => {
+  startScore: number,
+): ChallengeScoreDetails | undefined => {
   const challenge = matchProgress.challenge
 
   if (challenge === undefined) {
     return undefined
   }
 
-  const currentLeg = matchProgress.currentLeg
-  const committedVisits = countPlayerVisitsInLeg(visits, currentLeg, activePlayer.playerId)
-  const visitsUsed = committedVisits + (pendingDarts.length > 0 ? 1 : 0)
-  const visitLabel = formatChallengeVisitProgressLabel(
-    visitsUsed,
-    challenge.maxVisits,
-    activePlayer.primaryScore,
+  const visitInProgress = getChallengeVisitInProgress(
+    countPlayerVisitsInLeg(visits, matchProgress.currentLeg, activePlayer.playerId),
   )
 
-  return visitLabel
-}
-
-const buildOneTwentyOneSecondaryLabel = (
-  activePlayer: ScoreboardPlayerEntry,
-  maxVisitsPerTarget: number,
-  pendingDarts: DartThrow[],
-): string => {
-  const visitsUsed = (activePlayer.visitsOnTarget ?? 0) + (pendingDarts.length > 0 ? 1 : 0)
-
-  return formatOneTwentyOneVisitProgressLabel(visitsUsed, maxVisitsPerTarget)
+  return {
+    visitLabel: formatChallengeVisitProgressLabel(visitInProgress, challenge.maxVisits),
+    visitOverLimit: isChallengeVisitProgressOverLimit(
+      visitInProgress,
+      challenge.maxVisits,
+      activePlayer.primaryScore,
+    ),
+    targetAverage: getTargetThreeDartAverage(startScore, challenge.maxVisits),
+  }
 }
 
 export const ScoreboardCenter = ({
@@ -124,43 +119,31 @@ export const ScoreboardCenter = ({
     return getChallengeLegStatuses(visits, activePlayer.playerId, matchProgress)
   }, [activePlayer, matchProgress, visits])
 
-  const playersForDisplay = useMemo(() => {
+  const challengeScoreDetails = useMemo(() => {
     if (
-      mode === GameModeId.X01 &&
-      isX01Config(mode, config) &&
-      isChallengeMode(matchProgress) &&
-      activePlayer !== undefined &&
-      matchProgress !== undefined
+      mode !== GameModeId.X01 ||
+      !isX01Config(mode, config) ||
+      !isChallengeMode(matchProgress) ||
+      activePlayer === undefined ||
+      matchProgress === undefined
     ) {
-      const challengeLabel = buildChallengeSecondaryLabel(
-        visits,
-        matchProgress,
-        activePlayer,
-        pendingDarts,
-      )
-
-      return players.map((player) =>
-        player.playerId === activePlayer.playerId && challengeLabel !== undefined
-          ? { ...player, secondaryLabel: challengeLabel }
-          : player,
-      )
+      return undefined
     }
 
+    return buildChallengeScoreDetails(visits, matchProgress, activePlayer, config.startScore)
+  }, [activePlayer, config, matchProgress, mode, visits])
+
+  const playersForDisplay = useMemo((): ScoreboardDisplayPlayer[] => {
     if (
       mode === GameModeId.OneTwentyOne &&
       isOneTwentyOneConfig(mode, config) &&
       activePlayer !== undefined
     ) {
-      const visitLabel = buildOneTwentyOneSecondaryLabel(
-        activePlayer,
-        config.maxVisitsPerTarget,
-        pendingDarts,
-      )
+      const visitsUsed = (activePlayer.visitsOnTarget ?? 0) + (pendingDarts.length > 0 ? 1 : 0)
+      const secondaryMetrics = buildVisitScoreMetric(visitsUsed, config.maxVisitsPerTarget)
 
       return players.map((player) =>
-        player.playerId === activePlayer.playerId
-          ? { ...player, secondaryLabel: visitLabel }
-          : player,
+        player.playerId === activePlayer.playerId ? { ...player, secondaryMetrics } : player,
       )
     }
 
@@ -184,10 +167,10 @@ export const ScoreboardCenter = ({
       return {
         ...player,
         primaryDisplay: String(liveStats.dartsThrown),
-        secondaryLabel: formatAroundTheClockLiveStatsLabel(liveStats),
+        secondaryMetrics: buildAroundTheClockScoreMetrics(liveStats),
       }
     })
-  }, [activePlayer, config, matchProgress, mode, pendingDarts, players, visits])
+  }, [activePlayer, config, mode, pendingDarts, players, visits])
 
   const ninetyNineDartsMetrics = useMemo(() => {
     if (
@@ -220,6 +203,7 @@ export const ScoreboardCenter = ({
           legsToWin={matchProgress?.legsToWin}
           legWins={matchProgress?.legWins}
           challengeLegStatuses={challengeLegStatuses}
+          challengeScoreDetails={challengeScoreDetails}
           legStartingPlayerIndex={legStartingPlayerIndex}
           checkoutRules={checkoutRules}
         />

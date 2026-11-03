@@ -123,17 +123,19 @@ export const createChallengeConfig = (
 export const isOverVisitLimit = (visitsUsed: number, maxVisits: number): boolean =>
   visitsUsed > maxVisits
 
-export const formatChallengeVisitProgressLabel = (
+export const getChallengeVisitInProgress = (committedVisits: number): number => committedVisits + 1
+
+export const formatChallengeVisitProgressLabel = (visitsUsed: number, maxVisits: number): string =>
+  `${visitsUsed}/${maxVisits}`
+
+export const isOnChallengeAveragePace = (legAverage: number, targetAverage: number): boolean =>
+  legAverage >= targetAverage
+
+export const isChallengeVisitProgressOverLimit = (
   visitsUsed: number,
   maxVisits: number,
   remaining: number,
-): string => {
-  if (remaining > 0 && isOverVisitLimit(visitsUsed, maxVisits)) {
-    return `Visit ${visitsUsed} / ${maxVisits} · over limit`
-  }
-
-  return `Visit ${visitsUsed} / ${maxVisits}`
-}
+): boolean => remaining > 0 && isOverVisitLimit(visitsUsed, maxVisits)
 
 export const getChallengeMaxLegs = (legsToWin: number): number => legsToWin * 2 - 1
 

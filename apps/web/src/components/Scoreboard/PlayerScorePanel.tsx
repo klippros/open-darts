@@ -7,8 +7,15 @@ import { LegStarterIcon } from '../LegStarterIcon/LegStarterIcon'
 import { ChallengeLegDots } from './ChallengeLegDots'
 import { LegWinDots } from './LegWinDots'
 import { OneTwentyOneLives } from './OneTwentyOneLives'
+import { ScoreMetricRow } from './ScoreMetricRow'
+import type { ChallengeScoreDetails, ScoreMetric } from './scoreMetrics'
+import { buildAverageScoreMetrics, scoreMetricsFromSecondaryLabel } from './scoreMetrics'
 
 export type PlayerScorePanelAlign = 'left' | 'right' | 'solo'
+
+export type ScoreboardDisplayPlayer = ScoreboardPlayerEntry & {
+  secondaryMetrics?: ScoreMetric[]
+}
 
 const getPanelAlign = (isSolo: boolean, index: number): PlayerScorePanelAlign => {
   if (isSolo) {
@@ -19,7 +26,7 @@ const getPanelAlign = (isSolo: boolean, index: number): PlayerScorePanelAlign =>
 }
 
 export interface PlayerScorePanelProps {
-  player: ScoreboardPlayerEntry
+  player: ScoreboardDisplayPlayer
   legAverage: number | null
   matchAverage: number | null
   currentLeg?: number
@@ -28,26 +35,44 @@ export interface PlayerScorePanelProps {
   legsToWin?: number
   legsWon?: number
   challengeLegStatuses?: ChallengeLegStatus[]
+  challengeScoreDetails?: ChallengeScoreDetails
   isLegStarter?: boolean
   checkoutRules?: CheckoutRules | null
 }
 
-const formatLegAverage = (average: number | null): string =>
-  average === null ? '∅ —' : `∅ ${average.toFixed(1)}`
-
-const formatMatchAverage = (average: number | null): string =>
-  average === null ? '—' : average.toFixed(1)
-
-const formatAveragesDisplay = (
-  legAverage: number | null,
-  matchAverage: number | null,
-  currentLeg?: number,
-): string => {
-  if (currentLeg === undefined || currentLeg < 2) {
-    return formatLegAverage(legAverage)
+const resolveScoreMetrics = ({
+  player,
+  legAverage,
+  matchAverage,
+  currentLeg,
+  challengeScoreDetails,
+}: Pick<
+  PlayerScorePanelProps,
+  'player' | 'legAverage' | 'matchAverage' | 'currentLeg' | 'challengeScoreDetails'
+>): ScoreMetric[] | undefined => {
+  if (player.secondaryMetrics !== undefined) {
+    return player.secondaryMetrics
   }
 
-  return `${formatLegAverage(legAverage)} / ${formatMatchAverage(matchAverage)}`
+  if (player.secondaryLabel !== undefined) {
+    return scoreMetricsFromSecondaryLabel(player.secondaryLabel)
+  }
+
+  if (
+    challengeScoreDetails !== undefined ||
+    legAverage !== null ||
+    matchAverage !== null ||
+    currentLeg !== undefined
+  ) {
+    return buildAverageScoreMetrics({
+      legAverage,
+      matchAverage,
+      currentLeg,
+      challengeScoreDetails,
+    })
+  }
+
+  return undefined
 }
 
 const PlayerNameWithLegStarter = ({
@@ -171,11 +196,19 @@ export const PlayerScorePanel = ({
   legsToWin,
   legsWon,
   challengeLegStatuses,
+  challengeScoreDetails,
   isLegStarter = false,
   checkoutRules = null,
 }: PlayerScorePanelProps) => {
   const checkoutPathLabel =
     checkoutRules === null ? null : getCheckoutPathLabel(player.primaryScore, checkoutRules)
+  const scoreMetrics = resolveScoreMetrics({
+    player,
+    legAverage,
+    matchAverage,
+    currentLeg,
+    challengeScoreDetails,
+  })
 
   return (
     <Box
@@ -204,9 +237,9 @@ export const PlayerScorePanel = ({
       >
         {player.primaryDisplay ?? player.primaryScore}
       </Heading>
-      <Text mt={2} fontSize="sm" color="whiteAlpha.600" textAlign="center">
-        {player.secondaryLabel ?? formatAveragesDisplay(legAverage, matchAverage, currentLeg)}
-      </Text>
+      {scoreMetrics !== undefined && scoreMetrics.length > 0 && (
+        <ScoreMetricRow metrics={scoreMetrics} />
+      )}
       {checkoutPathLabel !== null && (
         <Text
           mt={2}
@@ -225,13 +258,14 @@ export const PlayerScorePanel = ({
 }
 
 export interface PlayerScorePanelsProps {
-  players: ScoreboardPlayerEntry[]
+  players: ScoreboardDisplayPlayer[]
   legAndMatchAverages: Record<string, { leg: number | null; match: number | null }>
   currentLeg?: number
   legsToWin?: number
   legWins?: Record<string, number>
   legLosses?: number
   challengeLegStatuses?: ChallengeLegStatus[]
+  challengeScoreDetails?: ChallengeScoreDetails
   legStartingPlayerIndex?: number
   checkoutRules?: CheckoutRules | null
 }
@@ -243,6 +277,7 @@ export const PlayerScorePanels = ({
   legsToWin,
   legWins,
   challengeLegStatuses,
+  challengeScoreDetails,
   legStartingPlayerIndex,
   checkoutRules = null,
 }: PlayerScorePanelsProps) => {
@@ -267,6 +302,7 @@ export const PlayerScorePanels = ({
             legsToWin={showLegDots ? legsToWin : undefined}
             legsWon={showLegDots ? (legWins[player.playerId] ?? 0) : undefined}
             challengeLegStatuses={challengeLegStatuses}
+            challengeScoreDetails={challengeScoreDetails}
             isLegStarter={!isSolo && legStartingPlayerIndex === index}
             checkoutRules={checkoutRules}
           />
