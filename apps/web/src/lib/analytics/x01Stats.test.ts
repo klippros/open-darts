@@ -441,4 +441,83 @@ describe('x01Stats', () => {
     expect(stats.fiveOhOne.doubleCheckout).toEqual({ attempts: 1, successes: 1 })
     expect(stats.fiveOhOne.doubleCheckoutUnavailable).toBe(false)
   })
+
+  it('limits every stat to legs that were checked out', () => {
+    const sessions = [
+      sampleSession({
+        id: 'checked-out',
+        visits: [
+          sampleVisit({ visitScore: 100, scoreBefore: 501, scoreAfter: 401 }),
+          sampleVisit({
+            visitIndex: 1,
+            checkout: true,
+            visitScore: 40,
+            scoreBefore: 40,
+            scoreAfter: 0,
+            darts: [numberDart(20, DartMultiplier.Double)],
+          }),
+        ],
+      }),
+      sampleSession({
+        id: 'abandoned',
+        startedAt: '2026-03-01T10:00:00.000Z',
+        visits: [
+          sampleVisit({
+            visitScore: 180,
+            scoreBefore: 501,
+            scoreAfter: 321,
+            darts: [
+              numberDart(20, DartMultiplier.Triple),
+              numberDart(20, DartMultiplier.Triple),
+              numberDart(20, DartMultiplier.Triple),
+            ],
+          }),
+          sampleVisit({
+            visitIndex: 1,
+            visitScore: 16,
+            scoreBefore: 32,
+            scoreAfter: 16,
+            darts: [numberDart(16, DartMultiplier.Single)],
+          }),
+        ],
+      }),
+      sampleSession({
+        id: '301-checkout',
+        config: { startScore: 301, doubleIn: false, doubleOut: true },
+        visits: [
+          sampleVisit({
+            checkout: true,
+            visitScore: 40,
+            scoreBefore: 40,
+            scoreAfter: 0,
+            darts: [numberDart(20, DartMultiplier.Double)],
+          }),
+        ],
+      }),
+    ]
+
+    const filtered = computeX01Stats(sessions, { checkedOutOnly: true })
+
+    expect(filtered.fiveOhOne.legCount).toBe(1)
+    expect(filtered.fiveOhOne.checkoutLegCount).toBe(1)
+    expect(filtered.fiveOhOne.threeDartAverage).toBe(70)
+    expect(filtered.fiveOhOne.bestLegAverage).toBe(70)
+    expect(filtered.fiveOhOne.thrown180).toBe(0)
+    expect(filtered.fiveOhOne.highestVisit).toBe(100)
+    expect(filtered.fiveOhOne.highestCheckout).toBe(40)
+    expect(filtered.fiveOhOne.avgDarts).toBe(2)
+    expect(filtered.fiveOhOne.doubleCheckout).toEqual({ attempts: 1, successes: 1 })
+    expect(filtered.fiveOhOne.lastPlayedAt).toBe('2026-01-01T10:00:00.000Z')
+    expect(filtered.threeOhOne.legCount).toBe(1)
+    expect(filtered.threeOhOne.threeDartAverage).toBe(40)
+    expect(filtered.all.legCount).toBe(2)
+
+    const unfiltered = computeX01Stats(sessions)
+
+    expect(unfiltered.fiveOhOne.legCount).toBe(2)
+    expect(unfiltered.fiveOhOne.thrown180).toBe(1)
+    expect(unfiltered.fiveOhOne.highestVisit).toBe(180)
+    expect(unfiltered.fiveOhOne.doubleCheckout).toEqual({ attempts: 2, successes: 1 })
+    expect(unfiltered.all.legCount).toBe(3)
+  })
 })

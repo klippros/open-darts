@@ -180,6 +180,57 @@ describe('statTimelines', () => {
     expect(timeline.points[1]?.sessionLabel).toBe('501 · Leg 2')
   })
 
+  it('omits legs that were not checked out', () => {
+    const timeline = buildStatTimeline(
+      [
+        sampleSession({
+          id: 'best-of-three',
+          completedAt: '2026-01-03T10:00:00.000Z',
+          visits: [
+            sampleVisit({
+              visitScore: 100,
+              scoreBefore: 501,
+              scoreAfter: 401,
+              legIndex: 1,
+            }),
+            sampleVisit({
+              visitIndex: 1,
+              checkout: true,
+              visitScore: 100,
+              scoreBefore: 100,
+              scoreAfter: 0,
+              legIndex: 1,
+            }),
+            sampleVisit({
+              visitIndex: 2,
+              visitScore: 40,
+              scoreBefore: 501,
+              scoreAfter: 461,
+              legIndex: 2,
+            }),
+          ],
+        }),
+        sampleSession({
+          id: 'abandoned',
+          completedAt: '2026-01-01T10:00:00.000Z',
+          visits: [sampleVisit({ visitScore: 180, scoreBefore: 501, scoreAfter: 321 })],
+        }),
+      ],
+      {
+        scope: { type: 'x01-501' },
+        metric: 'threeDartAverage',
+        metricLabel: '3-dart average',
+        scopeLabel: '501 · checked out',
+        checkedOutOnly: true,
+      },
+    )
+
+    expect(timeline.points).toHaveLength(1)
+    expect(timeline.points[0]?.sessionId).toBe('best-of-three:leg:1')
+    expect(timeline.points[0]?.value).toBe(100)
+    expect(timeline.points[0]?.sessionLabel).toBe('501 · Leg 1')
+  })
+
   it('builds bob27 doubles-per-game timeline points', () => {
     const timeline = buildStatTimeline(
       [

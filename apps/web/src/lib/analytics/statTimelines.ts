@@ -88,6 +88,7 @@ export interface StatTimelineSelection {
   metric: StatMetricId
   metricLabel: string
   scopeLabel: string
+  checkedOutOnly?: boolean
 }
 
 export type StatTimelineFormat = 'average' | 'percent' | 'wholePercent' | 'integer' | 'count'
@@ -429,11 +430,15 @@ const isX01TimelineScope = (scope: StatTimelineScope): boolean =>
 const buildX01TimelinePoints = (
   sessions: GameSession[],
   metric: StatMetricId,
+  checkedOutOnly: boolean,
 ): StatTimelinePoint[] => {
   const points = sessions.flatMap((session) => {
     const legs = expandX01SessionLegs(session)
+    const includedLegs = checkedOutOnly
+      ? legs.filter((slice) => legFinishedWithCheckout(slice.visits))
+      : legs
 
-    return legs.map((slice) => ({
+    return includedLegs.map((slice) => ({
       sessionId: getX01LegSlicePointId(slice),
       completedAt: getSessionCompletedAt(session),
       sessionLabel: getX01LegSessionLabel(slice, legs.length),
@@ -495,7 +500,11 @@ export const buildStatTimeline = (
       scopeLabel: selection.scopeLabel,
       format: getStatTimelineFormat(selection.metric),
       pointUnitLabel: 'leg',
-      points: buildX01TimelinePoints(scopedSessions, selection.metric),
+      points: buildX01TimelinePoints(
+        scopedSessions,
+        selection.metric,
+        selection.checkedOutOnly === true,
+      ),
     }
   }
 

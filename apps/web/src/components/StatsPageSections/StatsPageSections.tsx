@@ -1,5 +1,6 @@
-import { Stack, Text } from '@chakra-ui/react'
-import { useState } from 'react'
+import { Stack, Switch, Text } from '@chakra-ui/react'
+import { useMemo, useState } from 'react'
+import type { GameSession } from '@open-darts/game/types/gameSession'
 import type {
   CheckoutPracticeStats,
   OtherPracticeStats,
@@ -19,7 +20,7 @@ import {
   isClaimTheBoardPracticeStats,
   isNinetyNineDartsPracticeStats,
 } from '../../lib/analytics/practiceStats'
-import { X01StatsFilterId } from '../../lib/analytics/x01Stats'
+import { computeX01Stats, X01StatsFilterId } from '../../lib/analytics/x01Stats'
 import { StatsTable } from '../StatsTable/StatsTable'
 import {
   AroundTheClockPracticeCard,
@@ -93,6 +94,7 @@ interface X01Variant {
   id: X01StatsFilterId
   label: string
   emptyMessage: string
+  checkedOutEmptyMessage: string
   stats: X01LegStats
   scope: StatTimelineSelection['scope']
 }
@@ -102,6 +104,7 @@ const buildX01Variants = (x01: X01Stats): X01Variant[] => [
     id: X01StatsFilterId.FiveOhOne,
     label: '501',
     emptyMessage: 'No saved 501 games in this period yet.',
+    checkedOutEmptyMessage: 'No checked out 501 legs in this period yet.',
     stats: x01.fiveOhOne,
     scope: { type: 'x01-501' },
   },
@@ -109,6 +112,7 @@ const buildX01Variants = (x01: X01Stats): X01Variant[] => [
     id: X01StatsFilterId.FourOhOne,
     label: '401',
     emptyMessage: 'No saved 401 games in this period yet.',
+    checkedOutEmptyMessage: 'No checked out 401 legs in this period yet.',
     stats: x01.fourOhOne,
     scope: { type: 'x01-401' },
   },
@@ -116,6 +120,7 @@ const buildX01Variants = (x01: X01Stats): X01Variant[] => [
     id: X01StatsFilterId.ThreeOhOne,
     label: '301',
     emptyMessage: 'No saved 301 games in this period yet.',
+    checkedOutEmptyMessage: 'No checked out 301 legs in this period yet.',
     stats: x01.threeOhOne,
     scope: { type: 'x01-301' },
   },
@@ -123,6 +128,7 @@ const buildX01Variants = (x01: X01Stats): X01Variant[] => [
     id: X01StatsFilterId.All,
     label: 'All',
     emptyMessage: 'No saved x01 games in this period yet.',
+    checkedOutEmptyMessage: 'No checked out x01 legs in this period yet.',
     stats: x01.all,
     scope: { type: 'x01-all' },
   },
@@ -144,13 +150,19 @@ const parseX01StatsFilterId = (value: string): X01StatsFilterId | null => {
 }
 
 export interface X01LegSectionProps {
-  x01: X01Stats
+  sessions: GameSession[]
   onStatSelect: StatTimelineSelectHandler
 }
 
-export const X01LegSection = ({ x01, onStatSelect }: X01LegSectionProps) => {
-  const variants = buildX01Variants(x01)
+export const X01LegSection = ({ sessions, onStatSelect }: X01LegSectionProps) => {
+  const [checkedOutOnly, setCheckedOutOnly] = useState(false)
   const [selectedKey, setSelectedKey] = useState(X01StatsFilterId.FiveOhOne)
+  const allX01 = useMemo(() => computeX01Stats(sessions), [sessions])
+  const x01 = useMemo(
+    () => (checkedOutOnly ? computeX01Stats(sessions, { checkedOutOnly: true }) : allX01),
+    [allX01, checkedOutOnly, sessions],
+  )
+  const variants = buildX01Variants(x01)
   const selected =
     variants.find((variant) => variant.id === selectedKey) ??
     variants.find((variant) => variant.id === X01StatsFilterId.FiveOhOne)
@@ -159,7 +171,7 @@ export const X01LegSection = ({ x01, onStatSelect }: X01LegSectionProps) => {
     return null
   }
 
-  const { stats, scope, label, emptyMessage } = selected
+  const { stats, scope, label, emptyMessage, checkedOutEmptyMessage } = selected
   const trailing = (
     <StatsVariantToggle
       items={variants.map((variant) => ({
@@ -178,40 +190,59 @@ export const X01LegSection = ({ x01, onStatSelect }: X01LegSectionProps) => {
       countUnit="Leg"
     />
   )
-
-  if (stats.legCount === 0) {
-    return (
-      <PracticeModeCard title="x01" trailing={trailing}>
-        <Text color="whiteAlpha.700" fontSize="sm" lineHeight="1.55">
-          {emptyMessage}
-        </Text>
-      </PracticeModeCard>
-    )
-  }
-
   const playerStats = x01LegStatsToPlayerMatchStats(stats)
   const statsByPlayer = { [STATS_PAGE_PLAYER_ID]: playerStats }
   const rows = getVisibleStatsPageRows(statsByPlayer, [STATS_PAGE_PLAYER_ID])
 
   return (
     <PracticeModeCard title="x01" trailing={trailing}>
-      <StatsTable
-        players={[{ id: STATS_PAGE_PLAYER_ID, name: '' }]}
-        statsByPlayer={statsByPlayer}
-        rows={rows}
-        formatCell={(row) => formatStatsPageRowValue(row.id, stats)}
-        isRowClickable={(rowId) => rowId in timelineRowConfig}
-        onRowClick={(rowId) => {
-          const config = timelineRowConfig[rowId]
+      {allX01.all.legCount > 0 && (
+        <Switch.Root
+          size="sm"
+          checked={checkedOutOnly}
+          colorPalette="orange"
+          display="flex"
+          alignItems="center"
+          justifyContent="flex-end"
+          gap={3}
+          w="full"
+          onCheckedChange={(details) => {
+            setCheckedOutOnly(details.checked)
+          }}
+        >
+          <Switch.Label fontSize="sm" color="whiteAlpha.800" fontWeight="normal">
+            Only checked out
+          </Switch.Label>
+          <Switch.HiddenInput />
+          <Switch.Control>
+            <Switch.Thumb />
+          </Switch.Control>
+        </Switch.Root>
+      )}
+      {stats.legCount === 0 ? (
+        <Text color="whiteAlpha.700" fontSize="sm" lineHeight="1.55">
+          {checkedOutOnly ? checkedOutEmptyMessage : emptyMessage}
+        </Text>
+      ) : (
+        <StatsTable
+          players={[{ id: STATS_PAGE_PLAYER_ID, name: '' }]}
+          statsByPlayer={statsByPlayer}
+          rows={rows}
+          formatCell={(row) => formatStatsPageRowValue(row.id, stats)}
+          isRowClickable={(rowId) => rowId in timelineRowConfig}
+          onRowClick={(rowId) => {
+            const config = timelineRowConfig[rowId]
 
-          onStatSelect({
-            scope,
-            metric: config.metric,
-            metricLabel: config.metricLabel,
-            scopeLabel: label,
-          })
-        }}
-      />
+            onStatSelect({
+              scope,
+              metric: config.metric,
+              metricLabel: config.metricLabel,
+              scopeLabel: checkedOutOnly ? `${label} · checked out` : label,
+              checkedOutOnly,
+            })
+          }}
+        />
+      )}
     </PracticeModeCard>
   )
 }

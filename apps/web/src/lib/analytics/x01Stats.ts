@@ -37,6 +37,10 @@ export enum X01StatsFilterId {
   All = 'all',
 }
 
+export interface X01StatsOptions {
+  checkedOutOnly?: boolean
+}
+
 export interface X01LegStats {
   legCount: number
   checkoutLegCount: number
@@ -85,8 +89,15 @@ const emptyLegStats = (): X01LegStats => ({
 const isDoubleOutLeg = (leg: { session: GameSession }): boolean =>
   isX01Config(leg.session.mode, leg.session.config) && leg.session.config.doubleOut
 
-const computeX01LegStats = (sessions: GameSession[]): X01LegStats => {
-  const legs = expandX01SessionsLegs(sessions)
+const computeX01LegStats = (
+  sessions: GameSession[],
+  options: X01StatsOptions = {},
+): X01LegStats => {
+  const expandedLegs = expandX01SessionsLegs(sessions)
+  const legs =
+    options.checkedOutOnly === true
+      ? expandedLegs.filter((leg) => legFinishedWithCheckout(leg.visits))
+      : expandedLegs
 
   if (legs.length === 0) {
     return emptyLegStats()
@@ -141,13 +152,20 @@ const computeX01LegStats = (sessions: GameSession[]): X01LegStats => {
     checkouts100Plus: countCheckouts100Plus(allVisits),
     highestCheckout: getHighestCheckout(allVisits),
     highestVisit: getHighestVisit(allVisits),
-    lastPlayedAt: getLatestSessionStartedAt(sessions),
+    lastPlayedAt: getLatestSessionStartedAt(
+      options.checkedOutOnly === true
+        ? [...new Map(legs.map((leg) => [leg.session.id, leg.session])).values()]
+        : sessions,
+    ),
   }
 }
 
-export const computeX01Stats = (sessions: GameSession[]): X01Stats => ({
-  fiveOhOne: computeX01LegStats(filterFiveOhOneSessions(sessions)),
-  fourOhOne: computeX01LegStats(filterFourOhOneSessions(sessions)),
-  threeOhOne: computeX01LegStats(filterThreeOhOneSessions(sessions)),
-  all: computeX01LegStats(filterAllX01Sessions(sessions)),
+export const computeX01Stats = (
+  sessions: GameSession[],
+  options: X01StatsOptions = {},
+): X01Stats => ({
+  fiveOhOne: computeX01LegStats(filterFiveOhOneSessions(sessions), options),
+  fourOhOne: computeX01LegStats(filterFourOhOneSessions(sessions), options),
+  threeOhOne: computeX01LegStats(filterThreeOhOneSessions(sessions), options),
+  all: computeX01LegStats(filterAllX01Sessions(sessions), options),
 })

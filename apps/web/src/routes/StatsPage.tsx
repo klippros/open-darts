@@ -202,7 +202,7 @@ export const StatsPage = () => {
           {hasAnyData ? (
             <>
               <TotalDartsHero sessions={filteredSessions} />
-              <X01LegSection x01={analytics.x01} onStatSelect={handleStatSelect} />
+              <X01LegSection sessions={filteredSessions} onStatSelect={handleStatSelect} />
               <PracticeSection
                 checkout={analytics.practice.checkout}
                 other={analytics.practice.other}
