@@ -8,6 +8,7 @@ import {
   computeLegPlayerStats,
   computeMatchPlayerStats,
   computePlayerStatsForVisits,
+  getLiveMatchDoubleCheckoutByPlayer,
 } from './matchPlayerStats'
 import { getPlayedLegNumbers } from '@open-darts/game/game/matchLegs'
 
@@ -294,5 +295,47 @@ describe('matchPlayerStats', () => {
         visit({ visitIndex: 2, legIndex: 1 }),
       ]),
     ).toEqual([1, 2])
+  })
+
+  it('counts live match checkout attempts across legs for each player', () => {
+    const checkoutByPlayer = getLiveMatchDoubleCheckoutByPlayer(
+      [{ id: 'player-1' }, { id: 'player-2' }],
+      [
+        visit({
+          playerId: 'player-1',
+          legIndex: 1,
+          scoreBefore: 32,
+          darts: [numberDart(16, DartMultiplier.Single)],
+          visitScore: 16,
+          scoreAfter: 16,
+        }),
+        visit({
+          playerId: 'player-2',
+          visitIndex: 1,
+          legIndex: 1,
+          scoreBefore: 40,
+          darts: [numberDart(20, DartMultiplier.Double)],
+          visitScore: 40,
+          scoreAfter: 0,
+          checkout: true,
+        }),
+        visit({
+          playerId: 'player-1',
+          visitIndex: 2,
+          legIndex: 2,
+          scoreBefore: 32,
+          darts: [numberDart(16, DartMultiplier.Double)],
+          visitScore: 32,
+          scoreAfter: 0,
+          checkout: true,
+        }),
+      ],
+      { doubleIn: false, doubleOut: true },
+    )
+
+    expect(checkoutByPlayer).toEqual({
+      'player-1': { attempts: 2, successes: 1 },
+      'player-2': { attempts: 1, successes: 1 },
+    })
   })
 })

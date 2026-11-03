@@ -9,6 +9,7 @@ import type {
 import type { StatTimelineSelection } from '../../lib/analytics/statTimelines'
 import {
   formatAverage,
+  formatCheckoutPercent,
   formatCount,
   formatInteger,
   formatPercent,
@@ -46,7 +47,7 @@ export const CheckoutPracticeCard = ({
       <SimpleGrid columns={{ base: 1, sm: 2 }} gap={3}>
         <StatCard
           label="Checkout rate"
-          value={formatPercent(stats.checkoutRate)}
+          value={formatCheckoutPercent(stats.checkoutRate)}
           onClick={() => {
             onStatSelect({
               scope,

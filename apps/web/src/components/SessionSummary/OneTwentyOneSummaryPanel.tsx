@@ -1,5 +1,9 @@
 import { SimpleGrid } from '@chakra-ui/react'
-import { formatAverage, formatInteger, formatPercent } from '../../lib/analytics/formatAnalytics'
+import {
+  formatAverage,
+  formatCheckoutPercent,
+  formatInteger,
+} from '../../lib/analytics/formatAnalytics'
 import { computeOneTwentyOneSingleSessionStats } from '../../lib/oneTwentyOne/oneTwentyOneVisitStats'
 import type { GameSession } from '@open-darts/game/types/gameSession'
 import { StatCard } from '../StatsPageSections/StatCard'
@@ -24,7 +28,7 @@ export const OneTwentyOneSummaryPanel = ({ session }: OneTwentyOneSummaryPanelPr
       />
       <StatCard label="3-dart average" value={formatAverage(stats.threeDartAverage)} />
       {stats.checkoutRate !== null && (
-        <StatCard label="Checkout rate" value={formatPercent(stats.checkoutRate)} />
+        <StatCard label="Checkout rate" value={formatCheckoutPercent(stats.checkoutRate)} />
       )}
       {stats.highestCheckout !== null && (
         <StatCard label="Highest checkout" value={formatInteger(stats.highestCheckout)} />

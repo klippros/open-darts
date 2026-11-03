@@ -4,6 +4,7 @@ import { Box } from '@chakra-ui/react'
 import type { StatTimelineFormat, StatTimelinePoint } from '../../lib/analytics/statTimelines'
 import {
   formatAverage,
+  formatCheckoutPercent,
   formatCount,
   formatInteger,
   formatPercent,
@@ -38,6 +39,8 @@ const formatTimelineValue = (value: number, format: StatTimelineFormat): string 
   switch (format) {
     case 'percent':
       return formatPercent(value)
+    case 'wholePercent':
+      return formatCheckoutPercent(value)
     case 'integer':
       return formatInteger(value)
     case 'count':

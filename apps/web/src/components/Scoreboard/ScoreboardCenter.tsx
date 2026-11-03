@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { Stack } from '@chakra-ui/react'
 import { sumDartPoints } from '@open-darts/game/dartScoring'
 import { getAroundTheClockLiveStats } from '../../lib/analytics/aroundTheClockStats'
+import type { DoubleCheckoutStats } from '../../lib/analytics/doubleCheckoutStats'
 import {
   getNinetyNineDartsLiveScoreMetrics,
   getNinetyNineDartsLiveStats,
@@ -42,6 +43,7 @@ export interface ScoreboardCenterProps {
   mode: GameModeIdType
   players: ScoreboardPlayerEntry[]
   legAndMatchAverages: Record<string, { leg: number | null; match: number | null }>
+  matchCheckoutByPlayer?: Record<string, DoubleCheckoutStats>
   activePlayer: ScoreboardPlayerEntry | undefined
   pendingDarts: DartThrow[]
   visits: Visit[]
@@ -81,6 +83,7 @@ export const ScoreboardCenter = ({
   mode,
   players,
   legAndMatchAverages,
+  matchCheckoutByPlayer,
   activePlayer,
   pendingDarts,
   visits,
@@ -199,6 +202,7 @@ export const ScoreboardCenter = ({
         <PlayerScorePanels
           players={playersForDisplay}
           legAndMatchAverages={legAndMatchAverages}
+          matchCheckoutByPlayer={matchCheckoutByPlayer}
           currentLeg={matchProgress?.currentLeg}
           legsToWin={matchProgress?.legsToWin}
           legWins={matchProgress?.legWins}

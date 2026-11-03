@@ -1,5 +1,7 @@
 import { isOnChallengeAveragePace } from '@open-darts/game/game/challenge'
 import type { AroundTheClockLiveStats } from '../../lib/analytics/aroundTheClockStats'
+import type { DoubleCheckoutStats } from '../../lib/analytics/doubleCheckoutStats'
+import { formatDoubleCheckout } from '../../lib/analytics/formatAnalytics'
 
 export interface ScoreMetric {
   label: string
@@ -21,11 +23,13 @@ export const buildAverageScoreMetrics = ({
   matchAverage,
   currentLeg,
   challengeScoreDetails,
+  checkout,
 }: {
   legAverage: number | null
   matchAverage: number | null
   currentLeg?: number
   challengeScoreDetails?: ChallengeScoreDetails
+  checkout?: DoubleCheckoutStats
 }): ScoreMetric[] => {
   const legValueColor =
     challengeScoreDetails === undefined || legAverage === null
@@ -46,6 +50,13 @@ export const buildAverageScoreMetrics = ({
     metrics.push({
       label: 'Match',
       value: formatAverageValue(matchAverage),
+    })
+  }
+
+  if (checkout !== undefined) {
+    metrics.push({
+      label: 'Checkout',
+      value: formatDoubleCheckout(checkout),
     })
   }
 

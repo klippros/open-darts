@@ -4,6 +4,8 @@ export const formatAverage = (average: number | null, digits = 2): string =>
 export const formatPercent = (rate: number | null, digits = 2): string =>
   rate === null ? '—' : `${rate.toFixed(digits)}%`
 
+export const formatCheckoutPercent = (rate: number | null): string => formatPercent(rate, 0)
+
 export const formatCount = (value: number | null, digits = 2): string =>
   value === null ? '—' : value.toFixed(digits)
 
@@ -23,7 +25,7 @@ export const formatDoubleCheckout = ({
 
   const percentage = (successes / attempts) * 100
 
-  return `${percentage.toFixed(2)}% (${successes}/${attempts})`
+  return `${formatCheckoutPercent(percentage)} (${successes}/${attempts})`
 }
 
 export const getDoubleCheckoutRate = ({

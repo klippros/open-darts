@@ -90,7 +90,7 @@ export interface StatTimelineSelection {
   scopeLabel: string
 }
 
-export type StatTimelineFormat = 'average' | 'percent' | 'integer' | 'count'
+export type StatTimelineFormat = 'average' | 'percent' | 'wholePercent' | 'integer' | 'count'
 
 export interface StatTimelinePoint {
   sessionId: string
@@ -362,6 +362,7 @@ export const getStatTimelineFormat = (metric: StatMetricId): StatTimelineFormat 
   switch (metric) {
     case 'checkoutRate':
     case 'doubleCheckoutRate':
+      return 'wholePercent'
     case 'completionRate':
     case 'hitRate':
       return 'percent'

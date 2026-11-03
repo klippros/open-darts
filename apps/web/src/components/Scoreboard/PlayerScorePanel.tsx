@@ -3,6 +3,7 @@ import { getCheckoutPathLabel } from '@open-darts/game/checkout/checkoutSuggesti
 import type { ScoreboardPlayerEntry } from '@open-darts/game/game/GameEngine'
 import type { CheckoutRules } from '@open-darts/game/types/checkout'
 import type { ChallengeLegStatus } from '@open-darts/game/types/match'
+import type { DoubleCheckoutStats } from '../../lib/analytics/doubleCheckoutStats'
 import { LegStarterIcon } from '../LegStarterIcon/LegStarterIcon'
 import { ChallengeLegDots } from './ChallengeLegDots'
 import { LegWinDots } from './LegWinDots'
@@ -38,6 +39,7 @@ export interface PlayerScorePanelProps {
   challengeScoreDetails?: ChallengeScoreDetails
   isLegStarter?: boolean
   checkoutRules?: CheckoutRules | null
+  matchCheckout?: DoubleCheckoutStats
 }
 
 const resolveScoreMetrics = ({
@@ -46,9 +48,15 @@ const resolveScoreMetrics = ({
   matchAverage,
   currentLeg,
   challengeScoreDetails,
+  matchCheckout,
 }: Pick<
   PlayerScorePanelProps,
-  'player' | 'legAverage' | 'matchAverage' | 'currentLeg' | 'challengeScoreDetails'
+  | 'player'
+  | 'legAverage'
+  | 'matchAverage'
+  | 'currentLeg'
+  | 'challengeScoreDetails'
+  | 'matchCheckout'
 >): ScoreMetric[] | undefined => {
   if (player.secondaryMetrics !== undefined) {
     return player.secondaryMetrics
@@ -62,13 +70,15 @@ const resolveScoreMetrics = ({
     challengeScoreDetails !== undefined ||
     legAverage !== null ||
     matchAverage !== null ||
-    currentLeg !== undefined
+    currentLeg !== undefined ||
+    matchCheckout !== undefined
   ) {
     return buildAverageScoreMetrics({
       legAverage,
       matchAverage,
       currentLeg,
       challengeScoreDetails,
+      checkout: matchCheckout,
     })
   }
 
@@ -199,6 +209,7 @@ export const PlayerScorePanel = ({
   challengeScoreDetails,
   isLegStarter = false,
   checkoutRules = null,
+  matchCheckout,
 }: PlayerScorePanelProps) => {
   const checkoutPathLabel =
     checkoutRules === null ? null : getCheckoutPathLabel(player.primaryScore, checkoutRules)
@@ -208,6 +219,7 @@ export const PlayerScorePanel = ({
     matchAverage,
     currentLeg,
     challengeScoreDetails,
+    matchCheckout,
   })
 
   return (
@@ -218,6 +230,8 @@ export const PlayerScorePanel = ({
       borderWidth="1px"
       borderColor={player.isActive ? 'whiteAlpha.500' : 'whiteAlpha.200'}
       bg={player.isActive ? 'whiteAlpha.100' : 'whiteAlpha.50'}
+      minW={0}
+      w="full"
       gridColumn={isSolo ? '1 / -1' : undefined}
     >
       <Stack gap={3}>
@@ -269,6 +283,7 @@ export interface PlayerScorePanelsProps {
   challengeScoreDetails?: ChallengeScoreDetails
   legStartingPlayerIndex?: number
   checkoutRules?: CheckoutRules | null
+  matchCheckoutByPlayer?: Record<string, DoubleCheckoutStats>
 }
 
 export const PlayerScorePanels = ({
@@ -281,13 +296,14 @@ export const PlayerScorePanels = ({
   challengeScoreDetails,
   legStartingPlayerIndex,
   checkoutRules = null,
+  matchCheckoutByPlayer,
 }: PlayerScorePanelsProps) => {
   const isSolo = players.length === 1
   const showLegDots =
     legsToWin !== undefined && legWins !== undefined && challengeLegStatuses === undefined
 
   return (
-    <Grid templateColumns={isSolo ? '1fr' : 'repeat(2, 1fr)'} gap={3}>
+    <Grid templateColumns={isSolo ? 'minmax(0, 1fr)' : 'repeat(2, minmax(0, 1fr))'} gap={3}>
       {players.map((player, index) => {
         const averages = legAndMatchAverages[player.playerId] ?? { leg: null, match: null }
 
@@ -306,6 +322,7 @@ export const PlayerScorePanels = ({
             challengeScoreDetails={challengeScoreDetails}
             isLegStarter={!isSolo && legStartingPlayerIndex === index}
             checkoutRules={checkoutRules}
+            matchCheckout={matchCheckoutByPlayer?.[player.playerId]}
           />
         )
       })}

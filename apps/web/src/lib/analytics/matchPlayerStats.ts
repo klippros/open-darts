@@ -64,6 +64,20 @@ export const computePlayerStatsForVisits = (
   }
 }
 
+export const getLiveMatchDoubleCheckoutByPlayer = (
+  players: { id: string }[],
+  visits: Visit[],
+  rules: CheckoutRules,
+  doubleIn = false,
+): Record<string, DoubleCheckoutStats> =>
+  Object.fromEntries(
+    players.map((player) => [
+      player.id,
+      computePlayerStatsForVisits(getPlayerVisits(visits, player.id), rules, doubleIn)
+        .doubleCheckout,
+    ]),
+  )
+
 export const computeMatchPlayerStats = (session: GameSession): Record<string, PlayerMatchStats> => {
   const { config } = session
   if (!isX01Config(session.mode, config)) {

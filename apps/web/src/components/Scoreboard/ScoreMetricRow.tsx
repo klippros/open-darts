@@ -6,15 +6,21 @@ export interface ScoreMetricRowProps {
 }
 
 export const ScoreMetricRow = ({ metrics }: ScoreMetricRowProps) => (
-  <Flex justify="center" align="flex-start" gap={8} flexWrap="wrap">
+  <Flex justify="center" align="flex-start" columnGap={8} rowGap={3} flexWrap="wrap" w="full">
     {metrics.map((metric) => (
-      <Flex key={`${metric.label}-${metric.value}`} direction="column" align="center" minW={0}>
+      <Flex
+        key={`${metric.label}-${metric.value}`}
+        direction="column"
+        align="center"
+        flexShrink={0}
+      >
         <Text
           fontSize="lg"
           fontWeight="bold"
           color={metric.valueColor ?? 'whiteAlpha.600'}
           lineHeight="1"
           textAlign="center"
+          whiteSpace="nowrap"
         >
           {metric.value}
         </Text>
