@@ -6,7 +6,7 @@ export interface ScoreMetricRowProps {
 }
 
 export const ScoreMetricRow = ({ metrics }: ScoreMetricRowProps) => (
-  <Flex mt={2} justify="center" align="flex-start" gap={8} flexWrap="wrap">
+  <Flex justify="center" align="flex-start" gap={8} flexWrap="wrap">
     {metrics.map((metric) => (
       <Flex key={`${metric.label}-${metric.value}`} direction="column" align="center" minW={0}>
         <Text

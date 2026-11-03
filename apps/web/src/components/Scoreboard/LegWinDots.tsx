@@ -28,7 +28,13 @@ export const LegWinDots = ({
 
   if (legsToWin > LEG_WIN_DOTS_MAX) {
     return (
-      <Text fontSize="sm" color="whiteAlpha.600" aria-label={progressLabel}>
+      <Text
+        fontSize="lg"
+        fontWeight="bold"
+        color="whiteAlpha.600"
+        lineHeight="1"
+        aria-label={progressLabel}
+      >
         {legsWon}/{legsToWin}
       </Text>
     )

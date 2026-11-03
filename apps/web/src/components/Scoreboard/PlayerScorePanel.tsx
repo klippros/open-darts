@@ -1,4 +1,4 @@
-import { Box, Flex, Grid, Heading, Text } from '@chakra-ui/react'
+import { Box, Flex, Grid, Heading, Stack, Text } from '@chakra-ui/react'
 import { getCheckoutPathLabel } from '@open-darts/game/checkout/checkoutSuggestions'
 import type { ScoreboardPlayerEntry } from '@open-darts/game/game/GameEngine'
 import type { CheckoutRules } from '@open-darts/game/types/checkout'
@@ -122,7 +122,7 @@ const PlayerScorePanelHeader = ({
   if (panelAlign === 'solo') {
     if (showOneTwentyOneLives) {
       return (
-        <Grid templateColumns="1fr auto 1fr" alignItems="center" mb={1} minH="5">
+        <Grid templateColumns="1fr auto 1fr" alignItems="center" minH="5">
           <Box />
           <OneTwentyOneLives lives={player.lives ?? 0} />
           <Box />
@@ -132,7 +132,7 @@ const PlayerScorePanelHeader = ({
 
     if (showChallengeLegDots) {
       return (
-        <Grid templateColumns="1fr auto 1fr" alignItems="center" mb={1} minH="5">
+        <Grid templateColumns="1fr auto 1fr" alignItems="center" minH="5">
           <Box />
           <ChallengeLegDots legStatuses={challengeLegStatuses} />
           <Box />
@@ -145,7 +145,7 @@ const PlayerScorePanelHeader = ({
     }
 
     return (
-      <Grid templateColumns="1fr auto 1fr" alignItems="center" mb={1} minH="5">
+      <Grid templateColumns="1fr auto 1fr" alignItems="center" minH="5">
         <Box />
         <LegWinDots legsToWin={legsToWin} legsWon={legsWon} isSolo />
         <Box />
@@ -155,7 +155,7 @@ const PlayerScorePanelHeader = ({
 
   if (!showLegDots) {
     return (
-      <Flex mb={1} minH="5" justify={panelAlign === 'right' ? 'flex-end' : 'flex-start'}>
+      <Flex minH="5" justify={panelAlign === 'right' ? 'flex-end' : 'flex-start'}>
         <PlayerNameWithLegStarter
           name={player.name}
           isLegStarter={isLegStarter}
@@ -166,7 +166,7 @@ const PlayerScorePanelHeader = ({
   }
 
   return (
-    <Flex align="center" justify="space-between" mb={1} minH="5" gap={2}>
+    <Flex align="center" justify="space-between" minH="5" gap={2}>
       {panelAlign === 'left' ? (
         <>
           <PlayerNameWithLegStarter name={player.name} isLegStarter={isLegStarter} nameFirst />
@@ -220,39 +220,40 @@ export const PlayerScorePanel = ({
       bg={player.isActive ? 'whiteAlpha.100' : 'whiteAlpha.50'}
       gridColumn={isSolo ? '1 / -1' : undefined}
     >
-      <PlayerScorePanelHeader
-        player={player}
-        panelAlign={panelAlign}
-        legsToWin={legsToWin}
-        legsWon={legsWon}
-        challengeLegStatuses={challengeLegStatuses}
-        isLegStarter={isLegStarter}
-      />
-      <Heading
-        size="5xl"
-        color="white"
-        fontFamily="Archivo Black, sans-serif"
-        lineHeight="1"
-        textAlign="center"
-      >
-        {player.primaryDisplay ?? player.primaryScore}
-      </Heading>
-      {scoreMetrics !== undefined && scoreMetrics.length > 0 && (
-        <ScoreMetricRow metrics={scoreMetrics} />
-      )}
-      {checkoutPathLabel !== null && (
-        <Text
-          mt={2}
-          color="whiteAlpha.800"
+      <Stack gap={3}>
+        <PlayerScorePanelHeader
+          player={player}
+          panelAlign={panelAlign}
+          legsToWin={legsToWin}
+          legsWon={legsWon}
+          challengeLegStatuses={challengeLegStatuses}
+          isLegStarter={isLegStarter}
+        />
+        <Heading
+          size="5xl"
+          color="white"
           fontFamily="Archivo Black, sans-serif"
-          fontSize="lg"
           lineHeight="1"
           textAlign="center"
-          aria-label={`Checkout ${checkoutPathLabel}`}
         >
-          {checkoutPathLabel}
-        </Text>
-      )}
+          {player.primaryDisplay ?? player.primaryScore}
+        </Heading>
+        {scoreMetrics !== undefined && scoreMetrics.length > 0 && (
+          <ScoreMetricRow metrics={scoreMetrics} />
+        )}
+        {checkoutPathLabel !== null && (
+          <Text
+            color="whiteAlpha.800"
+            fontFamily="Archivo Black, sans-serif"
+            fontSize="lg"
+            lineHeight="1"
+            textAlign="center"
+            aria-label={`Checkout ${checkoutPathLabel}`}
+          >
+            {checkoutPathLabel}
+          </Text>
+        )}
+      </Stack>
     </Box>
   )
 }

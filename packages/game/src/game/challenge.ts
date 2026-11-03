@@ -196,6 +196,19 @@ export const getChallengeLegStatuses = (
 export const formatChallengeMatchScore = (wins: number, losses: number): string =>
   `${wins} – ${losses}`
 
+export const formatChallengeNumericMatchScore = (wins: number, losses: number): string =>
+  `${wins}:${losses}`
+
+export const formatChallengeFirstToLabel = (legsToWin: number): string => `First to ${legsToWin}`
+
+export const getChallengeLegsToWinFromMaxLegs = (maxLegs: number): number => (maxLegs + 1) / 2
+
+export const formatChallengeNumericLegScoreAriaLabel = (
+  wins: number,
+  losses: number,
+  legsToWin: number,
+): string => `${wins} to ${losses}, first to ${legsToWin}`
+
 export const formatChallengeLegProgressLabel = (statuses: ChallengeLegStatus[]): string => {
   const wins = statuses.filter((status) => status === ChallengeLegStatus.Won).length
   const losses = statuses.filter((status) => status === ChallengeLegStatus.Lost).length

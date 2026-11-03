@@ -3,7 +3,11 @@ import { ChallengeLegEndMode, ChallengeLegStatus } from '../types/match'
 import {
   clampMaxVisits,
   countPlayerVisitsInLeg,
+  formatChallengeFirstToLabel,
+  formatChallengeNumericLegScoreAriaLabel,
+  formatChallengeNumericMatchScore,
   formatChallengeTargetLabel,
+  getChallengeLegsToWinFromMaxLegs,
   formatChallengeVisitProgressLabel,
   getChallengeLegStatuses,
   getChallengeMaxLegs,
@@ -204,5 +208,13 @@ describe('challenge', () => {
       ChallengeLegStatus.Current,
       ChallengeLegStatus.Upcoming,
     ])
+  })
+
+  it('formats numeric challenge leg scores as first to', () => {
+    expect(getChallengeMaxLegs(6)).toBe(11)
+    expect(getChallengeLegsToWinFromMaxLegs(11)).toBe(6)
+    expect(formatChallengeNumericMatchScore(3, 4)).toBe('3:4')
+    expect(formatChallengeFirstToLabel(6)).toBe('First to 6')
+    expect(formatChallengeNumericLegScoreAriaLabel(3, 4, 6)).toBe('3 to 4, first to 6')
   })
 })

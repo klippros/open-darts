@@ -1,5 +1,11 @@
-import { Box, HStack, Text } from '@chakra-ui/react'
-import { formatChallengeLegProgressLabel } from '@open-darts/game/game/challenge'
+import { Box, Flex, HStack, Text } from '@chakra-ui/react'
+import {
+  formatChallengeFirstToLabel,
+  formatChallengeLegProgressLabel,
+  formatChallengeNumericLegScoreAriaLabel,
+  formatChallengeNumericMatchScore,
+  getChallengeLegsToWinFromMaxLegs,
+} from '@open-darts/game/game/challenge'
 import { ChallengeLegStatus } from '@open-darts/game/types/match'
 
 export interface ChallengeLegDotsProps {
@@ -40,11 +46,21 @@ export const ChallengeLegDots = ({ legStatuses }: ChallengeLegDotsProps) => {
   if (legStatuses.length > CHALLENGE_LEG_DOTS_MAX) {
     const wins = legStatuses.filter((status) => status === ChallengeLegStatus.Won).length
     const losses = legStatuses.filter((status) => status === ChallengeLegStatus.Lost).length
+    const legsToWin = getChallengeLegsToWinFromMaxLegs(legStatuses.length)
 
     return (
-      <Text fontSize="sm" color="whiteAlpha.600" aria-label={progressLabel}>
-        {wins}–{losses}
-      </Text>
+      <Flex
+        direction="column"
+        align="center"
+        aria-label={formatChallengeNumericLegScoreAriaLabel(wins, losses, legsToWin)}
+      >
+        <Text fontSize="lg" fontWeight="bold" color="whiteAlpha.600" lineHeight="1">
+          {formatChallengeNumericMatchScore(wins, losses)}
+        </Text>
+        <Text mt={1} fontSize="sm" color="whiteAlpha.600" lineHeight="1">
+          {formatChallengeFirstToLabel(legsToWin)}
+        </Text>
+      </Flex>
     )
   }
 
