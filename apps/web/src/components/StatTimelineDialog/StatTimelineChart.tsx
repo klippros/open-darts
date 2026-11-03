@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { PointerEvent as ReactPointerEvent } from 'react'
 import { Box } from '@chakra-ui/react'
 import type { StatTimelineFormat, StatTimelinePoint } from '../../lib/analytics/statTimelines'
@@ -131,6 +131,29 @@ export const StatTimelineChart = ({ points, format, onPointClick }: StatTimeline
       observer.disconnect()
     }
   }, [])
+
+  useEffect(() => {
+    if (selectedIndex === null) {
+      return undefined
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const container = containerRef.current
+      const target = event.target
+
+      if (container === null || !(target instanceof Node) || container.contains(target)) {
+        return
+      }
+
+      setSelectedIndex(null)
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown, true)
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown, true)
+    }
+  }, [selectedIndex])
 
   if (plotValues.length === 0) {
     return null
