@@ -7,9 +7,11 @@ import { numberDart } from '@open-darts/game/testHelpers'
 import {
   countDartsInVisits,
   expandX01SessionLegs,
+  getLegNumberFromTimelinePointId,
   getSessionIdFromTimelinePointId,
   getX01LegSlicePointId,
   legFinishedWithCheckout,
+  resolveInitialMatchStatsScope,
 } from './x01LegSlices'
 
 const sampleVisit = (
@@ -80,5 +82,20 @@ describe('x01LegSlices', () => {
 
     expect(getSessionIdFromTimelinePointId(legPointId)).toBe('best-of-three')
     expect(getSessionIdFromTimelinePointId('practice-session')).toBe('practice-session')
+  })
+
+  it('resolves leg numbers from timeline point ids', () => {
+    const session = sampleSession({ id: 'best-of-three' })
+    const legPointId = getX01LegSlicePointId({ session, legNumber: 2, visits: [] })
+
+    expect(getLegNumberFromTimelinePointId(legPointId)).toBe(2)
+    expect(getLegNumberFromTimelinePointId('practice-session')).toBeNull()
+  })
+
+  it('resolves an initial match stats scope from a played leg', () => {
+    expect(resolveInitialMatchStatsScope([1, 2, 3], 2)).toBe(2)
+    expect(resolveInitialMatchStatsScope([1, 2, 3], 4)).toBe('match')
+    expect(resolveInitialMatchStatsScope([1, 2, 3], null)).toBe('match')
+    expect(resolveInitialMatchStatsScope([1, 2, 3], undefined)).toBe('match')
   })
 })

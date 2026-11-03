@@ -16,11 +16,13 @@ import {
   computeMatchPlayerStats,
 } from '../../lib/analytics/matchPlayerStats'
 import { StatsTable } from '../StatsTable/StatsTable'
+import { resolveInitialMatchStatsScope } from '../../lib/analytics/x01LegSlices'
 import { MatchStatsScopeSelector } from './MatchStatsScopeSelector'
 import type { MatchStatsScope } from './MatchStatsScopeSelector'
 
 export interface MatchStatsPanelProps {
   session: GameSession
+  initialLegNumber?: number | null
 }
 
 const getLegScopeForVisits = (
@@ -38,10 +40,12 @@ const getLegScopeForVisits = (
   return undefined
 }
 
-export const MatchStatsPanel = ({ session }: MatchStatsPanelProps) => {
+export const MatchStatsPanel = ({ session, initialLegNumber }: MatchStatsPanelProps) => {
   const legNumbers = useMemo(() => getPlayedLegNumbers(session.visits), [session.visits])
   const playerIds = useMemo(() => session.players.map((player) => player.id), [session.players])
-  const [selectedScope, setSelectedScope] = useState<MatchStatsScope>('match')
+  const [selectedScope, setSelectedScope] = useState<MatchStatsScope>(() =>
+    resolveInitialMatchStatsScope(legNumbers, initialLegNumber),
+  )
 
   const matchStatsByPlayer = useMemo(() => {
     if (session.mode !== GameModeId.X01) {

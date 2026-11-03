@@ -14,9 +14,10 @@ import { TenUpOneDownSummaryPanel } from './TenUpOneDownSummaryPanel'
 
 export interface MatchSummaryBodyProps {
   session: GameSession
+  initialLegNumber?: number | null
 }
 
-export const MatchSummaryBody = ({ session }: MatchSummaryBodyProps) => {
+export const MatchSummaryBody = ({ session, initialLegNumber }: MatchSummaryBodyProps) => {
   const summary = getMatchSummary(session)
   const modeLabel = getSessionModeLabel(session)
   const showTextDetails =
@@ -37,7 +38,13 @@ export const MatchSummaryBody = ({ session }: MatchSummaryBodyProps) => {
 
       {session.mode === GameModeId.Bob27 && <Bob27SummaryPanel session={session} />}
 
-      {session.mode === GameModeId.ClaimTheBoard && <ClaimTheBoardSummaryPanel session={session} />}
+      {session.mode === GameModeId.ClaimTheBoard && (
+        <ClaimTheBoardSummaryPanel
+          key={`${session.id}:${initialLegNumber ?? 'match'}`}
+          session={session}
+          initialLegNumber={initialLegNumber}
+        />
+      )}
 
       {session.mode === GameModeId.Hunter && <HunterSummaryPanel session={session} />}
 
@@ -73,7 +80,11 @@ export const MatchSummaryBody = ({ session }: MatchSummaryBodyProps) => {
       {session.mode === GameModeId.X01 && (
         <>
           <MatchLegScore session={session} />
-          <MatchStatsPanel session={session} />
+          <MatchStatsPanel
+            key={`${session.id}:${initialLegNumber ?? 'match'}`}
+            session={session}
+            initialLegNumber={initialLegNumber}
+          />
         </>
       )}
     </Stack>

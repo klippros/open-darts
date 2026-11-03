@@ -8,10 +8,16 @@ import { MatchSummaryTitle } from '../SessionSummary/MatchSummaryTitle'
 export interface SessionSummaryDialogProps {
   open: boolean
   session: GameSession | null
+  initialLegNumber?: number | null
   onClose: () => void
 }
 
-export const SessionSummaryDialog = ({ open, session, onClose }: SessionSummaryDialogProps) => {
+export const SessionSummaryDialog = ({
+  open,
+  session,
+  initialLegNumber,
+  onClose,
+}: SessionSummaryDialogProps) => {
   if (session === null) {
     return null
   }
@@ -46,7 +52,7 @@ export const SessionSummaryDialog = ({ open, session, onClose }: SessionSummaryD
               </Dialog.Title>
             </Dialog.Header>
             <Dialog.Body>
-              <MatchSummaryBody session={session} />
+              <MatchSummaryBody session={session} initialLegNumber={initialLegNumber} />
             </Dialog.Body>
             <Dialog.CloseTrigger />
           </Dialog.Content>

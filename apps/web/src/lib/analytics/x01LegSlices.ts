@@ -39,3 +39,28 @@ export const getSessionIdFromTimelinePointId = (pointId: string): string => {
 
   return match?.[1] ?? pointId
 }
+
+export const getLegNumberFromTimelinePointId = (pointId: string): number | null => {
+  const match = /:leg:(\d+)$/u.exec(pointId)
+
+  if (match?.[1] === undefined) {
+    return null
+  }
+
+  return Number(match[1])
+}
+
+export const resolveInitialMatchStatsScope = (
+  legNumbers: number[],
+  legNumber: number | null | undefined,
+): 'match' | number => {
+  if (legNumber === null || legNumber === undefined) {
+    return 'match'
+  }
+
+  if (!legNumbers.includes(legNumber)) {
+    return 'match'
+  }
+
+  return legNumber
+}

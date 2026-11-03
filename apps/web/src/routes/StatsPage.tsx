@@ -19,7 +19,10 @@ import type {
   StatTimelinePoint,
   StatTimelineSelection,
 } from '../lib/analytics/statTimelines'
-import { getSessionIdFromTimelinePointId } from '../lib/analytics/x01LegSlices'
+import {
+  getLegNumberFromTimelinePointId,
+  getSessionIdFromTimelinePointId,
+} from '../lib/analytics/x01LegSlices'
 import { listMyOnlineMatchHistory } from '../lib/matchServer/api'
 import { isOnlineMatchesEnabled } from '../lib/matchServer/config'
 import { decorateOnlineSessionForViewer } from '../lib/matchServer/onlinePlay'
@@ -52,6 +55,7 @@ export const StatsPage = () => {
   const [dateRange, setDateRange] = useState<DateRangePreset>('all')
   const [timelineSelection, setTimelineSelection] = useState<StatTimelineSelection | null>(null)
   const [selectedSession, setSelectedSession] = useState<GameSession | null>(null)
+  const [selectedLegNumber, setSelectedLegNumber] = useState<number | null>(null)
   const [storedSessions, setStoredSessions] = useState(() => loadStoredSessions())
   const [onlineSessions, setOnlineSessions] = useState<GameSession[]>([])
 
@@ -151,6 +155,7 @@ export const StatsPage = () => {
 
       if (session !== null) {
         setSelectedSession(session)
+        setSelectedLegNumber(getLegNumberFromTimelinePointId(point.sessionId))
       }
     },
     [allSessions, filteredSessions],
@@ -223,8 +228,10 @@ export const StatsPage = () => {
       <SessionSummaryDialog
         open={selectedSession !== null}
         session={selectedSession}
+        initialLegNumber={selectedLegNumber}
         onClose={() => {
           setSelectedSession(null)
+          setSelectedLegNumber(null)
         }}
       />
     </ContentContainer>

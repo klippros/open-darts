@@ -17,6 +17,7 @@ import {
   getClaimTheBoardScoreLeaderId,
 } from '../../lib/claimTheBoard/claimTheBoardVisitStats'
 import type { ClaimTheBoardPlayerVisitStats } from '../../lib/claimTheBoard/claimTheBoardVisitStats'
+import { resolveInitialMatchStatsScope } from '../../lib/analytics/x01LegSlices'
 import { StatsTable } from '../StatsTable/StatsTable'
 import { MatchLegScore } from './MatchLegScore'
 import { MatchStatsScopeSelector } from './MatchStatsScopeSelector'
@@ -24,6 +25,7 @@ import type { MatchStatsScope } from './MatchStatsScopeSelector'
 
 export interface ClaimTheBoardSummaryPanelProps {
   session: GameSession
+  initialLegNumber?: number | null
 }
 
 const playerStats = (
@@ -76,10 +78,15 @@ const buildClaimTheBoardStatRows = (
   },
 ]
 
-export const ClaimTheBoardSummaryPanel = ({ session }: ClaimTheBoardSummaryPanelProps) => {
+export const ClaimTheBoardSummaryPanel = ({
+  session,
+  initialLegNumber,
+}: ClaimTheBoardSummaryPanelProps) => {
   const legNumbers = useMemo(() => getPlayedLegNumbers(session.visits), [session.visits])
   const playerIds = useMemo(() => session.players.map((player) => player.id), [session.players])
-  const [selectedScope, setSelectedScope] = useState<MatchStatsScope>('match')
+  const [selectedScope, setSelectedScope] = useState<MatchStatsScope>(() =>
+    resolveInitialMatchStatsScope(legNumbers, initialLegNumber),
+  )
 
   const aimMode = isClaimTheBoardConfig(session.mode, session.config)
     ? session.config.aimMode
