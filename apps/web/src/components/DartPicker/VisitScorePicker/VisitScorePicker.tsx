@@ -140,8 +140,9 @@ export const VisitScorePicker = ({
         placeholder="Visit score"
         textAlign="center"
         {...scorePadTypeProps}
-        _placeholder={{ fontSize: 'lg' }}
-        h="14"
+        fontSize="4xl"
+        _placeholder={{ fontSize: '4xl' }}
+        h={scoreInputButtonHeight}
         readOnly
         inputMode="numeric"
         aria-label="Visit score"
