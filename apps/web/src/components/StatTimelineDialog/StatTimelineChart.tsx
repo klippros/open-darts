@@ -103,6 +103,9 @@ export const StatTimelineChart = ({ points, format, onPointClick }: StatTimeline
   const svgRef = useRef<SVGSVGElement>(null)
   const [chartWidth, setChartWidth] = useState(DEFAULT_CHART_WIDTH)
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
+  const [tooltipInteractive, setTooltipInteractive] = useState(false)
+  const tooltipPointerIdRef = useRef<number | null>(null)
+  const ignoreMouseActivationUntilRef = useRef(0)
   const plotValues = getPlotValues(points)
   const trailingAverages = getTrailingAverages(points)
   const latestTrend = getLatestTrend(trailingAverages)
@@ -146,6 +149,7 @@ export const StatTimelineChart = ({ points, format, onPointClick }: StatTimeline
       }
 
       setSelectedIndex(null)
+      setTooltipInteractive(false)
     }
 
     document.addEventListener('pointerdown', handlePointerDown, true)
@@ -154,6 +158,33 @@ export const StatTimelineChart = ({ points, format, onPointClick }: StatTimeline
       document.removeEventListener('pointerdown', handlePointerDown, true)
     }
   }, [selectedIndex])
+
+  useEffect(() => {
+    if (selectedIndex === null || tooltipInteractive) {
+      return undefined
+    }
+
+    let armTimeoutId: number | undefined
+
+    const armTooltip = () => {
+      // Wait until after the selecting gesture's click so it cannot hit the tooltip.
+      armTimeoutId = window.setTimeout(() => {
+        setTooltipInteractive(true)
+      }, 0)
+    }
+
+    window.addEventListener('pointerup', armTooltip)
+    window.addEventListener('pointercancel', armTooltip)
+
+    return () => {
+      window.removeEventListener('pointerup', armTooltip)
+      window.removeEventListener('pointercancel', armTooltip)
+
+      if (armTimeoutId !== undefined) {
+        window.clearTimeout(armTimeoutId)
+      }
+    }
+  }, [selectedIndex, tooltipInteractive])
 
   if (plotValues.length === 0) {
     return null
@@ -195,9 +226,33 @@ export const StatTimelineChart = ({ points, format, onPointClick }: StatTimeline
     setSelectedIndex(findNearestIndexByX(pointerX, pointXs))
   }
 
-  const handleChartPointer = (event: ReactPointerEvent<SVGRectElement>) => {
+  const handleChartPointerMove = (event: ReactPointerEvent<SVGRectElement>) => {
+    selectNearestPoint(event.clientX, event.clientY)
+
+    // Only arm from hover; touch can emit a buttons===0 move after lift.
+    if (
+      event.buttons === 0 &&
+      event.pointerType === 'mouse' &&
+      window.matchMedia('(hover: hover) and (pointer: fine)').matches
+    ) {
+      setTooltipInteractive(true)
+    }
+  }
+
+  const handleChartPointerDown = (event: ReactPointerEvent<SVGRectElement>) => {
+    tooltipPointerIdRef.current = null
+    setTooltipInteractive(false)
+
+    // Touch/pen synthesize a later mouse click on the newly shown tooltip; ignore it.
+    if (event.pointerType === 'touch' || event.pointerType === 'pen') {
+      ignoreMouseActivationUntilRef.current = performance.now() + 500
+    }
+
     selectNearestPoint(event.clientX, event.clientY)
   }
+
+  const shouldIgnoreTooltipPointer = (pointerType: string): boolean =>
+    pointerType === 'mouse' && performance.now() < ignoreMouseActivationUntilRef.current
 
   const trendSegments = trailingAverages.flatMap((average, index) => {
     if (average === null || index === 0) {
@@ -253,24 +308,77 @@ export const StatTimelineChart = ({ points, format, onPointClick }: StatTimeline
           const x = getX(selectedIndex)
           const y = getY(selectedPoint.value)
           const { tooltipX, tooltipY } = getTooltipPosition(x, y, chartWidth)
-          const canOpenSummary = onPointClick !== undefined
+          const canOpenSummary = onPointClick !== undefined && tooltipInteractive
 
           return (
             <g
               role={canOpenSummary ? 'button' : undefined}
               tabIndex={canOpenSummary ? 0 : undefined}
-              style={{ cursor: canOpenSummary ? 'pointer' : undefined }}
-              onClick={(event) => {
-                event.stopPropagation()
-                onPointClick?.(selectedPoint)
+              style={{
+                cursor: canOpenSummary ? 'pointer' : undefined,
+                pointerEvents: canOpenSummary ? 'auto' : 'none',
               }}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault()
-                  event.stopPropagation()
-                  onPointClick?.(selectedPoint)
-                }
-              }}
+              onPointerDown={
+                canOpenSummary
+                  ? (event) => {
+                      event.stopPropagation()
+
+                      if (shouldIgnoreTooltipPointer(event.pointerType)) {
+                        return
+                      }
+
+                      tooltipPointerIdRef.current = event.pointerId
+                      event.currentTarget.setPointerCapture(event.pointerId)
+                    }
+                  : undefined
+              }
+              onPointerUp={
+                canOpenSummary
+                  ? (event) => {
+                      event.stopPropagation()
+
+                      if (shouldIgnoreTooltipPointer(event.pointerType)) {
+                        if (tooltipPointerIdRef.current === event.pointerId) {
+                          tooltipPointerIdRef.current = null
+                        }
+
+                        return
+                      }
+
+                      if (tooltipPointerIdRef.current !== event.pointerId) {
+                        return
+                      }
+
+                      tooltipPointerIdRef.current = null
+
+                      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                        event.currentTarget.releasePointerCapture(event.pointerId)
+                      }
+
+                      onPointClick?.(selectedPoint)
+                    }
+                  : undefined
+              }
+              onPointerCancel={
+                canOpenSummary
+                  ? (event) => {
+                      if (tooltipPointerIdRef.current === event.pointerId) {
+                        tooltipPointerIdRef.current = null
+                      }
+                    }
+                  : undefined
+              }
+              onKeyDown={
+                canOpenSummary
+                  ? (event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        event.stopPropagation()
+                        onPointClick?.(selectedPoint)
+                      }
+                    }
+                  : undefined
+              }
             >
               <rect
                 x={tooltipX}
@@ -348,6 +456,7 @@ export const StatTimelineChart = ({ points, format, onPointClick }: StatTimeline
         // Touch browsers synthesize mouseleave after a tap; keep the selection until the next tap.
         if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
           setSelectedIndex(null)
+          setTooltipInteractive(false)
         }
       }}
     >
@@ -366,8 +475,8 @@ export const StatTimelineChart = ({ points, format, onPointClick }: StatTimeline
           height={CHART_HEIGHT}
           fill="transparent"
           style={{ cursor: 'crosshair' }}
-          onPointerMove={handleChartPointer}
-          onPointerDown={handleChartPointer}
+          onPointerMove={handleChartPointerMove}
+          onPointerDown={handleChartPointerDown}
         />
         {gridValues.map((value) => {
           const y = getY(value)
