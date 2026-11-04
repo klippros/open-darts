@@ -24,7 +24,6 @@ export interface BullRunLiveStats {
   singlesPerThreeDarts: number | null
   doublesPerThreeDarts: number | null
   counts: BullRunOutcomeCounts
-  targetScore: number
 }
 
 export interface BullRunSingleSessionStats {
@@ -113,9 +112,6 @@ export const getBullRunLiveStats = (
   const allDarts = includePending ? [...committedDarts, ...pendingDarts] : committedDarts
   const counts = countBullRunOutcomes(allDarts)
   const score = allDarts.reduce((total, dart) => total + getBullRunDartPoints(dart), 0)
-  const lastVisit = playerVisits.at(-1)
-  const targetFromVisit =
-    typeof lastVisit?.metadata?.targetScore === 'number' ? lastVisit.metadata.targetScore : null
 
   return {
     score,
@@ -125,7 +121,6 @@ export const getBullRunLiveStats = (
     singlesPerThreeDarts: ratePerThreeDarts(counts.singles, allDarts.length),
     doublesPerThreeDarts: ratePerThreeDarts(counts.doubles, allDarts.length),
     counts,
-    targetScore: targetFromVisit ?? 0,
   }
 }
 

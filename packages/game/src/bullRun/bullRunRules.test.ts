@@ -5,7 +5,6 @@ import { bullDart, missDart, numberDart, outerBullDart } from '../testHelpers'
 import {
   getBullRunDartPoints,
   getBullRunOutcome,
-  getBullRunPickerOutcomes,
   getBullRunVisitScore,
   resolveBullRunVisit,
 } from './bullRunRules'
@@ -45,13 +44,5 @@ describe('bullRunRules', () => {
 
     const overshoot = resolveBullRunVisit(14, 9, [bullDart()], 15)
     expect(overshoot).toMatchObject({ scoreAfter: 16, checkout: true })
-  })
-
-  it('exposes miss, single, and double picker outcomes', () => {
-    expect(getBullRunPickerOutcomes()).toEqual([
-      BullRunOutcome.Miss,
-      BullRunOutcome.Single,
-      BullRunOutcome.Double,
-    ])
   })
 })

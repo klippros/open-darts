@@ -43,8 +43,6 @@ export const parseBullRunConfigFromSearchParams = (params: URLSearchParams): Bul
   targetScore: parseBullRunTargetScore(params.get('target')),
 })
 
-export const buildBullRunSetupPath = (): string => '/game/bull-run/setup'
-
 export const buildBullRunGamePath = (
   config: BullRunConfig,
   opponentParams?: URLSearchParams,
