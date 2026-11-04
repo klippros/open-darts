@@ -1,27 +1,14 @@
 import { Navigate, useSearchParams } from 'react-router-dom'
 import { GameModeId } from '@open-darts/game/types/gameMode'
+import { isOnlineMatchMode } from '@open-darts/game/game/onlineMatchSetup'
 import { buildX01PresetPath, X01PresetId } from '@open-darts/game/x01/x01Presets'
 import { isOnlineMatchesEnabled } from '../lib/matchServer/config'
 import { buildOnlineSetupPath } from '../lib/matchServer/onlineSetup'
 
-const parseOnlineMatchMode = (
-  raw: string | null,
-): GameModeId.X01 | GameModeId.ClaimTheBoard | GameModeId.Hunter | GameModeId.BullRun | null => {
-  if (
-    raw === GameModeId.X01 ||
-    raw === GameModeId.ClaimTheBoard ||
-    raw === GameModeId.Hunter ||
-    raw === GameModeId.BullRun
-  ) {
-    return raw
-  }
-
-  return null
-}
-
 export const OnlineMatchNewPage = () => {
   const [searchParams] = useSearchParams()
-  const matchMode = parseOnlineMatchMode(searchParams.get('mode'))
+  const rawMode = searchParams.get('mode')
+  const matchMode = rawMode !== null && isOnlineMatchMode(rawMode) ? rawMode : null
 
   if (!isOnlineMatchesEnabled || matchMode === null) {
     return <Navigate to="/" replace />

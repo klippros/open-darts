@@ -1,4 +1,4 @@
-import { GameModeId } from '@open-darts/game/types/gameMode'
+import { supportsOnlineVisitCorrection } from '@open-darts/game/game/onlineMatchSetup'
 import {
   applyAsyncRecordDarts,
   applyAsyncRecordVisitScore,
@@ -151,10 +151,7 @@ export const correctVisit = (
     )
   }
 
-  if (
-    required.play.session.mode === GameModeId.ClaimTheBoard ||
-    required.play.session.mode === GameModeId.Hunter
-  ) {
+  if (!supportsOnlineVisitCorrection(required.play.session.mode)) {
     return commandFailure(
       CommandErrorCode.Invalid,
       'Visit correction is not available for this game mode',

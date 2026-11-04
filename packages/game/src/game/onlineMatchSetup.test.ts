@@ -10,9 +10,12 @@ import {
   isOnlineBullRunSetup,
   isOnlineClaimTheBoardSetup,
   isOnlineHunterSetup,
+  isOnlineMatchMode,
   isV1OnlineX01Setup,
+  ONLINE_MATCH_MODES,
   readOnlineGameConfig,
   supportsOnlineAsyncPlay,
+  supportsOnlineVisitCorrection,
   withHunterStartingPlayerIndex,
 } from './onlineMatchSetup'
 
@@ -75,11 +78,29 @@ describe('onlineMatchSetup', () => {
     expect(canonicalizeOnlineMatchConfig(GameModeId.BullRun, { targetScore: '15' })).toBeNull()
   })
 
+  it('lists online match modes', () => {
+    expect(ONLINE_MATCH_MODES).toEqual([
+      GameModeId.X01,
+      GameModeId.ClaimTheBoard,
+      GameModeId.Hunter,
+      GameModeId.BullRun,
+    ])
+    expect(isOnlineMatchMode(GameModeId.BullRun)).toBe(true)
+    expect(isOnlineMatchMode(GameModeId.NinetyNineDarts)).toBe(false)
+  })
+
   it('allows async play for X01 and Bull Run', () => {
     expect(supportsOnlineAsyncPlay(GameModeId.X01)).toBe(true)
     expect(supportsOnlineAsyncPlay(GameModeId.BullRun)).toBe(true)
     expect(supportsOnlineAsyncPlay(GameModeId.ClaimTheBoard)).toBe(false)
     expect(supportsOnlineAsyncPlay(GameModeId.Hunter)).toBe(false)
+  })
+
+  it('allows visit correction for X01 and Bull Run', () => {
+    expect(supportsOnlineVisitCorrection(GameModeId.X01)).toBe(true)
+    expect(supportsOnlineVisitCorrection(GameModeId.BullRun)).toBe(true)
+    expect(supportsOnlineVisitCorrection(GameModeId.ClaimTheBoard)).toBe(false)
+    expect(supportsOnlineVisitCorrection(GameModeId.Hunter)).toBe(false)
   })
 
   it('reads stored configs by mode, not by shape', () => {

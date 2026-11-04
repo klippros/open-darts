@@ -1,7 +1,11 @@
 import { GameModeId } from '@open-darts/game/types/gameMode'
 import type { GameConfig } from '@open-darts/game/types/gameMode'
 import { LEGS_TO_WIN_MAX, LEGS_TO_WIN_MIN } from '@open-darts/game/types/match'
-import { canonicalizeOnlineMatchConfig } from '@open-darts/game/game/onlineMatchSetup'
+import {
+  canonicalizeOnlineMatchConfig,
+  isOnlineMatchMode,
+} from '@open-darts/game/game/onlineMatchSetup'
+import type { OnlineMatchMode } from '@open-darts/game/game/onlineMatchSetup'
 import { isJsonObject, isRecord } from '../json'
 import type { StartingPlayerSlot } from '../match/types'
 import { STARTING_PLAYER_SLOT_RANDOM } from '../match/types'
@@ -13,10 +17,13 @@ export interface CreateMatchRequest {
   startingPlayerSlot: StartingPlayerSlot
 }
 
-const x01Mode: string = GameModeId.X01
-const claimTheBoardMode: string = GameModeId.ClaimTheBoard
-const hunterMode: string = GameModeId.Hunter
-const bullRunMode: string = GameModeId.BullRun
+/** Modes other than X01 always create a single-leg match. */
+const ONLINE_CREATE_LEGS_TO_WIN: Record<OnlineMatchMode, 'request' | 1> = {
+  [GameModeId.X01]: 'request',
+  [GameModeId.ClaimTheBoard]: 1,
+  [GameModeId.Hunter]: 1,
+  [GameModeId.BullRun]: 1,
+}
 
 const isStartingPlayerSlot = (value: unknown): value is StartingPlayerSlot =>
   value === 0 || value === 1 || value === STARTING_PLAYER_SLOT_RANDOM
@@ -26,7 +33,12 @@ export const parseCreateMatchRequest = (value: unknown): CreateMatchRequest | nu
     return null
   }
 
-  const config = canonicalizeOnlineMatchConfig(value.mode, value.config)
+  if (!isOnlineMatchMode(value.mode)) {
+    return null
+  }
+
+  const mode = value.mode
+  const config = canonicalizeOnlineMatchConfig(mode, value.config)
 
   if (config === null) {
     return null
@@ -45,41 +57,12 @@ export const parseCreateMatchRequest = (value: unknown): CreateMatchRequest | nu
     return null
   }
 
-  if (value.mode === x01Mode) {
-    return {
-      mode: GameModeId.X01,
-      config,
-      legsToWin: value.legsToWin,
-      startingPlayerSlot: value.startingPlayerSlot,
-    }
-  }
+  const legsRule = ONLINE_CREATE_LEGS_TO_WIN[mode]
 
-  if (value.mode === claimTheBoardMode) {
-    return {
-      mode: GameModeId.ClaimTheBoard,
-      config,
-      legsToWin: 1,
-      startingPlayerSlot: value.startingPlayerSlot,
-    }
+  return {
+    mode,
+    config,
+    legsToWin: legsRule === 'request' ? value.legsToWin : legsRule,
+    startingPlayerSlot: value.startingPlayerSlot,
   }
-
-  if (value.mode === hunterMode) {
-    return {
-      mode: GameModeId.Hunter,
-      config,
-      legsToWin: 1,
-      startingPlayerSlot: value.startingPlayerSlot,
-    }
-  }
-
-  if (value.mode === bullRunMode) {
-    return {
-      mode: GameModeId.BullRun,
-      config,
-      legsToWin: 1,
-      startingPlayerSlot: value.startingPlayerSlot,
-    }
-  }
-
-  return null
 }

@@ -5,6 +5,8 @@ import { parseBullRunConfigFromSearchParams } from '@open-darts/game/bullRun/bul
 import { parseClaimTheBoardConfigFromSearchParams } from '@open-darts/game/claimTheBoard/claimTheBoardConfig'
 import { parseHunterConfigFromSearchParams } from '@open-darts/game/hunter/hunterConfig'
 import { parseNinetyNineDartsConfigFromSearchParams } from '@open-darts/game/ninetyNineDarts/ninetyNineDartsConfig'
+import { isOnlineMatchMode } from '@open-darts/game/game/onlineMatchSetup'
+import type { OnlineMatchMode } from '@open-darts/game/game/onlineMatchSetup'
 import {
   buildPlayersFromOpponentSetup,
   getChallengeConfigFromSetup,
@@ -20,8 +22,7 @@ export type PracticeGameMode =
   | GameModeId.TenUpOneDown
   | GameModeId.NinetyNineDarts
 
-export type LocalMatchGameMode =
-  GameModeId.X01 | GameModeId.ClaimTheBoard | GameModeId.Hunter | GameModeId.BullRun
+export type LocalMatchGameMode = OnlineMatchMode
 
 const PRACTICE_MODE_ROUTES: { mode: PracticeGameMode; param: string }[] = [
   { mode: GameModeId.Bob27, param: 'bob27' },
@@ -35,10 +36,7 @@ export const isPracticeGameMode = (mode: GameModeId): mode is PracticeGameMode =
   PRACTICE_MODE_ROUTES.some((entry) => entry.mode === mode)
 
 export const isLocalMatchGameMode = (mode: GameModeId): mode is LocalMatchGameMode =>
-  mode === GameModeId.X01 ||
-  mode === GameModeId.ClaimTheBoard ||
-  mode === GameModeId.Hunter ||
-  mode === GameModeId.BullRun
+  isOnlineMatchMode(mode)
 
 export const buildPracticeGamePath = (mode: PracticeGameMode): string => {
   const entry = PRACTICE_MODE_ROUTES.find((route) => route.mode === mode)

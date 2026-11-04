@@ -3,6 +3,7 @@ import type { ClaimTheBoardConfig } from '../types/claimTheBoard'
 import type { HunterConfig } from '../types/hunter'
 import { GameModeId } from '../types/gameMode'
 import type { GameConfig } from '../types/gameMode'
+import type { X01Config } from '../types/x01'
 import { AroundTheClockAimMode } from '../types/aroundTheClock'
 import { defaultX01Config } from '../x01/x01Presets'
 import { parseAroundTheClockAimModeValue } from '../aroundTheClock/aroundTheClockConfig'
@@ -13,6 +14,21 @@ const x01Mode: string = GameModeId.X01
 const claimTheBoardMode: string = GameModeId.ClaimTheBoard
 const hunterMode: string = GameModeId.Hunter
 const bullRunMode: string = GameModeId.BullRun
+
+export type OnlineMatchMode =
+  GameModeId.X01 | GameModeId.ClaimTheBoard | GameModeId.Hunter | GameModeId.BullRun
+
+export type OnlineMatchConfig = X01Config | ClaimTheBoardConfig | HunterConfig | BullRunConfig
+
+export const ONLINE_MATCH_MODES = [
+  GameModeId.X01,
+  GameModeId.ClaimTheBoard,
+  GameModeId.Hunter,
+  GameModeId.BullRun,
+] as const satisfies readonly OnlineMatchMode[]
+
+export const isOnlineMatchMode = (mode: string): mode is OnlineMatchMode =>
+  (ONLINE_MATCH_MODES as readonly string[]).includes(mode)
 
 const configField = (config: object, key: string): unknown => Reflect.get(config, key)
 
@@ -46,6 +62,10 @@ export const isAllowedOnlineMatchSetup = (mode: string, config: object): boolean
   isOnlineBullRunSetup(mode, config)
 
 export const supportsOnlineAsyncPlay = (mode: string): boolean =>
+  mode === x01Mode || mode === bullRunMode
+
+/** Race modes can rewrite an earlier visit after the opponent replies; shared-position modes cannot. */
+export const supportsOnlineVisitCorrection = (mode: string): boolean =>
   mode === x01Mode || mode === bullRunMode
 
 const parseStartingPlayerIndex = (value: unknown): number => (value === 1 ? 1 : 0)
@@ -92,7 +112,9 @@ export const canonicalizeOnlineMatchConfig = (mode: string, config: object): Gam
   return null
 }
 
-export const defaultOnlineGameConfigForMode = (mode: string): GameConfig => {
+export const defaultOnlineGameConfigForMode = (
+  mode: OnlineMatchMode | string,
+): OnlineMatchConfig => {
   if (mode === claimTheBoardMode) {
     return { aimMode: AroundTheClockAimMode.Any } satisfies ClaimTheBoardConfig
   }
