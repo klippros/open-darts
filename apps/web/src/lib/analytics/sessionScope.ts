@@ -13,6 +13,7 @@ import type { NinetyNineDartsStatGroup } from '../ninetyNineDarts/ninetyNineVisi
 import { x01PresetConfigs, X01PresetId } from '@open-darts/game/x01/x01Presets'
 
 const FIVE_OH_ONE_START_SCORE = x01PresetConfigs[X01PresetId.FiveOhOne].startScore
+const ONE_SEVENTY_START_SCORE = x01PresetConfigs[X01PresetId.OneSeventy].startScore
 const FOUR_OH_ONE_START_SCORE = x01PresetConfigs[X01PresetId.FourOhOne].startScore
 const THREE_OH_ONE_START_SCORE = x01PresetConfigs[X01PresetId.ThreeOhOne].startScore
 
@@ -35,6 +36,9 @@ export const filterX01SessionsByStartScore = (
 
 export const filterFiveOhOneSessions = (sessions: GameSession[]): GameSession[] =>
   filterX01SessionsByStartScore(sessions, FIVE_OH_ONE_START_SCORE)
+
+export const filterOneSeventySessions = (sessions: GameSession[]): GameSession[] =>
+  filterX01SessionsByStartScore(sessions, ONE_SEVENTY_START_SCORE)
 
 export const filterFourOhOneSessions = (sessions: GameSession[]): GameSession[] =>
   filterX01SessionsByStartScore(sessions, FOUR_OH_ONE_START_SCORE)

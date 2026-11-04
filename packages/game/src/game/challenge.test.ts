@@ -28,6 +28,7 @@ describe('challenge', () => {
     expect(getMinVisits(501)).toBe(3)
     expect(getMinVisits(401)).toBe(3)
     expect(getMinVisits(301)).toBe(2)
+    expect(getMinVisits(170)).toBe(1)
   })
 
   it('calculates target three-dart average', () => {

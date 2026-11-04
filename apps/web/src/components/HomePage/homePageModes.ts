@@ -19,6 +19,13 @@ export const MATCH_MODES: readonly HomePageModeLink[] = [
     onlineCapable: true,
   },
   {
+    id: X01PresetId.OneSeventy,
+    label: '170',
+    description: 'Double-out from 170',
+    to: buildX01PresetPath(X01PresetId.OneSeventy),
+    onlineCapable: true,
+  },
+  {
     id: X01PresetId.FourOhOne,
     label: '401',
     description: 'Shorter x01 leg',

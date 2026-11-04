@@ -75,6 +75,7 @@ describe('x01Stats', () => {
     expect(stats.fiveOhOne.threeDartAverageUntilDouble).toBe(85)
     expect(stats.fiveOhOne.bestLegAverage).toBe(85)
     expect(stats.fiveOhOne.checkoutLegCount).toBe(1)
+    expect(stats.oneSeventy.legCount).toBe(0)
     expect(stats.threeOhOne.legCount).toBe(0)
     expect(stats.fourOhOne.legCount).toBe(0)
     expect(stats.all.legCount).toBe(1)

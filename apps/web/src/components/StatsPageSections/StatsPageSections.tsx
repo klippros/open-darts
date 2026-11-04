@@ -111,6 +111,14 @@ const buildX01Variants = (x01: X01Stats): X01Variant[] => [
     scope: { type: 'x01-501' },
   },
   {
+    id: X01StatsFilterId.OneSeventy,
+    label: '170',
+    emptyMessage: 'No saved 170 games in this period yet.',
+    checkedOutEmptyMessage: 'No checked out 170 legs in this period yet.',
+    stats: x01.oneSeventy,
+    scope: { type: 'x01-170' },
+  },
+  {
     id: X01StatsFilterId.FourOhOne,
     label: '401',
     emptyMessage: 'No saved 401 games in this period yet.',
@@ -140,6 +148,8 @@ const parseX01StatsFilterId = (value: string): X01StatsFilterId | null => {
   switch (value) {
     case '501':
       return X01StatsFilterId.FiveOhOne
+    case '170':
+      return X01StatsFilterId.OneSeventy
     case '401':
       return X01StatsFilterId.FourOhOne
     case '301':

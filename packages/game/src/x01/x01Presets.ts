@@ -1,12 +1,18 @@
 import type { X01Config } from '../types/x01'
 
 export enum X01PresetId {
+  OneSeventy = '170',
   ThreeOhOne = '301',
   FourOhOne = '401',
   FiveOhOne = '501',
 }
 
 export const x01PresetConfigs: Record<X01PresetId, X01Config> = {
+  [X01PresetId.OneSeventy]: {
+    startScore: 170,
+    doubleIn: false,
+    doubleOut: true,
+  },
   [X01PresetId.ThreeOhOne]: {
     startScore: 301,
     doubleIn: false,
@@ -45,6 +51,8 @@ export const formatX01StartScore = (config: X01Config): string => String(config.
 
 export const getX01PresetConfig = (presetId: string): X01Config | null => {
   switch (presetId) {
+    case '170':
+      return { ...x01PresetConfigs[X01PresetId.OneSeventy] }
     case '301':
       return { ...x01PresetConfigs[X01PresetId.ThreeOhOne] }
     case '401':

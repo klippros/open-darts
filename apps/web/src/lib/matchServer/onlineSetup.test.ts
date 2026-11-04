@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { STARTING_PLAYER_INDEX_RANDOM } from '@open-darts/game/game/matchLegs'
-import { buildX01PresetPath, X01PresetId } from '@open-darts/game/x01/x01Presets'
-import { MatchPlayerSlot, V1_ONLINE_X01_CONFIG } from './types'
+import { buildX01PresetPath, x01PresetConfigs, X01PresetId } from '@open-darts/game/x01/x01Presets'
+import { MatchPlayerSlot } from './types'
 import {
   buildOnlineSetupPath,
   isOnlineCapableX01Config,
@@ -12,8 +12,9 @@ import {
 } from './onlineSetup'
 
 describe('onlineSetup', () => {
-  it('detects the fixed online 501 config and rejects other x01 configs', () => {
-    expect(isOnlineCapableX01Config(V1_ONLINE_X01_CONFIG)).toBe(true)
+  it('detects online 501 and 170 configs and rejects other x01 configs', () => {
+    expect(isOnlineCapableX01Config(x01PresetConfigs[X01PresetId.FiveOhOne])).toBe(true)
+    expect(isOnlineCapableX01Config(x01PresetConfigs[X01PresetId.OneSeventy])).toBe(true)
     expect(
       isOnlineCapableX01Config({
         startScore: 401,

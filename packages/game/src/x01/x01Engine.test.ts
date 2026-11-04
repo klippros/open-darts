@@ -62,6 +62,23 @@ describe('x01Engine', () => {
     expect(x01Engine.isGameComplete(result.state)).toBe(true)
   })
 
+  it('starts a 170 leg and can check out on bull', () => {
+    const oneSeventyConfig = { startScore: 170, doubleIn: false, doubleOut: true }
+    const state = x01Engine.createInitialState([player], oneSeventyConfig)
+
+    expect(state.players[player.id]?.remaining).toBe(170)
+
+    const result = x01Engine.commitVisit(state, player.id, 0, [
+      numberDart(20, DartMultiplier.Triple),
+      numberDart(20, DartMultiplier.Triple),
+      bullDart(),
+    ])
+
+    expect(result.visit.checkout).toBe(true)
+    expect(result.state.winnerId).toBe(player.id)
+    expect(result.state.players[player.id]?.remaining).toBe(0)
+  })
+
   it('ends a visit early on checkout or bust', () => {
     const state = x01Engine.createInitialState([player], { ...config, startScore: 40 })
 

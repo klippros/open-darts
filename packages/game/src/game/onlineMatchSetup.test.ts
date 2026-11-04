@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { AroundTheClockAimMode } from '../types/aroundTheClock'
 import { GameModeId } from '../types/gameMode'
-import { defaultX01Config } from '../x01/x01Presets'
+import { defaultX01Config, x01PresetConfigs, X01PresetId } from '../x01/x01Presets'
 import { DEFAULT_BULL_RUN_CONFIG } from '../bullRun/bullRunConfig'
 import { DEFAULT_HUNTER_CONFIG } from '../hunter/hunterConfig'
 import {
@@ -20,8 +20,9 @@ import {
 } from './onlineMatchSetup'
 
 describe('onlineMatchSetup', () => {
-  it('accepts the v1 online X01 setup only', () => {
+  it('accepts online X01 setups for 501 and 170 double-out only', () => {
     expect(isV1OnlineX01Setup(GameModeId.X01, defaultX01Config())).toBe(true)
+    expect(isV1OnlineX01Setup(GameModeId.X01, x01PresetConfigs[X01PresetId.OneSeventy])).toBe(true)
     expect(
       isV1OnlineX01Setup(GameModeId.X01, {
         startScore: 301,
@@ -29,7 +30,17 @@ describe('onlineMatchSetup', () => {
         doubleOut: true,
       }),
     ).toBe(false)
+    expect(
+      isV1OnlineX01Setup(GameModeId.X01, {
+        startScore: 170,
+        doubleIn: true,
+        doubleOut: true,
+      }),
+    ).toBe(false)
     expect(isAllowedOnlineMatchSetup(GameModeId.X01, defaultX01Config())).toBe(true)
+    expect(
+      isAllowedOnlineMatchSetup(GameModeId.X01, x01PresetConfigs[X01PresetId.OneSeventy]),
+    ).toBe(true)
   })
 
   it('accepts claim-the-board setups with a known aim mode', () => {
@@ -59,6 +70,16 @@ describe('onlineMatchSetup', () => {
     expect(canonicalizeOnlineMatchConfig(GameModeId.X01, defaultX01Config())).toEqual(
       defaultX01Config(),
     )
+    expect(
+      canonicalizeOnlineMatchConfig(GameModeId.X01, x01PresetConfigs[X01PresetId.OneSeventy]),
+    ).toEqual(x01PresetConfigs[X01PresetId.OneSeventy])
+    expect(
+      canonicalizeOnlineMatchConfig(GameModeId.X01, {
+        startScore: 301,
+        doubleIn: false,
+        doubleOut: true,
+      }),
+    ).toBeNull()
     expect(
       canonicalizeOnlineMatchConfig(GameModeId.ClaimTheBoard, {
         aimMode: AroundTheClockAimMode.Trebles,

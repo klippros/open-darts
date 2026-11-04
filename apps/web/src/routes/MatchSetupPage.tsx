@@ -33,7 +33,6 @@ import {
   ONLINE_PLAY_QUERY_VALUE,
   startingPlayerIndexToMatchSlot,
 } from '../lib/matchServer/onlineSetup'
-import { V1_ONLINE_X01_CONFIG } from '../lib/matchServer/types'
 import { MatchSetupLegSettings } from './MatchSetupLegSettings'
 
 const rangeInputStyle = {
@@ -134,7 +133,7 @@ export const MatchSetupPage = () => {
         mode: GameModeId.X01,
         legsToWin: setup.legsToWin,
         startingPlayerSlot: startingPlayerIndexToMatchSlot(setup.startingPlayerIndex),
-        config: { ...V1_ONLINE_X01_CONFIG },
+        config: { ...x01Config },
       })
       return
     }

@@ -1,13 +1,15 @@
 import { STARTING_PLAYER_INDEX_RANDOM } from '@open-darts/game/game/matchLegs'
 import type { X01Config } from '@open-darts/game/types/x01'
-import { x01ConfigsMatch } from '@open-darts/game/x01/x01Presets'
-import { MatchPlayerSlot, V1_ONLINE_X01_CONFIG } from './types'
+import { x01ConfigsMatch, x01PresetConfigs, X01PresetId } from '@open-darts/game/x01/x01Presets'
+import { MatchPlayerSlot } from './types'
 
 export const ONLINE_PLAY_QUERY_VALUE = 'online'
 export const ONLINE_PLAY_QUERY_KEY = 'play'
 
+const ONLINE_X01_PRESET_IDS = [X01PresetId.FiveOhOne, X01PresetId.OneSeventy] as const
+
 export const isOnlineCapableX01Config = (config: X01Config): boolean =>
-  x01ConfigsMatch(config, V1_ONLINE_X01_CONFIG)
+  ONLINE_X01_PRESET_IDS.some((presetId) => x01ConfigsMatch(config, x01PresetConfigs[presetId]))
 
 export const isOnlinePlaySelected = (params: URLSearchParams): boolean =>
   params.get(ONLINE_PLAY_QUERY_KEY) === ONLINE_PLAY_QUERY_VALUE

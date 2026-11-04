@@ -29,6 +29,7 @@ import {
   filterFiveOhOneSessions,
   filterFourOhOneSessions,
   filterNinetyNineDartsSessions,
+  filterOneSeventySessions,
   filterThreeOhOneSessions,
 } from './sessionScope'
 import {
@@ -80,6 +81,7 @@ export type StatMetricId =
 
 export type StatTimelineScope =
   | { type: 'x01-501' }
+  | { type: 'x01-170' }
   | { type: 'x01-401' }
   | { type: 'x01-301' }
   | { type: 'x01-all' }
@@ -472,6 +474,8 @@ const filterSessionsForScope = (
   switch (scope.type) {
     case 'x01-501':
       return filterFiveOhOneSessions(sessions)
+    case 'x01-170':
+      return filterOneSeventySessions(sessions)
     case 'x01-401':
       return filterFourOhOneSessions(sessions)
     case 'x01-301':
@@ -495,6 +499,7 @@ const filterSessionsForScope = (
 
 const isX01TimelineScope = (scope: StatTimelineScope): boolean =>
   scope.type === 'x01-501' ||
+  scope.type === 'x01-170' ||
   scope.type === 'x01-401' ||
   scope.type === 'x01-301' ||
   scope.type === 'x01-all'

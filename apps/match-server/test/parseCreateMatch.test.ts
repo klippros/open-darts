@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { GameModeId } from '@open-darts/game/types/gameMode'
 import { AroundTheClockAimMode } from '@open-darts/game/types/aroundTheClock'
-import { defaultX01Config } from '@open-darts/game/x01/x01Presets'
+import { defaultX01Config, x01PresetConfigs, X01PresetId } from '@open-darts/game/x01/x01Presets'
 import { parseCreateMatchRequest } from '../src/http/parseCreateMatch'
 import { STARTING_PLAYER_SLOT_RANDOM } from '../src/match/types'
 
@@ -11,6 +11,22 @@ describe('parseCreateMatchRequest', () => {
     config: defaultX01Config(),
     legsToWin: 2,
   }
+
+  it('accepts 170 double-out with requested legs', () => {
+    expect(
+      parseCreateMatchRequest({
+        mode: GameModeId.X01,
+        config: x01PresetConfigs[X01PresetId.OneSeventy],
+        legsToWin: 3,
+        startingPlayerSlot: 0,
+      }),
+    ).toEqual({
+      mode: GameModeId.X01,
+      config: x01PresetConfigs[X01PresetId.OneSeventy],
+      legsToWin: 3,
+      startingPlayerSlot: 0,
+    })
+  })
 
   it('accepts creator, joiner, and random starting slots', () => {
     expect(parseCreateMatchRequest({ ...base, startingPlayerSlot: 0 })?.startingPlayerSlot).toBe(0)
