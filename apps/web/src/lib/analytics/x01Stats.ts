@@ -11,9 +11,7 @@ import { getLatestSessionStartedAt } from './pickLastPlayedVariant'
 import {
   filterAllX01Sessions,
   filterFiveOhOneSessions,
-  filterFourOhOneSessions,
   filterOneSeventySessions,
-  filterThreeOhOneSessions,
 } from './sessionScope'
 import {
   countCheckouts100Plus,
@@ -34,8 +32,6 @@ export const FIVE_OH_ONE_START_SCORE = x01PresetConfigs[X01PresetId.FiveOhOne].s
 export enum X01StatsFilterId {
   FiveOhOne = '501',
   OneSeventy = '170',
-  FourOhOne = '401',
-  ThreeOhOne = '301',
   All = 'all',
 }
 
@@ -65,8 +61,6 @@ export interface X01LegStats {
 export interface X01Stats {
   fiveOhOne: X01LegStats
   oneSeventy: X01LegStats
-  fourOhOne: X01LegStats
-  threeOhOne: X01LegStats
   all: X01LegStats
 }
 
@@ -169,7 +163,5 @@ export const computeX01Stats = (
 ): X01Stats => ({
   fiveOhOne: computeX01LegStats(filterFiveOhOneSessions(sessions), options),
   oneSeventy: computeX01LegStats(filterOneSeventySessions(sessions), options),
-  fourOhOne: computeX01LegStats(filterFourOhOneSessions(sessions), options),
-  threeOhOne: computeX01LegStats(filterThreeOhOneSessions(sessions), options),
   all: computeX01LegStats(filterAllX01Sessions(sessions), options),
 })

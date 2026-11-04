@@ -17,18 +17,24 @@ import {
 describe('x01Presets', () => {
   it('exposes standard x01 preset configs', () => {
     expect(x01PresetConfigs[X01PresetId.OneSeventy].startScore).toBe(170)
-    expect(x01PresetConfigs[X01PresetId.ThreeOhOne].startScore).toBe(301)
-    expect(x01PresetConfigs[X01PresetId.FourOhOne].startScore).toBe(401)
     expect(x01PresetConfigs[X01PresetId.FiveOhOne].startScore).toBe(501)
   })
 
   it('parses preset ids from search params', () => {
-    const config = parseX01ConfigFromSearchParams(new URLSearchParams('preset=301'))
-
-    expect(config).toEqual(getX01PresetConfig('301'))
     expect(parseX01ConfigFromSearchParams(new URLSearchParams('preset=170'))).toEqual(
       getX01PresetConfig('170'),
     )
+    expect(parseX01ConfigFromSearchParams(new URLSearchParams('preset=501'))).toEqual(
+      getX01PresetConfig('501'),
+    )
+  })
+
+  it('falls back to custom start parsing for unknown presets', () => {
+    expect(parseX01ConfigFromSearchParams(new URLSearchParams('preset=301'))).toEqual({
+      startScore: 501,
+      doubleIn: false,
+      doubleOut: true,
+    })
   })
 
   it('parses custom start score and rule flags from search params', () => {

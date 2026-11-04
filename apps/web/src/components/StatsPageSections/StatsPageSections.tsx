@@ -119,22 +119,6 @@ const buildX01Variants = (x01: X01Stats): X01Variant[] => [
     scope: { type: 'x01-170' },
   },
   {
-    id: X01StatsFilterId.FourOhOne,
-    label: '401',
-    emptyMessage: 'No saved 401 games in this period yet.',
-    checkedOutEmptyMessage: 'No checked out 401 legs in this period yet.',
-    stats: x01.fourOhOne,
-    scope: { type: 'x01-401' },
-  },
-  {
-    id: X01StatsFilterId.ThreeOhOne,
-    label: '301',
-    emptyMessage: 'No saved 301 games in this period yet.',
-    checkedOutEmptyMessage: 'No checked out 301 legs in this period yet.',
-    stats: x01.threeOhOne,
-    scope: { type: 'x01-301' },
-  },
-  {
     id: X01StatsFilterId.All,
     label: 'All',
     emptyMessage: 'No saved x01 games in this period yet.',
@@ -150,10 +134,6 @@ const parseX01StatsFilterId = (value: string): X01StatsFilterId | null => {
       return X01StatsFilterId.FiveOhOne
     case '170':
       return X01StatsFilterId.OneSeventy
-    case '401':
-      return X01StatsFilterId.FourOhOne
-    case '301':
-      return X01StatsFilterId.ThreeOhOne
     case 'all':
       return X01StatsFilterId.All
     default:

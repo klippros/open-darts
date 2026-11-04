@@ -27,10 +27,8 @@ import {
   filterBullRunSessions,
   filterCheckoutPracticeSessions,
   filterFiveOhOneSessions,
-  filterFourOhOneSessions,
   filterNinetyNineDartsSessions,
   filterOneSeventySessions,
-  filterThreeOhOneSessions,
 } from './sessionScope'
 import {
   countDartsInSession,
@@ -82,8 +80,6 @@ export type StatMetricId =
 export type StatTimelineScope =
   | { type: 'x01-501' }
   | { type: 'x01-170' }
-  | { type: 'x01-401' }
-  | { type: 'x01-301' }
   | { type: 'x01-all' }
   | { type: 'practice-checkout'; mode: GameModeId.OneTwentyOne | GameModeId.TenUpOneDown }
   | { type: 'practice-bob27' }
@@ -476,10 +472,6 @@ const filterSessionsForScope = (
       return filterFiveOhOneSessions(sessions)
     case 'x01-170':
       return filterOneSeventySessions(sessions)
-    case 'x01-401':
-      return filterFourOhOneSessions(sessions)
-    case 'x01-301':
-      return filterThreeOhOneSessions(sessions)
     case 'x01-all':
       return filterAllX01Sessions(sessions)
     case 'practice-checkout':
@@ -498,11 +490,7 @@ const filterSessionsForScope = (
 }
 
 const isX01TimelineScope = (scope: StatTimelineScope): boolean =>
-  scope.type === 'x01-501' ||
-  scope.type === 'x01-170' ||
-  scope.type === 'x01-401' ||
-  scope.type === 'x01-301' ||
-  scope.type === 'x01-all'
+  scope.type === 'x01-501' || scope.type === 'x01-170' || scope.type === 'x01-all'
 
 const buildX01TimelinePoints = (
   sessions: GameSession[],
