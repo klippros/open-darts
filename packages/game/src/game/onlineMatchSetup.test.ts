@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { AroundTheClockAimMode } from '../types/aroundTheClock'
 import { GameModeId } from '../types/gameMode'
 import { defaultX01Config } from '../x01/x01Presets'
+import { DEFAULT_BULL_RUN_CONFIG } from '../bullRun/bullRunConfig'
 import { DEFAULT_HUNTER_CONFIG } from '../hunter/hunterConfig'
 import {
   canonicalizeOnlineMatchConfig,
   isAllowedOnlineMatchSetup,
+  isOnlineBullRunSetup,
   isOnlineClaimTheBoardSetup,
   isOnlineHunterSetup,
   isV1OnlineX01Setup,
@@ -43,6 +45,13 @@ describe('onlineMatchSetup', () => {
     expect(isOnlineHunterSetup(GameModeId.X01, {})).toBe(false)
   })
 
+  it('accepts bull-run setups with an integer target', () => {
+    expect(isOnlineBullRunSetup(GameModeId.BullRun, { targetScore: 15 })).toBe(true)
+    expect(isAllowedOnlineMatchSetup(GameModeId.BullRun, DEFAULT_BULL_RUN_CONFIG)).toBe(true)
+    expect(isOnlineBullRunSetup(GameModeId.BullRun, { targetScore: 15.5 })).toBe(false)
+    expect(isOnlineBullRunSetup(GameModeId.X01, { targetScore: 15 })).toBe(false)
+  })
+
   it('canonicalizes create-match configs', () => {
     expect(canonicalizeOnlineMatchConfig(GameModeId.X01, defaultX01Config())).toEqual(
       defaultX01Config(),
@@ -60,10 +69,15 @@ describe('onlineMatchSetup', () => {
     expect(canonicalizeOnlineMatchConfig(GameModeId.Hunter, { startingPlayerIndex: 1 })).toEqual({
       startingPlayerIndex: 1,
     })
+    expect(canonicalizeOnlineMatchConfig(GameModeId.BullRun, { targetScore: 60 })).toEqual({
+      targetScore: 50,
+    })
+    expect(canonicalizeOnlineMatchConfig(GameModeId.BullRun, { targetScore: '15' })).toBeNull()
   })
 
-  it('limits async play to X01', () => {
+  it('allows async play for X01 and Bull Run', () => {
     expect(supportsOnlineAsyncPlay(GameModeId.X01)).toBe(true)
+    expect(supportsOnlineAsyncPlay(GameModeId.BullRun)).toBe(true)
     expect(supportsOnlineAsyncPlay(GameModeId.ClaimTheBoard)).toBe(false)
     expect(supportsOnlineAsyncPlay(GameModeId.Hunter)).toBe(false)
   })
@@ -85,6 +99,10 @@ describe('onlineMatchSetup', () => {
       startingPlayerIndex: 1,
     })
     expect(readOnlineGameConfig(null, GameModeId.Hunter)).toEqual(DEFAULT_HUNTER_CONFIG)
+    expect(readOnlineGameConfig({ targetScore: 20 }, GameModeId.BullRun)).toEqual({
+      targetScore: 20,
+    })
+    expect(readOnlineGameConfig(null, GameModeId.BullRun)).toEqual(DEFAULT_BULL_RUN_CONFIG)
   })
 
   it('applies the resolved starting slot onto hunter config', () => {

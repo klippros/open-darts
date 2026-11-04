@@ -4,6 +4,7 @@ import type { GameSession } from '@open-darts/game/types/gameSession'
 import { getMatchSummary, getSessionModeLabel } from '../../lib/history/sessionSummary'
 import { AroundTheClockSummaryPanel } from './AroundTheClockSummaryPanel'
 import { Bob27SummaryPanel } from './Bob27SummaryPanel'
+import { BullRunSummaryPanel } from './BullRunSummaryPanel'
 import { ClaimTheBoardSummaryPanel } from './ClaimTheBoardSummaryPanel'
 import { HunterSummaryPanel } from './HunterSummaryPanel'
 import { MatchLegScore } from './MatchLegScore'
@@ -28,7 +29,8 @@ export const MatchSummaryBody = ({ session, initialLegNumber }: MatchSummaryBody
     session.mode !== GameModeId.OneTwentyOne &&
     session.mode !== GameModeId.TenUpOneDown &&
     session.mode !== GameModeId.NinetyNineDarts &&
-    session.mode !== GameModeId.Hunter
+    session.mode !== GameModeId.Hunter &&
+    session.mode !== GameModeId.BullRun
 
   return (
     <Stack gap={5}>
@@ -47,6 +49,8 @@ export const MatchSummaryBody = ({ session, initialLegNumber }: MatchSummaryBody
       )}
 
       {session.mode === GameModeId.Hunter && <HunterSummaryPanel session={session} />}
+
+      {session.mode === GameModeId.BullRun && <BullRunSummaryPanel session={session} />}
 
       {session.mode === GameModeId.NinetyNineDarts && (
         <NinetyNineDartsSummaryPanel session={session} />

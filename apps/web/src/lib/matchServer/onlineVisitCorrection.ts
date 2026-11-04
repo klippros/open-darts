@@ -24,8 +24,9 @@ export const hasLaterOpponentVisit = (
       isCountingVisit(visit) && visit.visitIndex > ownVisitIndex && visit.playerId !== playerId,
   )
 
-/** X01 can rewrite an earlier visit after the opponent replies; shared-target modes cannot. */
-export const supportsOnlineVisitCorrection = (mode: GameModeId): boolean => mode === GameModeId.X01
+/** Race modes can rewrite an earlier visit after the opponent replies; shared-position modes cannot. */
+export const supportsOnlineVisitCorrection = (mode: GameModeId): boolean =>
+  mode === GameModeId.X01 || mode === GameModeId.BullRun
 
 export const canAmendLastOwnVisit = (input: {
   isActiveMatch: boolean

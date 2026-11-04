@@ -59,6 +59,22 @@ describe('parseCreateMatchRequest', () => {
     })
   })
 
+  it('accepts bull-run setups', () => {
+    expect(
+      parseCreateMatchRequest({
+        mode: GameModeId.BullRun,
+        config: { targetScore: 20 },
+        legsToWin: 3,
+        startingPlayerSlot: 0,
+      }),
+    ).toEqual({
+      mode: GameModeId.BullRun,
+      config: { targetScore: 20 },
+      legsToWin: 1,
+      startingPlayerSlot: 0,
+    })
+  })
+
   it('rejects invalid claim-the-board aim modes', () => {
     expect(
       parseCreateMatchRequest({

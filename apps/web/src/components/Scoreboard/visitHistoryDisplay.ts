@@ -117,6 +117,14 @@ export const getVisitHistoryEntryDisplay = (
     }
   }
 
+  if (mode === GameModeId.BullRun) {
+    return {
+      headline: String(visit.visitScore),
+      detail: String(visit.scoreAfter),
+      tone: visit.checkout ? 'success' : visit.visitScore === 0 ? 'failed' : 'default',
+    }
+  }
+
   if (isTenUpOneDownMode(mode)) {
     if (visit.checkout) {
       return {

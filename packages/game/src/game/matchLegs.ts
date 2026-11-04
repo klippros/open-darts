@@ -1,4 +1,5 @@
 import { GameModeId } from '../types/gameMode'
+import type { BullRunState } from '../types/bullRun'
 import type { ClaimTheBoardState } from '../types/claimTheBoard'
 import type { HunterState } from '../types/hunter'
 import type { GameSession } from '../types/gameSession'
@@ -286,6 +287,8 @@ const getLegWinnerIdFromClaimTheBoardState = (state: ClaimTheBoardState): string
 
 const getLegWinnerIdFromHunterState = (state: HunterState): string | undefined => state.winnerId
 
+const getLegWinnerIdFromBullRunState = (state: BullRunState): string | undefined => state.winnerId
+
 export const getWinnerIdForCompletedLeg = (
   mode: GameModeId,
   engineState: unknown,
@@ -303,6 +306,11 @@ export const getWinnerIdForCompletedLeg = (
   if (mode === GameModeId.Hunter) {
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- engine state matches mode
     return getLegWinnerIdFromHunterState(engineState as HunterState)
+  }
+
+  if (mode === GameModeId.BullRun) {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- engine state matches mode
+    return getLegWinnerIdFromBullRunState(engineState as BullRunState)
   }
 
   return undefined

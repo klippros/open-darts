@@ -61,6 +61,7 @@ import {
   supportsOnlineVisitCorrection,
   visitsWithCorrectionRemoved,
 } from '../../lib/matchServer/onlineVisitCorrection'
+import { supportsOnlineAsyncPlay } from '@open-darts/game/game/onlineMatchSetup'
 import { canStartAsyncFromInactivity } from '../../lib/matchServer/startAsyncEligibility'
 import { DeadlineKind, MatchCommandName, MatchStatus, PlayMode } from '../../lib/matchServer/types'
 import type { MatchCommand, PublicMatchState } from '../../lib/matchServer/types'
@@ -282,7 +283,7 @@ export const OnlineMatchPlayBoard = ({
   const asyncInactivityEligible =
     state.status === MatchStatus.Active &&
     state.playMode === PlayMode.Synchronous &&
-    state.mode === GameModeId.X01 &&
+    supportsOnlineAsyncPlay(state.mode) &&
     !state.pendingFinalization &&
     canStartAsyncFromInactivity({
       nowMs,

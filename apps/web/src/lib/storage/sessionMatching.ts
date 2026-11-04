@@ -2,8 +2,13 @@ import { GameModeId } from '@open-darts/game/types/gameMode'
 import type { GameConfig } from '@open-darts/game/types/gameMode'
 import type { GameSession } from '@open-darts/game/types/gameSession'
 import type { CreateSessionParams } from '@open-darts/game/game/createSession'
-import { isNinetyNineDartsConfig, isX01Config } from '@open-darts/game/game/gameConfigGuards'
+import {
+  isBullRunConfig,
+  isNinetyNineDartsConfig,
+  isX01Config,
+} from '@open-darts/game/game/gameConfigGuards'
 import { getDefaultConfig } from '@open-darts/game/game/gameModeDefinitions'
+import { buildBullRunGamePath } from '@open-darts/game/bullRun/bullRunConfig'
 import { buildNinetyNineDartsGamePath } from '@open-darts/game/ninetyNineDarts/ninetyNineDartsConfig'
 import { buildPracticeGamePath, isPracticeGameMode } from '../game/gameRoute'
 import {
@@ -91,6 +96,13 @@ export const buildGamePathFromSession = (session: GameSession): string => {
 
   if (isNinetyNineDartsConfig(session.mode, session.config)) {
     return buildNinetyNineDartsGamePath(session.config)
+  }
+
+  if (isBullRunConfig(session.mode, session.config)) {
+    const opponentSetup = getOpponentSetupFromSession(session)
+    const params = appendOpponentSetupParams(new URLSearchParams(), opponentSetup, 0)
+
+    return buildBullRunGamePath(session.config, params)
   }
 
   if (isPracticeGameMode(session.mode)) {

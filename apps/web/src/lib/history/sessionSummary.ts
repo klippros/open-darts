@@ -1,5 +1,6 @@
 import { getVisitAverages, getPrimaryPlayerVisits } from '../analytics/visitStats'
 import { computeAroundTheClockSingleSessionStats } from '../analytics/aroundTheClockStats'
+import { computeBullRunSingleSessionStats } from '../bullRun/bullRunVisitStats'
 import { computeNinetyNineDartsSingleSessionStats } from '../ninetyNineDarts/ninetyNineVisitStats'
 import {
   computeClaimTheBoardSingleSessionStats,
@@ -10,9 +11,11 @@ import { gameModeDefinitions } from '@open-darts/game/game/gameModeDefinitions'
 import {
   isX01Config,
   isAroundTheClockConfig,
+  isBullRunConfig,
   isClaimTheBoardConfig,
   isNinetyNineDartsConfig,
 } from '@open-darts/game/game/gameConfigGuards'
+import { getBullRunConfigLabel } from '@open-darts/game/bullRun/bullRunConfig'
 import {
   getAroundTheClockAimModeLabel,
   getAroundTheClockConfig,
@@ -52,6 +55,10 @@ export const getSessionModeLabel = (session: GameSession): string => {
 
   if (isNinetyNineDartsConfig(session.mode, session.config)) {
     return `${gameModeDefinitions[session.mode].label} · ${getNinetyNineDartsConfigLabel(session.config)}`
+  }
+
+  if (isBullRunConfig(session.mode, session.config)) {
+    return `${gameModeDefinitions[session.mode].label} · ${getBullRunConfigLabel(session.config)}`
   }
 
   return gameModeDefinitions[session.mode].label
@@ -305,6 +312,29 @@ export const getMatchSummary = (session: GameSession): MatchSummary => {
 
   if (session.mode === GameModeId.NinetyNineDarts) {
     const stats = computeNinetyNineDartsSingleSessionStats(session)
+    const modeLabel = getSessionModeLabel(session)
+    const details: string[] = []
+
+    if (stats?.score !== undefined && stats.score !== null) {
+      details.push(`${stats.score} pts`)
+    }
+
+    if (stats?.hitRate !== undefined && stats.hitRate !== null) {
+      details.push(`${Math.round(stats.hitRate)}%`)
+    }
+
+    if (details.length === 0) {
+      details.push(`${visitCount} visit${visitCount === 1 ? '' : 's'}`)
+    }
+
+    return {
+      title: finishedEarly ? `${modeLabel} session ended` : `${modeLabel} complete`,
+      details,
+    }
+  }
+
+  if (session.mode === GameModeId.BullRun) {
+    const stats = computeBullRunSingleSessionStats(session)
     const modeLabel = getSessionModeLabel(session)
     const details: string[] = []
 

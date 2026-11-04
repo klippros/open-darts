@@ -6,8 +6,13 @@ import { buildOnlineSetupPath } from '../lib/matchServer/onlineSetup'
 
 const parseOnlineMatchMode = (
   raw: string | null,
-): GameModeId.X01 | GameModeId.ClaimTheBoard | GameModeId.Hunter | null => {
-  if (raw === GameModeId.X01 || raw === GameModeId.ClaimTheBoard || raw === GameModeId.Hunter) {
+): GameModeId.X01 | GameModeId.ClaimTheBoard | GameModeId.Hunter | GameModeId.BullRun | null => {
+  if (
+    raw === GameModeId.X01 ||
+    raw === GameModeId.ClaimTheBoard ||
+    raw === GameModeId.Hunter ||
+    raw === GameModeId.BullRun
+  ) {
     return raw
   }
 
@@ -28,6 +33,10 @@ export const OnlineMatchNewPage = () => {
 
   if (matchMode === GameModeId.Hunter) {
     return <Navigate to={buildOnlineSetupPath('/game/hunter/setup')} replace />
+  }
+
+  if (matchMode === GameModeId.BullRun) {
+    return <Navigate to={buildOnlineSetupPath('/game/bull-run/setup')} replace />
   }
 
   return <Navigate to={buildOnlineSetupPath(buildX01PresetPath(X01PresetId.FiveOhOne))} replace />

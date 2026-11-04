@@ -3,6 +3,7 @@ import { App } from './App'
 import { AboutPage } from './routes/AboutPage'
 import { AroundTheClockSetupPage } from './routes/AroundTheClockSetupPage'
 import { ClaimTheBoardSetupPage } from './routes/ClaimTheBoardSetupPage'
+import { BullRunSetupPage } from './routes/BullRunSetupPage'
 import { HunterSetupPage } from './routes/HunterSetupPage'
 import { AuthCallbackPage } from './routes/AuthCallbackPage'
 import { GamePage } from './routes/GamePage'
@@ -28,6 +29,7 @@ export const router = createBrowserRouter(
         { path: 'game/around-the-clock/setup', element: <AroundTheClockSetupPage /> },
         { path: 'game/claim-the-board/setup', element: <ClaimTheBoardSetupPage /> },
         { path: 'game/hunter/setup', element: <HunterSetupPage /> },
+        { path: 'game/bull-run/setup', element: <BullRunSetupPage /> },
         { path: 'game/99-darts/setup', element: <NinetyNineDartsSetupPage /> },
         { path: 'match/new', element: <OnlineMatchNewPage /> },
         { path: 'match/join/:token', element: <OnlineMatchJoinPage /> },

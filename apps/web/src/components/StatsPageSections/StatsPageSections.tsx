@@ -17,6 +17,7 @@ import {
 import {
   isAroundTheClockPracticeStats,
   isBob27PracticeStats,
+  isBullRunPracticeStats,
   isClaimTheBoardPracticeStats,
   isNinetyNineDartsPracticeStats,
 } from '../../lib/analytics/practiceStats'
@@ -25,6 +26,7 @@ import { StatsTable } from '../StatsTable/StatsTable'
 import {
   AroundTheClockPracticeCard,
   Bob27PracticeCard,
+  BullRunPracticeCard,
   CheckoutPracticeCard,
   ClaimTheBoardPracticeCard,
   NinetyNineDartsPracticeCard,
@@ -267,6 +269,7 @@ export const PracticeSection = ({ checkout, other, onStatSelect }: PracticeSecti
   const claimTheBoard = other.find(isClaimTheBoardPracticeStats)
   const aroundTheClock = other.filter(isAroundTheClockPracticeStats)
   const ninetyNineDarts = other.filter(isNinetyNineDartsPracticeStats)
+  const bullRun = other.find(isBullRunPracticeStats)
 
   return (
     <Stack gap={4}>
@@ -282,6 +285,9 @@ export const PracticeSection = ({ checkout, other, onStatSelect }: PracticeSecti
         )}
         {ninetyNineDarts.length > 0 && (
           <NinetyNineDartsPracticeCard variants={ninetyNineDarts} onStatSelect={onStatSelect} />
+        )}
+        {bullRun !== undefined && (
+          <BullRunPracticeCard stats={bullRun} onStatSelect={onStatSelect} />
         )}
       </Stack>
     </Stack>

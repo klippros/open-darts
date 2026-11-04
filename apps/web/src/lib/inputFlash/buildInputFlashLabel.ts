@@ -5,6 +5,7 @@ import {
   isAroundTheClockConfig,
   isNinetyNineDartsConfig,
 } from '@open-darts/game/game/gameConfigGuards'
+import { getBullRunDartPoints } from '@open-darts/game/bullRun/bullRunRules'
 import {
   getHunterAdvanceForDart,
   getHunterAimFieldNumberAfterDarts,
@@ -77,7 +78,7 @@ const labelForOneTwentyOneRoundFailed = (visit: Visit): string => {
 }
 
 const applyVisitOutcomeOverride = (mode: GameModeId, visit: Visit, inputLabel: string): string => {
-  if (isScoreCheckoutMode(mode) && visit.checkout) {
+  if ((isScoreCheckoutMode(mode) || mode === GameModeId.BullRun) && visit.checkout) {
     return GAME_SHOT
   }
 
@@ -190,6 +191,10 @@ const labelForAddedDarts = (
     return formatSignedDelta(sumNinetyNinePoints(darts, config))
   }
 
+  if (mode === GameModeId.BullRun) {
+    return formatSignedDelta(darts.reduce((total, dart) => total + getBullRunDartPoints(dart), 0))
+  }
+
   if (mode === GameModeId.Hunter) {
     return formatSignedDelta(
       sumHunterAdvances(darts, before.hunterFieldNumber, before.pendingDarts),
@@ -239,6 +244,10 @@ const labelForRemovedDart = (
     return formatSignedDelta(getNinetyNineDartsDartPoints(dart, config.target))
   }
 
+  if (mode === GameModeId.BullRun) {
+    return formatSignedDelta(getBullRunDartPoints(dart))
+  }
+
   if (mode === GameModeId.Hunter && before.hunterFieldNumber !== undefined) {
     return formatSignedDelta(hunterAdvanceForDartAt(dart, before.hunterFieldNumber, dartsBefore))
   }
@@ -255,7 +264,7 @@ const labelForRemovedDart = (
 }
 
 const labelForRemovedVisit = (mode: GameModeId, visit: Visit): string => {
-  if (isScoreCheckoutMode(mode) && visit.checkout) {
+  if ((isScoreCheckoutMode(mode) || mode === GameModeId.BullRun) && visit.checkout) {
     return GAME_SHOT
   }
 

@@ -50,6 +50,9 @@ export const filterCheckoutPracticeSessions = (
 export const filterBob27Sessions = (sessions: GameSession[]): GameSession[] =>
   sessions.filter((session) => session.mode === GameModeId.Bob27)
 
+export const filterBullRunSessions = (sessions: GameSession[]): GameSession[] =>
+  sessions.filter((session) => session.mode === GameModeId.BullRun)
+
 export const filterAroundTheClockSessions = (
   sessions: GameSession[],
   aimMode?: AroundTheClockAimMode,

@@ -14,15 +14,18 @@ import type {
   PublicMatchState,
 } from './types'
 import { MatchEndingKind, MatchStatus, PlayMode, V1_ONLINE_X01_CONFIG } from './types'
+import { DEFAULT_BULL_RUN_CONFIG } from '@open-darts/game/bullRun/bullRunConfig'
 import { DEFAULT_CLAIM_THE_BOARD_CONFIG } from '@open-darts/game/claimTheBoard/claimTheBoardConfig'
 import { DEFAULT_HUNTER_CONFIG } from '@open-darts/game/hunter/hunterConfig'
+import type { BullRunConfig } from '@open-darts/game/types/bullRun'
 import type { ClaimTheBoardConfig } from '@open-darts/game/types/claimTheBoard'
 import type { HunterConfig } from '@open-darts/game/types/hunter'
 import type { X01Config } from '@open-darts/game/types/x01'
 import { readOnlineGameConfig } from '@open-darts/game/game/onlineMatchSetup'
 
-type OnlineMatchMode = GameModeId.X01 | GameModeId.ClaimTheBoard | GameModeId.Hunter
-type OnlineMatchConfig = X01Config | ClaimTheBoardConfig | HunterConfig
+type OnlineMatchMode =
+  GameModeId.X01 | GameModeId.ClaimTheBoard | GameModeId.Hunter | GameModeId.BullRun
+type OnlineMatchConfig = X01Config | ClaimTheBoardConfig | HunterConfig | BullRunConfig
 
 export class MatchServerApiError extends Error {
   readonly status: number
@@ -208,7 +211,9 @@ export const createMatch = async (
       ? DEFAULT_CLAIM_THE_BOARD_CONFIG
       : mode === GameModeId.Hunter
         ? DEFAULT_HUNTER_CONFIG
-        : { ...V1_ONLINE_X01_CONFIG })
+        : mode === GameModeId.BullRun
+          ? DEFAULT_BULL_RUN_CONFIG
+          : { ...V1_ONLINE_X01_CONFIG })
   const payload = await matchServerFetch('/v1/matches', {
     method: 'POST',
     accessToken,

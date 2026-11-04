@@ -10,6 +10,13 @@ import {
 } from '../bob27/bob27VisitStats'
 import { getClaimTheBoardPrimaryPlayerStats } from '../claimTheBoard/claimTheBoardVisitStats'
 import {
+  computeBullRunSingleSessionStats,
+  getBullRunHitRateFromCounts,
+  mergeBullRunOutcomeCounts,
+  ratePerThreeDarts,
+} from '../bullRun/bullRunVisitStats'
+import type { BullRunOutcomeCounts } from '../bullRun/bullRunVisitStats'
+import {
   computeNinetyNineDartsSingleSessionStats,
   getNinetyNineDartsHitRateFromCounts,
   getNinetyNineDartsStatGroupLabel,
@@ -103,11 +110,24 @@ export interface NinetyNineDartsPracticeStats {
   lastPlayedAt: string
 }
 
+export interface BullRunPracticeStats {
+  mode: GameModeId.BullRun
+  label: string
+  gameCount: number
+  completedCount: number
+  hitRate: number | null
+  singlesPerThreeDarts: number | null
+  doublesPerThreeDarts: number | null
+  avgPerThreeDarts: number | null
+  lastPlayedAt: string
+}
+
 export type OtherPracticeStats =
   | Bob27PracticeStats
   | ClaimTheBoardPracticeStats
   | AroundTheClockPracticeStats
   | NinetyNineDartsPracticeStats
+  | BullRunPracticeStats
 
 export interface PracticeStats {
   checkout: CheckoutPracticeStats[]
@@ -342,6 +362,50 @@ const computeNinetyNineDartsStatsForGroup = (
   }
 }
 
+const emptyBullRunCounts = (): BullRunOutcomeCounts => ({
+  singles: 0,
+  doubles: 0,
+  misses: 0,
+})
+
+const computeBullRunStats = (sessions: GameSession[]): BullRunPracticeStats | null => {
+  const modeSessions = sessions.filter((session) => session.mode === GameModeId.BullRun)
+
+  if (modeSessions.length === 0) {
+    return null
+  }
+
+  const completedSessions = modeSessions.filter((session) => session.finishedEarly !== true)
+  const lastPlayedAt = getLatestSessionStartedAt(modeSessions)
+
+  if (lastPlayedAt === null) {
+    return null
+  }
+
+  const sessionStats = modeSessions
+    .map((session) => computeBullRunSingleSessionStats(session))
+    .filter((stats): stats is NonNullable<typeof stats> => stats !== null)
+
+  const totals = sessionStats.reduce(
+    (counts, stats) => mergeBullRunOutcomeCounts(counts, stats.counts),
+    emptyBullRunCounts(),
+  )
+  const totalDarts = sessionStats.reduce((sum, stats) => sum + stats.dartsThrown, 0)
+  const totalPoints = sessionStats.reduce((sum, stats) => sum + (stats.score ?? 0), 0)
+
+  return {
+    mode: GameModeId.BullRun,
+    label: gameModeDefinitions[GameModeId.BullRun].label,
+    gameCount: modeSessions.length,
+    completedCount: completedSessions.length,
+    hitRate: getBullRunHitRateFromCounts(totals),
+    singlesPerThreeDarts: ratePerThreeDarts(totals.singles, totalDarts),
+    doublesPerThreeDarts: ratePerThreeDarts(totals.doubles, totalDarts),
+    avgPerThreeDarts: ratePerThreeDarts(totalPoints, totalDarts),
+    lastPlayedAt,
+  }
+}
+
 export const computePracticeStats = (sessions: GameSession[]): PracticeStats => ({
   checkout: CHECKOUT_PRACTICE_MODES.flatMap((mode) => {
     const stats = computeCheckoutPracticeStats(mode, sessions)
@@ -357,6 +421,7 @@ export const computePracticeStats = (sessions: GameSession[]): PracticeStats => 
     ...NINETY_NINE_DARTS_STAT_GROUPS.map((group) =>
       computeNinetyNineDartsStatsForGroup(sessions, group),
     ),
+    computeBullRunStats(sessions),
   ].flatMap((stats) => (stats === null ? [] : [stats])),
 })
 
@@ -374,3 +439,6 @@ export const isAroundTheClockPracticeStats = (
 export const isNinetyNineDartsPracticeStats = (
   stats: OtherPracticeStats,
 ): stats is NinetyNineDartsPracticeStats => stats.mode === GameModeId.NinetyNineDarts
+
+export const isBullRunPracticeStats = (stats: OtherPracticeStats): stats is BullRunPracticeStats =>
+  stats.mode === GameModeId.BullRun

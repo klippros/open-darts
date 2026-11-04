@@ -50,6 +50,13 @@ export const MATCH_MODES: readonly HomePageModeLink[] = [
     to: '/game/hunter/setup',
     onlineCapable: true,
   },
+  {
+    id: 'bull-run',
+    label: 'Bull Run',
+    description: 'Race to the bull target · outer 1, bullseye 2',
+    to: '/game/bull-run/setup',
+    onlineCapable: true,
+  },
 ]
 
 export const PRACTICE_MODES: readonly HomePageModeLink[] = [
