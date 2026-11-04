@@ -1,13 +1,16 @@
-import { Box, Input, Stack, Text } from '@chakra-ui/react'
-import { useMemo, useState } from 'react'
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { Box, Stack, Text } from '@chakra-ui/react'
+import { useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { SetupPageActions } from '../components/SetupPageLayout/SetupPageActions'
 import { SetupPageHeader } from '../components/SetupPageLayout/SetupPageHeader'
 import { SetupPageLayout } from '../components/SetupPageLayout/SetupPageLayout'
 import { SetupOptionCard } from '../components/SetupPageLayout/SetupOptionCard'
 import { SetupSection } from '../components/SetupPageLayout/SetupSection'
+import { SetupFirstThrowSection } from '../components/SetupPageLayout/SetupFirstThrowSection'
+import { SetupGuestNameSection } from '../components/SetupPageLayout/SetupGuestNameSection'
+import { SetupOnlineSignInDialog } from '../components/SetupPageLayout/SetupOnlineSignInDialog'
+import { useMatchSetupSession } from '../components/SetupPageLayout/useMatchSetupSession'
 import { ResumeOnlineMatchBanner } from '../components/ResumeOnlineMatchBanner/ResumeOnlineMatchBanner'
-import { SignInDialog } from '../components/SignInDialog/SignInDialog'
 import { buildBullRunGamePath, getBullRunConfig } from '@open-darts/game/bullRun/bullRunConfig'
 import {
   BULL_RUN_DEFAULT_TARGET_SCORE,
@@ -16,20 +19,12 @@ import {
 } from '@open-darts/game/bullRun/bullRunRules'
 import { parseOpponentSetup } from '@open-darts/game/game/opponentSetup'
 import type { OpponentMode } from '@open-darts/game/game/opponentSetup'
-import {
-  resolveStartingPlayerIndex,
-  STARTING_PLAYER_INDEX_RANDOM,
-} from '@open-darts/game/game/matchLegs'
-import { resolveHumanPlayerName } from '@open-darts/game/game/playerFactory'
+import { resolveStartingPlayerIndex } from '@open-darts/game/game/matchLegs'
 import { GameModeId } from '@open-darts/game/types/gameMode'
 import type { BullRunConfig } from '@open-darts/game/types/bullRun'
-import { useAuth } from '../hooks/authContext'
-import { useCreateOnlineMatch } from '../hooks/useCreateOnlineMatch'
 import { isOnlineMatchesEnabled } from '../lib/matchServer/config'
 import {
   isOnlinePlaySelected,
-  ONLINE_PLAY_QUERY_KEY,
-  ONLINE_PLAY_QUERY_VALUE,
   startingPlayerIndexToMatchSlot,
 } from '../lib/matchServer/onlineSetup'
 
@@ -39,70 +34,51 @@ const rangeInputStyle = {
   cursor: 'pointer',
 } as const
 
-type BullRunPlayMode = OpponentMode | 'online'
-
 const localOpponentOptions: { value: OpponentMode; label: string; description: string }[] = [
   { value: 'solo', label: 'Solo', description: 'Play on your own' },
   { value: 'guest', label: 'Guest', description: 'Pass the device to a second player' },
 ]
 
+const resolveBullRunLocalMode = (playMode: string, isOnline: boolean): OpponentMode => {
+  if (isOnline || playMode === 'online') {
+    return isOnline ? 'guest' : 'solo'
+  }
+
+  return playMode === 'guest' ? 'guest' : 'solo'
+}
+
 export const BullRunSetupPage = () => {
   const navigate = useNavigate()
-  const location = useLocation()
   const [searchParams] = useSearchParams()
-  const { profile } = useAuth()
-  const [playMode, setPlayMode] = useState<BullRunPlayMode>(() => {
-    if (isOnlineMatchesEnabled && isOnlinePlaySelected(searchParams)) {
-      return 'online'
-    }
-
-    return parseOpponentSetup(searchParams, 2, 0).mode === 'guest' ? 'guest' : 'solo'
-  })
-  const [guestName, setGuestName] = useState(() => parseOpponentSetup(searchParams, 2, 0).guestName)
-  const [startingPlayerIndex, setStartingPlayerIndex] = useState(STARTING_PLAYER_INDEX_RANDOM)
+  const opponentSetup = parseOpponentSetup(searchParams, 2, 0)
   const [targetScore, setTargetScore] = useState(BULL_RUN_DEFAULT_TARGET_SCORE)
-  const {
-    createLobby,
-    submitting,
-    error,
-    signInOpen,
-    setSignInOpen,
-    inProgressMatch,
-    dismissCancelledMatch,
-    isAuthLoading,
-    authReady,
-    isAuthenticated,
-  } = useCreateOnlineMatch()
+  const session = useMatchSetupSession({
+    initialPlayMode:
+      isOnlineMatchesEnabled && isOnlinePlaySelected(searchParams)
+        ? 'online'
+        : opponentSetup.mode === 'guest'
+          ? 'guest'
+          : 'solo',
+    initialGuestName: opponentSetup.guestName,
+  })
 
-  const primaryPlayerLabel = resolveHumanPlayerName(profile?.displayName)
-  const isOnline = playMode === 'online' && isAuthenticated
-  const blockedByExistingMatch = isOnline && inProgressMatch !== null
-  const activeLocalMode: OpponentMode = isOnline
-    ? 'guest'
-    : playMode === 'online'
-      ? 'solo'
-      : playMode
-  const showGuest = activeLocalMode === 'guest' && !isOnline
-  const showFirstThrow = activeLocalMode === 'guest' || isOnline
-  const opponentLabel = isOnline ? 'Opponent' : guestName.trim() || 'Guest'
-  const signInReturnTo = useMemo(() => {
-    const params = new URLSearchParams(searchParams)
-    params.set(ONLINE_PLAY_QUERY_KEY, ONLINE_PLAY_QUERY_VALUE)
-    return `${location.pathname}?${params.toString()}`
-  }, [location.pathname, searchParams])
+  const activeLocalMode = resolveBullRunLocalMode(session.playMode, session.isOnline)
+  const showGuest = activeLocalMode === 'guest' && !session.isOnline
+  const showFirstThrow = activeLocalMode === 'guest' || session.isOnline
+  const inProgressMatch = session.inProgressMatch
 
   const handleStart = () => {
-    if (blockedByExistingMatch) {
+    if (session.blockedByExistingMatch) {
       return
     }
 
     const config: BullRunConfig = getBullRunConfig({ targetScore })
 
-    if (isOnline) {
-      void createLobby({
+    if (session.isOnline) {
+      void session.createLobby({
         mode: GameModeId.BullRun,
         legsToWin: 1,
-        startingPlayerSlot: startingPlayerIndexToMatchSlot(startingPlayerIndex),
+        startingPlayerSlot: startingPlayerIndexToMatchSlot(session.startingPlayerIndex),
         config,
       })
       return
@@ -113,10 +89,10 @@ export const BullRunSetupPage = () => {
       return
     }
 
-    const resolvedStarter = resolveStartingPlayerIndex(startingPlayerIndex, 2)
+    const resolvedStarter = resolveStartingPlayerIndex(session.startingPlayerIndex, 2)
     const params = new URLSearchParams({
       opponent: 'guest',
-      guestName: opponentLabel,
+      guestName: session.opponentLabel,
       starter: String(resolvedStarter),
       legs: '1',
     })
@@ -139,31 +115,31 @@ export const BullRunSetupPage = () => {
                 key={option.value}
                 label={option.label}
                 description={option.description}
-                selected={activeLocalMode === option.value && !isOnline}
+                selected={activeLocalMode === option.value && !session.isOnline}
                 onSelect={() => {
-                  setPlayMode(option.value)
+                  session.setPlayMode(option.value)
                 }}
               />
             ))}
             {isOnlineMatchesEnabled ? (
-              authReady && !isAuthenticated ? (
+              session.authReady && !session.isAuthenticated ? (
                 <SetupOptionCard
                   label="Sign in to play online"
                   description="Create a match and share an invite"
                   selected={false}
                   showLiveIndicator
                   onSelect={() => {
-                    setSignInOpen(true)
+                    session.setSignInOpen(true)
                   }}
                 />
               ) : (
                 <SetupOptionCard
                   label="Online"
                   description="Invite a signed-in opponent over the internet"
-                  selected={isOnline}
+                  selected={session.isOnline}
                   showLiveIndicator
                   onSelect={() => {
-                    setPlayMode('online')
+                    session.setPlayMode('online')
                   }}
                 />
               )
@@ -171,38 +147,23 @@ export const BullRunSetupPage = () => {
           </Stack>
         </SetupSection>
 
-        {blockedByExistingMatch && inProgressMatch !== null ? (
+        {session.blockedByExistingMatch && inProgressMatch !== null ? (
           <ResumeOnlineMatchBanner
             match={inProgressMatch}
             stacked
             onCancelled={() => {
-              dismissCancelledMatch(inProgressMatch.id)
+              session.dismissCancelledMatch(inProgressMatch.id)
             }}
           />
         ) : null}
 
         {showGuest && (
-          <SetupSection title="Guest name">
-            <Box
-              borderWidth="1px"
-              borderColor="whiteAlpha.200"
-              borderRadius="lg"
-              bg="whiteAlpha.50"
-              px={4}
-              py={4}
-            >
-              <Input
-                value={guestName}
-                onChange={(event) => {
-                  setGuestName(event.target.value)
-                }}
-                placeholder="Guest"
-                bg="whiteAlpha.100"
-                borderColor="whiteAlpha.300"
-                color="white"
-              />
-            </Box>
-          </SetupSection>
+          <SetupGuestNameSection
+            guestName={session.guestName}
+            onGuestNameChange={(value) => {
+              session.setGuestName(value)
+            }}
+          />
         )}
 
         <SetupSection
@@ -251,56 +212,40 @@ export const BullRunSetupPage = () => {
         </SetupSection>
 
         {showFirstThrow && (
-          <SetupSection title="First throw">
-            <Stack gap={2}>
-              <SetupOptionCard
-                label="Random"
-                description="Coin flip who throws first"
-                selected={startingPlayerIndex === STARTING_PLAYER_INDEX_RANDOM}
-                onSelect={() => {
-                  setStartingPlayerIndex(STARTING_PLAYER_INDEX_RANDOM)
-                }}
-              />
-              <SetupOptionCard
-                label={primaryPlayerLabel}
-                description={`${primaryPlayerLabel} throws first`}
-                selected={startingPlayerIndex === 0}
-                onSelect={() => {
-                  setStartingPlayerIndex(0)
-                }}
-              />
-              <SetupOptionCard
-                label={opponentLabel}
-                description={`${opponentLabel} throws first`}
-                selected={startingPlayerIndex === 1}
-                onSelect={() => {
-                  setStartingPlayerIndex(1)
-                }}
-              />
-            </Stack>
-          </SetupSection>
+          <SetupFirstThrowSection
+            startingPlayerIndex={session.startingPlayerIndex}
+            onStartingPlayerIndexChange={(value) => {
+              session.setStartingPlayerIndex(value)
+            }}
+            primaryPlayerLabel={session.primaryPlayerLabel}
+            opponentLabel={session.opponentLabel}
+          />
         )}
 
-        {error !== null && (
+        {session.error !== null && (
           <Text color="red.300" fontSize="sm">
-            {error}
+            {session.error}
           </Text>
         )}
 
         <SetupPageActions
-          primaryLabel={
-            isOnline ? (submitting || isAuthLoading ? 'Creating…' : 'Create lobby') : 'Start game'
-          }
-          primaryDisabled={blockedByExistingMatch || (isOnline && (submitting || isAuthLoading))}
+          primaryLabel={session.primaryLabel}
+          primaryDisabled={session.primaryDisabled}
           onBack={() => void navigate('/')}
           onPrimary={() => {
-            if (!submitting && !(isOnline && isAuthLoading) && !blockedByExistingMatch) {
+            if (session.canStart) {
               handleStart()
             }
           }}
         />
       </Stack>
-      <SignInDialog open={signInOpen} onOpenChange={setSignInOpen} returnTo={signInReturnTo} />
+      <SetupOnlineSignInDialog
+        open={session.signInOpen}
+        onOpenChange={(open) => {
+          session.setSignInOpen(open)
+        }}
+        returnTo={session.signInReturnTo}
+      />
     </SetupPageLayout>
   )
 }
