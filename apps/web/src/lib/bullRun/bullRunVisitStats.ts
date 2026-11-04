@@ -2,19 +2,24 @@ import type { DartThrow } from '@open-darts/game/types/dart'
 import { GameModeId } from '@open-darts/game/types/gameMode'
 import type { GameSession } from '@open-darts/game/types/gameSession'
 import { BullRunOutcome } from '@open-darts/game/types/bullRun'
-import { isCountingVisit } from '@open-darts/game/types/visit'
 import type { Visit } from '@open-darts/game/types/visit'
 import { isBullRunConfig } from '@open-darts/game/game/gameConfigGuards'
 import { getBullRunConfig } from '@open-darts/game/bullRun/bullRunConfig'
 import { getBullRunDartPoints, getBullRunOutcome } from '@open-darts/game/bullRun/bullRunRules'
 import type { ScoreMetric } from '../../components/Scoreboard/scoreMetrics'
+import {
+  collectPlayerDarts,
+  emptyBaseHitCounts,
+  formatThreeDartRate,
+  getHitCount,
+  getHitRateFromCounts,
+  mergeBaseHitOutcomeCounts,
+  ratePerThreeDarts,
+} from '../analytics/hitOutcomeStats'
+import type { BaseHitOutcomeCounts } from '../analytics/hitOutcomeStats'
 import { getPlayerVisits, getPrimaryPlayerVisits } from '../analytics/visitStats'
 
-export interface BullRunOutcomeCounts {
-  singles: number
-  doubles: number
-  misses: number
-}
+export type BullRunOutcomeCounts = BaseHitOutcomeCounts
 
 export interface BullRunLiveStats {
   score: number
@@ -38,12 +43,6 @@ export interface BullRunSingleSessionStats {
   visitCount: number
 }
 
-const emptyCounts = (): BullRunOutcomeCounts => ({
-  singles: 0,
-  doubles: 0,
-  misses: 0,
-})
-
 export const accumulateBullRunOutcome = (
   counts: BullRunOutcomeCounts,
   outcome: BullRunOutcome,
@@ -65,39 +64,16 @@ export const accumulateBullRunOutcome = (
 export const countBullRunOutcomes = (darts: DartThrow[]): BullRunOutcomeCounts =>
   darts.reduce(
     (counts, dart) => accumulateBullRunOutcome(counts, getBullRunOutcome(dart)),
-    emptyCounts(),
+    emptyBaseHitCounts(),
   )
 
-export const mergeBullRunOutcomeCounts = (
-  left: BullRunOutcomeCounts,
-  right: BullRunOutcomeCounts,
-): BullRunOutcomeCounts => ({
-  singles: left.singles + right.singles,
-  doubles: left.doubles + right.doubles,
-  misses: left.misses + right.misses,
-})
+export const mergeBullRunOutcomeCounts = mergeBaseHitOutcomeCounts
 
-export const getBullRunHitCount = (counts: BullRunOutcomeCounts): number =>
-  counts.singles + counts.doubles
+export const getBullRunHitCount = getHitCount
 
-export const getBullRunHitRateFromCounts = (counts: BullRunOutcomeCounts): number | null => {
-  const dartsThrown = getBullRunHitCount(counts) + counts.misses
+export const getBullRunHitRateFromCounts = getHitRateFromCounts
 
-  if (dartsThrown === 0) {
-    return null
-  }
-
-  return (getBullRunHitCount(counts) / dartsThrown) * 100
-}
-
-/** Normalize a per-dart rate to a three-dart average. */
-export const ratePerThreeDarts = (count: number, dartsThrown: number): number | null => {
-  if (dartsThrown === 0) {
-    return null
-  }
-
-  return (count / dartsThrown) * 3
-}
+export { ratePerThreeDarts }
 
 export const getBullRunLiveStats = (
   visits: Visit[],
@@ -105,11 +81,7 @@ export const getBullRunLiveStats = (
   pendingDarts: DartThrow[] = [],
   includePending = true,
 ): BullRunLiveStats => {
-  const playerVisits = visits.filter(
-    (visit) => visit.playerId === playerId && isCountingVisit(visit),
-  )
-  const committedDarts = playerVisits.flatMap((visit) => visit.darts)
-  const allDarts = includePending ? [...committedDarts, ...pendingDarts] : committedDarts
+  const allDarts = collectPlayerDarts(visits, playerId, pendingDarts, includePending)
   const counts = countBullRunOutcomes(allDarts)
   const score = allDarts.reduce((total, dart) => total + getBullRunDartPoints(dart), 0)
 
@@ -123,9 +95,6 @@ export const getBullRunLiveStats = (
     counts,
   }
 }
-
-const formatThreeDartRate = (value: number | null): string =>
-  value === null ? '—' : value.toFixed(2)
 
 export const getBullRunLiveScoreMetrics = (stats: BullRunLiveStats): ScoreMetric[] => [
   { label: 'Singles', value: formatThreeDartRate(stats.singlesPerThreeDarts) },

@@ -6,7 +6,6 @@ import {
   NinetyNineDartsTargetKind,
 } from '@open-darts/game/types/ninetyNineDarts'
 import type { NinetyNineDartsTarget } from '@open-darts/game/types/ninetyNineDarts'
-import { isCountingVisit } from '@open-darts/game/types/visit'
 import type { Visit } from '@open-darts/game/types/visit'
 import { isNinetyNineDartsConfig } from '@open-darts/game/game/gameConfigGuards'
 import { getNinetyNineDartsConfig } from '@open-darts/game/ninetyNineDarts/ninetyNineDartsConfig'
@@ -17,14 +16,17 @@ import {
   getNinetyNineDartsTargetLabel,
   NINETY_NINE_DARTS_DART_COUNT,
 } from '@open-darts/game/ninetyNineDarts/ninetyNineDartsRules'
+import {
+  collectPlayerDarts,
+  emptyHitCounts,
+  getHitCount,
+  getHitRateFromCounts,
+  mergeHitOutcomeCounts,
+} from '../analytics/hitOutcomeStats'
+import type { HitOutcomeCounts } from '../analytics/hitOutcomeStats'
 import { getPrimaryPlayerVisits, getSessionFinalScore } from '../analytics/visitStats'
 
-export interface NinetyNineDartsOutcomeCounts {
-  singles: number
-  doubles: number
-  trebles: number
-  misses: number
-}
+export type NinetyNineDartsOutcomeCounts = HitOutcomeCounts
 
 export interface NinetyNineDartsLiveStats {
   score: number
@@ -47,13 +49,6 @@ export interface NinetyNineDartsSingleSessionStats {
   targetLabel: string
   isBull: boolean
 }
-
-const emptyCounts = (): NinetyNineDartsOutcomeCounts => ({
-  singles: 0,
-  doubles: 0,
-  trebles: 0,
-  misses: 0,
-})
 
 export const accumulateNinetyNineDartsOutcome = (
   counts: NinetyNineDartsOutcomeCounts,
@@ -82,33 +77,14 @@ export const countNinetyNineDartsOutcomes = (
   darts.reduce(
     (counts, dart) =>
       accumulateNinetyNineDartsOutcome(counts, getNinetyNineDartsOutcome(dart, target)),
-    emptyCounts(),
+    emptyHitCounts(),
   )
 
-export const mergeNinetyNineDartsOutcomeCounts = (
-  left: NinetyNineDartsOutcomeCounts,
-  right: NinetyNineDartsOutcomeCounts,
-): NinetyNineDartsOutcomeCounts => ({
-  singles: left.singles + right.singles,
-  doubles: left.doubles + right.doubles,
-  trebles: left.trebles + right.trebles,
-  misses: left.misses + right.misses,
-})
+export const mergeNinetyNineDartsOutcomeCounts = mergeHitOutcomeCounts
 
-export const getNinetyNineDartsHitCount = (counts: NinetyNineDartsOutcomeCounts): number =>
-  counts.singles + counts.doubles + counts.trebles
+export const getNinetyNineDartsHitCount = getHitCount
 
-export const getNinetyNineDartsHitRateFromCounts = (
-  counts: NinetyNineDartsOutcomeCounts,
-): number | null => {
-  const dartsThrown = getNinetyNineDartsHitCount(counts) + counts.misses
-
-  if (dartsThrown === 0) {
-    return null
-  }
-
-  return (getNinetyNineDartsHitCount(counts) / dartsThrown) * 100
-}
+export const getNinetyNineDartsHitRateFromCounts = getHitRateFromCounts
 
 export interface NinetyNineDartsLiveScoreMetric {
   label: string
@@ -144,11 +120,7 @@ export const getNinetyNineDartsLiveStats = (
   pendingDarts: DartThrow[] = [],
   includePending = true,
 ): NinetyNineDartsLiveStats => {
-  const playerVisits = visits.filter(
-    (visit) => visit.playerId === playerId && isCountingVisit(visit),
-  )
-  const committedDarts = playerVisits.flatMap((visit) => visit.darts)
-  const allDarts = includePending ? [...committedDarts, ...pendingDarts] : committedDarts
+  const allDarts = collectPlayerDarts(visits, playerId, pendingDarts, includePending)
   const counts = countNinetyNineDartsOutcomes(allDarts, target)
   const score = allDarts.reduce(
     (total, dart) => total + getNinetyNineDartsDartPoints(dart, target),

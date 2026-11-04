@@ -15,7 +15,6 @@ import {
   mergeBullRunOutcomeCounts,
   ratePerThreeDarts,
 } from '../bullRun/bullRunVisitStats'
-import type { BullRunOutcomeCounts } from '../bullRun/bullRunVisitStats'
 import {
   computeNinetyNineDartsSingleSessionStats,
   getNinetyNineDartsHitRateFromCounts,
@@ -23,7 +22,7 @@ import {
   mergeNinetyNineDartsOutcomeCounts,
   NinetyNineDartsStatGroup,
 } from '../ninetyNineDarts/ninetyNineVisitStats'
-import type { NinetyNineDartsOutcomeCounts } from '../ninetyNineDarts/ninetyNineVisitStats'
+import { emptyBaseHitCounts, emptyHitCounts } from './hitOutcomeStats'
 import { getSessionModeLabel } from '../history/sessionSummary'
 import {
   getHighestOneTwentyOneCheckoutTarget,
@@ -306,13 +305,6 @@ const computeAroundTheClockStatsForAimMode = (
   }
 }
 
-const emptyCounts = (): NinetyNineDartsOutcomeCounts => ({
-  singles: 0,
-  doubles: 0,
-  trebles: 0,
-  misses: 0,
-})
-
 const computeNinetyNineDartsStatsForGroup = (
   sessions: GameSession[],
   group: NinetyNineDartsStatGroup,
@@ -340,7 +332,7 @@ const computeNinetyNineDartsStatsForGroup = (
 
   const totals = sessionStats.reduce(
     (counts, stats) => mergeNinetyNineDartsOutcomeCounts(counts, stats.counts),
-    emptyCounts(),
+    emptyHitCounts(),
   )
 
   return {
@@ -362,12 +354,6 @@ const computeNinetyNineDartsStatsForGroup = (
   }
 }
 
-const emptyBullRunCounts = (): BullRunOutcomeCounts => ({
-  singles: 0,
-  doubles: 0,
-  misses: 0,
-})
-
 const computeBullRunStats = (sessions: GameSession[]): BullRunPracticeStats | null => {
   const modeSessions = sessions.filter((session) => session.mode === GameModeId.BullRun)
 
@@ -388,7 +374,7 @@ const computeBullRunStats = (sessions: GameSession[]): BullRunPracticeStats | nu
 
   const totals = sessionStats.reduce(
     (counts, stats) => mergeBullRunOutcomeCounts(counts, stats.counts),
-    emptyBullRunCounts(),
+    emptyBaseHitCounts(),
   )
   const totalDarts = sessionStats.reduce((sum, stats) => sum + stats.dartsThrown, 0)
   const totalPoints = sessionStats.reduce((sum, stats) => sum + (stats.score ?? 0), 0)
