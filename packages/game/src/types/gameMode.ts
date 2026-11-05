@@ -1,12 +1,12 @@
-import type { AroundTheClockConfig } from './aroundTheClock'
-import type { BullRunConfig } from './bullRun'
-import type { ClaimTheBoardConfig } from './claimTheBoard'
-import type { Bob27Config } from './bob27'
-import type { HunterConfig } from './hunter'
-import type { NinetyNineDartsConfig } from './ninetyNineDarts'
-import type { OneTwentyOneConfig } from './oneTwentyOne'
-import type { TenUpOneDownConfig } from './tenUpOneDown'
-import type { X01Config } from './x01'
+import type { AroundTheClockConfig } from './aroundTheClock.ts'
+import type { BullRunConfig } from './bullRun.ts'
+import type { ClaimTheBoardConfig } from './claimTheBoard.ts'
+import type { Bob27Config } from './bob27.ts'
+import type { HunterConfig } from './hunter.ts'
+import type { NinetyNineDartsConfig } from './ninetyNineDarts.ts'
+import type { OneTwentyOneConfig } from './oneTwentyOne.ts'
+import type { TenUpOneDownConfig } from './tenUpOneDown.ts'
+import type { X01Config } from './x01.ts'
 
 export enum GameModeId {
   X01 = 'x01',

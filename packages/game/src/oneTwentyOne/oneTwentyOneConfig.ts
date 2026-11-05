@@ -1,6 +1,6 @@
-import type { CheckoutRules } from '../types/checkout'
-import type { OneTwentyOneConfig } from '../types/oneTwentyOne'
-import type { X01Config } from '../types/x01'
+import type { CheckoutRules } from '../types/checkout.ts'
+import type { OneTwentyOneConfig } from '../types/oneTwentyOne.ts'
+import type { X01Config } from '../types/x01.ts'
 
 export const DEFAULT_ONE_TWENTY_ONE_CONFIG = {
   startScore: 121,

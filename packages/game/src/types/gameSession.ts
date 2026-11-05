@@ -1,7 +1,7 @@
-import type { GameConfig, GameModeId, GameStatus } from './gameMode'
-import type { MatchProgress } from './match'
-import type { Player } from './player'
-import type { Visit } from './visit'
+import type { GameConfig, GameModeId, GameStatus } from './gameMode.ts'
+import type { MatchProgress } from './match.ts'
+import type { Player } from './player.ts'
+import type { Visit } from './visit.ts'
 
 export interface GameSession {
   id: string

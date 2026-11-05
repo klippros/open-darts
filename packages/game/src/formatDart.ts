@@ -1,5 +1,5 @@
-import { DartMultiplier, DartSegmentType } from './types/dart'
-import type { DartThrow } from './types/dart'
+import { DartMultiplier, DartSegmentType } from './types/dart.ts'
+import type { DartThrow } from './types/dart.ts'
 
 const multiplierPrefix = (multiplier: DartThrow['multiplier']): string => {
   if (multiplier === DartMultiplier.Double) {

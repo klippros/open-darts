@@ -1,0 +1,66 @@
+import type { GameSession } from '@open-darts/game/types/gameSession.ts'
+import type { Visit } from '@open-darts/game/types/visit.ts'
+import { getVisitDartCount } from '@open-darts/game/types/visit.ts'
+import { getPlayedLegNumbers, getVisitsForLeg } from '@open-darts/game/game/matchLegs.ts'
+import { getPrimaryPlayerVisits } from './visitStats.ts'
+
+export interface X01LegSlice {
+  session: GameSession
+  legNumber: number
+  visits: Visit[]
+}
+
+export const expandX01SessionLegs = (session: GameSession): X01LegSlice[] => {
+  const primaryVisits = getPrimaryPlayerVisits(session)
+
+  return getPlayedLegNumbers(session.visits)
+    .map((legNumber) => ({
+      session,
+      legNumber,
+      visits: getVisitsForLeg(primaryVisits, legNumber),
+    }))
+    .filter((slice) => slice.visits.length > 0)
+}
+
+export const expandX01SessionsLegs = (sessions: GameSession[]): X01LegSlice[] =>
+  sessions.flatMap(expandX01SessionLegs)
+
+export const legFinishedWithCheckout = (visits: Visit[]): boolean =>
+  visits.some((visit) => visit.checkout)
+
+export const countDartsInVisits = (visits: Visit[]): number =>
+  visits.reduce((sum, visit) => sum + getVisitDartCount(visit), 0)
+
+export const getX01LegSlicePointId = (slice: X01LegSlice): string =>
+  `${slice.session.id}:leg:${slice.legNumber}`
+
+export const getSessionIdFromTimelinePointId = (pointId: string): string => {
+  const match = /^(.*):leg:\d+$/u.exec(pointId)
+
+  return match?.[1] ?? pointId
+}
+
+export const getLegNumberFromTimelinePointId = (pointId: string): number | null => {
+  const match = /:leg:(\d+)$/u.exec(pointId)
+
+  if (match?.[1] === undefined) {
+    return null
+  }
+
+  return Number(match[1])
+}
+
+export const resolveInitialMatchStatsScope = (
+  legNumbers: number[],
+  legNumber: number | null | undefined,
+): 'match' | number => {
+  if (legNumber === null || legNumber === undefined) {
+    return 'match'
+  }
+
+  if (!legNumbers.includes(legNumber)) {
+    return 'match'
+  }
+
+  return legNumber
+}

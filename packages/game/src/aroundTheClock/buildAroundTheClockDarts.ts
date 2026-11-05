@@ -1,10 +1,10 @@
-import { AroundTheClockAimMode } from '../types/aroundTheClock'
-import { DartMultiplier, DartSegmentType } from '../types/dart'
-import type { DartThrow } from '../types/dart'
-import type { VisitDartSlotView } from '../checkout/checkoutSuggestions'
-import { createDartThrow } from '../dartScoring'
-import { formatDart } from '../formatDart'
-import { resolveAroundTheClockVisit } from './aroundTheClockRules'
+import { AroundTheClockAimMode } from '../types/aroundTheClock.ts'
+import { DartMultiplier, DartSegmentType } from '../types/dart.ts'
+import type { DartThrow } from '../types/dart.ts'
+import type { VisitDartSlotView } from '../checkout/checkoutSuggestions.ts'
+import { createDartThrow } from '../dartScoring.ts'
+import { formatDart } from '../formatDart.ts'
+import { resolveAroundTheClockVisit } from './aroundTheClockRules.ts'
 
 export const AROUND_THE_CLOCK_MAX_DARTS_PER_VISIT = 3
 

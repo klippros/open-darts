@@ -173,6 +173,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return error?.message ?? null
   }, [user])
 
+  const setDisplayName = useCallback((displayName: string) => {
+    setProfile((current) => (current === null ? current : { ...current, displayName }))
+  }, [])
+
   const value = useMemo(
     () => ({
       user,
@@ -184,6 +188,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       signInWithEmail,
       signOut,
       clearSyncedSessions,
+      setDisplayName,
     }),
     [
       user,
@@ -194,6 +199,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       signInWithEmail,
       signOut,
       clearSyncedSessions,
+      setDisplayName,
     ],
   )
 

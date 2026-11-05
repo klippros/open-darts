@@ -1,4 +1,4 @@
-import type { DartThrow } from './dart'
+import type { DartThrow } from './dart.ts'
 
 export enum VisitInputMode {
   PerDart = 'per-dart',

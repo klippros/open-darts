@@ -15,6 +15,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@open-darts/analytics": "workspace:*",
     "@open-darts/game": "workspace:*",
     "@chakra-ui/react": "^3.36.0",
     "@emotion/react": "^11.14.0",

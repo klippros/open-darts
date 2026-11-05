@@ -1,6 +1,6 @@
-import type { CheckoutRules } from '../types/checkout'
-import type { CheckoutDart } from './checkoutDart'
-import { checkoutDartFromLabel } from './checkoutDart'
+import type { CheckoutRules } from '../types/checkout.ts'
+import type { CheckoutDart } from './checkoutDart.ts'
+import { checkoutDartFromLabel } from './checkoutDart.ts'
 
 const DOUBLE_FINISH_SEGMENT_PREFERENCE_ORDER = [
   20, 16, 10, 8, 12, 6, 4, 2, 18, 14, 15, 17, 19, 7, 9, 11, 13, 5, 3, 1,

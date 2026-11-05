@@ -1,4 +1,4 @@
-import type { Visit } from '../types/visit'
+import type { Visit } from '../types/visit.ts'
 
 const readMetadataNumber = (visit: Visit | undefined, key: string): number | undefined => {
   const value = visit?.metadata?.[key]
