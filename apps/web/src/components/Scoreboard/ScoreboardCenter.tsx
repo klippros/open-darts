@@ -1,16 +1,16 @@
 import { useMemo } from 'react'
 import { Stack } from '@chakra-ui/react'
 import { sumDartPoints } from '@open-darts/game/dartScoring'
-import { getAroundTheClockLiveStats } from '../../lib/analytics/aroundTheClockStats'
-import type { DoubleCheckoutStats } from '../../lib/analytics/doubleCheckoutStats'
+import { getAroundTheClockLiveStats } from '@open-darts/analytics/aroundTheClockStats'
+import type { DoubleCheckoutStats } from '@open-darts/analytics/doubleCheckoutStats'
 import {
   getNinetyNineDartsLiveScoreMetrics,
   getNinetyNineDartsLiveStats,
-} from '../../lib/ninetyNineDarts/ninetyNineVisitStats'
+} from '@open-darts/analytics/ninetyNineVisitStats'
 import {
   getBullRunLiveScoreMetrics,
   getBullRunLiveStats,
-} from '../../lib/bullRun/bullRunVisitStats'
+} from '@open-darts/analytics/bullRunVisitStats'
 import { getAroundTheClockConfig } from '@open-darts/game/aroundTheClock/aroundTheClockConfig'
 import type { ScoreboardPlayerEntry } from '@open-darts/game/game/GameEngine'
 import {

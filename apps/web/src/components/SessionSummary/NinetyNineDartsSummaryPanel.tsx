@@ -1,6 +1,6 @@
 import { SimpleGrid } from '@chakra-ui/react'
 import { formatInteger, formatPercent } from '../../lib/analytics/formatAnalytics'
-import { computeNinetyNineDartsSingleSessionStats } from '../../lib/ninetyNineDarts/ninetyNineVisitStats'
+import { computeNinetyNineDartsSingleSessionStats } from '@open-darts/analytics/ninetyNineVisitStats'
 import type { GameSession } from '@open-darts/game/types/gameSession'
 import { StatCard } from '../StatsPageSections/StatCard'
 

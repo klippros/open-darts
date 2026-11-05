@@ -1,11 +1,11 @@
-import { getVisitAverages, getPrimaryPlayerVisits } from '../analytics/visitStats'
-import { computeAroundTheClockSingleSessionStats } from '../analytics/aroundTheClockStats'
-import { computeBullRunSingleSessionStats } from '../bullRun/bullRunVisitStats'
-import { computeNinetyNineDartsSingleSessionStats } from '../ninetyNineDarts/ninetyNineVisitStats'
+import { getVisitAverages, getPrimaryPlayerVisits } from '@open-darts/analytics/visitStats'
+import { computeAroundTheClockSingleSessionStats } from '@open-darts/analytics/aroundTheClockStats'
+import { computeBullRunSingleSessionStats } from '@open-darts/analytics/bullRunVisitStats'
+import { computeNinetyNineDartsSingleSessionStats } from '@open-darts/analytics/ninetyNineVisitStats'
 import {
   computeClaimTheBoardSingleSessionStats,
   getClaimTheBoardScoreLeaderId,
-} from '../claimTheBoard/claimTheBoardVisitStats'
+} from '@open-darts/analytics/claimTheBoardVisitStats'
 import { computeHunterSingleSessionStats } from '../hunter/hunterVisitStats'
 import { gameModeDefinitions } from '@open-darts/game/game/gameModeDefinitions'
 import {
@@ -23,7 +23,7 @@ import {
 import { getNinetyNineDartsConfigLabel } from '@open-darts/game/ninetyNineDarts/ninetyNineDartsConfig'
 import { formatChallengeMatchScore, isChallengeMode } from '@open-darts/game/game/challenge'
 import { getOneTwentyOneRoundTargetFromVisit } from '@open-darts/game/oneTwentyOne/oneTwentyOneVisitMetadata'
-import { getHighestOneTwentyOneCheckoutTarget } from '../oneTwentyOne/oneTwentyOneVisitStats'
+import { getHighestOneTwentyOneCheckoutTarget } from '@open-darts/analytics/oneTwentyOneVisitStats'
 import { isTenUpOneDownWinSession } from '../tenUpOneDown/tenUpOneDownVisitStats'
 import { getMatchWinnerId } from '@open-darts/game/game/matchLegs'
 import { formatLegWinLine } from '@open-darts/game/game/matchLegDisplay'

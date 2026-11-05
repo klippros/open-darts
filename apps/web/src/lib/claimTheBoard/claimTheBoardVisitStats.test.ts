@@ -9,7 +9,7 @@ import {
   computeClaimTheBoardSingleSessionStats,
   getClaimTheBoardScoreLeaderId,
   getClaimTheBoardVisitHitCount,
-} from './claimTheBoardVisitStats'
+} from '@open-darts/analytics/claimTheBoardVisitStats'
 
 const visit = (overrides: Partial<Visit> & Pick<Visit, 'visitIndex' | 'playerId'>): Visit => ({
   darts: [],

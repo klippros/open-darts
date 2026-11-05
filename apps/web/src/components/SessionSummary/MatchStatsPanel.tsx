@@ -16,7 +16,7 @@ import {
   computeMatchPlayerStats,
 } from '../../lib/analytics/matchPlayerStats'
 import { StatsTable } from '../StatsTable/StatsTable'
-import { resolveInitialMatchStatsScope } from '../../lib/analytics/x01LegSlices'
+import { resolveInitialMatchStatsScope } from '@open-darts/analytics/x01LegSlices'
 import { MatchStatsScopeSelector } from './MatchStatsScopeSelector'
 import type { MatchStatsScope } from './MatchStatsScopeSelector'
 

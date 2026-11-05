@@ -1,4 +1,4 @@
-import type { X01LegStats } from './x01Stats'
+import type { X01LegStats } from '@open-darts/analytics/x01Stats'
 import { formatAverage, formatCount, formatDoubleCheckout, formatInteger } from './formatAnalytics'
 import type { PlayerMatchStats } from './matchPlayerStats'
 import { emptyPlayerMatchStats } from './matchPlayerStats'

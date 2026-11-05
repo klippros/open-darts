@@ -12,7 +12,7 @@ import {
   getX01LegSlicePointId,
   legFinishedWithCheckout,
   resolveInitialMatchStatsScope,
-} from './x01LegSlices'
+} from '@open-darts/analytics/x01LegSlices'
 
 const sampleVisit = (
   overrides: Partial<GameSession['visits'][number]> = {},

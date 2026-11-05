@@ -6,7 +6,7 @@ import type {
   CheckoutPracticeStats,
   ClaimTheBoardPracticeStats,
   NinetyNineDartsPracticeStats,
-} from '../../lib/analytics/computeAnalytics'
+} from '@open-darts/analytics/computeAnalytics'
 import type { StatTimelineSelection } from '../../lib/analytics/statTimelines'
 import {
   formatAverage,
@@ -21,7 +21,7 @@ import { GameModeId } from '@open-darts/game/types/gameMode'
 import {
   getNinetyNineDartsStatGroupLabel,
   NinetyNineDartsStatGroup,
-} from '../../lib/ninetyNineDarts/ninetyNineVisitStats'
+} from '@open-darts/analytics/ninetyNineVisitStats'
 import { AroundTheClockHeatmap } from './AroundTheClockHeatmap/AroundTheClockHeatmap'
 import { PracticeModeCard } from './PracticeModeCard'
 import { StatCard } from './StatCard'

@@ -5,7 +5,7 @@ import { PlayerKind } from '@open-darts/game/types/player'
 import { DartMultiplier } from '@open-darts/game/types/dart'
 import { VisitInputMode } from '@open-darts/game/types/visit'
 import { bullDart, numberDart } from '@open-darts/game/testHelpers'
-import { computeX01Stats, FIVE_OH_ONE_START_SCORE } from './x01Stats'
+import { computeX01Stats, FIVE_OH_ONE_START_SCORE } from '@open-darts/analytics/x01Stats'
 
 const sampleVisit = (
   overrides: Partial<GameSession['visits'][number]> = {},

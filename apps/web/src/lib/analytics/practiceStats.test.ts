@@ -5,7 +5,7 @@ import { PlayerKind } from '@open-darts/game/types/player'
 import { DartMultiplier } from '@open-darts/game/types/dart'
 import { AroundTheClockAimMode } from '@open-darts/game/types/aroundTheClock'
 import { numberDart, bullDart } from '@open-darts/game/testHelpers'
-import { computePracticeStats } from './practiceStats'
+import { computePracticeStats } from '@open-darts/analytics/practiceStats'
 
 const sampleVisit = (
   overrides: Partial<GameSession['visits'][number]> = {},

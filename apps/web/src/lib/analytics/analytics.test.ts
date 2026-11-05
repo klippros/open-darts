@@ -4,13 +4,13 @@ import type { GameSession } from '@open-darts/game/types/gameSession'
 import { PlayerKind } from '@open-darts/game/types/player'
 import { DartMultiplier } from '@open-darts/game/types/dart'
 import { numberDart } from '@open-darts/game/testHelpers'
-import { computeAnalytics } from './computeAnalytics'
-import { filterSessions } from './sessionFilters'
+import { computeAnalytics } from '@open-darts/analytics/computeAnalytics'
+import { filterSessions } from '@open-darts/analytics/sessionFilters'
 import {
   getPrimaryPlayerVisits,
   getThreeDartAverage,
   sessionFinishedWithCheckout,
-} from './visitStats'
+} from '@open-darts/analytics/visitStats'
 
 const sampleVisit = (
   overrides: Partial<GameSession['visits'][number]> = {},

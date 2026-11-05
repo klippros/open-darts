@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { AroundTheClockPerTargetStats } from '../analytics/aroundTheClockStats'
+import type { AroundTheClockPerTargetStats } from '@open-darts/analytics/aroundTheClockStats'
 import {
   getHeatmapColorForRatio,
   getHeatmapFillColor,

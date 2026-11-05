@@ -3,7 +3,7 @@ import { getCheckoutPathLabel } from '@open-darts/game/checkout/checkoutSuggesti
 import type { ScoreboardPlayerEntry } from '@open-darts/game/game/GameEngine'
 import type { CheckoutRules } from '@open-darts/game/types/checkout'
 import type { ChallengeLegStatus } from '@open-darts/game/types/match'
-import type { DoubleCheckoutStats } from '../../lib/analytics/doubleCheckoutStats'
+import type { DoubleCheckoutStats } from '@open-darts/analytics/doubleCheckoutStats'
 import { LegStarterIcon } from '../LegStarterIcon/LegStarterIcon'
 import { ChallengeLegDots } from './ChallengeLegDots'
 import { LegWinDots } from './LegWinDots'

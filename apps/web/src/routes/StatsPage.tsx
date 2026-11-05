@@ -9,10 +9,10 @@ import {
   X01LegSection,
 } from '../components/StatsPageSections/StatsPageSections'
 import { TotalDartsHero } from '../components/StatsPageSections/TotalDartsHero'
-import { computeAnalytics } from '../lib/analytics/computeAnalytics'
+import { computeAnalytics } from '@open-darts/analytics/computeAnalytics'
 import { mergeSessionsForStats } from '../lib/analytics/mergeSessionsForStats'
-import type { DateRangePreset } from '../lib/analytics/sessionFilters'
-import { filterSessions } from '../lib/analytics/sessionFilters'
+import type { DateRangePreset } from '@open-darts/analytics/sessionFilters'
+import { filterSessions } from '@open-darts/analytics/sessionFilters'
 import { buildStatTimeline } from '../lib/analytics/statTimelines'
 import type {
   StatTimeline,
@@ -22,7 +22,7 @@ import type {
 import {
   getLegNumberFromTimelinePointId,
   getSessionIdFromTimelinePointId,
-} from '../lib/analytics/x01LegSlices'
+} from '@open-darts/analytics/x01LegSlices'
 import { getDateRangeCompletedAfter } from '../lib/history/historyPager'
 import { listMyOnlineMatchSessions } from '../lib/matchServer/api'
 import { isOnlineMatchesEnabled } from '../lib/matchServer/config'

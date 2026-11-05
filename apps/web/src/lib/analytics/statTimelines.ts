@@ -7,15 +7,15 @@ import {
   getBob27AvgHitsPerVisit,
   getBob27SessionDoublesHit,
   getBob27VisitHitRate,
-} from '../bob27/bob27VisitStats'
-import { computeBullRunSingleSessionStats } from '../bullRun/bullRunVisitStats'
-import { computeNinetyNineDartsSingleSessionStats } from '../ninetyNineDarts/ninetyNineVisitStats'
-import type { NinetyNineDartsStatGroup } from '../ninetyNineDarts/ninetyNineVisitStats'
+} from '@open-darts/analytics/bob27VisitStats'
+import { computeBullRunSingleSessionStats } from '@open-darts/analytics/bullRunVisitStats'
+import { computeNinetyNineDartsSingleSessionStats } from '@open-darts/analytics/ninetyNineVisitStats'
+import type { NinetyNineDartsStatGroup } from '@open-darts/analytics/ninetyNineVisitStats'
 import {
   getSessionCheckoutCount,
   getHighestOneTwentyOneCheckoutTarget,
   getOneTwentyOneCheckoutRate,
-} from '../oneTwentyOne/oneTwentyOneVisitStats'
+} from '@open-darts/analytics/oneTwentyOneVisitStats'
 import { getSessionCompletedAt, getSessionModeLabel } from '../history/sessionSummary'
 import { isAroundTheClockConfig, isX01Config } from '@open-darts/game/game/gameConfigGuards'
 import { getDoubleCheckoutRate } from './formatAnalytics'
@@ -29,7 +29,7 @@ import {
   filterFiveOhOneSessions,
   filterNinetyNineDartsSessions,
   filterOneSeventySessions,
-} from './sessionScope'
+} from '@open-darts/analytics/sessionScope'
 import {
   countDartsInSession,
   getHighestCheckout,
@@ -38,14 +38,14 @@ import {
   getSessionCheckoutRate,
   getSessionFinalScore,
   getThreeDartAverage,
-} from './visitStats'
+} from '@open-darts/analytics/visitStats'
 import {
   countDartsInVisits,
   expandX01SessionLegs,
   getX01LegSlicePointId,
   legFinishedWithCheckout,
-} from './x01LegSlices'
-import type { X01LegSlice } from './x01LegSlices'
+} from '@open-darts/analytics/x01LegSlices'
+import type { X01LegSlice } from '@open-darts/analytics/x01LegSlices'
 
 export type StatMetricId =
   | 'threeDartAverage'

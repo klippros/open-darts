@@ -2,4 +2,4 @@ export {
   getLegAndMatchAverages,
   getVisitAverages,
   type LegAndMatchAverages,
-} from '../../lib/analytics/visitStats'
+} from '@open-darts/analytics/visitStats'

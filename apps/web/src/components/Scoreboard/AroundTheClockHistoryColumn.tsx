@@ -1,6 +1,6 @@
 import { Box, Stack, Text } from '@chakra-ui/react'
 import { getAroundTheClockConfig } from '@open-darts/game/aroundTheClock/aroundTheClockConfig'
-import { getAroundTheClockCompletedTargets } from '../../lib/aroundTheClock/aroundTheClockTargetHits'
+import { getAroundTheClockCompletedTargets } from '@open-darts/analytics/aroundTheClockTargetHits'
 import { getVisitsForLeg } from '@open-darts/game/game/matchLegs'
 import type { AroundTheClockConfig } from '@open-darts/game/types/aroundTheClock'
 import type { Player } from '@open-darts/game/types/player'

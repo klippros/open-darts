@@ -1,5 +1,5 @@
 import { Box, Heading, Stack, Text } from '@chakra-ui/react'
-import { countTotalDartsThrown } from '../../lib/analytics/visitStats'
+import { countTotalDartsThrown } from '@open-darts/analytics/visitStats'
 import type { GameSession } from '@open-darts/game/types/gameSession'
 import { formatInteger } from '../../lib/analytics/formatAnalytics'
 

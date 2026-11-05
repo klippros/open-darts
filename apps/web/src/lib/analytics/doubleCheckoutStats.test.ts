@@ -8,7 +8,7 @@ import {
   countDoubleCheckoutStatsForVisit,
   countDoubleCheckoutStatsOmittingUnresolvedLegs,
   visitScoreCouldHideDoubleAttempt,
-} from './doubleCheckoutStats'
+} from '@open-darts/analytics/doubleCheckoutStats'
 
 const doubleOutRules = {
   doubleIn: false,
