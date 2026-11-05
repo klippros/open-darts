@@ -7,6 +7,10 @@ import {
   getNinetyNineDartsLiveScoreMetrics,
   getNinetyNineDartsLiveStats,
 } from '../../lib/ninetyNineDarts/ninetyNineVisitStats'
+import {
+  getBullRunLiveScoreMetrics,
+  getBullRunLiveStats,
+} from '../../lib/bullRun/bullRunVisitStats'
 import { getAroundTheClockConfig } from '@open-darts/game/aroundTheClock/aroundTheClockConfig'
 import type { ScoreboardPlayerEntry } from '@open-darts/game/game/GameEngine'
 import {
@@ -98,7 +102,8 @@ export const ScoreboardCenter = ({
     mode !== GameModeId.ClaimTheBoard &&
     mode !== GameModeId.Bob27 &&
     mode !== GameModeId.NinetyNineDarts &&
-    mode !== GameModeId.Hunter
+    mode !== GameModeId.Hunter &&
+    mode !== GameModeId.BullRun
   const scoreBeforeVisit =
     activePlayer === undefined ? 0 : activePlayer.primaryScore + sumDartPoints(pendingDarts)
   const legStartingPlayerIndex =
@@ -148,6 +153,24 @@ export const ScoreboardCenter = ({
       return players.map((player) =>
         player.playerId === activePlayer.playerId ? { ...player, secondaryMetrics } : player,
       )
+    }
+
+    if (mode === GameModeId.BullRun) {
+      return players.map((player) => {
+        const liveStats = getBullRunLiveStats(
+          visits,
+          player.playerId,
+          player.isActive ? pendingDarts : [],
+          player.isActive,
+        )
+
+        return {
+          ...player,
+          primaryScore: liveStats.score,
+          primaryDisplay: String(liveStats.score),
+          secondaryMetrics: getBullRunLiveScoreMetrics(liveStats),
+        }
+      })
     }
 
     if (mode !== GameModeId.AroundTheClock || !isAroundTheClockConfig(mode, config)) {

@@ -17,9 +17,14 @@ import {
 import { isOnlineMatchesEnabled } from '../lib/matchServer/config'
 import type { OnlineMatchInvite } from '../lib/matchServer/types'
 import { GameModeId } from '@open-darts/game/types/gameMode'
-import { isClaimTheBoardConfig, isX01Config } from '@open-darts/game/game/gameConfigGuards'
+import {
+  isBullRunConfig,
+  isClaimTheBoardConfig,
+  isX01Config,
+} from '@open-darts/game/game/gameConfigGuards'
 import { formatX01StartScore } from '@open-darts/game/x01/x01Presets'
 import { getAroundTheClockAimModeLabel } from '@open-darts/game/aroundTheClock/aroundTheClockConfig'
+import { getBullRunConfigLabel } from '@open-darts/game/bullRun/bullRunConfig'
 import { gameModeDefinitions } from '@open-darts/game/game/gameModeDefinitions'
 
 const getInviteModeLabel = (invite: OnlineMatchInvite): string => {
@@ -38,6 +43,13 @@ const getInviteModeLabel = (invite: OnlineMatchInvite): string => {
 
   if (mode === (GameModeId.Hunter as string)) {
     return gameModeDefinitions[GameModeId.Hunter].label
+  }
+
+  if (
+    mode === (GameModeId.BullRun as string) &&
+    isBullRunConfig(GameModeId.BullRun, invite.config)
+  ) {
+    return `${gameModeDefinitions[GameModeId.BullRun].label} · ${getBullRunConfigLabel(invite.config)}`
   }
 
   const knownMode = (Object.values(GameModeId) as string[]).includes(mode)

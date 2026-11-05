@@ -1,4 +1,5 @@
 import type { AroundTheClockConfig } from './aroundTheClock'
+import type { BullRunConfig } from './bullRun'
 import type { ClaimTheBoardConfig } from './claimTheBoard'
 import type { Bob27Config } from './bob27'
 import type { HunterConfig } from './hunter'
@@ -16,6 +17,7 @@ export enum GameModeId {
   TenUpOneDown = '10-up-1-down',
   NinetyNineDarts = '99-darts',
   Hunter = 'hunter',
+  BullRun = 'bull-run',
 }
 
 export enum GameStatus {
@@ -33,3 +35,4 @@ export type GameConfig =
   | TenUpOneDownConfig
   | NinetyNineDartsConfig
   | HunterConfig
+  | BullRunConfig

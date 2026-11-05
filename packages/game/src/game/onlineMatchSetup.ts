@@ -1,23 +1,68 @@
+import type { BullRunConfig } from '../types/bullRun'
 import type { ClaimTheBoardConfig } from '../types/claimTheBoard'
 import type { HunterConfig } from '../types/hunter'
 import { GameModeId } from '../types/gameMode'
 import type { GameConfig } from '../types/gameMode'
+import type { X01Config } from '../types/x01'
 import { AroundTheClockAimMode } from '../types/aroundTheClock'
-import { defaultX01Config } from '../x01/x01Presets'
+import { defaultX01Config, x01ConfigsMatch, x01PresetConfigs, X01PresetId } from '../x01/x01Presets'
 import { parseAroundTheClockAimModeValue } from '../aroundTheClock/aroundTheClockConfig'
+import { clampBullRunTargetScore, DEFAULT_BULL_RUN_CONFIG } from '../bullRun/bullRunConfig'
 import { DEFAULT_HUNTER_CONFIG } from '../hunter/hunterConfig'
+
+const ONLINE_X01_PRESET_IDS = [X01PresetId.FiveOhOne, X01PresetId.OneSeventy] as const
 
 const x01Mode: string = GameModeId.X01
 const claimTheBoardMode: string = GameModeId.ClaimTheBoard
 const hunterMode: string = GameModeId.Hunter
+const bullRunMode: string = GameModeId.BullRun
+
+export type OnlineMatchMode =
+  GameModeId.X01 | GameModeId.ClaimTheBoard | GameModeId.Hunter | GameModeId.BullRun
+
+export type OnlineMatchConfig = X01Config | ClaimTheBoardConfig | HunterConfig | BullRunConfig
+
+export const ONLINE_MATCH_MODES = [
+  GameModeId.X01,
+  GameModeId.ClaimTheBoard,
+  GameModeId.Hunter,
+  GameModeId.BullRun,
+] as const satisfies readonly OnlineMatchMode[]
+
+export const isOnlineMatchMode = (mode: string): mode is OnlineMatchMode =>
+  (ONLINE_MATCH_MODES as readonly string[]).includes(mode)
 
 const configField = (config: object, key: string): unknown => Reflect.get(config, key)
 
+const findOnlineX01PresetConfig = (config: object): X01Config | null => {
+  const startScore = configField(config, 'startScore')
+  const doubleIn = configField(config, 'doubleIn')
+  const doubleOut = configField(config, 'doubleOut')
+
+  if (
+    typeof startScore !== 'number' ||
+    typeof doubleIn !== 'boolean' ||
+    typeof doubleOut !== 'boolean'
+  ) {
+    return null
+  }
+
+  const candidate: X01Config = { startScore, doubleIn, doubleOut }
+
+  for (const presetId of ONLINE_X01_PRESET_IDS) {
+    const preset = x01PresetConfigs[presetId]
+
+    if (x01ConfigsMatch(candidate, preset)) {
+      return { ...preset }
+    }
+  }
+
+  return null
+}
+
+/** Allowed online X01 presets: 501 and 170 double-out. */
 export const isV1OnlineX01Setup = (mode: string, config: object): boolean =>
-  mode === x01Mode &&
-  configField(config, 'startScore') === 501 &&
-  configField(config, 'doubleIn') === false &&
-  configField(config, 'doubleOut') === true
+  mode === x01Mode && findOnlineX01PresetConfig(config) !== null
 
 export const isOnlineClaimTheBoardSetup = (mode: string, config: object): boolean =>
   mode === claimTheBoardMode &&
@@ -25,24 +70,41 @@ export const isOnlineClaimTheBoardSetup = (mode: string, config: object): boolea
 
 export const isOnlineHunterSetup = (mode: string, _config: object): boolean => mode === hunterMode
 
-/** Allowed online match setups (sync play). Async remains X01-only. */
+export const isOnlineBullRunSetup = (mode: string, config: object): boolean => {
+  if (mode !== bullRunMode) {
+    return false
+  }
+
+  const targetScore = configField(config, 'targetScore')
+
+  return typeof targetScore === 'number' && Number.isInteger(targetScore)
+}
+
+/** Allowed online match setups (sync play). Async is X01 and Bull Run. */
 export const isAllowedOnlineMatchSetup = (mode: string, config: object): boolean =>
   isV1OnlineX01Setup(mode, config) ||
   isOnlineClaimTheBoardSetup(mode, config) ||
-  isOnlineHunterSetup(mode, config)
+  isOnlineHunterSetup(mode, config) ||
+  isOnlineBullRunSetup(mode, config)
 
-export const supportsOnlineAsyncPlay = (mode: string): boolean => mode === x01Mode
+export const supportsOnlineAsyncPlay = (mode: string): boolean =>
+  mode === x01Mode || mode === bullRunMode
+
+/** Race modes can rewrite an earlier visit after the opponent replies; shared-position modes cannot. */
+export const supportsOnlineVisitCorrection = (mode: string): boolean =>
+  mode === x01Mode || mode === bullRunMode
 
 const parseStartingPlayerIndex = (value: unknown): number => (value === 1 ? 1 : 0)
 
 /**
  * Canonical config for a validated online create-match body.
- * X01 is always the default 501 DO preset; Claim the Board keeps only aimMode;
- * Hunter keeps startingPlayerIndex (default 0; resolved slot may overwrite at start).
+ * X01 keeps the matching 501 or 170 double-out preset; Claim the Board keeps only aimMode;
+ * Hunter keeps startingPlayerIndex (default 0; resolved slot may overwrite at start);
+ * Bull Run keeps a clamped targetScore.
  */
 export const canonicalizeOnlineMatchConfig = (mode: string, config: object): GameConfig | null => {
-  if (isV1OnlineX01Setup(mode, config)) {
-    return defaultX01Config()
+  if (mode === x01Mode) {
+    return findOnlineX01PresetConfig(config)
   }
 
   if (mode === claimTheBoardMode) {
@@ -61,16 +123,34 @@ export const canonicalizeOnlineMatchConfig = (mode: string, config: object): Gam
     } satisfies HunterConfig
   }
 
+  if (mode === bullRunMode) {
+    const targetScore = configField(config, 'targetScore')
+
+    if (typeof targetScore !== 'number' || !Number.isInteger(targetScore)) {
+      return null
+    }
+
+    return {
+      targetScore: clampBullRunTargetScore(targetScore),
+    } satisfies BullRunConfig
+  }
+
   return null
 }
 
-export const defaultOnlineGameConfigForMode = (mode: string): GameConfig => {
+export const defaultOnlineGameConfigForMode = (
+  mode: OnlineMatchMode | string,
+): OnlineMatchConfig => {
   if (mode === claimTheBoardMode) {
     return { aimMode: AroundTheClockAimMode.Any } satisfies ClaimTheBoardConfig
   }
 
   if (mode === hunterMode) {
     return DEFAULT_HUNTER_CONFIG
+  }
+
+  if (mode === bullRunMode) {
+    return DEFAULT_BULL_RUN_CONFIG
   }
 
   return defaultX01Config()
@@ -99,6 +179,16 @@ export const readOnlineGameConfig = (value: unknown, mode: string): GameConfig =
     return {
       startingPlayerIndex: parseStartingPlayerIndex(value.startingPlayerIndex),
     } satisfies HunterConfig
+  }
+
+  if (mode === bullRunMode) {
+    if (!isConfigRecord(value) || typeof value.targetScore !== 'number') {
+      return defaultOnlineGameConfigForMode(mode)
+    }
+
+    return {
+      targetScore: clampBullRunTargetScore(value.targetScore),
+    } satisfies BullRunConfig
   }
 
   if (!isConfigRecord(value) || typeof value.startScore !== 'number') {

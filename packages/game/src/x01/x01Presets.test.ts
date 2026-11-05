@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   buildX01CustomGamePath,
   buildX01GameSearchParams,
+  buildX01PresetPath,
   getX01PresetConfig,
   findX01PresetId,
   formatX01StartScore,
@@ -15,15 +16,25 @@ import {
 
 describe('x01Presets', () => {
   it('exposes standard x01 preset configs', () => {
-    expect(x01PresetConfigs[X01PresetId.ThreeOhOne].startScore).toBe(301)
-    expect(x01PresetConfigs[X01PresetId.FourOhOne].startScore).toBe(401)
+    expect(x01PresetConfigs[X01PresetId.OneSeventy].startScore).toBe(170)
     expect(x01PresetConfigs[X01PresetId.FiveOhOne].startScore).toBe(501)
   })
 
   it('parses preset ids from search params', () => {
-    const config = parseX01ConfigFromSearchParams(new URLSearchParams('preset=301'))
+    expect(parseX01ConfigFromSearchParams(new URLSearchParams('preset=170'))).toEqual(
+      getX01PresetConfig('170'),
+    )
+    expect(parseX01ConfigFromSearchParams(new URLSearchParams('preset=501'))).toEqual(
+      getX01PresetConfig('501'),
+    )
+  })
 
-    expect(config).toEqual(getX01PresetConfig('301'))
+  it('falls back to custom start parsing for unknown presets', () => {
+    expect(parseX01ConfigFromSearchParams(new URLSearchParams('preset=301'))).toEqual({
+      startScore: 501,
+      doubleIn: false,
+      doubleOut: true,
+    })
   })
 
   it('parses custom start score and rule flags from search params', () => {
@@ -60,11 +71,17 @@ describe('x01Presets', () => {
 
   it('matches x01 configs and finds preset ids', () => {
     const preset501 = x01PresetConfigs[X01PresetId.FiveOhOne]
+    const preset170 = x01PresetConfigs[X01PresetId.OneSeventy]
 
     expect(x01ConfigsMatch(preset501, { ...preset501 })).toBe(true)
     expect(x01ConfigsMatch(preset501, { ...preset501, startScore: 301 })).toBe(false)
     expect(findX01PresetId(preset501)).toBe(X01PresetId.FiveOhOne)
+    expect(findX01PresetId(preset170)).toBe(X01PresetId.OneSeventy)
     expect(findX01PresetId({ startScore: 333, doubleIn: false, doubleOut: true })).toBeNull()
+  })
+
+  it('builds the 170 preset path', () => {
+    expect(buildX01PresetPath(X01PresetId.OneSeventy)).toBe('/game/match-setup?preset=170')
   })
 
   it('parses optional start score input for forms', () => {

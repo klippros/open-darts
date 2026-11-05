@@ -8,6 +8,7 @@ import {
   getBob27SessionDoublesHit,
   getBob27VisitHitRate,
 } from '../bob27/bob27VisitStats'
+import { computeBullRunSingleSessionStats } from '../bullRun/bullRunVisitStats'
 import { computeNinetyNineDartsSingleSessionStats } from '../ninetyNineDarts/ninetyNineVisitStats'
 import type { NinetyNineDartsStatGroup } from '../ninetyNineDarts/ninetyNineVisitStats'
 import {
@@ -23,11 +24,11 @@ import {
   filterAllX01Sessions,
   filterAroundTheClockSessions,
   filterBob27Sessions,
+  filterBullRunSessions,
   filterCheckoutPracticeSessions,
   filterFiveOhOneSessions,
-  filterFourOhOneSessions,
   filterNinetyNineDartsSessions,
-  filterThreeOhOneSessions,
+  filterOneSeventySessions,
 } from './sessionScope'
 import {
   countDartsInSession,
@@ -72,16 +73,19 @@ export type StatMetricId =
   | 'avgTreblesPerGame'
   | 'bestDarts'
   | 'completionRate'
+  | 'singlesPerThreeDarts'
+  | 'doublesPerThreeDarts'
+  | 'avgPerThreeDarts'
 
 export type StatTimelineScope =
   | { type: 'x01-501' }
-  | { type: 'x01-401' }
-  | { type: 'x01-301' }
+  | { type: 'x01-170' }
   | { type: 'x01-all' }
   | { type: 'practice-checkout'; mode: GameModeId.OneTwentyOne | GameModeId.TenUpOneDown }
   | { type: 'practice-bob27' }
   | { type: 'practice-around-the-clock'; aimMode?: AroundTheClockAimMode }
   | { type: 'practice-99-darts'; group: NinetyNineDartsStatGroup }
+  | { type: 'practice-bull-run' }
 
 export interface StatTimelineSelection {
   scope: StatTimelineScope
@@ -164,6 +168,9 @@ const getX01LegMetric = (slice: X01LegSlice, metric: StatMetricId): number | nul
     case 'avgTreblesPerGame':
     case 'bestDarts':
     case 'completionRate':
+    case 'singlesPerThreeDarts':
+    case 'doublesPerThreeDarts':
+    case 'avgPerThreeDarts':
       return null
   }
 
@@ -218,6 +225,9 @@ const getCheckoutPracticeSessionMetric = (
     case 'avgTreblesPerGame':
     case 'bestDarts':
     case 'completionRate':
+    case 'singlesPerThreeDarts':
+    case 'doublesPerThreeDarts':
+    case 'avgPerThreeDarts':
       return null
   }
 
@@ -255,6 +265,9 @@ const getBob27SessionMetric = (session: GameSession, metric: StatMetricId): numb
     case 'bestCheckoutsPerGame':
     case 'avgSinglesPerGame':
     case 'avgTreblesPerGame':
+    case 'singlesPerThreeDarts':
+    case 'doublesPerThreeDarts':
+    case 'avgPerThreeDarts':
       return null
   }
 
@@ -306,6 +319,9 @@ const getAroundTheClockSessionMetric = (
     case 'bestDoublesPerGame':
     case 'avgSinglesPerGame':
     case 'avgTreblesPerGame':
+    case 'singlesPerThreeDarts':
+    case 'doublesPerThreeDarts':
+    case 'avgPerThreeDarts':
       return null
   }
 
@@ -353,6 +369,55 @@ const getNinetyNineDartsSessionMetric = (
     case 'completionRate':
     case 'avgHitsPerVisit':
     case 'bestDoublesPerGame':
+    case 'singlesPerThreeDarts':
+    case 'doublesPerThreeDarts':
+    case 'avgPerThreeDarts':
+      return null
+  }
+
+  return null
+}
+
+const getBullRunSessionMetric = (session: GameSession, metric: StatMetricId): number | null => {
+  const stats = computeBullRunSingleSessionStats(session)
+
+  if (stats === null) {
+    return null
+  }
+
+  switch (metric) {
+    case 'hitRate':
+      return stats.hitRate
+    case 'singlesPerThreeDarts':
+      return stats.singlesPerThreeDarts
+    case 'doublesPerThreeDarts':
+      return stats.doublesPerThreeDarts
+    case 'avgPerThreeDarts':
+      return stats.avgPerThreeDarts
+    case 'threeDartAverage':
+    case 'threeDartAverageUntil170':
+    case 'threeDartAverageUntilDouble':
+    case 'bestLegAverage':
+    case 'thrown180':
+    case 'thrown140Plus':
+    case 'thrown100Plus':
+    case 'highestVisit':
+    case 'doubleCheckoutRate':
+    case 'checkouts100Plus':
+    case 'highestCheckout':
+    case 'checkoutRate':
+    case 'avgCheckoutsPerGame':
+    case 'bestCheckoutsPerGame':
+    case 'avgDarts':
+    case 'avgFinalScore':
+    case 'bestFinalScore':
+    case 'avgHitsPerVisit':
+    case 'avgDoublesPerGame':
+    case 'bestDoublesPerGame':
+    case 'avgSinglesPerGame':
+    case 'avgTreblesPerGame':
+    case 'bestDarts':
+    case 'completionRate':
       return null
   }
 
@@ -389,6 +454,9 @@ export const getStatTimelineFormat = (metric: StatMetricId): StatTimelineFormat 
     case 'avgHitsPerVisit':
     case 'avgSinglesPerGame':
     case 'avgTreblesPerGame':
+    case 'singlesPerThreeDarts':
+    case 'doublesPerThreeDarts':
+    case 'avgPerThreeDarts':
       return 'average'
   }
 
@@ -402,10 +470,8 @@ const filterSessionsForScope = (
   switch (scope.type) {
     case 'x01-501':
       return filterFiveOhOneSessions(sessions)
-    case 'x01-401':
-      return filterFourOhOneSessions(sessions)
-    case 'x01-301':
-      return filterThreeOhOneSessions(sessions)
+    case 'x01-170':
+      return filterOneSeventySessions(sessions)
     case 'x01-all':
       return filterAllX01Sessions(sessions)
     case 'practice-checkout':
@@ -416,16 +482,15 @@ const filterSessionsForScope = (
       return filterAroundTheClockSessions(sessions, scope.aimMode)
     case 'practice-99-darts':
       return filterNinetyNineDartsSessions(sessions, scope.group)
+    case 'practice-bull-run':
+      return filterBullRunSessions(sessions)
     default:
       return []
   }
 }
 
 const isX01TimelineScope = (scope: StatTimelineScope): boolean =>
-  scope.type === 'x01-501' ||
-  scope.type === 'x01-401' ||
-  scope.type === 'x01-301' ||
-  scope.type === 'x01-all'
+  scope.type === 'x01-501' || scope.type === 'x01-170' || scope.type === 'x01-all'
 
 const buildX01TimelinePoints = (
   sessions: GameSession[],
@@ -483,6 +548,10 @@ const getPracticeSessionMetricValue = (
 
   if (selection.scope.type === 'practice-99-darts') {
     return getNinetyNineDartsSessionMetric(session, selection.metric)
+  }
+
+  if (selection.scope.type === 'practice-bull-run') {
+    return getBullRunSessionMetric(session, selection.metric)
   }
 
   return null

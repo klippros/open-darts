@@ -19,22 +19,11 @@ export const MATCH_MODES: readonly HomePageModeLink[] = [
     onlineCapable: true,
   },
   {
-    id: X01PresetId.FourOhOne,
-    label: '401',
-    description: 'Shorter x01 leg',
-    to: buildX01PresetPath(X01PresetId.FourOhOne),
-  },
-  {
-    id: X01PresetId.ThreeOhOne,
-    label: '301',
-    description: 'Quick x01 leg',
-    to: buildX01PresetPath(X01PresetId.ThreeOhOne),
-  },
-  {
-    id: 'custom-x01',
-    label: 'Custom x01',
-    description: 'Choose start score and rules',
-    to: '/game/setup',
+    id: X01PresetId.OneSeventy,
+    label: '170',
+    description: 'Double-out from 170',
+    to: buildX01PresetPath(X01PresetId.OneSeventy),
+    onlineCapable: true,
   },
   {
     id: 'claim-the-board',
@@ -49,6 +38,19 @@ export const MATCH_MODES: readonly HomePageModeLink[] = [
     description: 'Chase around the board · land on or pass to win',
     to: '/game/hunter/setup',
     onlineCapable: true,
+  },
+  {
+    id: 'bull-run',
+    label: 'Bull Run',
+    description: 'Race to the bull target · outer 1, bullseye 2',
+    to: '/game/bull-run/setup',
+    onlineCapable: true,
+  },
+  {
+    id: 'custom-x01',
+    label: 'Custom x01',
+    description: 'Choose start score and rules',
+    to: '/game/setup',
   },
 ]
 

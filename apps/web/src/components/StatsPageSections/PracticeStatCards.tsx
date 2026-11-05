@@ -2,6 +2,7 @@ import { SimpleGrid, Stack } from '@chakra-ui/react'
 import type {
   AroundTheClockPracticeStats,
   Bob27PracticeStats,
+  BullRunPracticeStats,
   CheckoutPracticeStats,
   ClaimTheBoardPracticeStats,
   NinetyNineDartsPracticeStats,
@@ -446,3 +447,70 @@ export const NinetyNineDartsPracticeCard = ({
     </PracticeModeCard>
   )
 }
+
+export const BullRunPracticeCard = ({
+  stats,
+  onStatSelect,
+}: {
+  stats: BullRunPracticeStats
+  onStatSelect: (selection: StatTimelineSelection) => void
+}) => (
+  <PracticeModeCard title={stats.label} trailing={<StatsCountLabel count={stats.gameCount} />}>
+    <SimpleGrid columns={{ base: 1, sm: 2 }} gap={3}>
+      <StatCard
+        label="Hit rate"
+        value={formatPercent(stats.hitRate)}
+        onClick={() => {
+          onStatSelect({
+            scope: { type: 'practice-bull-run' },
+            metric: 'hitRate',
+            metricLabel: 'Hit rate',
+            scopeLabel: stats.label,
+          })
+        }}
+      />
+      {stats.singlesPerThreeDarts !== null && (
+        <StatCard
+          label="Singles / 3 darts"
+          value={formatAverage(stats.singlesPerThreeDarts)}
+          onClick={() => {
+            onStatSelect({
+              scope: { type: 'practice-bull-run' },
+              metric: 'singlesPerThreeDarts',
+              metricLabel: 'Singles / 3 darts',
+              scopeLabel: stats.label,
+            })
+          }}
+        />
+      )}
+      {stats.doublesPerThreeDarts !== null && (
+        <StatCard
+          label="Doubles / 3 darts"
+          value={formatAverage(stats.doublesPerThreeDarts)}
+          onClick={() => {
+            onStatSelect({
+              scope: { type: 'practice-bull-run' },
+              metric: 'doublesPerThreeDarts',
+              metricLabel: 'Doubles / 3 darts',
+              scopeLabel: stats.label,
+            })
+          }}
+        />
+      )}
+      {stats.avgPerThreeDarts !== null && (
+        <StatCard
+          label="3-dart avg"
+          value={formatAverage(stats.avgPerThreeDarts)}
+          onClick={() => {
+            onStatSelect({
+              scope: { type: 'practice-bull-run' },
+              metric: 'avgPerThreeDarts',
+              metricLabel: '3-dart avg',
+              scopeLabel: stats.label,
+            })
+          }}
+        />
+      )}
+    </SimpleGrid>
+  </PracticeModeCard>
+)

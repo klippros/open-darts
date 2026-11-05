@@ -1,7 +1,7 @@
+import { buildAsyncSoloConfig } from '@open-darts/game/game/asyncSoloConfig'
 import { createGameController, restoreGameController } from '@open-darts/game/game/createSession'
 import type { AppGameController } from '@open-darts/game/game/createSession'
 import type { ScoreboardSnapshot } from '@open-darts/game/game/GameEngine'
-import { isX01Config } from '@open-darts/game/game/gameConfigGuards'
 import { replaySoloVisits } from '@open-darts/game/game/replaySoloVisits'
 import type { DartThrow } from '@open-darts/game/types/dart'
 import type { GameConfig, GameModeId } from '@open-darts/game/types/gameMode'
@@ -9,7 +9,6 @@ import { GameStatus } from '@open-darts/game/types/gameMode'
 import { PlayerKind } from '@open-darts/game/types/player'
 import type { Visit } from '@open-darts/game/types/visit'
 import { getCountingVisits, isCountingVisit } from '@open-darts/game/types/visit'
-import type { X01Config } from '@open-darts/game/types/x01'
 
 export interface AsyncPlayerStream {
   visits: Visit[]
@@ -137,20 +136,16 @@ export const restoreAsyncEntryController = (input: {
   treatPendingAsCompleted?: boolean
 }): AppGameController | null => {
   const { mode, config } = input
+  const soloConfig = buildAsyncSoloConfig(mode, config, input.stream.startScore)
 
-  if (!isX01Config(mode, config)) {
+  if (soloConfig === null) {
     return null
-  }
-
-  const x01Config: X01Config = {
-    ...config,
-    startScore: input.stream.startScore,
   }
 
   const controller = replaySoloVisits(
     createGameController({
       mode,
-      config: x01Config,
+      config: soloConfig,
       players: [
         {
           id: input.playerId,

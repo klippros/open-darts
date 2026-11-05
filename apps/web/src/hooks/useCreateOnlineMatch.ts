@@ -1,9 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { ClaimTheBoardConfig } from '@open-darts/game/types/claimTheBoard'
-import type { HunterConfig } from '@open-darts/game/types/hunter'
-import type { GameModeId } from '@open-darts/game/types/gameMode'
-import type { X01Config } from '@open-darts/game/types/x01'
+import type { OnlineMatchConfig, OnlineMatchMode } from '@open-darts/game/game/onlineMatchSetup'
 import { useAuth } from './authContext'
 import { useInProgressOnlineMatch } from './useInProgressOnlineMatch'
 import { buildMatchPath, createMatch, MatchServerApiError } from '../lib/matchServer/api'
@@ -11,10 +8,10 @@ import type { InProgressOnlineMatchRow, MatchPlayerSlot } from '../lib/matchServ
 import { AuthStatus } from '../types/auth'
 
 export interface CreateOnlineLobbyInput {
-  mode: GameModeId.X01 | GameModeId.ClaimTheBoard | GameModeId.Hunter
+  mode: OnlineMatchMode
   legsToWin: number
   startingPlayerSlot: MatchPlayerSlot
-  config: X01Config | ClaimTheBoardConfig | HunterConfig
+  config: OnlineMatchConfig
 }
 
 export const useCreateOnlineMatch = () => {

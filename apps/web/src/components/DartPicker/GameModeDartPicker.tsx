@@ -16,6 +16,7 @@ import { supportsVisitScoreInput } from '@open-darts/game/game/gameModeDefinitio
 import type { DartThrow } from '@open-darts/game/types/dart'
 import type { GameConfig } from '@open-darts/game/types/gameMode'
 import { GameModeId } from '@open-darts/game/types/gameMode'
+import { NinetyNineDartsTargetKind } from '@open-darts/game/types/ninetyNineDarts'
 import { VisitInputMode } from '@open-darts/game/types/visit'
 
 export interface GameModeDartPickerProps {
@@ -106,6 +107,19 @@ export const GameModeDartPicker = ({
     return (
       <NinetyNineDartsDartPicker
         target={config.target}
+        pendingDarts={pendingDarts}
+        onDarts={onDarts}
+        onUndo={onUndo}
+        inputDisabled={inputDisabled}
+        undoDisabled={undoDisabled}
+      />
+    )
+  }
+
+  if (mode === GameModeId.BullRun) {
+    return (
+      <NinetyNineDartsDartPicker
+        target={{ kind: NinetyNineDartsTargetKind.Bull }}
         pendingDarts={pendingDarts}
         onDarts={onDarts}
         onUndo={onUndo}

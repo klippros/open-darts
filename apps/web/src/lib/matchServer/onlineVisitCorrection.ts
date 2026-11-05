@@ -1,6 +1,6 @@
 import type { Visit } from '@open-darts/game/types/visit'
 import { VisitInputMode, isCountingVisit } from '@open-darts/game/types/visit'
-import { GameModeId, GameStatus } from '@open-darts/game/types/gameMode'
+import { GameStatus } from '@open-darts/game/types/gameMode'
 import type { GameSession } from '@open-darts/game/types/gameSession'
 import type { DartThrow } from '@open-darts/game/types/dart'
 import { restoreGameController } from '@open-darts/game/game/createSession'
@@ -10,6 +10,8 @@ import { MatchCommandName } from './types'
 import type { MatchCommand, PublicDartThrow } from './types'
 import { VoiceIntentKind } from '../voice/parseVoiceCommand'
 import type { VoiceIntent } from '../voice/parseVoiceCommand'
+
+export { supportsOnlineVisitCorrection } from '@open-darts/game/game/onlineMatchSetup'
 
 export const getLastOwnCountingVisit = (visits: Visit[], playerId: string): Visit | undefined =>
   [...visits].reverse().find((visit) => isCountingVisit(visit) && visit.playerId === playerId)
@@ -23,9 +25,6 @@ export const hasLaterOpponentVisit = (
     (visit) =>
       isCountingVisit(visit) && visit.visitIndex > ownVisitIndex && visit.playerId !== playerId,
   )
-
-/** X01 can rewrite an earlier visit after the opponent replies; shared-target modes cannot. */
-export const supportsOnlineVisitCorrection = (mode: GameModeId): boolean => mode === GameModeId.X01
 
 export const canAmendLastOwnVisit = (input: {
   isActiveMatch: boolean

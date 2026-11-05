@@ -149,6 +149,17 @@ export const getDartPickerHelpContent = (
     }
   }
 
+  if (mode === GameModeId.BullRun) {
+    return {
+      title: 'How to score',
+      paragraphs: [
+        'Aim at the bull. Outer bull scores 1, bullseye scores 2. First to the target wins.',
+        'Use the three dart columns left to right: Miss, Single, Double. Undo removes the last dart.',
+      ],
+      voice,
+    }
+  }
+
   if (mode === GameModeId.Hunter) {
     return {
       title: 'How to score',

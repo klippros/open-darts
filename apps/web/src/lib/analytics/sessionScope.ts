@@ -13,8 +13,7 @@ import type { NinetyNineDartsStatGroup } from '../ninetyNineDarts/ninetyNineVisi
 import { x01PresetConfigs, X01PresetId } from '@open-darts/game/x01/x01Presets'
 
 const FIVE_OH_ONE_START_SCORE = x01PresetConfigs[X01PresetId.FiveOhOne].startScore
-const FOUR_OH_ONE_START_SCORE = x01PresetConfigs[X01PresetId.FourOhOne].startScore
-const THREE_OH_ONE_START_SCORE = x01PresetConfigs[X01PresetId.ThreeOhOne].startScore
+const ONE_SEVENTY_START_SCORE = x01PresetConfigs[X01PresetId.OneSeventy].startScore
 
 export const isX01Session = (session: GameSession): boolean =>
   session.mode === GameModeId.X01 && isX01Config(session.mode, session.config)
@@ -36,11 +35,8 @@ export const filterX01SessionsByStartScore = (
 export const filterFiveOhOneSessions = (sessions: GameSession[]): GameSession[] =>
   filterX01SessionsByStartScore(sessions, FIVE_OH_ONE_START_SCORE)
 
-export const filterFourOhOneSessions = (sessions: GameSession[]): GameSession[] =>
-  filterX01SessionsByStartScore(sessions, FOUR_OH_ONE_START_SCORE)
-
-export const filterThreeOhOneSessions = (sessions: GameSession[]): GameSession[] =>
-  filterX01SessionsByStartScore(sessions, THREE_OH_ONE_START_SCORE)
+export const filterOneSeventySessions = (sessions: GameSession[]): GameSession[] =>
+  filterX01SessionsByStartScore(sessions, ONE_SEVENTY_START_SCORE)
 
 export const filterCheckoutPracticeSessions = (
   sessions: GameSession[],
@@ -49,6 +45,9 @@ export const filterCheckoutPracticeSessions = (
 
 export const filterBob27Sessions = (sessions: GameSession[]): GameSession[] =>
   sessions.filter((session) => session.mode === GameModeId.Bob27)
+
+export const filterBullRunSessions = (sessions: GameSession[]): GameSession[] =>
+  sessions.filter((session) => session.mode === GameModeId.BullRun)
 
 export const filterAroundTheClockSessions = (
   sessions: GameSession[],

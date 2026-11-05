@@ -4,7 +4,7 @@ import type { GameSession } from '@open-darts/game/types/gameSession'
 import { PlayerKind } from '@open-darts/game/types/player'
 import { DartMultiplier } from '@open-darts/game/types/dart'
 import { VisitInputMode } from '@open-darts/game/types/visit'
-import { numberDart } from '@open-darts/game/testHelpers'
+import { bullDart, numberDart } from '@open-darts/game/testHelpers'
 import { computeX01Stats, FIVE_OH_ONE_START_SCORE } from './x01Stats'
 
 const sampleVisit = (
@@ -75,12 +75,11 @@ describe('x01Stats', () => {
     expect(stats.fiveOhOne.threeDartAverageUntilDouble).toBe(85)
     expect(stats.fiveOhOne.bestLegAverage).toBe(85)
     expect(stats.fiveOhOne.checkoutLegCount).toBe(1)
-    expect(stats.threeOhOne.legCount).toBe(0)
-    expect(stats.fourOhOne.legCount).toBe(0)
+    expect(stats.oneSeventy.legCount).toBe(0)
     expect(stats.all.legCount).toBe(1)
   })
 
-  it('keeps 501, 401, and 301 x01 stats separate', () => {
+  it('keeps 501 and 170 x01 stats separate and rolls other starts into all', () => {
     const stats = computeX01Stats([
       sampleSession({
         config: { startScore: FIVE_OH_ONE_START_SCORE, doubleIn: false, doubleOut: true },
@@ -93,6 +92,23 @@ describe('x01Stats', () => {
             scoreBefore: 50,
             visitScore: 50,
             darts: [numberDart(20, DartMultiplier.Triple), numberDart(20, DartMultiplier.Triple)],
+          }),
+        ],
+      }),
+      sampleSession({
+        id: '170',
+        config: { startScore: 170, doubleIn: false, doubleOut: true },
+        visits: [
+          sampleVisit({
+            checkout: true,
+            scoreAfter: 0,
+            scoreBefore: 170,
+            visitScore: 170,
+            darts: [
+              numberDart(20, DartMultiplier.Triple),
+              numberDart(20, DartMultiplier.Triple),
+              bullDart(),
+            ],
           }),
         ],
       }),
@@ -119,14 +135,11 @@ describe('x01Stats', () => {
     expect(stats.fiveOhOne.avgDarts).toBe(3)
     expect(stats.fiveOhOne.lastPlayedAt).toBe('2026-01-01T10:00:00.000Z')
 
-    expect(stats.threeOhOne.legCount).toBe(1)
-    expect(stats.threeOhOne.threeDartAverage).toBe(30)
-    expect(stats.threeOhOne.bestLegAverage).toBe(30)
-    expect(stats.threeOhOne.avgDarts).toBe(2)
-    expect(stats.threeOhOne.lastPlayedAt).toBe('2026-01-01T10:00:00.000Z')
+    expect(stats.oneSeventy.legCount).toBe(1)
+    expect(stats.oneSeventy.avgDarts).toBe(3)
+    expect(stats.oneSeventy.lastPlayedAt).toBe('2026-01-01T10:00:00.000Z')
 
-    expect(stats.fourOhOne.legCount).toBe(0)
-    expect(stats.all.legCount).toBe(2)
+    expect(stats.all.legCount).toBe(3)
   })
 
   it('calculates average until double excluding visits that start on a double', () => {
@@ -508,8 +521,7 @@ describe('x01Stats', () => {
     expect(filtered.fiveOhOne.avgDarts).toBe(2)
     expect(filtered.fiveOhOne.doubleCheckout).toEqual({ attempts: 1, successes: 1 })
     expect(filtered.fiveOhOne.lastPlayedAt).toBe('2026-01-01T10:00:00.000Z')
-    expect(filtered.threeOhOne.legCount).toBe(1)
-    expect(filtered.threeOhOne.threeDartAverage).toBe(40)
+    expect(filtered.oneSeventy.legCount).toBe(0)
     expect(filtered.all.legCount).toBe(2)
 
     const unfiltered = computeX01Stats(sessions)

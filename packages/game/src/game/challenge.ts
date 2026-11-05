@@ -5,6 +5,7 @@ import { isCountingVisit } from '../types/visit'
 import { getVisitsForLeg } from './matchLegs'
 
 const MIN_CHECKOUT_DARTS_BY_START_SCORE: Record<number, number> = {
+  170: 3,
   301: 6,
   401: 7,
   501: 9,

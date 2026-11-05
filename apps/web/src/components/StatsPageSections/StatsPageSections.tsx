@@ -17,6 +17,7 @@ import {
 import {
   isAroundTheClockPracticeStats,
   isBob27PracticeStats,
+  isBullRunPracticeStats,
   isClaimTheBoardPracticeStats,
   isNinetyNineDartsPracticeStats,
 } from '../../lib/analytics/practiceStats'
@@ -25,6 +26,7 @@ import { StatsTable } from '../StatsTable/StatsTable'
 import {
   AroundTheClockPracticeCard,
   Bob27PracticeCard,
+  BullRunPracticeCard,
   CheckoutPracticeCard,
   ClaimTheBoardPracticeCard,
   NinetyNineDartsPracticeCard,
@@ -109,20 +111,12 @@ const buildX01Variants = (x01: X01Stats): X01Variant[] => [
     scope: { type: 'x01-501' },
   },
   {
-    id: X01StatsFilterId.FourOhOne,
-    label: '401',
-    emptyMessage: 'No saved 401 games in this period yet.',
-    checkedOutEmptyMessage: 'No checked out 401 legs in this period yet.',
-    stats: x01.fourOhOne,
-    scope: { type: 'x01-401' },
-  },
-  {
-    id: X01StatsFilterId.ThreeOhOne,
-    label: '301',
-    emptyMessage: 'No saved 301 games in this period yet.',
-    checkedOutEmptyMessage: 'No checked out 301 legs in this period yet.',
-    stats: x01.threeOhOne,
-    scope: { type: 'x01-301' },
+    id: X01StatsFilterId.OneSeventy,
+    label: '170',
+    emptyMessage: 'No saved 170 games in this period yet.',
+    checkedOutEmptyMessage: 'No checked out 170 legs in this period yet.',
+    stats: x01.oneSeventy,
+    scope: { type: 'x01-170' },
   },
   {
     id: X01StatsFilterId.All,
@@ -138,10 +132,8 @@ const parseX01StatsFilterId = (value: string): X01StatsFilterId | null => {
   switch (value) {
     case '501':
       return X01StatsFilterId.FiveOhOne
-    case '401':
-      return X01StatsFilterId.FourOhOne
-    case '301':
-      return X01StatsFilterId.ThreeOhOne
+    case '170':
+      return X01StatsFilterId.OneSeventy
     case 'all':
       return X01StatsFilterId.All
     default:
@@ -267,6 +259,7 @@ export const PracticeSection = ({ checkout, other, onStatSelect }: PracticeSecti
   const claimTheBoard = other.find(isClaimTheBoardPracticeStats)
   const aroundTheClock = other.filter(isAroundTheClockPracticeStats)
   const ninetyNineDarts = other.filter(isNinetyNineDartsPracticeStats)
+  const bullRun = other.find(isBullRunPracticeStats)
 
   return (
     <Stack gap={4}>
@@ -282,6 +275,9 @@ export const PracticeSection = ({ checkout, other, onStatSelect }: PracticeSecti
         )}
         {ninetyNineDarts.length > 0 && (
           <NinetyNineDartsPracticeCard variants={ninetyNineDarts} onStatSelect={onStatSelect} />
+        )}
+        {bullRun !== undefined && (
+          <BullRunPracticeCard stats={bullRun} onStatSelect={onStatSelect} />
         )}
       </Stack>
     </Stack>

@@ -6,6 +6,7 @@ import type { ClaimTheBoardConfig } from '../types/claimTheBoard'
 import type { Bob27Config } from '../types/bob27'
 import type { HunterConfig } from '../types/hunter'
 import type { TenUpOneDownConfig } from '../types/tenUpOneDown'
+import { DEFAULT_BULL_RUN_CONFIG } from '../bullRun/bullRunConfig'
 import { DEFAULT_CLAIM_THE_BOARD_CONFIG } from '../claimTheBoard/claimTheBoardConfig'
 import { DEFAULT_HUNTER_CONFIG } from '../hunter/hunterConfig'
 import { DEFAULT_ONE_TWENTY_ONE_CONFIG } from '../oneTwentyOne/oneTwentyOneConfig'
@@ -79,6 +80,12 @@ export const gameModeDefinitions: Record<GameModeId, GameModeDefinition> = {
     label: 'Hunter',
     description: 'Chase around the board · land on or pass your opponent to win',
   },
+  [GameModeId.BullRun]: {
+    mode: GameModeId.BullRun,
+    defaultConfig: DEFAULT_BULL_RUN_CONFIG,
+    label: 'Bull Run',
+    description: 'Race to the bull target · outer 1, bullseye 2',
+  },
 }
 
 export const getDefaultConfig = (mode: GameModeId): GameConfig =>
@@ -90,7 +97,8 @@ export const supportsScoreCaller = (mode: GameModeId): boolean =>
   mode !== GameModeId.AroundTheClock &&
   mode !== GameModeId.ClaimTheBoard &&
   mode !== GameModeId.NinetyNineDarts &&
-  mode !== GameModeId.Hunter
+  mode !== GameModeId.Hunter &&
+  mode !== GameModeId.BullRun
 
 export const supportsVisitScoreInput = (mode: GameModeId): boolean =>
   mode === GameModeId.X01 || mode === GameModeId.OneTwentyOne || mode === GameModeId.TenUpOneDown

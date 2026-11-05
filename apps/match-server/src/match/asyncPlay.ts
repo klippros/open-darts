@@ -1,5 +1,6 @@
 import { applyAsyncMatchResultToSession, resolveAsyncMatchResult } from '@open-darts/game'
 import type { GameSession } from '@open-darts/game/types/gameSession'
+import { buildAsyncSoloConfig, readAsyncStartScore } from '@open-darts/game/game/asyncSoloConfig'
 import { createGameController, restoreGameController } from '@open-darts/game/game/createSession'
 import type { AppGameController } from '@open-darts/game/game/createSession'
 import { replaySoloVisits } from '@open-darts/game/game/replaySoloVisits'
@@ -8,7 +9,6 @@ import type { GameConfig } from '@open-darts/game/types/gameMode'
 import { GameStatus } from '@open-darts/game/types/gameMode'
 import { PlayerKind } from '@open-darts/game/types/player'
 import type { Visit } from '@open-darts/game/types/visit'
-import type { X01Config, X01State } from '@open-darts/game/types/x01'
 import { isRecord } from '../json'
 import { loadController } from './sessionPlay'
 import type { StoredPlayState } from './sessionPlay'
@@ -47,11 +47,36 @@ export const isAsyncPlayState = (value: unknown): value is AsyncPlayState => {
   return true
 }
 
-const asX01Config = (config: GameConfig): X01Config =>
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- online v1 config is X01
-  config as X01Config
-
 const countingVisits = (visits: Visit[]): Visit[] => visits.filter((visit) => visit.voided !== true)
+
+const requireAsyncSoloConfig = (play: StoredPlayState, stream: AsyncPlayerStream): GameConfig => {
+  const config = buildAsyncSoloConfig(play.session.mode, play.session.config, stream.startScore)
+
+  if (config === null) {
+    throw new Error(`Async solo rebuild is not supported for mode ${play.session.mode}`)
+  }
+
+  return config
+}
+
+const requireAsyncStartScore = (
+  play: StoredPlayState,
+  engineState: unknown,
+  playerId: string,
+): number => {
+  const startScore = readAsyncStartScore(
+    play.session.mode,
+    play.session.config,
+    engineState,
+    playerId,
+  )
+
+  if (startScore === null) {
+    throw new Error(`Async start score is not supported for mode ${play.session.mode}`)
+  }
+
+  return startScore
+}
 
 export const anyAsyncPendingFinalization = (asyncPlay: AsyncPlayState): boolean =>
   Object.values(asyncPlay.players).some((stream) => stream.pendingFinalization)
@@ -80,9 +105,6 @@ export const bothAsyncPlayersFinalized = (asyncPlay: AsyncPlayState): boolean =>
 
 export const createAsyncPlayFromSync = (play: StoredPlayState): AsyncPlayState => {
   const controller = loadController(play)
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- sync online play is X01
-  const x01State = controller.engineState as X01State
-  const config = asX01Config(play.session.config)
   const players: Record<string, AsyncPlayerStream> = {}
 
   for (const player of play.session.players) {
@@ -90,7 +112,7 @@ export const createAsyncPlayFromSync = (play: StoredPlayState): AsyncPlayState =
       visits: [],
       pendingFinalization: false,
       finalized: false,
-      startScore: x01State.players[player.id]?.remaining ?? config.startScore,
+      startScore: requireAsyncStartScore(play, controller.engineState, player.id),
       finalizeAt: null,
     }
   }
@@ -107,10 +129,7 @@ const rebuildAsyncController = (
   stream: AsyncPlayerStream,
   treatPendingAsCompleted: boolean,
 ): AppGameController => {
-  const config = {
-    ...asX01Config(play.session.config),
-    startScore: stream.startScore,
-  }
+  const config = requireAsyncSoloConfig(play, stream)
   const controller = replaySoloVisits(
     createGameController({
       mode: play.session.mode,
