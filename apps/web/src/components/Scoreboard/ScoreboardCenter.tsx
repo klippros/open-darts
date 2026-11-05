@@ -147,8 +147,8 @@ export const ScoreboardCenter = ({
       isOneTwentyOneConfig(mode, config) &&
       activePlayer !== undefined
     ) {
-      const visitsUsed = (activePlayer.visitsOnTarget ?? 0) + (pendingDarts.length > 0 ? 1 : 0)
-      const secondaryMetrics = buildVisitScoreMetric(visitsUsed, config.maxVisitsPerTarget)
+      const visitInProgress = getChallengeVisitInProgress(activePlayer.visitsOnTarget ?? 0)
+      const secondaryMetrics = buildVisitScoreMetric(visitInProgress, config.maxVisitsPerTarget)
 
       return players.map((player) =>
         player.playerId === activePlayer.playerId ? { ...player, secondaryMetrics } : player,
