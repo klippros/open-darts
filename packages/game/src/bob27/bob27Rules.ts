@@ -1,5 +1,5 @@
-import type { DartThrow } from '../types/dart'
-import { hitsBull, hitsDoubleOnNumber } from '../segmentMatching'
+import type { DartThrow } from '../types/dart.ts'
+import { hitsBull, hitsDoubleOnNumber } from '../segmentMatching.ts'
 
 export const BOB27_TARGET_COUNT = 21
 export const BOB27_MAX_DARTS_PER_VISIT = 3

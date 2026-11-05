@@ -67,6 +67,24 @@ export const takeMergedHistoryPage = <T extends HistorySortableEntry>(
   }
 }
 
+export const loadedHistoryCoversPage = <T extends HistorySortableEntry>(
+  localEntries: readonly T[],
+  onlineEntries: readonly T[],
+  limit: number,
+  onlineCursor: HistorySortableEntry,
+): boolean => {
+  const page = takeMergedHistoryPage(localEntries, onlineEntries, limit)
+  const boundary = page.entries.at(-1)
+  if (page.entries.length < limit || boundary === undefined) {
+    return false
+  }
+
+  return (
+    boundary.sortAt > onlineCursor.sortAt ||
+    (boundary.sortAt === onlineCursor.sortAt && boundary.id >= onlineCursor.id)
+  )
+}
+
 export const getDateRangeCompletedAfter = (dateRange: 'all' | '7d' | '30d'): string | null => {
   if (dateRange === 'all') {
     return null

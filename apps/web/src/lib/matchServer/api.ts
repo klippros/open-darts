@@ -282,7 +282,7 @@ export const lookupOnlineMatchInvite = async (
   })
 
   if (result.error !== null) {
-    throw new MatchServerApiError(result.error.message, 500, result.error.code)
+    throw new MatchServerApiError('Could not load online match summaries', 500, 'server_error')
   }
 
   const data: unknown = result.data
@@ -336,7 +336,7 @@ export const getMyInProgressOnlineMatch = async (): Promise<InProgressOnlineMatc
   const result = await supabaseClient.rpc('get_my_in_progress_online_match')
 
   if (result.error !== null) {
-    throw new MatchServerApiError(result.error.message, 500, result.error.code)
+    throw new MatchServerApiError('Could not load online match summaries', 500, 'server_error')
   }
 
   const data: unknown = result.data
@@ -401,7 +401,12 @@ const mapSummaryRow = (
     status: statusRaw,
     playMode: playModeRaw,
     mode: modeRaw,
-    config: readOnlineGameConfig(row.config, modeRaw),
+    x01StartScore:
+      typeof row.x01_start_score === 'number' && Number.isInteger(row.x01_start_score)
+        ? row.x01_start_score
+        : null,
+    claimTheBoardAimMode:
+      typeof row.claim_the_board_aim_mode === 'string' ? row.claim_the_board_aim_mode : null,
     legsToWin: readNumber(row.legs_to_win, 1),
     endingKind: endingKindRaw,
     winnerUserId: typeof row.winner_user_id === 'string' ? row.winner_user_id : null,
@@ -443,7 +448,7 @@ export const listMyOnlineMatchSummaries = async (
   })
 
   if (result.error !== null) {
-    throw new MatchServerApiError(result.error.message, 500, result.error.code)
+    throw new MatchServerApiError('Could not load online match detail', 500, 'server_error')
   }
 
   return parseRpcRows(result.data)
@@ -468,7 +473,7 @@ export const listUserOnlineMatches = async (
   })
 
   if (result.error !== null) {
-    throw new MatchServerApiError(result.error.message, 500, result.error.code)
+    throw new MatchServerApiError('Could not load online match sessions', 500, 'server_error')
   }
 
   return parseRpcRows(result.data)
@@ -498,7 +503,7 @@ export const getMyOnlineMatchDetail = async (
   }
 
   const summary = mapSummaryRow(first, viewerUserId)
-  if (summary === null) {
+  if (summary === null || first.scorecard_version !== 1) {
     return null
   }
 
@@ -511,7 +516,7 @@ export const getMyOnlineMatchDetail = async (
     }
   }
 
-  return { ...summary, session }
+  return { ...summary, scorecardVersion: 1, session }
 }
 
 export const listMyOnlineMatchSessions = async (
@@ -561,7 +566,8 @@ export const listMyOnlineMatchHistory = async (
       status: summary.status,
       playMode: summary.playMode,
       mode: summary.mode,
-      config: summary.config,
+      x01StartScore: summary.x01StartScore,
+      claimTheBoardAimMode: summary.claimTheBoardAimMode,
       legsToWin: summary.legsToWin,
       endingKind: summary.endingKind,
       winnerUserId: summary.winnerUserId,
@@ -572,6 +578,7 @@ export const listMyOnlineMatchHistory = async (
       playerDisplayNames: summary.playerDisplayNames,
       opponentUserId: summary.opponentUserId,
       opponentDisplayName: summary.opponentDisplayName,
+      scorecardVersion: 1,
       session: null,
     })
   }

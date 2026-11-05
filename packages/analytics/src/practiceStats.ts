@@ -1,45 +1,45 @@
-import { AroundTheClockAimMode } from '@open-darts/game/types/aroundTheClock'
-import { GameModeId } from '@open-darts/game/types/gameMode'
-import type { GameSession } from '@open-darts/game/types/gameSession'
-import { gameModeDefinitions } from '@open-darts/game/game/gameModeDefinitions'
-import { getAroundTheClockAimModeLabel } from '@open-darts/game/aroundTheClock/aroundTheClockConfig'
+import { AroundTheClockAimMode } from '@open-darts/game/types/aroundTheClock.ts'
+import { GameModeId } from '@open-darts/game/types/gameMode.ts'
+import type { GameSession } from '@open-darts/game/types/gameSession.ts'
+import { gameModeDefinitions } from '@open-darts/game/game/gameModeDefinitions.ts'
+import { getAroundTheClockAimModeLabel } from '@open-darts/game/aroundTheClock/aroundTheClockConfig.ts'
 import {
   getBob27AvgHitsPerVisit,
   getBob27SessionDoublesHit,
   getBob27VisitHitRate,
-} from './bob27VisitStats'
-import { getClaimTheBoardPrimaryPlayerStats } from './claimTheBoardVisitStats'
+} from './bob27VisitStats.ts'
+import { getClaimTheBoardPrimaryPlayerStats } from './claimTheBoardVisitStats.ts'
 import {
   computeBullRunSingleSessionStats,
   getBullRunHitRateFromCounts,
   mergeBullRunOutcomeCounts,
   ratePerThreeDarts,
-} from './bullRunVisitStats'
+} from './bullRunVisitStats.ts'
 import {
   computeNinetyNineDartsSingleSessionStats,
   getNinetyNineDartsHitRateFromCounts,
   getNinetyNineDartsStatGroupLabel,
   mergeNinetyNineDartsOutcomeCounts,
   NinetyNineDartsStatGroup,
-} from './ninetyNineVisitStats'
-import { emptyBaseHitCounts, emptyHitCounts } from './hitOutcomeStats'
-import { getSessionModeLabel } from './sessionLabels'
+} from './ninetyNineVisitStats.ts'
+import { emptyBaseHitCounts, emptyHitCounts } from './hitOutcomeStats.ts'
+import { getSessionModeLabel } from './sessionLabels.ts'
 import {
   getHighestOneTwentyOneCheckoutTarget,
   getOneTwentyOneCheckoutRate,
   getSessionCheckoutCount,
-} from './oneTwentyOneVisitStats'
-import { aggregateAroundTheClockSessionStats } from './aroundTheClockStats'
-import type { AroundTheClockPerTargetStats } from './aroundTheClockStats'
-import { getLatestSessionStartedAt } from './pickLastPlayedVariant'
-import { filterAroundTheClockSessions, filterNinetyNineDartsSessions } from './sessionScope'
+} from './oneTwentyOneVisitStats.ts'
+import { aggregateAroundTheClockSessionStats } from './aroundTheClockStats.ts'
+import type { AroundTheClockPerTargetStats } from './aroundTheClockStats.ts'
+import { getLatestSessionStartedAt } from './pickLastPlayedVariant.ts'
+import { filterAroundTheClockSessions, filterNinetyNineDartsSessions } from './sessionScope.ts'
 import {
   countCheckoutVisits,
   getHighestCheckout,
   getPrimaryPlayerVisits,
   getSessionFinalScore,
   getThreeDartAverage,
-} from './visitStats'
+} from './visitStats.ts'
 
 export interface CheckoutPracticeStats {
   mode: GameModeId.OneTwentyOne | GameModeId.TenUpOneDown

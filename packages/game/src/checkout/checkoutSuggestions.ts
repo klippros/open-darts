@@ -1,17 +1,17 @@
-import type { DartThrow } from '../types/dart'
-import type { CheckoutRules } from '../types/checkout'
-import { formatDart } from '../formatDart'
+import type { DartThrow } from '../types/dart.ts'
+import type { CheckoutRules } from '../types/checkout.ts'
+import { formatDart } from '../formatDart.ts'
 import {
   findBestFallbackCheckoutPath,
   findFallbackCheckoutPath,
   getSingleDartFinish,
   labelsToCheckoutPath,
-} from './checkoutFallback'
-import type { CheckoutDart } from './checkoutDart'
-import { DOUBLE_OUT_BOGEY_SCORES, getPdcCheckoutLabels } from './pdcCheckoutTable'
+} from './checkoutFallback.ts'
+import type { CheckoutDart } from './checkoutDart.ts'
+import { DOUBLE_OUT_BOGEY_SCORES, getPdcCheckoutLabels } from './pdcCheckoutTable.ts'
 
-export { checkoutDartFromLabel } from './checkoutDart'
-export type { CheckoutDart } from './checkoutDart'
+export { checkoutDartFromLabel } from './checkoutDart.ts'
+export type { CheckoutDart } from './checkoutDart.ts'
 
 export const MAX_CHECKOUT_SCORE = 170
 

@@ -1,5 +1,5 @@
-import type { DartThrow } from './dart'
-import type { GameSession } from './gameSession'
+import type { DartThrow } from './dart.ts'
+import type { GameSession } from './gameSession.ts'
 
 export interface ActiveGameSnapshot {
   session: GameSession

@@ -1,7 +1,7 @@
-import type { DartThrow } from '../types/dart'
-import { BullRunOutcome } from '../types/bullRun'
-import { NinetyNineDartsOutcome, NinetyNineDartsTargetKind } from '../types/ninetyNineDarts'
-import { getNinetyNineDartsOutcome } from '../ninetyNineDarts/ninetyNineDartsRules'
+import type { DartThrow } from '../types/dart.ts'
+import { BullRunOutcome } from '../types/bullRun.ts'
+import { NinetyNineDartsOutcome, NinetyNineDartsTargetKind } from '../types/ninetyNineDarts.ts'
+import { getNinetyNineDartsOutcome } from '../ninetyNineDarts/ninetyNineDartsRules.ts'
 
 export const BULL_RUN_MAX_DARTS_PER_VISIT = 3
 export const BULL_RUN_TARGET_SCORE_MIN = 5

@@ -4,6 +4,8 @@ import type { GameSession } from '@open-darts/game/types/gameSession'
 import { PlayerKind } from '@open-darts/game/types/player'
 import { DartMultiplier } from '@open-darts/game/types/dart'
 import { numberDart } from '@open-darts/game/testHelpers'
+import { AroundTheClockAimMode } from '@open-darts/game/types/aroundTheClock'
+import { NinetyNineDartsTargetKind } from '@open-darts/game/types/ninetyNineDarts'
 import { buildProfileStats, orientSessionForProfileUser } from './buildProfileStats'
 
 const sampleVisit = (
@@ -126,7 +128,10 @@ describe('buildProfileStats', () => {
     expect(stats.fiveOhOne).not.toBeNull()
     expect(stats.fiveOhOne?.thrown180).toBe(1)
     expect(stats.fiveOhOne?.highestVisit).toBeNull()
-    expect(stats.fiveOhOne?.legsPlayed).toBeGreaterThan(0)
+    expect(stats.fiveOhOne?.legsPlayed).toBe(1)
+    expect(stats.fiveOhOne?.legWinRate).toBe(100)
+    expect(stats.fiveOhOne?.dartsThrown).toBe(6)
+    expect(stats.fiveOhOne?.bestLegDarts).toBe(6)
     expect(stats.bob27?.sessionsPlayed).toBe(1)
     expect(stats.aroundTheClock).toBeNull()
     expect(JSON.stringify(stats)).not.toMatch(/"visits"/u)
@@ -145,5 +150,66 @@ describe('buildProfileStats', () => {
     expect(stats.bob27).toBeNull()
     expect(stats.ninetyNineDarts).toBeNull()
     expect(stats.aroundTheClock).toBeNull()
+  })
+
+  it('uses independent active windows and mode-specific practice aggregation', () => {
+    const ninetyNineAtTwenty = sampleSession({
+      id: '99-at-20',
+      mode: GameModeId.NinetyNineDarts,
+      config: {
+        target: { kind: NinetyNineDartsTargetKind.Number, value: 20 },
+      },
+      completedAt: '2026-05-05T00:00:00.000Z',
+      visits: [
+        sampleVisit({
+          visitScore: 9,
+          scoreBefore: 0,
+          scoreAfter: 9,
+        }),
+      ],
+    })
+    const ninetyNineBull = sampleSession({
+      id: '99-bull',
+      mode: GameModeId.NinetyNineDarts,
+      config: { target: { kind: NinetyNineDartsTargetKind.Bull } },
+      completedAt: '2026-05-31T00:00:00.000Z',
+      visits: [sampleVisit({ visitScore: 6, scoreBefore: 0, scoreAfter: 6 })],
+    })
+    const newerBob = sampleSession({
+      id: 'newer-bob',
+      mode: GameModeId.Bob27,
+      config: { startScore: 27 },
+      completedAt: '2026-07-15T00:00:00.000Z',
+      visits: [sampleVisit({ visitScore: 40, scoreBefore: 27, scoreAfter: 67 })],
+    })
+    const aroundSingles = sampleSession({
+      id: 'atc-singles',
+      mode: GameModeId.AroundTheClock,
+      config: { finishOnBull: false, aimMode: AroundTheClockAimMode.Singles },
+      completedAt: '2026-06-01T00:00:00.000Z',
+      visits: [sampleVisit({ visitScore: 1, scoreBefore: 0, scoreAfter: 1, checkout: true })],
+    })
+    const aroundAny = sampleSession({
+      id: 'atc-any',
+      mode: GameModeId.AroundTheClock,
+      config: { finishOnBull: false, aimMode: AroundTheClockAimMode.Any },
+      completedAt: '2026-06-15T00:00:00.000Z',
+      visits: [sampleVisit({ visitScore: 2, scoreBefore: 0, scoreAfter: 1, checkout: true })],
+    })
+
+    const stats = buildProfileStats({
+      displayName: 'Alex',
+      profileUserId: 'user-a',
+      onlineSessions: [],
+      practiceSessions: [ninetyNineAtTwenty, ninetyNineBull, newerBob, aroundSingles, aroundAny],
+    })
+
+    expect(stats.ninetyNineDarts?.sessionsPlayed).toBe(2)
+    expect(stats.ninetyNineDarts?.avgFinalScore).toBe(9)
+    expect(stats.ninetyNineDarts?.avgTreblesPerGame).toBe(3)
+    expect(stats.ninetyNineDarts?.window.endAt).toBe('2026-05-31T00:00:00.000Z')
+    expect(stats.bob27?.window.endAt).toBe('2026-07-15T00:00:00.000Z')
+    expect(stats.aroundTheClock?.sessionsPlayed).toBe(2)
+    expect(stats.aroundTheClock?.window.endAt).toBe('2026-06-15T00:00:00.000Z')
   })
 })

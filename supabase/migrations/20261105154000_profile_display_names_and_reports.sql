@@ -28,9 +28,16 @@ begin
   );
 
   -- Signup must not fail on provider names that fail the update trigger.
+  profile_name := normalize(profile_name, NFKC);
   profile_name := regexp_replace(profile_name, '[^[:alnum:] ]', '', 'g');
   profile_name := nullif(trim(both from regexp_replace(profile_name, '\s+', ' ', 'g')), '');
   profile_name := coalesce(left(profile_name, 30), 'You');
+
+  if not private.display_name_has_allowed_characters(profile_name)
+    or private.display_name_is_blocked(profile_name)
+  then
+    profile_name := 'You';
+  end if;
 
   insert into public.profiles (user_id, display_name)
   values (new.id, profile_name);
@@ -46,7 +53,7 @@ immutable
 set search_path = ''
 as $$
   select translate(
-    lower(regexp_replace(coalesce(p_name, ''), '\s+', '', 'g')),
+    lower(trim(both from regexp_replace(normalize(coalesce(p_name, ''), NFKC), '\s+', ' ', 'g'))),
     '01345@$!',
     'oieasasi'
   );
@@ -62,7 +69,7 @@ immutable
 set search_path = ''
 as $$
   -- Unicode letters, numbers, and single spaces between words.
-  select coalesce(p_name, '') ~ '^[[:alnum:]]+( [[:alnum:]]+)*$';
+  select normalize(coalesce(p_name, ''), NFKC) ~ '^[[:alnum:]]+( [[:alnum:]]+)*$';
 $$;
 
 revoke all on function private.display_name_has_allowed_characters(text)
@@ -76,6 +83,7 @@ set search_path = ''
 as $$
 declare
   normalized text := private.normalize_display_name_for_blocklist(p_name);
+  compact text := replace(normalized, ' ', '');
   token text;
   blocked_tokens text[] := array[
     'fuck', 'shit', 'bitch', 'cunt', 'asshole', 'bastard', 'dick', 'piss',
@@ -90,22 +98,19 @@ begin
   end if;
 
   foreach token in array blocked_tokens loop
-    if normalized = token then
+    if compact = token then
       return true;
     end if;
   end loop;
 
-  foreach token in array string_to_array(
-    regexp_replace(lower(coalesce(p_name, '')), '\s+', ' ', 'g'),
-    ' '
-  ) loop
+  foreach token in array string_to_array(normalized, ' ') loop
     if token = any (blocked_tokens) then
       return true;
     end if;
   end loop;
 
   foreach token in array slur_substrings loop
-    if position(token in normalized) > 0 then
+    if position(token in compact) > 0 then
       return true;
     end if;
   end loop;
@@ -124,7 +129,9 @@ security definer
 set search_path = ''
 as $$
 begin
-  new.display_name := trim(both from regexp_replace(new.display_name, '\s+', ' ', 'g'));
+  new.display_name := trim(
+    both from regexp_replace(normalize(new.display_name, NFKC), '\s+', ' ', 'g')
+  );
 
   if char_length(new.display_name) < 1 or char_length(new.display_name) > 30 then
     raise exception 'DISPLAY_NAME_LENGTH'
@@ -150,11 +157,11 @@ revoke all on function private.enforce_display_name_rules() from public, anon, a
 drop trigger if exists enforce_profiles_display_name on public.profiles;
 
 create trigger enforce_profiles_display_name
-  before update of display_name on public.profiles
+  before insert or update of display_name on public.profiles
   for each row
   execute function private.enforce_display_name_rules();
 
-create table public.display_name_reports (
+create table private.display_name_reports (
   id uuid primary key default gen_random_uuid(),
   reporter_user_id uuid not null references auth.users (id) on delete cascade,
   reported_user_id uuid not null references auth.users (id) on delete cascade,
@@ -168,7 +175,7 @@ create table public.display_name_reports (
 );
 
 create unique index display_name_reports_open_unique
-  on public.display_name_reports (
+  on private.display_name_reports (
     reporter_user_id,
     reported_user_id,
     display_name_snapshot
@@ -176,11 +183,11 @@ create unique index display_name_reports_open_unique
   where status = 'open';
 
 create index display_name_reports_reported_user_idx
-  on public.display_name_reports (reported_user_id, created_at desc);
+  on private.display_name_reports (reported_user_id, created_at desc);
 
-alter table public.display_name_reports enable row level security;
+alter table private.display_name_reports enable row level security;
 
-revoke all on public.display_name_reports from anon, authenticated;
+revoke all on private.display_name_reports from public, anon, authenticated;
 
 create or replace function public.report_display_name(p_reported_user_id uuid)
 returns void
@@ -212,7 +219,7 @@ begin
 
   select count(*)::integer
   into recent_count
-  from public.display_name_reports as report
+  from private.display_name_reports as report
   where report.reporter_user_id = reporter
     and report.created_at > now() - interval '1 hour';
 
@@ -220,7 +227,7 @@ begin
     raise exception 'report rate limited' using errcode = '54000';
   end if;
 
-  insert into public.display_name_reports (
+  insert into private.display_name_reports (
     reporter_user_id,
     reported_user_id,
     display_name_snapshot,
@@ -267,7 +274,7 @@ begin
     outcome := 'replaced';
   end if;
 
-  update public.display_name_reports
+  update private.display_name_reports
   set
     status = 'closed',
     closed_at = now(),
@@ -360,4 +367,5 @@ alter table public.game_sessions
 
 alter table public.game_sessions
   add constraint game_sessions_payload_size_check
-  check (pg_column_size(payload) <= 524288);
+  check (pg_column_size(payload) <= 524288)
+  not valid;

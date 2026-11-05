@@ -3,7 +3,7 @@ export {
   PROFILE_STATS_VERSION,
   buildProfileStats,
   orientSessionForProfileUser,
-} from './buildProfileStats'
+} from './buildProfileStats.ts'
 export type {
   BuildProfileStatsInput,
   PlayerProfileStats,
@@ -12,6 +12,6 @@ export type {
   ProfileFiveOhOneStats,
   ProfileNinetyNineDartsStats,
   ProfileStatWindow,
-} from './buildProfileStats'
-export { computeX01Stats } from './x01Stats'
-export { computePracticeStats } from './practiceStats'
+} from './buildProfileStats.ts'
+export { computeX01Stats } from './x01Stats.ts'
+export { computePracticeStats } from './practiceStats.ts'

@@ -1,5 +1,5 @@
-import type { HunterConfig } from '../types/hunter'
-import { GameModeId } from '../types/gameMode'
+import type { HunterConfig } from '../types/hunter.ts'
+import { GameModeId } from '../types/gameMode.ts'
 
 export const DEFAULT_HUNTER_CONFIG: HunterConfig = {
   startingPlayerIndex: 0,

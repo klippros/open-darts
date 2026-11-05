@@ -1,7 +1,7 @@
-import { DartMultiplier } from '../types/dart'
-import type { DartThrow } from '../types/dart'
-import { NinetyNineDartsOutcome, NinetyNineDartsTargetKind } from '../types/ninetyNineDarts'
-import type { NinetyNineDartsTarget } from '../types/ninetyNineDarts'
+import { DartMultiplier } from '../types/dart.ts'
+import type { DartThrow } from '../types/dart.ts'
+import { NinetyNineDartsOutcome, NinetyNineDartsTargetKind } from '../types/ninetyNineDarts.ts'
+import type { NinetyNineDartsTarget } from '../types/ninetyNineDarts.ts'
 import {
   hitsBull,
   hitsDoubleOnNumber,
@@ -9,7 +9,7 @@ import {
   hitsOuterBull,
   hitsSingleOnNumber,
   hitsTripleOnNumber,
-} from '../segmentMatching'
+} from '../segmentMatching.ts'
 
 export const NINETY_NINE_DARTS_DART_COUNT = 99
 export const NINETY_NINE_DARTS_MAX_DARTS_PER_VISIT = 3

@@ -1,18 +1,18 @@
-import type { GameSession } from '@open-darts/game/types/gameSession'
-import { isX01Config } from '@open-darts/game/game/gameConfigGuards'
-import { x01PresetConfigs, X01PresetId } from '@open-darts/game/x01/x01Presets'
+import type { GameSession } from '@open-darts/game/types/gameSession.ts'
+import { isX01Config } from '@open-darts/game/game/gameConfigGuards.ts'
+import { x01PresetConfigs, X01PresetId } from '@open-darts/game/x01/x01Presets.ts'
 import {
   countDoubleCheckoutStatsOmittingUnresolvedLegs,
   mergeDoubleCheckoutStats,
   emptyDoubleCheckoutStats,
-} from './doubleCheckoutStats'
-import type { DoubleCheckoutStats } from './doubleCheckoutStats'
-import { getLatestSessionStartedAt } from './pickLastPlayedVariant'
+} from './doubleCheckoutStats.ts'
+import type { DoubleCheckoutStats } from './doubleCheckoutStats.ts'
+import { getLatestSessionStartedAt } from './pickLastPlayedVariant.ts'
 import {
   filterAllX01Sessions,
   filterFiveOhOneSessions,
   filterOneSeventySessions,
-} from './sessionScope'
+} from './sessionScope.ts'
 import {
   countCheckouts100Plus,
   countThrown100Plus,
@@ -24,8 +24,12 @@ import {
   getScoringVisits,
   getThreeDartAverage,
   getVisitsBeforeDouble,
-} from './visitStats'
-import { countDartsInVisits, expandX01SessionsLegs, legFinishedWithCheckout } from './x01LegSlices'
+} from './visitStats.ts'
+import {
+  countDartsInVisits,
+  expandX01SessionsLegs,
+  legFinishedWithCheckout,
+} from './x01LegSlices.ts'
 
 export const FIVE_OH_ONE_START_SCORE = x01PresetConfigs[X01PresetId.FiveOhOne].startScore
 

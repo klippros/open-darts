@@ -1,10 +1,13 @@
 import { createClient } from '@supabase/supabase-js'
-import { parseGameSession } from '@open-darts/game/game/serializeGame'
-import type { GameSession } from '@open-darts/game/types/gameSession'
-import { GameModeId } from '@open-darts/game/types/gameMode'
+import type { GameSession } from '@open-darts/game/types/gameSession.ts'
+import { GameModeId } from '@open-darts/game/types/gameMode.ts'
 import { buildProfileStats } from '@open-darts/analytics'
-
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu
+import {
+  addStoredValueToBudget,
+  isRecord,
+  parseProfileStatsRequest,
+  parseStoredSession,
+} from './profileStatsGuards.ts'
 
 const PRACTICE_MODES = [
   GameModeId.Bob27,
@@ -12,8 +15,6 @@ const PRACTICE_MODES = [
   GameModeId.AroundTheClock,
 ] as const
 
-const MAX_SESSION_BYTES = 524_288
-const MAX_TOTAL_BYTES = 8_000_000
 const ACTIVE_DAYS_MS = 30 * 24 * 60 * 60 * 1000
 
 const corsHeadersFor = (origin: string | null): HeadersInit => {
@@ -46,21 +47,6 @@ const jsonResponse = (
       ...extraHeaders,
     },
   })
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value)
-
-const parseStoredSession = (value: unknown): GameSession | null => {
-  try {
-    const encoded = typeof value === 'string' ? value : JSON.stringify(value)
-    if (encoded.length > MAX_SESSION_BYTES) {
-      return null
-    }
-    return parseGameSession(encoded)
-  } catch {
-    return null
-  }
-}
 
 const windowStartFromAnchor = (anchorIso: string): string =>
   new Date(new Date(anchorIso).getTime() - ACTIVE_DAYS_MS).toISOString()
@@ -111,11 +97,11 @@ Deno.serve(async (req: Request) => {
       return jsonResponse(400, { error: 'bad_request' }, origin)
     }
 
-    if (!isRecord(body) || typeof body.userId !== 'string' || !UUID_PATTERN.test(body.userId)) {
+    const profileUserId = parseProfileStatsRequest(body)
+    if (profileUserId === null) {
       return jsonResponse(400, { error: 'bad_request' }, origin)
     }
 
-    const profileUserId = body.userId
     const admin = createClient(supabaseUrl, serviceRoleKey)
 
     // Rate-limit by caller JWT so auth.uid() is the viewer.
@@ -145,58 +131,44 @@ Deno.serve(async (req: Request) => {
         ? profileResult.data.display_name
         : 'Player'
 
-    const membership = await admin
-      .from('online_match_players')
-      .select('match_id')
-      .eq('user_id', profileUserId)
-
-    if (membership.error !== null) {
-      return jsonResponse(500, { error: 'server_error' }, origin)
-    }
-
-    const matchIds = (membership.data ?? [])
-      .map((row) => (isRecord(row) && typeof row.match_id === 'string' ? row.match_id : null))
-      .filter((id): id is string => id !== null)
-
     const onlineSessions: GameSession[] = []
     let totalBytes = 0
 
-    if (matchIds.length > 0) {
+    const latestOnlineResult = await admin
+      .from('online_matches')
+      .select('completed_at, online_match_players!inner(user_id)')
+      .eq('online_match_players.user_id', profileUserId)
+      .eq('mode', GameModeId.X01)
+      .eq('status', 'completed')
+      .contains('config', { startScore: 501 })
+      .not('completed_at', 'is', null)
+      .order('completed_at', { ascending: false })
+      .limit(1)
+
+    if (latestOnlineResult.error !== null) {
+      return jsonResponse(500, { error: 'server_error' }, origin)
+    }
+
+    const latestOnlineAt = latestOnlineResult.data?.[0]?.completed_at
+    if (typeof latestOnlineAt === 'string') {
+      const windowStart = windowStartFromAnchor(latestOnlineAt)
       const matchesResult = await admin
         .from('online_matches')
-        .select('id, mode, config, status, ending_kind, completed_at, created_at, result_payload')
-        .in('id', matchIds)
+        .select('completed_at, result_payload, online_match_players!inner(user_id)')
+        .eq('online_match_players.user_id', profileUserId)
         .eq('mode', GameModeId.X01)
-        .in('status', ['completed', 'cancelled'])
+        .eq('status', 'completed')
+        .contains('config', { startScore: 501 })
+        .gte('completed_at', windowStart)
+        .lte('completed_at', latestOnlineAt)
+        .order('completed_at', { ascending: false })
 
       if (matchesResult.error !== null) {
         return jsonResponse(500, { error: 'server_error' }, origin)
       }
 
-      const fiveOhOneCandidates: { completedAt: string; session: GameSession }[] = []
-
       for (const row of matchesResult.data ?? []) {
         if (!isRecord(row)) {
-          continue
-        }
-
-        const status = row.status
-        const endingKind = row.ending_kind
-        const isHistory =
-          status === 'completed' ||
-          (status === 'cancelled' &&
-            (endingKind === 'mutual_cancel' || endingKind === 'idle_timeout'))
-
-        if (!isHistory) {
-          continue
-        }
-
-        const config = row.config
-        if (
-          !isRecord(config) ||
-          typeof config.startScore !== 'number' ||
-          config.startScore !== 501
-        ) {
           continue
         }
 
@@ -205,35 +177,15 @@ Deno.serve(async (req: Request) => {
           continue
         }
 
-        const encoded = JSON.stringify(payload.session)
-        totalBytes += encoded.length
-        if (totalBytes > MAX_TOTAL_BYTES) {
-          break
+        const nextTotalBytes = addStoredValueToBudget(totalBytes, payload.session)
+        if (nextTotalBytes === null) {
+          return jsonResponse(500, { error: 'server_error' }, origin)
         }
+        totalBytes = nextTotalBytes
 
         const session = parseStoredSession(payload.session)
-        if (session === null) {
-          continue
-        }
-
-        const completedAt =
-          typeof row.completed_at === 'string'
-            ? row.completed_at
-            : typeof row.created_at === 'string'
-              ? row.created_at
-              : (session.completedAt ?? session.startedAt)
-
-        fiveOhOneCandidates.push({ completedAt, session })
-      }
-
-      fiveOhOneCandidates.sort((left, right) => right.completedAt.localeCompare(left.completedAt))
-      const latest = fiveOhOneCandidates[0]?.completedAt
-      if (latest !== undefined) {
-        const start = windowStartFromAnchor(latest)
-        for (const candidate of fiveOhOneCandidates) {
-          if (candidate.completedAt >= start && candidate.completedAt <= latest) {
-            onlineSessions.push(candidate.session)
-          }
+        if (session !== null) {
+          onlineSessions.push(session)
         }
       }
     }
@@ -277,11 +229,11 @@ Deno.serve(async (req: Request) => {
           continue
         }
 
-        const encoded = JSON.stringify(row.payload)
-        totalBytes += encoded.length
-        if (totalBytes > MAX_TOTAL_BYTES) {
-          break
+        const nextTotalBytes = addStoredValueToBudget(totalBytes, row.payload)
+        if (nextTotalBytes === null) {
+          return jsonResponse(500, { error: 'server_error' }, origin)
         }
+        totalBytes = nextTotalBytes
 
         const session = parseStoredSession(row.payload)
         if (session !== null) {

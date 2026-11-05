@@ -15,7 +15,11 @@ import {
   getOnlineMatchResultSummary,
   HistoryEntrySource,
 } from '../lib/history/onlineHistorySummary'
-import { HISTORY_PAGE_SIZE, takeMergedHistoryPage } from '../lib/history/historyPager'
+import {
+  HISTORY_PAGE_SIZE,
+  loadedHistoryCoversPage,
+  takeMergedHistoryPage,
+} from '../lib/history/historyPager'
 import { sortSessionsByDate } from '../lib/history/sessionSummary'
 import { getMyOnlineMatchDetail, listMyOnlineMatchSummaries } from '../lib/matchServer/api'
 import { isOnlineMatchesEnabled } from '../lib/matchServer/config'
@@ -131,10 +135,16 @@ export const HistoryPage = () => {
         }
 
         setSelectedSession(null)
-        setSelectedOnlineMatch({ match: detail ?? { ...match, session: null }, resultSummary })
+        setSelectedOnlineMatch({
+          match: detail ?? { ...match, scorecardVersion: 1, session: null },
+          resultSummary,
+        })
       } catch {
         setSelectedSession(null)
-        setSelectedOnlineMatch({ match: { ...match, session: null }, resultSummary })
+        setSelectedOnlineMatch({
+          match: { ...match, scorecardVersion: 1, session: null },
+          resultSummary,
+        })
       }
     },
     [profile?.displayName, user],
@@ -199,8 +209,14 @@ export const HistoryPage = () => {
       return
     }
 
-    // Fetch another online page when the merged window may need more online rows.
-    if (onlineEntries.length >= nextVisible) {
+    // Unknown online rows sort after the last fetched online row. Avoid a
+    // request when loaded local rows already fill the next page above it.
+    if (
+      loadedHistoryCoversPage(localEntries, onlineEntries, nextVisible, {
+        id: lastOnline.id,
+        sortAt: getOnlineMatchCompletedAt(lastOnline),
+      })
+    ) {
       return
     }
 
@@ -223,7 +239,8 @@ export const HistoryPage = () => {
     }
   }, [
     loadingMore,
-    onlineEntries.length,
+    localEntries,
+    onlineEntries,
     onlineHasMore,
     onlineMatches,
     shouldLoadOnlineHistory,

@@ -15,7 +15,8 @@ const sampleMatch = (overrides: Partial<OnlineMatchHistoryRow> = {}): OnlineMatc
   status: MatchStatus.Completed,
   playMode: PlayMode.Synchronous,
   mode: GameModeId.X01,
-  config: { startScore: 501, doubleIn: false, doubleOut: true },
+  x01StartScore: 501,
+  claimTheBoardAimMode: null,
   legsToWin: 3,
   endingKind: MatchEndingKind.Checkout,
   winnerUserId: 'viewer',
@@ -26,6 +27,7 @@ const sampleMatch = (overrides: Partial<OnlineMatchHistoryRow> = {}): OnlineMatc
   playerDisplayNames: ['Viewer', 'Alex'],
   opponentUserId: 'opponent',
   opponentDisplayName: 'Alex',
+  scorecardVersion: 1,
   session: null,
   ...overrides,
 })

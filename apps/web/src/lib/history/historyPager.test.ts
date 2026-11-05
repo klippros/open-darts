@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   getDateRangeCompletedAfter,
   HISTORY_PAGE_SIZE,
+  loadedHistoryCoversPage,
   takeMergedHistoryPage,
 } from './historyPager'
 
@@ -44,6 +45,25 @@ describe('takeMergedHistoryPage', () => {
     )
 
     expect(page.entries.map((item) => item.id)).toEqual(['b', 'a'])
+  })
+
+  it('avoids another online page only when local rows cover the online cursor', () => {
+    const online = [
+      entry('online-new', '2026-03-01T00:00:00.000Z'),
+      entry('online-cursor', '2026-02-01T00:00:00.000Z'),
+    ]
+    const newerLocal = [
+      entry('local-1', '2026-04-01T00:00:00.000Z'),
+      entry('local-2', '2026-03-15T00:00:00.000Z'),
+    ]
+    const olderLocal = [
+      entry('local-1', '2026-01-15T00:00:00.000Z'),
+      entry('local-2', '2026-01-01T00:00:00.000Z'),
+    ]
+    const cursor = online[1]!
+
+    expect(loadedHistoryCoversPage(newerLocal, online, 3, cursor)).toBe(true)
+    expect(loadedHistoryCoversPage(olderLocal, online, 3, cursor)).toBe(false)
   })
 })
 

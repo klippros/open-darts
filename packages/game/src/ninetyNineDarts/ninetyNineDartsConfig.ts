@@ -1,6 +1,6 @@
-import { NinetyNineDartsTargetKind } from '../types/ninetyNineDarts'
-import type { NinetyNineDartsConfig, NinetyNineDartsTarget } from '../types/ninetyNineDarts'
-import { getNinetyNineDartsTargetLabel } from './ninetyNineDartsRules'
+import { NinetyNineDartsTargetKind } from '../types/ninetyNineDarts.ts'
+import type { NinetyNineDartsConfig, NinetyNineDartsTarget } from '../types/ninetyNineDarts.ts'
+import { getNinetyNineDartsTargetLabel } from './ninetyNineDartsRules.ts'
 
 export const DEFAULT_NINETY_NINE_DARTS_CONFIG: NinetyNineDartsConfig = {
   target: { kind: NinetyNineDartsTargetKind.Number, value: 20 },

@@ -195,7 +195,8 @@ export interface OnlineMatchSummary {
   status: MatchStatus
   playMode: PlayMode
   mode: GameModeId
-  config: GameConfig
+  x01StartScore: number | null
+  claimTheBoardAimMode: string | null
   legsToWin: number
   endingKind: MatchEndingKind
   winnerUserId: string | null
@@ -209,6 +210,7 @@ export interface OnlineMatchSummary {
 }
 
 export interface OnlineMatchHistoryRow extends OnlineMatchSummary {
+  scorecardVersion: 1
   /** Present only after a participant detail fetch. */
   session: GameSession | null
 }

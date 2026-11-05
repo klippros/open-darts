@@ -1,16 +1,16 @@
-import type { AroundTheClockAimMode } from '@open-darts/game/types/aroundTheClock'
-import { GameModeId } from '@open-darts/game/types/gameMode'
-import type { GameSession } from '@open-darts/game/types/gameSession'
-import { getAroundTheClockConfig } from '@open-darts/game/aroundTheClock/aroundTheClockConfig'
-import { getNinetyNineDartsConfig } from '@open-darts/game/ninetyNineDarts/ninetyNineDartsConfig'
+import type { AroundTheClockAimMode } from '@open-darts/game/types/aroundTheClock.ts'
+import { GameModeId } from '@open-darts/game/types/gameMode.ts'
+import type { GameSession } from '@open-darts/game/types/gameSession.ts'
+import { getAroundTheClockConfig } from '@open-darts/game/aroundTheClock/aroundTheClockConfig.ts'
+import { getNinetyNineDartsConfig } from '@open-darts/game/ninetyNineDarts/ninetyNineDartsConfig.ts'
 import {
   isAroundTheClockConfig,
   isNinetyNineDartsConfig,
   isX01Config,
-} from '@open-darts/game/game/gameConfigGuards'
-import { getNinetyNineDartsStatGroup } from './ninetyNineVisitStats'
-import type { NinetyNineDartsStatGroup } from './ninetyNineVisitStats'
-import { x01PresetConfigs, X01PresetId } from '@open-darts/game/x01/x01Presets'
+} from '@open-darts/game/game/gameConfigGuards.ts'
+import { getNinetyNineDartsStatGroup } from './ninetyNineVisitStats.ts'
+import type { NinetyNineDartsStatGroup } from './ninetyNineVisitStats.ts'
+import { x01PresetConfigs, X01PresetId } from '@open-darts/game/x01/x01Presets.ts'
 
 const FIVE_OH_ONE_START_SCORE = x01PresetConfigs[X01PresetId.FiveOhOne].startScore
 const ONE_SEVENTY_START_SCORE = x01PresetConfigs[X01PresetId.OneSeventy].startScore

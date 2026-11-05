@@ -1,12 +1,12 @@
-import type { DartThrow } from '@open-darts/game/types/dart'
-import { GameModeId } from '@open-darts/game/types/gameMode'
-import type { GameSession } from '@open-darts/game/types/gameSession'
-import { BullRunOutcome } from '@open-darts/game/types/bullRun'
-import type { Visit } from '@open-darts/game/types/visit'
-import { isBullRunConfig } from '@open-darts/game/game/gameConfigGuards'
-import { getBullRunConfig } from '@open-darts/game/bullRun/bullRunConfig'
-import { getBullRunDartPoints, getBullRunOutcome } from '@open-darts/game/bullRun/bullRunRules'
-import type { ScoreMetric } from './scoreMetric'
+import type { DartThrow } from '@open-darts/game/types/dart.ts'
+import { GameModeId } from '@open-darts/game/types/gameMode.ts'
+import type { GameSession } from '@open-darts/game/types/gameSession.ts'
+import { BullRunOutcome } from '@open-darts/game/types/bullRun.ts'
+import type { Visit } from '@open-darts/game/types/visit.ts'
+import { isBullRunConfig } from '@open-darts/game/game/gameConfigGuards.ts'
+import { getBullRunConfig } from '@open-darts/game/bullRun/bullRunConfig.ts'
+import { getBullRunDartPoints, getBullRunOutcome } from '@open-darts/game/bullRun/bullRunRules.ts'
+import type { ScoreMetric } from './scoreMetric.ts'
 import {
   collectPlayerDarts,
   emptyBaseHitCounts,
@@ -15,9 +15,9 @@ import {
   getHitRateFromCounts,
   mergeBaseHitOutcomeCounts,
   ratePerThreeDarts,
-} from './hitOutcomeStats'
-import type { BaseHitOutcomeCounts } from './hitOutcomeStats'
-import { getPlayerVisits, getPrimaryPlayerVisits } from './visitStats'
+} from './hitOutcomeStats.ts'
+import type { BaseHitOutcomeCounts } from './hitOutcomeStats.ts'
+import { getPlayerVisits, getPrimaryPlayerVisits } from './visitStats.ts'
 
 export type BullRunOutcomeCounts = BaseHitOutcomeCounts
 

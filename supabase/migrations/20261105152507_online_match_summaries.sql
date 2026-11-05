@@ -6,7 +6,8 @@ create type public.online_match_summary as (
   status text,
   play_mode text,
   mode text,
-  config jsonb,
+  x01_start_score integer,
+  claim_the_board_aim_mode text,
   legs_to_win integer,
   ending_kind text,
   winner_user_id uuid,
@@ -22,7 +23,8 @@ create type public.online_match_detail as (
   status text,
   play_mode text,
   mode text,
-  config jsonb,
+  x01_start_score integer,
+  claim_the_board_aim_mode text,
   legs_to_win integer,
   ending_kind text,
   winner_user_id uuid,
@@ -31,6 +33,7 @@ create type public.online_match_detail as (
   created_at timestamptz,
   player_user_ids uuid[],
   player_display_names text[],
+  scorecard_version integer,
   session jsonb
 );
 
@@ -65,7 +68,18 @@ as $$
     match.status,
     match.play_mode,
     match.mode,
-    match.config,
+    case
+      when match.mode = 'x01'
+        and jsonb_typeof(match.config -> 'startScore') = 'number'
+        then (match.config ->> 'startScore')::integer
+      else null
+    end,
+    case
+      when match.mode = 'claim-the-board'
+        and jsonb_typeof(match.config -> 'aimMode') = 'string'
+        then match.config ->> 'aimMode'
+      else null
+    end,
     match.legs_to_win,
     match.ending_kind,
     match.winner_user_id,
@@ -140,6 +154,56 @@ revoke all on function private.list_online_match_summaries_for_user(
   timestamptz
 ) from public, anon, authenticated;
 
+create table private.profile_history_rate_limits (
+  user_id uuid primary key references auth.users (id) on delete cascade,
+  window_started_at timestamptz not null,
+  request_count integer not null check (request_count >= 0)
+);
+
+revoke all on table private.profile_history_rate_limits from public, anon, authenticated;
+
+create or replace function private.consume_profile_history_rate_limit(
+  p_user_id uuid,
+  p_limit integer default 60,
+  p_window_seconds integer default 60
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  allowed boolean;
+begin
+  insert into private.profile_history_rate_limits (
+    user_id,
+    window_started_at,
+    request_count
+  )
+  values (p_user_id, now(), 1)
+  on conflict (user_id) do update
+  set
+    window_started_at = case
+      when private.profile_history_rate_limits.window_started_at
+        <= now() - make_interval(secs => p_window_seconds)
+        then now()
+      else private.profile_history_rate_limits.window_started_at
+    end,
+    request_count = case
+      when private.profile_history_rate_limits.window_started_at
+        <= now() - make_interval(secs => p_window_seconds)
+        then 1
+      else private.profile_history_rate_limits.request_count + 1
+    end
+  returning request_count <= p_limit into allowed;
+
+  return allowed;
+end;
+$$;
+
+revoke all on function private.consume_profile_history_rate_limit(uuid, integer, integer)
+  from public, anon, authenticated;
+
 create or replace function public.list_my_online_match_summaries(
   p_before_completed_at timestamptz default null,
   p_before_id uuid default null,
@@ -183,20 +247,35 @@ create or replace function public.list_user_online_matches(
   p_limit integer default 30
 )
 returns setof public.online_match_summary
-language sql
-stable
+language plpgsql
 security definer
 set search_path = ''
 as $$
-  select *
+declare
+  caller uuid := (select auth.uid());
+begin
+  if caller is null then
+    raise exception 'not authenticated' using errcode = '42501';
+  end if;
+
+  if (p_before_completed_at is null) <> (p_before_id is null) then
+    raise exception 'invalid cursor' using errcode = '22023';
+  end if;
+
+  if not private.consume_profile_history_rate_limit(caller, 60, 60) then
+    raise exception 'rate limited' using errcode = '54000';
+  end if;
+
+  return query
+  select summary.*
   from private.list_online_match_summaries_for_user(
     p_user_id,
     p_before_completed_at,
     p_before_id,
     p_limit,
     null
-  )
-  where (select auth.uid()) is not null;
+  ) as summary;
+end;
 $$;
 
 revoke all on function public.list_user_online_matches(
@@ -213,6 +292,152 @@ grant execute on function public.list_user_online_matches(
   integer
 ) to authenticated;
 
+create or replace function private.sanitize_online_match_config(
+  p_mode text,
+  p_config jsonb
+)
+returns jsonb
+language sql
+immutable
+set search_path = ''
+as $$
+  select case p_mode
+    when 'x01' then jsonb_build_object(
+      'startScore', p_config -> 'startScore',
+      'doubleIn', p_config -> 'doubleIn',
+      'doubleOut', p_config -> 'doubleOut'
+    )
+    when 'claim-the-board' then jsonb_build_object(
+      'aimMode', p_config -> 'aimMode'
+    )
+    when 'hunter' then jsonb_build_object(
+      'startingPlayerIndex', p_config -> 'startingPlayerIndex'
+    )
+    when 'bull-run' then jsonb_build_object(
+      'targetScore', p_config -> 'targetScore'
+    )
+    else '{}'::jsonb
+  end;
+$$;
+
+revoke all on function private.sanitize_online_match_config(text, jsonb)
+  from public, anon, authenticated;
+
+create or replace function private.sanitize_online_match_session(p_session jsonb)
+returns jsonb
+language sql
+immutable
+set search_path = ''
+as $$
+  select case
+    when jsonb_typeof(p_session) <> 'object' then null
+    else jsonb_strip_nulls(jsonb_build_object(
+      'id', p_session -> 'id',
+      'mode', p_session -> 'mode',
+      'config', private.sanitize_online_match_config(
+        p_session ->> 'mode',
+        coalesce(p_session -> 'config', '{}'::jsonb)
+      ),
+      'players', coalesce((
+        select jsonb_agg(jsonb_build_object(
+          'id', player -> 'id',
+          'name', player -> 'name',
+          'kind', player -> 'kind'
+        ) order by player_ordinality)
+        from jsonb_array_elements(
+          case
+            when jsonb_typeof(p_session -> 'players') = 'array'
+              then p_session -> 'players'
+            else '[]'::jsonb
+          end
+        )
+          with ordinality as players(player, player_ordinality)
+      ), '[]'::jsonb),
+      'visits', coalesce((
+        select jsonb_agg(jsonb_strip_nulls(jsonb_build_object(
+          'visitIndex', visit -> 'visitIndex',
+          'playerId', visit -> 'playerId',
+          'darts', coalesce((
+            select jsonb_agg(jsonb_build_object(
+              'segment', case
+                when dart #>> '{segment,type}' = 'number'
+                  then jsonb_build_object(
+                    'type', dart #> '{segment,type}',
+                    'value', dart #> '{segment,value}'
+                  )
+                else jsonb_build_object('type', dart #> '{segment,type}')
+              end,
+              'multiplier', dart -> 'multiplier',
+              'points', dart -> 'points',
+              'timestamp', dart -> 'timestamp'
+            ) order by dart_ordinality)
+            from jsonb_array_elements(
+              case
+                when jsonb_typeof(visit -> 'darts') = 'array'
+                  then visit -> 'darts'
+                else '[]'::jsonb
+              end
+            )
+              with ordinality as darts(dart, dart_ordinality)
+          ), '[]'::jsonb),
+          'visitScore', visit -> 'visitScore',
+          'scoreBefore', visit -> 'scoreBefore',
+          'scoreAfter', visit -> 'scoreAfter',
+          'bust', visit -> 'bust',
+          'checkout', visit -> 'checkout',
+          'legIndex', visit -> 'legIndex',
+          'inputMode', visit -> 'inputMode',
+          'voided', visit -> 'voided',
+          'metadata', case
+            when jsonb_typeof(visit -> 'metadata') = 'object'
+              then jsonb_strip_nulls(jsonb_build_object(
+                'targetLabel', visit #> '{metadata,targetLabel}',
+                'hit', visit #> '{metadata,hit}',
+                'hitCount', visit #> '{metadata,hitCount}',
+                'sharedTargetIndex', visit #> '{metadata,sharedTargetIndex}',
+                'sharedTargetIndexAfter', visit #> '{metadata,sharedTargetIndexAfter}',
+                'fieldIndex', visit #> '{metadata,fieldIndex}',
+                'fieldIndexAfter', visit #> '{metadata,fieldIndexAfter}',
+                'fieldNumber', visit #> '{metadata,fieldNumber}',
+                'fieldNumberAfter', visit #> '{metadata,fieldNumberAfter}',
+                'advances', visit #> '{metadata,advances}',
+                'catch', visit #> '{metadata,catch}',
+                'targetScore', visit #> '{metadata,targetScore}'
+              ))
+            else null
+          end
+        )) order by visit_ordinality)
+        from jsonb_array_elements(
+          case
+            when jsonb_typeof(p_session -> 'visits') = 'array'
+              then p_session -> 'visits'
+            else '[]'::jsonb
+          end
+        )
+          with ordinality as visits(visit, visit_ordinality)
+      ), '[]'::jsonb),
+      'status', p_session -> 'status',
+      'startedAt', p_session -> 'startedAt',
+      'completedAt', p_session -> 'completedAt',
+      'finishedEarly', p_session -> 'finishedEarly',
+      'matchProgress', case
+        when jsonb_typeof(p_session -> 'matchProgress') = 'object'
+          then jsonb_strip_nulls(jsonb_build_object(
+            'legsToWin', p_session #> '{matchProgress,legsToWin}',
+            'startingPlayerIndex', p_session #> '{matchProgress,startingPlayerIndex}',
+            'currentLeg', p_session #> '{matchProgress,currentLeg}',
+            'legWins', p_session #> '{matchProgress,legWins}',
+            'legLosses', p_session #> '{matchProgress,legLosses}'
+          ))
+        else null
+      end
+    ))
+  end;
+$$;
+
+revoke all on function private.sanitize_online_match_session(jsonb)
+  from public, anon, authenticated;
+
 create or replace function public.get_my_online_match_detail(p_match_id uuid)
 returns setof public.online_match_detail
 language sql
@@ -225,7 +450,8 @@ as $$
     summary.status,
     summary.play_mode,
     summary.mode,
-    summary.config,
+    summary.x01_start_score,
+    summary.claim_the_board_aim_mode,
     summary.legs_to_win,
     summary.ending_kind,
     summary.winner_user_id,
@@ -234,9 +460,10 @@ as $$
     summary.created_at,
     summary.player_user_ids,
     summary.player_display_names,
+    1,
     case
       when jsonb_typeof(match.result_payload -> 'session') = 'object'
-        then match.result_payload -> 'session'
+        then private.sanitize_online_match_session(match.result_payload -> 'session')
       else null
     end
   from public.online_matches as match
@@ -307,9 +534,17 @@ $$;
 revoke all on function public.list_my_online_match_history() from public, anon;
 grant execute on function public.list_my_online_match_history() to authenticated;
 
-create index if not exists online_match_players_user_completed_idx
-  on public.online_match_players (user_id);
-
 create index if not exists online_matches_history_completed_idx
   on public.online_matches (completed_at desc nulls last, id desc)
   where status in ('completed', 'cancelled');
+
+alter table public.online_matches
+  drop constraint if exists online_matches_result_payload_size_check;
+
+alter table public.online_matches
+  add constraint online_matches_result_payload_size_check
+  check (
+    result_payload is null
+    or pg_column_size(result_payload) <= 524288
+  )
+  not valid;

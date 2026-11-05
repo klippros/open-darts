@@ -1,7 +1,7 @@
-import { parseAroundTheClockAimMode } from '../aroundTheClock/aroundTheClockConfig'
-import { AroundTheClockAimMode } from '../types/aroundTheClock'
-import type { ClaimTheBoardConfig } from '../types/claimTheBoard'
-import { GameModeId } from '../types/gameMode'
+import { parseAroundTheClockAimMode } from '../aroundTheClock/aroundTheClockConfig.ts'
+import { AroundTheClockAimMode } from '../types/aroundTheClock.ts'
+import type { ClaimTheBoardConfig } from '../types/claimTheBoard.ts'
+import { GameModeId } from '../types/gameMode.ts'
 
 export const DEFAULT_CLAIM_THE_BOARD_CONFIG: ClaimTheBoardConfig = {
   aimMode: AroundTheClockAimMode.Any,

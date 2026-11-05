@@ -1,11 +1,11 @@
-import type { DartThrow } from '../types/dart'
-import type { AroundTheClockAimMode } from '../types/aroundTheClock'
+import type { DartThrow } from '../types/dart.ts'
+import type { AroundTheClockAimMode } from '../types/aroundTheClock.ts'
 import {
   AROUND_THE_CLOCK_TARGET_COUNT,
   getAroundTheClockTargetAimLabel,
   isAroundTheClockBullTarget,
   isAroundTheClockTargetHit,
-} from '../aroundTheClock/aroundTheClockRules'
+} from '../aroundTheClock/aroundTheClockRules.ts'
 
 export const CLAIM_THE_BOARD_TARGET_COUNT = AROUND_THE_CLOCK_TARGET_COUNT
 export const CLAIM_THE_BOARD_MAX_DARTS_PER_VISIT = 3

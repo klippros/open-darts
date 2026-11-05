@@ -1,20 +1,24 @@
-import { GameModeId, GameStatus } from '@open-darts/game/types/gameMode'
-import type { GameSession } from '@open-darts/game/types/gameSession'
-import { PlayerKind } from '@open-darts/game/types/player'
-import { isAroundTheClockConfig } from '@open-darts/game/game/gameConfigGuards'
-import { getAroundTheClockConfig } from '@open-darts/game/aroundTheClock/aroundTheClockConfig'
-import { aggregateAroundTheClockSessionStats } from './aroundTheClockStats'
+import { GameModeId, GameStatus } from '@open-darts/game/types/gameMode.ts'
+import type { GameSession } from '@open-darts/game/types/gameSession.ts'
+import { PlayerKind } from '@open-darts/game/types/player.ts'
+import { isAroundTheClockConfig } from '@open-darts/game/game/gameConfigGuards.ts'
+import { getAroundTheClockConfig } from '@open-darts/game/aroundTheClock/aroundTheClockConfig.ts'
+import { aggregateAroundTheClockSessionStats } from './aroundTheClockStats.ts'
 import {
   isBob27PracticeStats,
   isNinetyNineDartsPracticeStats,
   computePracticeStats,
-} from './practiceStats'
-import { filterFiveOhOneSessions, filterNinetyNineDartsSessions } from './sessionScope'
-import { getSessionCompletedAt } from './sessionLabels'
-import { countDartsInVisits, expandX01SessionsLegs, legFinishedWithCheckout } from './x01LegSlices'
-import { computeX01Stats } from './x01Stats'
-import { countTotalDartsThrown, countThrown180 } from './visitStats'
-import { NinetyNineDartsStatGroup } from './ninetyNineVisitStats'
+} from './practiceStats.ts'
+import { filterFiveOhOneSessions, filterNinetyNineDartsSessions } from './sessionScope.ts'
+import { getSessionCompletedAt } from './sessionLabels.ts'
+import {
+  countDartsInVisits,
+  expandX01SessionsLegs,
+  legFinishedWithCheckout,
+} from './x01LegSlices.ts'
+import { computeX01Stats } from './x01Stats.ts'
+import { countTotalDartsThrown, countThrown180 } from './visitStats.ts'
+import { NinetyNineDartsStatGroup } from './ninetyNineVisitStats.ts'
 
 export const PROFILE_STATS_VERSION = 1
 export const PROFILE_ACTIVE_DAYS = 30

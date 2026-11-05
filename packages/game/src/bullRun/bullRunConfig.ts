@@ -1,10 +1,10 @@
-import { GameModeId } from '../types/gameMode'
-import type { BullRunConfig } from '../types/bullRun'
+import { GameModeId } from '../types/gameMode.ts'
+import type { BullRunConfig } from '../types/bullRun.ts'
 import {
   BULL_RUN_DEFAULT_TARGET_SCORE,
   BULL_RUN_TARGET_SCORE_MAX,
   BULL_RUN_TARGET_SCORE_MIN,
-} from './bullRunRules'
+} from './bullRunRules.ts'
 
 export const DEFAULT_BULL_RUN_CONFIG: BullRunConfig = {
   targetScore: BULL_RUN_DEFAULT_TARGET_SCORE,

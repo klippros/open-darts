@@ -1,6 +1,8 @@
 import { formatX01StartScore } from '@open-darts/game/x01/x01Presets'
-import { isClaimTheBoardConfig, isX01Config } from '@open-darts/game/game/gameConfigGuards'
-import { getAroundTheClockAimModeLabel } from '@open-darts/game/aroundTheClock/aroundTheClockConfig'
+import {
+  getAroundTheClockAimModeLabel,
+  parseAroundTheClockAimModeValue,
+} from '@open-darts/game/aroundTheClock/aroundTheClockConfig'
 import { parseGameSession } from '@open-darts/game/game/serializeGame'
 import { GameModeId } from '@open-darts/game/types/gameMode'
 import { gameModeDefinitions } from '@open-darts/game/game/gameModeDefinitions'
@@ -40,15 +42,19 @@ export const readOnlineMatchHistorySession = (resultPayload: unknown): GameSessi
 }
 
 export const getOnlineMatchModeLabel = (match: OnlineMatchSummary): string => {
-  if (match.mode === GameModeId.X01 && isX01Config(GameModeId.X01, match.config)) {
-    return formatX01StartScore(match.config)
+  if (match.mode === GameModeId.X01 && match.x01StartScore !== null) {
+    return formatX01StartScore({
+      startScore: match.x01StartScore,
+      doubleIn: false,
+      doubleOut: true,
+    })
   }
 
-  if (
-    match.mode === GameModeId.ClaimTheBoard &&
-    isClaimTheBoardConfig(GameModeId.ClaimTheBoard, match.config)
-  ) {
-    return `${gameModeDefinitions[match.mode].label} · ${getAroundTheClockAimModeLabel(match.config.aimMode)}`
+  if (match.mode === GameModeId.ClaimTheBoard && match.claimTheBoardAimMode !== null) {
+    const aimMode = parseAroundTheClockAimModeValue(match.claimTheBoardAimMode)
+    if (aimMode !== null) {
+      return `${gameModeDefinitions[match.mode].label} · ${getAroundTheClockAimModeLabel(aimMode)}`
+    }
   }
 
   return gameModeDefinitions[match.mode]?.label ?? match.mode

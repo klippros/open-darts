@@ -60,6 +60,25 @@ export const PlayerProfilePage = () => {
   const validUserId = isProfileUserId(profileUserId)
 
   useEffect(() => {
+    const existing = document.querySelector<HTMLMetaElement>('meta[name="robots"]')
+    const previousContent = existing?.content
+    const robots = existing ?? document.createElement('meta')
+    robots.name = 'robots'
+    robots.content = 'noindex, nofollow'
+    if (existing === null) {
+      document.head.append(robots)
+    }
+
+    return () => {
+      if (existing === null) {
+        robots.remove()
+      } else {
+        robots.content = previousContent ?? ''
+      }
+    }
+  }, [])
+
+  useEffect(() => {
     if (!isSignedIn || !validUserId || user === null) {
       setStats(null)
       setMatches([])
@@ -177,10 +196,16 @@ export const PlayerProfilePage = () => {
         }
 
         setSelectedSession(null)
-        setSelectedOnlineMatch({ match: detail ?? { ...match, session: null }, resultSummary })
+        setSelectedOnlineMatch({
+          match: detail ?? { ...match, scorecardVersion: 1, session: null },
+          resultSummary,
+        })
       } catch {
         setSelectedSession(null)
-        setSelectedOnlineMatch({ match: { ...match, session: null }, resultSummary })
+        setSelectedOnlineMatch({
+          match: { ...match, scorecardVersion: 1, session: null },
+          resultSummary,
+        })
       }
     },
     [profile?.displayName, user],

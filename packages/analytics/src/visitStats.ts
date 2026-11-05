@@ -1,11 +1,11 @@
-import type { Player } from '@open-darts/game/types/player'
-import { PlayerKind } from '@open-darts/game/types/player'
-import type { GameSession } from '@open-darts/game/types/gameSession'
-import type { Visit } from '@open-darts/game/types/visit'
-import { getVisitDartCount, isCountingVisit } from '@open-darts/game/types/visit'
-import { MAX_CHECKOUT_SCORE } from '@open-darts/game/checkout/checkoutSuggestions'
-import { isSingleDartDoubleFinish } from '@open-darts/game/checkout/checkoutFallback'
-import { getVisitsForLeg } from '@open-darts/game/game/matchLegs'
+import type { Player } from '@open-darts/game/types/player.ts'
+import { PlayerKind } from '@open-darts/game/types/player.ts'
+import type { GameSession } from '@open-darts/game/types/gameSession.ts'
+import type { Visit } from '@open-darts/game/types/visit.ts'
+import { getVisitDartCount, isCountingVisit } from '@open-darts/game/types/visit.ts'
+import { MAX_CHECKOUT_SCORE } from '@open-darts/game/checkout/checkoutSuggestions.ts'
+import { isSingleDartDoubleFinish } from '@open-darts/game/checkout/checkoutFallback.ts'
+import { getVisitsForLeg } from '@open-darts/game/game/matchLegs.ts'
 
 export const getPrimaryPlayerVisits = (session: GameSession): Visit[] => {
   const humanPlayer = session.players.find((player) => player.kind === PlayerKind.Human)

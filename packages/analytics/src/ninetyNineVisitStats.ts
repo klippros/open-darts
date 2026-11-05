@@ -1,30 +1,30 @@
-import type { DartThrow } from '@open-darts/game/types/dart'
-import { GameModeId } from '@open-darts/game/types/gameMode'
-import type { GameSession } from '@open-darts/game/types/gameSession'
+import type { DartThrow } from '@open-darts/game/types/dart.ts'
+import { GameModeId } from '@open-darts/game/types/gameMode.ts'
+import type { GameSession } from '@open-darts/game/types/gameSession.ts'
 import {
   NinetyNineDartsOutcome,
   NinetyNineDartsTargetKind,
-} from '@open-darts/game/types/ninetyNineDarts'
-import type { NinetyNineDartsTarget } from '@open-darts/game/types/ninetyNineDarts'
-import type { Visit } from '@open-darts/game/types/visit'
-import { isNinetyNineDartsConfig } from '@open-darts/game/game/gameConfigGuards'
-import { getNinetyNineDartsConfig } from '@open-darts/game/ninetyNineDarts/ninetyNineDartsConfig'
+} from '@open-darts/game/types/ninetyNineDarts.ts'
+import type { NinetyNineDartsTarget } from '@open-darts/game/types/ninetyNineDarts.ts'
+import type { Visit } from '@open-darts/game/types/visit.ts'
+import { isNinetyNineDartsConfig } from '@open-darts/game/game/gameConfigGuards.ts'
+import { getNinetyNineDartsConfig } from '@open-darts/game/ninetyNineDarts/ninetyNineDartsConfig.ts'
 import {
   getNinetyNineDartsDartPoints,
   getNinetyNineDartsMaxScore,
   getNinetyNineDartsOutcome,
   getNinetyNineDartsTargetLabel,
   NINETY_NINE_DARTS_DART_COUNT,
-} from '@open-darts/game/ninetyNineDarts/ninetyNineDartsRules'
+} from '@open-darts/game/ninetyNineDarts/ninetyNineDartsRules.ts'
 import {
   collectPlayerDarts,
   emptyHitCounts,
   getHitCount,
   getHitRateFromCounts,
   mergeHitOutcomeCounts,
-} from './hitOutcomeStats'
-import type { HitOutcomeCounts } from './hitOutcomeStats'
-import { getPrimaryPlayerVisits, getSessionFinalScore } from './visitStats'
+} from './hitOutcomeStats.ts'
+import type { HitOutcomeCounts } from './hitOutcomeStats.ts'
+import { getPrimaryPlayerVisits, getSessionFinalScore } from './visitStats.ts'
 
 export type NinetyNineDartsOutcomeCounts = HitOutcomeCounts
 
