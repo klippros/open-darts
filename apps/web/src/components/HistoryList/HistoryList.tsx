@@ -79,6 +79,9 @@ export const HistoryList = ({
           )
         }
 
+        const opponentUserId = entry.match.opponentUserId
+        const opponentName = entry.match.opponentDisplayName ?? undefined
+
         return (
           <HistoryListItem
             key={`online:${entry.id}`}
@@ -86,6 +89,8 @@ export const HistoryList = ({
             resultSummary={entry.resultSummary}
             completedAtLabel={formatOnlineMatchDate(entry.match)}
             badgeLabel="Online"
+            opponentProfileTo={opponentUserId === null ? undefined : `/players/${opponentUserId}`}
+            opponentName={opponentName}
             onClick={
               entry.canOpenDetail
                 ? () => {
