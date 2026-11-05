@@ -23,7 +23,8 @@ import {
   getLegNumberFromTimelinePointId,
   getSessionIdFromTimelinePointId,
 } from '../lib/analytics/x01LegSlices'
-import { listMyOnlineMatchHistory } from '../lib/matchServer/api'
+import { getDateRangeCompletedAfter } from '../lib/history/historyPager'
+import { listMyOnlineMatchSessions } from '../lib/matchServer/api'
 import { isOnlineMatchesEnabled } from '../lib/matchServer/config'
 import { decorateOnlineSessionForViewer } from '../lib/matchServer/onlinePlay'
 import { loadStoredSessions } from '../lib/storage/gameStore'
@@ -32,9 +33,9 @@ import { AuthStatus, SyncStatus } from '../types/auth'
 import type { GameSession } from '@open-darts/game/types/gameSession'
 
 const DATE_RANGE_OPTIONS: { value: DateRangePreset; label: string }[] = [
-  { value: 'all', label: 'All time' },
-  { value: '7d', label: 'Last 7 days' },
   { value: '30d', label: 'Last 30 days' },
+  { value: '7d', label: 'Last 7 days' },
+  { value: 'all', label: 'All time' },
 ]
 
 const filterSelectStyle = {
@@ -52,12 +53,13 @@ const isDateRangePreset = (value: string): value is DateRangePreset =>
 
 export const StatsPage = () => {
   const { authStatus, syncStatus, user, profile } = useAuth()
-  const [dateRange, setDateRange] = useState<DateRangePreset>('all')
+  const [dateRange, setDateRange] = useState<DateRangePreset>('30d')
   const [timelineSelection, setTimelineSelection] = useState<StatTimelineSelection | null>(null)
   const [selectedSession, setSelectedSession] = useState<GameSession | null>(null)
   const [selectedLegNumber, setSelectedLegNumber] = useState<number | null>(null)
   const [storedSessions, setStoredSessions] = useState(() => loadStoredSessions())
-  const [onlineSessions, setOnlineSessions] = useState<GameSession[]>([])
+  const [onlineSessions30d, setOnlineSessions30d] = useState<GameSession[]>([])
+  const [onlineSessionsAll, setOnlineSessionsAll] = useState<GameSession[] | null>(null)
 
   const isSignedIn = authStatus === AuthStatus.Authenticated && user !== null
   const shouldLoadOnlineStats = isSignedIn && isOnlineMatchesEnabled
@@ -76,33 +78,32 @@ export const StatsPage = () => {
 
   useEffect(() => {
     if (!shouldLoadOnlineStats || user === null) {
-      setOnlineSessions([])
+      setOnlineSessions30d([])
+      setOnlineSessionsAll(null)
       return undefined
     }
 
     let cancelled = false
     const viewerUserId = user.id
     const viewerDisplayName = profile?.displayName
+    const completedAfter = getDateRangeCompletedAfter('30d')
 
     const loadOnlineStats = async () => {
       try {
-        const matches = await listMyOnlineMatchHistory(viewerUserId)
+        const sessions = await listMyOnlineMatchSessions(viewerUserId, completedAfter)
 
         if (cancelled) {
           return
         }
 
-        setOnlineSessions(
-          matches
-            .map((match) => match.session)
-            .filter((session): session is GameSession => session !== null)
-            .map((session) =>
-              decorateOnlineSessionForViewer(session, viewerUserId, viewerDisplayName),
-            ),
+        setOnlineSessions30d(
+          sessions.map((session) =>
+            decorateOnlineSessionForViewer(session, viewerUserId, viewerDisplayName),
+          ),
         )
       } catch {
         if (!cancelled) {
-          setOnlineSessions([])
+          setOnlineSessions30d([])
         }
       }
     }
@@ -113,6 +114,54 @@ export const StatsPage = () => {
       cancelled = true
     }
   }, [profile?.displayName, shouldLoadOnlineStats, user])
+
+  useEffect(() => {
+    if (!shouldLoadOnlineStats || user === null || dateRange !== 'all') {
+      return undefined
+    }
+
+    if (onlineSessionsAll !== null) {
+      return undefined
+    }
+
+    let cancelled = false
+    const viewerUserId = user.id
+    const viewerDisplayName = profile?.displayName
+
+    const loadAllOnlineStats = async () => {
+      try {
+        const sessions = await listMyOnlineMatchSessions(viewerUserId, null)
+
+        if (cancelled) {
+          return
+        }
+
+        setOnlineSessionsAll(
+          sessions.map((session) =>
+            decorateOnlineSessionForViewer(session, viewerUserId, viewerDisplayName),
+          ),
+        )
+      } catch {
+        if (!cancelled) {
+          setOnlineSessionsAll([])
+        }
+      }
+    }
+
+    void loadAllOnlineStats()
+
+    return () => {
+      cancelled = true
+    }
+  }, [dateRange, onlineSessionsAll, profile?.displayName, shouldLoadOnlineStats, user])
+
+  const onlineSessions = useMemo(() => {
+    if (dateRange === 'all') {
+      return onlineSessionsAll ?? onlineSessions30d
+    }
+
+    return onlineSessions30d
+  }, [dateRange, onlineSessions30d, onlineSessionsAll])
 
   const allSessions = useMemo(
     () => mergeSessionsForStats(storedSessions, onlineSessions),

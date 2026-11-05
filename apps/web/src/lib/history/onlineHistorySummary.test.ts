@@ -22,7 +22,10 @@ const sampleMatch = (overrides: Partial<OnlineMatchHistoryRow> = {}): OnlineMatc
   creatorUserId: 'viewer',
   completedAt: '2026-09-08T12:00:00.000Z',
   createdAt: '2026-09-08T11:00:00.000Z',
+  playerUserIds: ['viewer', 'opponent'],
+  playerDisplayNames: ['Viewer', 'Alex'],
   opponentUserId: 'opponent',
+  opponentDisplayName: 'Alex',
   session: null,
   ...overrides,
 })

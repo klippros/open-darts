@@ -190,7 +190,7 @@ export interface InProgressOnlineMatchRow {
   invite_token: string
 }
 
-export interface OnlineMatchHistoryRow {
+export interface OnlineMatchSummary {
   id: string
   status: MatchStatus
   playMode: PlayMode
@@ -202,8 +202,14 @@ export interface OnlineMatchHistoryRow {
   creatorUserId: string
   completedAt: string | null
   createdAt: string
+  playerUserIds: string[]
+  playerDisplayNames: string[]
   opponentUserId: string | null
-  /** Present when the match server stored a full session in result_payload. */
+  opponentDisplayName: string | null
+}
+
+export interface OnlineMatchHistoryRow extends OnlineMatchSummary {
+  /** Present only after a participant detail fetch. */
   session: GameSession | null
 }
 

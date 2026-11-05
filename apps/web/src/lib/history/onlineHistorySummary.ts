@@ -5,7 +5,7 @@ import { parseGameSession } from '@open-darts/game/game/serializeGame'
 import { GameModeId } from '@open-darts/game/types/gameMode'
 import { gameModeDefinitions } from '@open-darts/game/game/gameModeDefinitions'
 import type { GameSession } from '@open-darts/game/types/gameSession'
-import type { OnlineMatchHistoryRow } from '../matchServer/types'
+import type { OnlineMatchSummary } from '../matchServer/types'
 import { MatchEndingKind } from '../matchServer/types'
 import { formatSessionDate } from './sessionSummary'
 
@@ -39,7 +39,7 @@ export const readOnlineMatchHistorySession = (resultPayload: unknown): GameSessi
   }
 }
 
-export const getOnlineMatchModeLabel = (match: OnlineMatchHistoryRow): string => {
+export const getOnlineMatchModeLabel = (match: OnlineMatchSummary): string => {
   if (match.mode === GameModeId.X01 && isX01Config(GameModeId.X01, match.config)) {
     return formatX01StartScore(match.config)
   }
@@ -80,7 +80,7 @@ export const getOnlineMatchEndingLabel = (endingKind: MatchEndingKind): string =
 }
 
 export const getOnlineMatchSummaryTitle = (
-  match: OnlineMatchHistoryRow,
+  match: OnlineMatchSummary,
   viewerUserId: string,
 ): string => {
   if (
@@ -99,7 +99,7 @@ export const getOnlineMatchSummaryTitle = (
 }
 
 export const getOnlineMatchResultSummary = (
-  match: OnlineMatchHistoryRow,
+  match: OnlineMatchSummary,
   viewerUserId: string,
   opponentName: string,
 ): string => {
@@ -121,8 +121,8 @@ export const getOnlineMatchResultSummary = (
   return `Lost vs ${opponentName} · ${endingLabel} · ${legsLabel}`
 }
 
-export const getOnlineMatchCompletedAt = (match: OnlineMatchHistoryRow): string =>
+export const getOnlineMatchCompletedAt = (match: OnlineMatchSummary): string =>
   match.completedAt ?? match.createdAt
 
-export const formatOnlineMatchDate = (match: OnlineMatchHistoryRow): string =>
+export const formatOnlineMatchDate = (match: OnlineMatchSummary): string =>
   formatSessionDate(getOnlineMatchCompletedAt(match))

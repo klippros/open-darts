@@ -1,6 +1,7 @@
 import { GameModeId } from '@open-darts/game/types/gameMode'
-import { readOnlineMatchHistorySession } from '../history/onlineHistorySummary'
+import { parseGameSession } from '@open-darts/game/game/serializeGame'
 import { supabaseClient } from '../supabase/client'
+import { HISTORY_PAGE_SIZE } from '../history/historyPager'
 import { isMatchServerConfigured, matchServerUrl } from './config'
 import type {
   CreateMatchRequest,
@@ -11,8 +12,10 @@ import type {
   MatchTicketResponse,
   OnlineMatchHistoryRow,
   OnlineMatchInvite,
+  OnlineMatchSummary,
   PublicMatchState,
 } from './types'
+import type { GameSession } from '@open-darts/game/types/gameSession'
 import { MatchEndingKind, MatchStatus, PlayMode, V1_ONLINE_X01_CONFIG } from './types'
 import {
   defaultOnlineGameConfigForMode,
@@ -347,10 +350,30 @@ export const getMyInProgressOnlineMatch = async (): Promise<InProgressOnlineMatc
   return mapInProgressRow(first)
 }
 
-const mapHistoryRow = (
+const readStringArray = (value: unknown): string[] =>
+  Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
+
+const resolveOpponent = (
+  viewerUserId: string,
+  playerUserIds: string[],
+  playerDisplayNames: string[],
+): { opponentUserId: string | null; opponentDisplayName: string | null } => {
+  const opponentIndex = playerUserIds.findIndex((id) => id !== viewerUserId)
+
+  if (opponentIndex < 0) {
+    return { opponentUserId: null, opponentDisplayName: null }
+  }
+
+  return {
+    opponentUserId: playerUserIds[opponentIndex] ?? null,
+    opponentDisplayName: playerDisplayNames[opponentIndex] ?? null,
+  }
+}
+
+const mapSummaryRow = (
   row: Record<string, unknown>,
-  opponentByMatchId: Record<string, string>,
-): OnlineMatchHistoryRow | null => {
+  viewerUserId: string,
+): OnlineMatchSummary | null => {
   if (typeof row.id !== 'string') {
     return null
   }
@@ -369,6 +392,10 @@ const mapHistoryRow = (
     return null
   }
 
+  const playerUserIds = readStringArray(row.player_user_ids)
+  const playerDisplayNames = readStringArray(row.player_display_names)
+  const opponent = resolveOpponent(viewerUserId, playerUserIds, playerDisplayNames)
+
   return {
     id: row.id,
     status: statusRaw,
@@ -381,59 +408,174 @@ const mapHistoryRow = (
     creatorUserId: readString(row.creator_user_id),
     completedAt: typeof row.completed_at === 'string' ? row.completed_at : null,
     createdAt: readString(row.created_at),
-    opponentUserId: opponentByMatchId[row.id] ?? null,
-    session: readOnlineMatchHistorySession(row.result_payload),
+    playerUserIds,
+    playerDisplayNames,
+    opponentUserId: opponent.opponentUserId,
+    opponentDisplayName: opponent.opponentDisplayName,
   }
 }
 
-export const listMyOnlineMatchHistory = async (
+const parseRpcRows = (data: unknown): Record<string, unknown>[] => {
+  const rows = Array.isArray(data) ? data : data === null || data === undefined ? [] : [data]
+  return rows.filter(isRecord)
+}
+
+export interface ListOnlineMatchSummariesOptions {
+  beforeCompletedAt?: string | null
+  beforeId?: string | null
+  limit?: number
+  completedAfter?: string | null
+}
+
+export const listMyOnlineMatchSummaries = async (
   viewerUserId: string,
-): Promise<OnlineMatchHistoryRow[]> => {
+  options: ListOnlineMatchSummariesOptions = {},
+): Promise<OnlineMatchSummary[]> => {
   if (supabaseClient === null) {
     throw new MatchServerApiError('Supabase is not configured', 503, 'not_configured')
   }
 
-  const result = await supabaseClient.rpc('list_my_online_match_history')
+  const result = await supabaseClient.rpc('list_my_online_match_summaries', {
+    p_before_completed_at: options.beforeCompletedAt ?? null,
+    p_before_id: options.beforeId ?? null,
+    p_limit: options.limit ?? HISTORY_PAGE_SIZE,
+    p_completed_after: options.completedAfter ?? null,
+  })
 
   if (result.error !== null) {
     throw new MatchServerApiError(result.error.message, 500, result.error.code)
   }
 
-  const data: unknown = result.data
-  const rows = Array.isArray(data) ? data : data === null || data === undefined ? [] : [data]
-  const matchRows = rows.filter(isRecord)
-  const matchIds = matchRows
-    .map((row) => (typeof row.id === 'string' ? row.id : null))
-    .filter((id): id is string => id !== null)
+  return parseRpcRows(result.data)
+    .map((row) => mapSummaryRow(row, viewerUserId))
+    .filter((row): row is OnlineMatchSummary => row !== null)
+}
 
-  const opponentByMatchId: Record<string, string> = {}
+export const listUserOnlineMatches = async (
+  viewerUserId: string,
+  profileUserId: string,
+  options: ListOnlineMatchSummariesOptions = {},
+): Promise<OnlineMatchSummary[]> => {
+  if (supabaseClient === null) {
+    throw new MatchServerApiError('Supabase is not configured', 503, 'not_configured')
+  }
 
-  if (matchIds.length > 0) {
-    const playersResult = await supabaseClient
-      .from('online_match_players')
-      .select('match_id, user_id')
-      .in('match_id', matchIds)
+  const result = await supabaseClient.rpc('list_user_online_matches', {
+    p_user_id: profileUserId,
+    p_before_completed_at: options.beforeCompletedAt ?? null,
+    p_before_id: options.beforeId ?? null,
+    p_limit: options.limit ?? HISTORY_PAGE_SIZE,
+  })
 
-    if (playersResult.error !== null) {
-      throw new MatchServerApiError(playersResult.error.message, 500, playersResult.error.code)
-    }
+  if (result.error !== null) {
+    throw new MatchServerApiError(result.error.message, 500, result.error.code)
+  }
 
-    for (const player of playersResult.data ?? []) {
-      if (
-        typeof player === 'object' &&
-        player !== null &&
-        typeof player.match_id === 'string' &&
-        typeof player.user_id === 'string' &&
-        player.user_id !== viewerUserId
-      ) {
-        opponentByMatchId[player.match_id] = player.user_id
-      }
+  return parseRpcRows(result.data)
+    .map((row) => mapSummaryRow(row, viewerUserId))
+    .filter((row): row is OnlineMatchSummary => row !== null)
+}
+
+export const getMyOnlineMatchDetail = async (
+  viewerUserId: string,
+  matchId: string,
+): Promise<OnlineMatchHistoryRow | null> => {
+  if (supabaseClient === null) {
+    throw new MatchServerApiError('Supabase is not configured', 503, 'not_configured')
+  }
+
+  const result = await supabaseClient.rpc('get_my_online_match_detail', {
+    p_match_id: matchId,
+  })
+
+  if (result.error !== null) {
+    throw new MatchServerApiError(result.error.message, 500, result.error.code)
+  }
+
+  const first = parseRpcRows(result.data)[0]
+  if (first === undefined) {
+    return null
+  }
+
+  const summary = mapSummaryRow(first, viewerUserId)
+  if (summary === null) {
+    return null
+  }
+
+  let session: GameSession | null = null
+  if (first.session !== null && first.session !== undefined) {
+    try {
+      session = parseGameSession(JSON.stringify(first.session))
+    } catch {
+      session = null
     }
   }
 
-  return matchRows
-    .map((row) => mapHistoryRow(row, opponentByMatchId))
-    .filter((row): row is OnlineMatchHistoryRow => row !== null)
+  return { ...summary, session }
+}
+
+export const listMyOnlineMatchSessions = async (
+  _viewerUserId: string,
+  completedAfter: string | null = null,
+): Promise<GameSession[]> => {
+  if (supabaseClient === null) {
+    throw new MatchServerApiError('Supabase is not configured', 503, 'not_configured')
+  }
+
+  const result = await supabaseClient.rpc('list_my_online_match_sessions', {
+    p_completed_after: completedAfter,
+  })
+
+  if (result.error !== null) {
+    throw new MatchServerApiError(result.error.message, 500, result.error.code)
+  }
+
+  const sessions: GameSession[] = []
+
+  for (const row of parseRpcRows(result.data)) {
+    if (row.session === null || row.session === undefined) {
+      continue
+    }
+
+    try {
+      sessions.push(parseGameSession(JSON.stringify(row.session)))
+    } catch {
+      // Skip malformed stored sessions.
+    }
+  }
+
+  return sessions
+}
+
+/** @deprecated Prefer listMyOnlineMatchSummaries / listMyOnlineMatchSessions. */
+export const listMyOnlineMatchHistory = async (
+  viewerUserId: string,
+): Promise<OnlineMatchHistoryRow[]> => {
+  const summaries = await listMyOnlineMatchSummaries(viewerUserId, {
+    limit: HISTORY_PAGE_SIZE,
+  })
+  const rows: OnlineMatchHistoryRow[] = []
+  for (const summary of summaries) {
+    rows.push({
+      id: summary.id,
+      status: summary.status,
+      playMode: summary.playMode,
+      mode: summary.mode,
+      config: summary.config,
+      legsToWin: summary.legsToWin,
+      endingKind: summary.endingKind,
+      winnerUserId: summary.winnerUserId,
+      creatorUserId: summary.creatorUserId,
+      completedAt: summary.completedAt,
+      createdAt: summary.createdAt,
+      playerUserIds: summary.playerUserIds,
+      playerDisplayNames: summary.playerDisplayNames,
+      opponentUserId: summary.opponentUserId,
+      opponentDisplayName: summary.opponentDisplayName,
+      session: null,
+    })
+  }
+  return rows
 }
 
 export const isPublicMatchState = (value: unknown): value is PublicMatchState => {
