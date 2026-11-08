@@ -22,6 +22,14 @@ const requestUrl = (input: RequestInfo | URL): string => {
   return input.url
 }
 
+const requestBodyText = (init?: RequestInit): string => {
+  if (typeof init?.body === 'string') {
+    return init.body
+  }
+
+  return '{}'
+}
+
 const fakeEnv = {
   SUPABASE_URL: 'http://127.0.0.1:54321',
   SUPABASE_SERVICE_ROLE_KEY: 'key',
@@ -88,16 +96,15 @@ describe('match index sync', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
-  it('maps occupancy POST 409 to IndexPublishError Conflict', async () => {
+  it('maps occupancy conflict to IndexPublishError Conflict', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-        const url = requestUrl(input)
-        if (url.includes('online_match_occupancy') && init?.method === 'POST') {
-          return new Response(JSON.stringify({ message: 'duplicate' }), { status: 409 })
-        }
-        return new Response(null, { status: 204 })
-      }),
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ message: 'occupancy_conflict', code: '23505' }), {
+            status: 409,
+          }),
+      ),
     )
 
     await expect(publishMatchIndex(fakeEnv, minimalPublicState())).rejects.toMatchObject({
@@ -118,44 +125,38 @@ describe('match index sync', () => {
     } satisfies Partial<IndexPublishError>)
   })
 
-  it('happy path posts matches, players, and occupancy', async () => {
-    const calls: { url: string; method: string }[] = []
+  it('posts a single versioned publish RPC including players', async () => {
+    const bodies: unknown[] = []
 
     vi.stubGlobal(
       'fetch',
       vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-        calls.push({ url: requestUrl(input), method: init?.method ?? 'GET' })
+        expect(requestUrl(input)).toBe(
+          'http://127.0.0.1:54321/rest/v1/rpc/publish_online_match_index',
+        )
+        bodies.push(JSON.parse(requestBodyText(init)))
         return new Response(null, { status: 204 })
       }),
     )
 
     await publishMatchIndex(fakeEnv, minimalPublicState())
 
-    expect(calls).toEqual([
-      { url: 'http://127.0.0.1:54321/rest/v1/online_matches', method: 'POST' },
-      {
-        url: `http://127.0.0.1:54321/rest/v1/online_match_players?match_id=eq.aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa&user_id=not.in.(${creatorUserId})`,
-        method: 'DELETE',
-      },
-      {
-        url: 'http://127.0.0.1:54321/rest/v1/online_match_players?on_conflict=match_id,user_id',
-        method: 'POST',
-      },
-      {
-        url: 'http://127.0.0.1:54321/rest/v1/online_match_occupancy?match_id=eq.aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
-        method: 'DELETE',
-      },
-      { url: 'http://127.0.0.1:54321/rest/v1/online_match_occupancy', method: 'POST' },
+    expect(bodies).toEqual([
+      expect.objectContaining({
+        p_match_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+        p_index_version: 1,
+        p_players: [{ user_id: creatorUserId, slot: 0 }],
+      }),
     ])
   })
 
-  it('waiting cancel endings DELETE online_matches', async () => {
-    const calls: { url: string; method: string }[] = []
+  it('publishes cancelled waiting lobbies instead of deleting them', async () => {
+    const bodies: unknown[] = []
 
     vi.stubGlobal(
       'fetch',
-      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-        calls.push({ url: requestUrl(input), method: init?.method ?? 'GET' })
+      vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+        bodies.push(JSON.parse(requestBodyText(init)))
         return new Response(null, { status: 204 })
       }),
     )
@@ -165,14 +166,35 @@ describe('match index sync', () => {
       minimalPublicState({
         status: MatchStatus.Cancelled,
         endingKind: MatchEndingKind.CreatorCancel,
+        version: 3,
       }),
     )
 
-    expect(calls).toEqual([
-      {
-        url: 'http://127.0.0.1:54321/rest/v1/online_matches?id=eq.aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
-        method: 'DELETE',
-      },
+    expect(bodies).toEqual([
+      expect.objectContaining({
+        p_status: MatchStatus.Cancelled,
+        p_ending_kind: MatchEndingKind.CreatorCancel,
+        p_index_version: 3,
+      }),
     ])
+  })
+
+  it('publishes later versions independently so out-of-order retries stay version-gated in the database', async () => {
+    const versions: number[] = []
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+        const body = JSON.parse(requestBodyText(init)) as { p_index_version: number }
+        versions.push(body.p_index_version)
+        return new Response(null, { status: 204 })
+      }),
+    )
+
+    await publishMatchIndex(fakeEnv, minimalPublicState({ version: 5 }))
+    await publishMatchIndex(fakeEnv, minimalPublicState({ version: 4 }))
+    await publishMatchIndex(fakeEnv, minimalPublicState({ version: 6 }))
+
+    expect(versions).toEqual([5, 4, 6])
   })
 })

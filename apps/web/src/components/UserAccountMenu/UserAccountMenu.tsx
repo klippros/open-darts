@@ -5,6 +5,7 @@ import { getSyncStatusLabel } from '../../lib/auth/syncStatusLabel'
 import { darkDialogContentProps } from '../darkDialogContentProps'
 import { SettingsDismissBackdrop } from '../SettingsMenu/SettingsDismissBackdrop'
 import { SignOutConfirmDialog } from '../SignOutConfirmDialog/SignOutConfirmDialog'
+import { InvitePrivacySetting } from './InvitePrivacySetting'
 
 export const UserAccountMenu = () => {
   const { user, profile, syncStatus, signOut } = useAuth()
@@ -86,6 +87,7 @@ export const UserAccountMenu = () => {
                       {getSyncStatusLabel(syncStatus)}
                     </Text>
                   </Stack>
+                  <InvitePrivacySetting />
                   <Button
                     variant="cancel"
                     w="full"

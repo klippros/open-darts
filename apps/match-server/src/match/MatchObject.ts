@@ -6,7 +6,7 @@ import { deleteDeadline, dueDeadlineKinds, scheduleEarliestAlarm, upsertDeadline
 import { processAsyncFinalizeAlarm, resolveAsyncDeadline } from './alarmHandlers'
 import { broadcast, serializeErrorMessage, serializeStateMessage } from './broadcast'
 import { commandFailure, commandSuccess, parseMatchCommand } from './commands'
-import { MATCH_USER_HEADER, WAITING_TIMEOUT_MS } from './constants'
+import { computeIndexSyncRetryDelayMs, MATCH_USER_HEADER, WAITING_TIMEOUT_MS } from './constants'
 import { publishMatchIndex } from './indexSync'
 import {
   acceptCancel,
@@ -19,9 +19,13 @@ import {
 import { completeFromPendingFinalization, persistCancelled, persistTerminal } from './matchPersist'
 import { correctVisit, finishMatch, recordDarts, recordVisitScore, undoVisit } from './playCommands'
 import {
+  bumpIndexSyncRetry,
+  clearIndexSyncPending,
   findOpenSlot,
   findPlayer,
+  hasIndexSyncPending,
   loadPublicMatchState,
+  markIndexSyncPending,
   matchExists,
   migrateMatchSchema,
 } from './schema'
@@ -45,14 +49,6 @@ import type {
   PublicMatchState,
   TicketInspection,
 } from './types'
-
-const publishIndexBestEffort = async (env: Env, state: PublicMatchState): Promise<void> => {
-  try {
-    await publishMatchIndex(env, state)
-  } catch {
-    // The next persist retries the index write.
-  }
-}
 
 const readSocketUserId = (socket: WebSocket): string | null => {
   const attachment: unknown = socket.deserializeAttachment()
@@ -422,9 +418,15 @@ export class MatchObject extends DurableObject<Env> {
     const sql = this.ctx.storage.sql
     const now = Date.now()
     const dueKinds = dueDeadlineKinds(sql, now)
+    let indexRetryDue = false
 
     for (const kind of dueKinds) {
       deleteDeadline(sql, kind)
+
+      if (kind === DeadlineKind.IndexSyncRetry) {
+        indexRetryDue = true
+        continue
+      }
 
       if (kind === DeadlineKind.WaitingExpiresAt) {
         const state = loadPublicMatchState(sql)
@@ -459,6 +461,20 @@ export class MatchObject extends DurableObject<Env> {
           resolveAsyncDeadline(sql, now)
         }
       }
+    }
+
+    if (indexRetryDue) {
+      const state = loadPublicMatchState(sql)
+      if (state !== null && hasIndexSyncPending(sql)) {
+        await this.publishIndexAndHandleResult(state)
+      }
+
+      if (dueKinds.some((kind) => kind !== DeadlineKind.IndexSyncRetry)) {
+        await this.afterPersist({ publishIndex: false })
+      } else {
+        await scheduleEarliestAlarm(this.ctx)
+      }
+      return
     }
 
     await this.afterPersist()
@@ -676,15 +692,50 @@ export class MatchObject extends DurableObject<Env> {
     this.ctx.storage.sql.exec('UPDATE match_state SET updated_at = ?, version = version + 1', now)
   }
 
+  private scheduleIndexSyncRetry(now: number): void {
+    const sql = this.ctx.storage.sql
+    const retryCount = bumpIndexSyncRetry(sql)
+    upsertDeadline(sql, DeadlineKind.IndexSyncRetry, now + computeIndexSyncRetryDelayMs(retryCount))
+  }
+
+  private async publishIndexAndHandleResult(state: PublicMatchState): Promise<void> {
+    const sql = this.ctx.storage.sql
+
+    try {
+      await publishMatchIndex(this.env, state)
+      clearIndexSyncPending(sql, state.version)
+
+      const pending = hasIndexSyncPending(sql)
+      const currentState = loadPublicMatchState(sql)
+
+      if (!pending) {
+        deleteDeadline(sql, DeadlineKind.IndexSyncRetry)
+      }
+
+      if (currentState !== null && TERMINAL_STATUSES.has(currentState.status) && !pending) {
+        await this.ctx.storage.deleteAlarm()
+      } else {
+        await scheduleEarliestAlarm(this.ctx)
+      }
+    } catch {
+      if (hasIndexSyncPending(sql)) {
+        this.scheduleIndexSyncRetry(Date.now())
+      }
+      await scheduleEarliestAlarm(this.ctx)
+    }
+  }
+
   private async afterPersist(options: { publishIndex?: boolean } = {}): Promise<void> {
-    const state = loadPublicMatchState(this.ctx.storage.sql)
+    const sql = this.ctx.storage.sql
+    const state = loadPublicMatchState(sql)
     const publishIndex = options.publishIndex !== false
 
     if (state !== null) {
       broadcast(this.ctx.getWebSockets(), serializeStateMessage(state))
 
       if (publishIndex) {
-        this.ctx.waitUntil(publishIndexBestEffort(this.env, state))
+        markIndexSyncPending(sql, state.version)
+        this.ctx.waitUntil(this.publishIndexAndHandleResult(state))
       }
     }
 
@@ -693,7 +744,11 @@ export class MatchObject extends DurableObject<Env> {
         socket.close(1000, 'match ended')
       }
 
-      await this.ctx.storage.deleteAlarm()
+      if (hasIndexSyncPending(sql)) {
+        await scheduleEarliestAlarm(this.ctx)
+      } else {
+        await this.ctx.storage.deleteAlarm()
+      }
       return
     }
 

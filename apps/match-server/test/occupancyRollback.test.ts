@@ -61,22 +61,16 @@ const requestUrl = (input: RequestInfo | URL): string => {
   return input.url
 }
 
-const mockIndexFetch = (occupancyPostStatus: number): void => {
+const mockIndexFetch = (status: number, message = 'occupied'): void => {
   vi.stubGlobal(
     'fetch',
-    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = requestUrl(input)
-      const method = init?.method ?? 'GET'
-
-      if (url.includes('online_match_occupancy') && method === 'POST') {
-        return new Response(JSON.stringify({ message: 'occupied' }), {
-          status: occupancyPostStatus,
+    vi.fn(
+      async () =>
+        new Response(JSON.stringify({ message, code: status === 409 ? '23505' : 'XX000' }), {
+          status,
           headers: { 'Content-Type': 'application/json' },
-        })
-      }
-
-      return new Response(null, { status: 204 })
-    }),
+        }),
+    ),
   )
 }
 
@@ -86,7 +80,7 @@ afterEach(() => {
 
 describe('HTTP occupancy conflict rollback', () => {
   it('create returns 409 and cancels the waiting DO when occupancy conflicts', async () => {
-    mockIndexFetch(409)
+    mockIndexFetch(409, 'occupancy_conflict')
     const testEnv = indexEnv()
     const tracker = trackMatchId(testEnv)
 
@@ -126,7 +120,7 @@ describe('HTTP occupancy conflict rollback', () => {
     expect(created.status).toBe(201)
     const createdBody = await created.json<{ matchId: string; inviteToken: string }>()
 
-    mockIndexFetch(409)
+    mockIndexFetch(409, 'occupancy_conflict')
     const guestToken = await signAccessToken(otherUserId)
     const joinResponse = await joinMatch(
       new Request(`https://match.example/v1/matches/${createdBody.matchId}/join`, {
@@ -149,5 +143,38 @@ describe('HTTP occupancy conflict rollback', () => {
     expect(state.state?.status).toBe(MatchStatus.Waiting)
     expect(state.state?.players).toHaveLength(1)
     expect(state.state?.players[0]?.userId).toBe(creatorUserId)
+  })
+
+  it('successful join publishes the versioned index RPC', async () => {
+    const created = await createMatch(await create501Request(creatorUserId), env)
+    expect(created.status).toBe(201)
+    const createdBody = await created.json<{ matchId: string; inviteToken: string }>()
+
+    const calls: string[] = []
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        calls.push(requestUrl(input))
+        return new Response(null, { status: 204 })
+      }),
+    )
+
+    const guestToken = await signAccessToken(otherUserId)
+    const joinResponse = await joinMatch(
+      new Request(`https://match.example/v1/matches/${createdBody.matchId}/join`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${guestToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ inviteToken: createdBody.inviteToken }),
+      }),
+      indexEnv(),
+      createdBody.matchId,
+    )
+
+    expect(joinResponse.status).toBe(200)
+    expect(calls.some((url) => url.includes('/rpc/publish_online_match_index'))).toBe(true)
+    expect(calls.some((url) => url.includes('/rpc/resolve_online_match_invites'))).toBe(false)
   })
 })

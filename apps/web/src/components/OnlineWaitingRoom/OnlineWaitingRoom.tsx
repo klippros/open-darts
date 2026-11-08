@@ -30,7 +30,7 @@ export const OnlineWaitingRoom = ({
       <Stack gap={8}>
         <SetupPageHeader
           title="Waiting room"
-          description="Share the invite link. The host can start once both players are here."
+          description="Share an invite link or invite someone you follow. The host can start once both players are here."
         />
 
         {!isCreator && (
@@ -40,6 +40,7 @@ export const OnlineWaitingRoom = ({
         )}
 
         <OnlineWaitingPlayers
+          matchId={state.matchId}
           players={state.players}
           creatorUserId={state.creatorUserId}
           currentUserId={currentUserId}

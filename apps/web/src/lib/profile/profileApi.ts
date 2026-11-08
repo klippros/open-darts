@@ -1,10 +1,11 @@
 import type { PlayerProfileStats } from '@open-darts/analytics'
-import { supabaseClient } from '../supabase/client'
-import { readEnvironmentVariable } from '../env'
+import { HISTORY_PAGE_SIZE } from '../history/historyPager'
 import { listUserOnlineMatches, getMyOnlineMatchDetail } from '../matchServer/api'
 import type { ListOnlineMatchSummariesOptions } from '../matchServer/api'
 import type { OnlineMatchHistoryRow, OnlineMatchSummary } from '../matchServer/types'
-import { HISTORY_PAGE_SIZE } from '../history/historyPager'
+import { parseRequireMutualFollowPreference } from '../social/invitePrivacyPreference'
+import { supabaseClient } from '../supabase/client'
+import { readEnvironmentVariable } from '../env'
 import { parsePlayerProfileStats } from './parseProfileStats'
 
 export class ProfileApiError extends Error {
@@ -155,4 +156,34 @@ export const reportDisplayName = async (reportedUserId: string): Promise<boolean
   })
 
   return error === null
+}
+
+export const getMyRequireMutualFollowForInvites = async (): Promise<boolean> => {
+  if (supabaseClient === null) {
+    return parseRequireMutualFollowPreference(undefined)
+  }
+
+  const result = await supabaseClient.rpc('get_my_require_mutual_follow_for_invites')
+
+  if (result.error !== null) {
+    return parseRequireMutualFollowPreference(undefined)
+  }
+
+  return parseRequireMutualFollowPreference(result.data as unknown)
+}
+
+export const setMyRequireMutualFollowForInvites = async (enabled: boolean): Promise<boolean> => {
+  if (supabaseClient === null) {
+    throw new ProfileApiError('Supabase is not configured', 503, 'not_configured')
+  }
+
+  const result = await supabaseClient.rpc('set_my_require_mutual_follow_for_invites', {
+    p_enabled: enabled,
+  })
+
+  if (result.error !== null) {
+    throw new ProfileApiError('Could not update invite privacy', 500, 'server_error')
+  }
+
+  return parseRequireMutualFollowPreference(result.data as unknown)
 }

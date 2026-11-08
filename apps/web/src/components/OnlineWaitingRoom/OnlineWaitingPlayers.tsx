@@ -4,6 +4,7 @@ import { OnlineWaitingInviteSlot } from './OnlineWaitingInviteSlot'
 import { OnlineWaitingPlayerRow } from './OnlineWaitingPlayerRow'
 
 export interface OnlineWaitingPlayersProps {
+  matchId: string
   players: MatchPlayerSnapshot[]
   creatorUserId: string
   currentUserId: string
@@ -13,6 +14,7 @@ export interface OnlineWaitingPlayersProps {
 }
 
 export const OnlineWaitingPlayers = ({
+  matchId,
   players,
   creatorUserId,
   currentUserId,
@@ -21,7 +23,8 @@ export const OnlineWaitingPlayers = ({
   onKick,
 }: OnlineWaitingPlayersProps) => {
   const isHost = creatorUserId === currentUserId
-  const showInviteSlot = isHost && players.length < 2 && inviteToken !== undefined
+  const canInvite = isHost && players.length < 2 && inviteToken !== undefined
+  const showInviteSlot = isHost && inviteToken !== undefined
 
   return (
     <Stack gap={3}>
@@ -50,7 +53,13 @@ export const OnlineWaitingPlayers = ({
             />
           )
         })}
-        {showInviteSlot && <OnlineWaitingInviteSlot inviteToken={inviteToken} />}
+        {showInviteSlot ? (
+          <OnlineWaitingInviteSlot
+            matchId={matchId}
+            inviteToken={inviteToken}
+            canInvite={canInvite}
+          />
+        ) : null}
       </Stack>
     </Stack>
   )

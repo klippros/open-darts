@@ -3,6 +3,7 @@ import type { User } from '@supabase/supabase-js'
 export interface UserProfile {
   userId: string
   displayName: string
+  requireMutualFollowForInvites: boolean
 }
 
 export enum AuthStatus {

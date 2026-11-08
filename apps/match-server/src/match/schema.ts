@@ -131,6 +131,63 @@ export const migrateMatchSchema = (sql: SqlStorage): void => {
     sql.exec('ALTER TABLE match_state ADD COLUMN darts_owner_user_id TEXT')
     sql.exec('INSERT INTO _sql_schema_migrations (id, applied_at) VALUES (4, ?)', Date.now())
   }
+
+  if (version < 5) {
+    sql.exec('ALTER TABLE match_state ADD COLUMN index_sync_pending_version INTEGER')
+    sql.exec('ALTER TABLE match_state ADD COLUMN index_sync_retry_count INTEGER NOT NULL DEFAULT 0')
+    sql.exec('INSERT INTO _sql_schema_migrations (id, applied_at) VALUES (5, ?)', Date.now())
+  }
+}
+
+export const markIndexSyncPending = (sql: SqlStorage, version: number): void => {
+  sql.exec(
+    `
+      UPDATE match_state
+      SET index_sync_pending_version = ?, index_sync_retry_count = 0
+      WHERE id IS NOT NULL
+    `,
+    version,
+  )
+}
+
+export const clearIndexSyncPending = (sql: SqlStorage, publishedVersion: number): void => {
+  sql.exec(
+    `
+      UPDATE match_state
+      SET index_sync_pending_version = NULL, index_sync_retry_count = 0
+      WHERE id IS NOT NULL
+        AND index_sync_pending_version <= ?
+    `,
+    publishedVersion,
+  )
+}
+
+export const hasIndexSyncPending = (sql: SqlStorage): boolean => {
+  const row = sql
+    .exec<{ pending: number | null }>(
+      'SELECT index_sync_pending_version AS pending FROM match_state LIMIT 1',
+    )
+    .toArray()[0]
+
+  return row?.pending !== null && row?.pending !== undefined
+}
+
+export const bumpIndexSyncRetry = (sql: SqlStorage): number => {
+  sql.exec(
+    `
+      UPDATE match_state
+      SET index_sync_retry_count = index_sync_retry_count + 1
+      WHERE id IS NOT NULL
+    `,
+  )
+
+  const row = sql
+    .exec<{ retry_count: number }>(
+      'SELECT index_sync_retry_count AS retry_count FROM match_state LIMIT 1',
+    )
+    .one()
+
+  return row.retry_count
 }
 
 const isGameModeId = (value: string): value is GameModeId =>

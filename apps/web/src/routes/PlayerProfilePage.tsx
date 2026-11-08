@@ -8,6 +8,7 @@ import { HistoryList } from '../components/HistoryList/HistoryList'
 import type { HistoryListEntry } from '../components/HistoryList/HistoryList'
 import { OnlineMatchSummaryDialog } from '../components/MatchSummaryDialog/OnlineMatchSummaryDialog'
 import { SessionSummaryDialog } from '../components/MatchSummaryDialog/SessionSummaryDialog'
+import { ProfileFollowButton } from '../components/ProfileFollowButton/ProfileFollowButton'
 import { ProfileStatSection } from '../components/ProfileStatSection/ProfileStatSection'
 import { SignInDialog } from '../components/SignInDialog/SignInDialog'
 import { useAuth } from '../hooks/authContext'
@@ -274,22 +275,25 @@ export const PlayerProfilePage = () => {
               }}
             />
           ) : (
-            <Stack gap={2} align="start">
-              <Button
-                variant="cancel"
-                onClick={() => {
-                  void (async () => {
-                    const ok = await reportDisplayName(profileUserId)
-                    setReportMessage(
-                      ok
-                        ? 'Thanks. We received your report.'
-                        : 'Could not send the report. Try again later.',
-                    )
-                  })()
-                }}
-              >
-                Report name
-              </Button>
+            <Stack gap={3} align="start">
+              <Stack direction="row" gap={2} flexWrap="wrap">
+                <ProfileFollowButton profileUserId={profileUserId} />
+                <Button
+                  variant="cancel"
+                  onClick={() => {
+                    void (async () => {
+                      const ok = await reportDisplayName(profileUserId)
+                      setReportMessage(
+                        ok
+                          ? 'Thanks. We received your report.'
+                          : 'Could not send the report. Try again later.',
+                      )
+                    })()
+                  }}
+                >
+                  Report name
+                </Button>
+              </Stack>
               {reportMessage !== null ? (
                 <Text fontSize="sm" color="whiteAlpha.700">
                   {reportMessage}
