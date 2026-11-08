@@ -1,8 +1,8 @@
-import { ChallengeLegEndMode, ChallengeLegStatus } from '../types/match'
-import type { ChallengeConfig, MatchProgress } from '../types/match'
-import type { Visit } from '../types/visit'
-import { isCountingVisit } from '../types/visit'
-import { getVisitsForLeg } from './matchLegs'
+import { ChallengeLegEndMode, ChallengeLegStatus } from '../types/match.ts'
+import type { ChallengeConfig, MatchProgress } from '../types/match.ts'
+import type { Visit } from '../types/visit.ts'
+import { isCountingVisit } from '../types/visit.ts'
+import { getVisitsForLeg } from './matchLegs.ts'
 
 const MIN_CHECKOUT_DARTS_BY_START_SCORE: Record<number, number> = {
   170: 3,

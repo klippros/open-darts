@@ -15,9 +15,9 @@ import type { LegVisitTableRow } from '../../lib/analytics/legVisitRows'
 import {
   computeClaimTheBoardPlayerVisitStats,
   getClaimTheBoardScoreLeaderId,
-} from '../../lib/claimTheBoard/claimTheBoardVisitStats'
-import type { ClaimTheBoardPlayerVisitStats } from '../../lib/claimTheBoard/claimTheBoardVisitStats'
-import { resolveInitialMatchStatsScope } from '../../lib/analytics/x01LegSlices'
+} from '@open-darts/analytics/claimTheBoardVisitStats'
+import type { ClaimTheBoardPlayerVisitStats } from '@open-darts/analytics/claimTheBoardVisitStats'
+import { resolveInitialMatchStatsScope } from '@open-darts/analytics/x01LegSlices'
 import { StatsTable } from '../StatsTable/StatsTable'
 import { MatchLegScore } from './MatchLegScore'
 import { MatchStatsScopeSelector } from './MatchStatsScopeSelector'

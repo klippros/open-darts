@@ -15,12 +15,12 @@ import {
   getScoringVisits,
   getThreeDartAverage,
   getVisitsBeforeDouble,
-} from './visitStats'
+} from '@open-darts/analytics/visitStats'
 import {
   countDoubleCheckoutStatsOmittingUnresolvedLegs,
   emptyDoubleCheckoutStats,
-} from './doubleCheckoutStats'
-import type { DoubleCheckoutStats } from './doubleCheckoutStats'
+} from '@open-darts/analytics/doubleCheckoutStats'
+import type { DoubleCheckoutStats } from '@open-darts/analytics/doubleCheckoutStats'
 
 export interface PlayerMatchStats {
   threeDartAverage: number | null

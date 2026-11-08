@@ -1,5 +1,5 @@
-import type { DartThrow } from '../types/dart'
-import { AroundTheClockAimMode } from '../types/aroundTheClock'
+import type { DartThrow } from '../types/dart.ts'
+import { AroundTheClockAimMode } from '../types/aroundTheClock.ts'
 import {
   hitsBull,
   hitsDoubleOnNumber,
@@ -10,7 +10,7 @@ import {
   hitsSingleOnNumber,
   hitsSingleOnOuterBull,
   hitsTripleOnNumber,
-} from '../segmentMatching'
+} from '../segmentMatching.ts'
 
 export const AROUND_THE_CLOCK_TARGET_COUNT = 21
 

@@ -2,6 +2,7 @@ import type { User } from '@supabase/supabase-js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { buildAuthRedirectUrl, stashAuthReturnPath } from '../lib/auth/authRedirect'
+import { getMyRequireMutualFollowForInvites } from '../lib/profile/profileApi'
 import { isSupabaseConfigured, supabaseClient } from '../lib/supabase/client'
 import {
   clearSyncedLocalSessionData,
@@ -50,11 +51,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     setAuthStatus(AuthStatus.Authenticated)
     const userId = nextUser.id
-    const { data } = await supabaseClient
-      .from('profiles')
-      .select('user_id, display_name')
-      .eq('user_id', userId)
-      .maybeSingle()
+    const [{ data }, requireMutualFollowForInvites] = await Promise.all([
+      supabaseClient
+        .from('profiles')
+        .select('user_id, display_name')
+        .eq('user_id', userId)
+        .maybeSingle(),
+      getMyRequireMutualFollowForInvites(),
+    ])
 
     if (currentUserId.current !== userId) {
       return
@@ -66,6 +70,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         typeof data?.display_name === 'string'
           ? data.display_name
           : getFallbackDisplayName(nextUser),
+      requireMutualFollowForInvites,
     })
     await startSessionSync(supabaseClient, setSyncStatus)
   }, [])
@@ -173,6 +178,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return error?.message ?? null
   }, [user])
 
+  const setDisplayName = useCallback((displayName: string) => {
+    setProfile((current) => (current === null ? current : { ...current, displayName }))
+  }, [])
+
+  const setRequireMutualFollowForInvites = useCallback((requireMutualFollowForInvites: boolean) => {
+    setProfile((current) =>
+      current === null ? current : { ...current, requireMutualFollowForInvites },
+    )
+  }, [])
+
   const value = useMemo(
     () => ({
       user,
@@ -184,6 +199,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       signInWithEmail,
       signOut,
       clearSyncedSessions,
+      setDisplayName,
+      setRequireMutualFollowForInvites,
     }),
     [
       user,
@@ -194,6 +211,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       signInWithEmail,
       signOut,
       clearSyncedSessions,
+      setDisplayName,
+      setRequireMutualFollowForInvites,
     ],
   )
 

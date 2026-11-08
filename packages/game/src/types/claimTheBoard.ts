@@ -1,4 +1,4 @@
-import type { AroundTheClockAimMode } from './aroundTheClock'
+import type { AroundTheClockAimMode } from './aroundTheClock.ts'
 
 export interface ClaimTheBoardConfig {
   aimMode: AroundTheClockAimMode

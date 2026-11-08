@@ -1,5 +1,5 @@
-import type { ActiveGameSnapshot } from '../types/activeGameSnapshot'
-import type { GameSession } from '../types/gameSession'
+import type { ActiveGameSnapshot } from '../types/activeGameSnapshot.ts'
+import type { GameSession } from '../types/gameSession.ts'
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)

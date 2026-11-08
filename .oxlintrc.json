@@ -4,7 +4,7 @@
   "env": {
     "browser": true
   },
-  "ignorePatterns": ["apps/match-server/worker-configuration.d.ts"],
+  "ignorePatterns": ["apps/match-server/worker-configuration.d.ts", "supabase/functions/**"],
   "options": {
     "typeAware": true
   },
@@ -74,7 +74,7 @@
       }
     },
     {
-      "files": ["packages/game/**"],
+      "files": ["packages/game/**", "packages/analytics/**"],
       "rules": {
         "react/rules-of-hooks": "off",
         "react/only-export-components": "off"

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { GameModeId, GameStatus } from '@open-darts/game/types/gameMode'
 import type { GameSession } from '@open-darts/game/types/gameSession'
 import { PlayerKind } from '@open-darts/game/types/player'
-import { getLatestSessionStartedAt, pickLastPlayedVariant } from './pickLastPlayedVariant'
+import { getLatestSessionStartedAt, pickLastPlayedVariant } from '@open-darts/analytics/pickLastPlayedVariant'
 
 const sampleSession = (overrides: Partial<GameSession> = {}): GameSession => ({
   id: 'session-1',

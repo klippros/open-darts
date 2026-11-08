@@ -1,5 +1,5 @@
-import { AroundTheClockAimMode } from '../types/aroundTheClock'
-import type { AroundTheClockConfig } from '../types/aroundTheClock'
+import { AroundTheClockAimMode } from '../types/aroundTheClock.ts'
+import type { AroundTheClockConfig } from '../types/aroundTheClock.ts'
 
 export const DEFAULT_AROUND_THE_CLOCK_CONFIG: Required<AroundTheClockConfig> = {
   finishOnBull: true,

@@ -13,7 +13,7 @@ import {
   getNinetyNineDartsLiveStats,
   getNinetyNineDartsStatGroup,
   NinetyNineDartsStatGroup,
-} from './ninetyNineVisitStats'
+} from '@open-darts/analytics/ninetyNineVisitStats'
 
 const playerId = 'p1'
 const target = { kind: NinetyNineDartsTargetKind.Number, value: 20 } as const

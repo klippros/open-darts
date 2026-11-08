@@ -6,7 +6,7 @@ import type {
   OtherPracticeStats,
   X01LegStats,
   X01Stats,
-} from '../../lib/analytics/computeAnalytics'
+} from '@open-darts/analytics/computeAnalytics'
 import type { StatMetricId, StatTimelineSelection } from '../../lib/analytics/statTimelines'
 import {
   MatchStatRowId,
@@ -20,8 +20,8 @@ import {
   isBullRunPracticeStats,
   isClaimTheBoardPracticeStats,
   isNinetyNineDartsPracticeStats,
-} from '../../lib/analytics/practiceStats'
-import { computeX01Stats, X01StatsFilterId } from '../../lib/analytics/x01Stats'
+} from '@open-darts/analytics/practiceStats'
+import { computeX01Stats, X01StatsFilterId } from '@open-darts/analytics/x01Stats'
 import { StatsTable } from '../StatsTable/StatsTable'
 import {
   AroundTheClockPracticeCard,

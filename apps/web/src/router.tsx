@@ -14,6 +14,7 @@ import { NinetyNineDartsSetupPage } from './routes/NinetyNineDartsSetupPage'
 import { OnlineMatchJoinPage } from './routes/OnlineMatchJoinPage'
 import { OnlineMatchNewPage } from './routes/OnlineMatchNewPage'
 import { OnlineMatchPage } from './routes/OnlineMatchPage'
+import { PlayerProfilePage } from './routes/PlayerProfilePage'
 import { StatsPage } from './routes/StatsPage'
 import { X01SetupPage } from './routes/X01SetupPage'
 
@@ -36,6 +37,7 @@ export const router = createBrowserRouter(
         { path: 'match/:id', element: <OnlineMatchPage /> },
         { path: 'auth/callback', element: <AuthCallbackPage /> },
         { path: 'history', element: <HistoryPage /> },
+        { path: 'players/:userId', element: <PlayerProfilePage /> },
         { path: 'stats', element: <StatsPage /> },
         { path: 'about', element: <AboutPage /> },
       ],

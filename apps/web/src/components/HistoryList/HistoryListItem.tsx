@@ -1,10 +1,13 @@
 import { Badge, Box, Button, Stack, Text } from '@chakra-ui/react'
+import { Link as RouterLink } from 'react-router-dom'
 
 export interface HistoryListItemProps {
   modeLabel: string
   resultSummary: string
   completedAtLabel: string
   badgeLabel?: string
+  opponentProfileTo?: string
+  opponentName?: string
   onClick?: () => void
 }
 
@@ -13,6 +16,8 @@ export const HistoryListItem = ({
   resultSummary,
   completedAtLabel,
   badgeLabel,
+  opponentProfileTo,
+  opponentName,
   onClick,
 }: HistoryListItemProps) => {
   const content = (
@@ -35,6 +40,18 @@ export const HistoryListItem = ({
       <Text fontSize="sm" color="whiteAlpha.700">
         {resultSummary}
       </Text>
+      {opponentProfileTo !== undefined && opponentName !== undefined ? (
+        <Text fontSize="sm" color="orange.200">
+          <RouterLink
+            to={opponentProfileTo}
+            onClick={(event) => {
+              event.stopPropagation()
+            }}
+          >
+            View {opponentName}
+          </RouterLink>
+        </Text>
+      ) : null}
     </Stack>
   )
 

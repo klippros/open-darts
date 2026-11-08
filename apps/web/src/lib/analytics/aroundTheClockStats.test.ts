@@ -5,14 +5,14 @@ import { PlayerKind } from '@open-darts/game/types/player'
 import { DartMultiplier } from '@open-darts/game/types/dart'
 import { AroundTheClockAimMode } from '@open-darts/game/types/aroundTheClock'
 import { numberDart, missDart, outerBullDart } from '@open-darts/game/testHelpers'
-import type { AroundTheClockTargetAttempt } from '../aroundTheClock/aroundTheClockTargetHits'
+import type { AroundTheClockTargetAttempt } from '@open-darts/analytics/aroundTheClockTargetHits'
 import {
   computeAroundTheClockSingleSessionStats,
   aggregatePerTargetStats,
   aggregateAroundTheClockSessionStats,
   formatAroundTheClockLiveStatsLabel,
   getAroundTheClockLiveStats,
-} from './aroundTheClockStats'
+} from '@open-darts/analytics/aroundTheClockStats'
 
 const sampleSession = (overrides: Partial<GameSession> = {}): GameSession => ({
   id: 'session-1',

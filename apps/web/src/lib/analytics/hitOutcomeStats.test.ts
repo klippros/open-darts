@@ -12,7 +12,7 @@ import {
   mergeBaseHitOutcomeCounts,
   mergeHitOutcomeCounts,
   ratePerThreeDarts,
-} from './hitOutcomeStats'
+} from '@open-darts/analytics/hitOutcomeStats'
 
 describe('hitOutcomeStats', () => {
   it('merges base and full hit counts', () => {

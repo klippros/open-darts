@@ -1,5 +1,6 @@
 import { Box, Button, Heading, Stack, Text } from '@chakra-ui/react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link as RouterLink } from 'react-router-dom'
 import { ContentContainer } from '../components/ContentContainer'
 import { HistoryList } from '../components/HistoryList/HistoryList'
 import type { HistoryListEntry } from '../components/HistoryList/HistoryList'
@@ -14,13 +15,17 @@ import {
   getOnlineMatchResultSummary,
   HistoryEntrySource,
 } from '../lib/history/onlineHistorySummary'
+import {
+  HISTORY_PAGE_SIZE,
+  loadedHistoryCoversPage,
+  takeMergedHistoryPage,
+} from '../lib/history/historyPager'
 import { sortSessionsByDate } from '../lib/history/sessionSummary'
-import { listMyOnlineMatchHistory } from '../lib/matchServer/api'
+import { getMyOnlineMatchDetail, listMyOnlineMatchSummaries } from '../lib/matchServer/api'
 import { isOnlineMatchesEnabled } from '../lib/matchServer/config'
 import { decorateOnlineSessionForViewer } from '../lib/matchServer/onlinePlay'
-import type { OnlineMatchHistoryRow } from '../lib/matchServer/types'
+import type { OnlineMatchHistoryRow, OnlineMatchSummary } from '../lib/matchServer/types'
 import { clearStoredSessions, loadStoredSessions } from '../lib/storage/gameStore'
-import { supabaseClient } from '../lib/supabase/client'
 import { AuthStatus, SyncStatus } from '../types/auth'
 import type { GameSession } from '@open-darts/game/types/gameSession'
 import { resolveHumanPlayerName } from '@open-darts/game/game/playerFactory'
@@ -36,8 +41,10 @@ export const HistoryPage = () => {
     resultSummary: string
   } | null>(null)
   const [sessions, setSessions] = useState(() => sortSessionsByDate(loadStoredSessions()))
-  const [onlineMatches, setOnlineMatches] = useState<OnlineMatchHistoryRow[]>([])
-  const [opponentNames, setOpponentNames] = useState<Record<string, string>>({})
+  const [onlineMatches, setOnlineMatches] = useState<OnlineMatchSummary[]>([])
+  const [onlineHasMore, setOnlineHasMore] = useState(false)
+  const [visibleCount, setVisibleCount] = useState(HISTORY_PAGE_SIZE)
+  const [loadingMore, setLoadingMore] = useState(false)
 
   const isSignedIn = authStatus === AuthStatus.Authenticated && user !== null
   const shouldLoadOnlineHistory = isSignedIn && isOnlineMatchesEnabled
@@ -57,7 +64,7 @@ export const HistoryPage = () => {
   useEffect(() => {
     if (!shouldLoadOnlineHistory || user === null) {
       setOnlineMatches([])
-      setOpponentNames({})
+      setOnlineHasMore(false)
       return undefined
     }
 
@@ -66,50 +73,20 @@ export const HistoryPage = () => {
 
     const loadOnlineHistory = async () => {
       try {
-        const matches = await listMyOnlineMatchHistory(viewerUserId)
+        const matches = await listMyOnlineMatchSummaries(viewerUserId, {
+          limit: HISTORY_PAGE_SIZE,
+        })
         if (cancelled) {
           return
         }
 
         setOnlineMatches(matches)
-
-        const opponentIds = [
-          ...new Set(
-            matches
-              .map((match) => match.opponentUserId)
-              .filter((id): id is string => typeof id === 'string'),
-          ),
-        ]
-
-        if (opponentIds.length === 0 || supabaseClient === null) {
-          setOpponentNames({})
-          return
-        }
-
-        const { data } = await supabaseClient
-          .from('profiles')
-          .select('user_id, display_name')
-          .in('user_id', opponentIds)
-
-        if (cancelled) {
-          return
-        }
-
-        const next: Record<string, string> = {}
-        for (const row of data ?? []) {
-          if (typeof row === 'object' && row !== null && typeof row.user_id === 'string') {
-            const displayName =
-              'display_name' in row && typeof row.display_name === 'string'
-                ? row.display_name
-                : null
-            next[row.user_id] = resolveHumanPlayerName(displayName)
-          }
-        }
-        setOpponentNames(next)
+        setOnlineHasMore(matches.length === HISTORY_PAGE_SIZE)
+        setVisibleCount(HISTORY_PAGE_SIZE)
       } catch {
         if (!cancelled) {
           setOnlineMatches([])
-          setOpponentNames({})
+          setOnlineHasMore(false)
         }
       }
     }
@@ -134,29 +111,43 @@ export const HistoryPage = () => {
   }, [clearSyncedSessions])
 
   const handleSelectOnlineMatch = useCallback(
-    (match: OnlineMatchHistoryRow, resultSummary: string) => {
-      if (match.session !== null && user !== null) {
-        const opponentName =
-          match.opponentUserId === null
-            ? 'Opponent'
-            : (opponentNames[match.opponentUserId] ?? 'Opponent')
-
-        setSelectedOnlineMatch(null)
-        setSelectedSession(
-          decorateOnlineSessionForViewer(
-            match.session,
-            user.id,
-            profile?.displayName,
-            opponentName,
-          ),
-        )
+    async (match: OnlineMatchSummary, resultSummary: string) => {
+      if (user === null) {
         return
       }
 
-      setSelectedSession(null)
-      setSelectedOnlineMatch({ match, resultSummary })
+      try {
+        const detail = await getMyOnlineMatchDetail(user.id, match.id)
+        if (detail?.session !== null && detail?.session !== undefined) {
+          const opponentName = resolveHumanPlayerName(
+            detail.opponentDisplayName ?? match.opponentDisplayName,
+          )
+          setSelectedOnlineMatch(null)
+          setSelectedSession(
+            decorateOnlineSessionForViewer(
+              detail.session,
+              user.id,
+              profile?.displayName,
+              opponentName,
+            ),
+          )
+          return
+        }
+
+        setSelectedSession(null)
+        setSelectedOnlineMatch({
+          match: detail ?? { ...match, scorecardVersion: 1, session: null },
+          resultSummary,
+        })
+      } catch {
+        setSelectedSession(null)
+        setSelectedOnlineMatch({
+          match: { ...match, scorecardVersion: 1, session: null },
+          resultSummary,
+        })
+      }
     },
-    [opponentNames, profile?.displayName, user],
+    [profile?.displayName, user],
   )
 
   const handleSelectSession = useCallback((session: GameSession) => {
@@ -164,41 +155,102 @@ export const HistoryPage = () => {
     setSelectedSession(session)
   }, [])
 
-  const entries = useMemo((): HistoryListEntry[] => {
-    const localEntries: HistoryListEntry[] = sessions.map((session) => ({
-      source: HistoryEntrySource.Local,
-      id: session.id,
-      sortAt: session.completedAt ?? session.startedAt,
-      session,
-    }))
+  const localEntries = useMemo(
+    (): HistoryListEntry[] =>
+      sessions.map((session) => ({
+        source: HistoryEntrySource.Local,
+        id: session.id,
+        sortAt: session.completedAt ?? session.startedAt,
+        session,
+      })),
+    [sessions],
+  )
 
+  const onlineEntries = useMemo((): HistoryListEntry[] => {
     if (user === null) {
-      return localEntries
+      return []
     }
 
     const viewerUserId = user.id
-    const onlineEntries: HistoryListEntry[] = onlineMatches.map((match) => {
-      const opponentName =
-        match.opponentUserId === null
-          ? 'Opponent'
-          : (opponentNames[match.opponentUserId] ?? 'Opponent')
+
+    return onlineMatches.map((match) => {
+      const opponentName = resolveHumanPlayerName(match.opponentDisplayName)
 
       return {
-        source: HistoryEntrySource.Online,
+        source: HistoryEntrySource.Online as const,
         id: match.id,
         sortAt: getOnlineMatchCompletedAt(match),
         match,
         resultSummary: getOnlineMatchResultSummary(match, viewerUserId, opponentName),
+        canOpenDetail: true,
       }
     })
+  }, [onlineMatches, user])
 
-    return [...localEntries, ...onlineEntries].sort((left, right) =>
-      right.sortAt.localeCompare(left.sortAt),
-    )
-  }, [onlineMatches, opponentNames, sessions, user])
+  const page = useMemo(
+    () => takeMergedHistoryPage(localEntries, onlineEntries, visibleCount),
+    [localEntries, onlineEntries, visibleCount],
+  )
+
+  const handleLoadMore = useCallback(async () => {
+    if (loadingMore) {
+      return
+    }
+
+    const nextVisible = visibleCount + HISTORY_PAGE_SIZE
+    setVisibleCount(nextVisible)
+
+    if (!shouldLoadOnlineHistory || user === null || !onlineHasMore) {
+      return
+    }
+
+    const lastOnline = onlineMatches.at(-1)
+    if (lastOnline === undefined) {
+      return
+    }
+
+    // Unknown online rows sort after the last fetched online row. Avoid a
+    // request when loaded local rows already fill the next page above it.
+    if (
+      loadedHistoryCoversPage(localEntries, onlineEntries, nextVisible, {
+        id: lastOnline.id,
+        sortAt: getOnlineMatchCompletedAt(lastOnline),
+      })
+    ) {
+      return
+    }
+
+    setLoadingMore(true)
+    try {
+      const more = await listMyOnlineMatchSummaries(user.id, {
+        beforeCompletedAt: getOnlineMatchCompletedAt(lastOnline),
+        beforeId: lastOnline.id,
+        limit: HISTORY_PAGE_SIZE,
+      })
+      setOnlineMatches((current) => {
+        const known = new Set(current.map((match) => match.id))
+        return [...current, ...more.filter((match) => !known.has(match.id))]
+      })
+      setOnlineHasMore(more.length === HISTORY_PAGE_SIZE)
+    } catch {
+      setOnlineHasMore(false)
+    } finally {
+      setLoadingMore(false)
+    }
+  }, [
+    loadingMore,
+    localEntries,
+    onlineEntries,
+    onlineHasMore,
+    onlineMatches,
+    shouldLoadOnlineHistory,
+    user,
+    visibleCount,
+  ])
 
   const hasSavedGames = sessions.length > 0
   const syncLabel = getSyncStatusLabel(syncStatus)
+  const hasMore = page.hasMore || onlineHasMore
 
   return (
     <ContentContainer>
@@ -272,8 +324,16 @@ export const HistoryPage = () => {
             >
               <Stack gap={3} direction={{ base: 'column', sm: 'row' }} align={{ sm: 'center' }}>
                 <Stack gap={1} flex="1">
-                  <Text fontWeight="semibold" color="white">
-                    {profile?.displayName ?? user.email ?? 'Signed in'}
+                  <Text
+                    asChild
+                    fontWeight="semibold"
+                    color="white"
+                    textDecoration="underline"
+                    textUnderlineOffset="3px"
+                  >
+                    <RouterLink to={`/players/${user.id}`}>
+                      {profile?.displayName ?? user.email ?? 'Signed in'}
+                    </RouterLink>
                   </Text>
                   <Text fontSize="sm" color="whiteAlpha.700">
                     {syncLabel}
@@ -306,9 +366,15 @@ export const HistoryPage = () => {
           )}
 
           <HistoryList
-            entries={entries}
+            entries={page.entries}
+            hasMore={hasMore}
+            onLoadMore={() => {
+              void handleLoadMore()
+            }}
             onSelectSession={handleSelectSession}
-            onSelectOnlineMatch={handleSelectOnlineMatch}
+            onSelectOnlineMatch={(match, resultSummary) => {
+              void handleSelectOnlineMatch(match, resultSummary)
+            }}
           />
         </Stack>
       </Box>

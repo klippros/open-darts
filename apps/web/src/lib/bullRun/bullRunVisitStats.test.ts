@@ -9,7 +9,7 @@ import {
   getBullRunLiveScoreMetrics,
   getBullRunLiveStats,
   ratePerThreeDarts,
-} from './bullRunVisitStats'
+} from '@open-darts/analytics/bullRunVisitStats'
 
 const player = { id: 'p1', name: 'Player', kind: PlayerKind.Human }
 

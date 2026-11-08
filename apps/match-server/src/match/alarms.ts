@@ -2,10 +2,11 @@ import { DeadlineKind, isDeadlineKind } from './types'
 
 /** Lower number = processed first when multiple deadlines are due in one alarm wake. */
 export const DEADLINE_KIND_PRIORITY: Record<DeadlineKind, number> = {
-  [DeadlineKind.FinalizeAt]: 0,
-  [DeadlineKind.AsyncDeadlineAt]: 1,
-  [DeadlineKind.IdleExpiresAt]: 2,
-  [DeadlineKind.WaitingExpiresAt]: 3,
+  [DeadlineKind.IndexSyncRetry]: 0,
+  [DeadlineKind.FinalizeAt]: 1,
+  [DeadlineKind.AsyncDeadlineAt]: 2,
+  [DeadlineKind.IdleExpiresAt]: 3,
+  [DeadlineKind.WaitingExpiresAt]: 4,
 }
 
 export const compareDeadlineKindPriority = (left: DeadlineKind, right: DeadlineKind): number =>

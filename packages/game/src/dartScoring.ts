@@ -1,5 +1,5 @@
-import { DartMultiplier, DartSegmentType } from './types/dart'
-import type { DartSegment, DartThrow } from './types/dart'
+import { DartMultiplier, DartSegmentType } from './types/dart.ts'
+import type { DartSegment, DartThrow } from './types/dart.ts'
 
 export const isDoubleDart = (dart: DartThrow): boolean => {
   if (dart.multiplier === DartMultiplier.Miss) {

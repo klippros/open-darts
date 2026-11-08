@@ -6,7 +6,7 @@ import {
   getHighestCheckout,
   getPrimaryPlayerVisits,
   getSessionCheckoutRate,
-} from '../analytics/visitStats'
+} from '@open-darts/analytics/visitStats'
 
 export interface TenUpOneDownSingleSessionStats {
   checkouts: number

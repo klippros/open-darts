@@ -10,7 +10,7 @@ import {
   getHighestOneTwentyOneCheckoutTarget,
   getOneTwentyOneCheckoutRate,
   getSessionCheckoutCount,
-} from './oneTwentyOneVisitStats'
+} from '@open-darts/analytics/oneTwentyOneVisitStats'
 
 const visit = (overrides: Partial<Visit>): Visit => ({
   visitIndex: 0,

@@ -18,6 +18,7 @@ export enum DeadlineKind {
   FinalizeAt = 'finalize_at',
   AsyncDeadlineAt = 'async_deadline_at',
   IdleExpiresAt = 'idle_expires_at',
+  IndexSyncRetry = 'index_sync_retry',
 }
 
 export enum MatchEndingKind {

@@ -1,6 +1,6 @@
-import { Box, Stack, Text } from '@chakra-ui/react'
+import { Box, Button, Stack, Text } from '@chakra-ui/react'
 import type { GameSession } from '@open-darts/game/types/gameSession'
-import type { OnlineMatchHistoryRow } from '../../lib/matchServer/types'
+import type { OnlineMatchSummary } from '../../lib/matchServer/types'
 import {
   formatSessionDate,
   getSessionCompletedAt,
@@ -25,18 +25,23 @@ export type HistoryListEntry =
       source: HistoryEntrySource.Online
       id: string
       sortAt: string
-      match: OnlineMatchHistoryRow
+      match: OnlineMatchSummary
       resultSummary: string
+      canOpenDetail: boolean
     }
 
 export interface HistoryListProps {
   entries: HistoryListEntry[]
+  hasMore?: boolean
+  onLoadMore?: () => void
   onSelectSession: (session: GameSession) => void
-  onSelectOnlineMatch: (match: OnlineMatchHistoryRow, resultSummary: string) => void
+  onSelectOnlineMatch: (match: OnlineMatchSummary, resultSummary: string) => void
 }
 
 export const HistoryList = ({
   entries,
+  hasMore = false,
+  onLoadMore,
   onSelectSession,
   onSelectOnlineMatch,
 }: HistoryListProps) => {
@@ -74,6 +79,9 @@ export const HistoryList = ({
           )
         }
 
+        const opponentUserId = entry.match.opponentUserId
+        const opponentName = entry.match.opponentDisplayName ?? undefined
+
         return (
           <HistoryListItem
             key={`online:${entry.id}`}
@@ -81,12 +89,23 @@ export const HistoryList = ({
             resultSummary={entry.resultSummary}
             completedAtLabel={formatOnlineMatchDate(entry.match)}
             badgeLabel="Online"
-            onClick={() => {
-              onSelectOnlineMatch(entry.match, entry.resultSummary)
-            }}
+            opponentProfileTo={opponentUserId === null ? undefined : `/players/${opponentUserId}`}
+            opponentName={opponentName}
+            onClick={
+              entry.canOpenDetail
+                ? () => {
+                    onSelectOnlineMatch(entry.match, entry.resultSummary)
+                  }
+                : undefined
+            }
           />
         )
       })}
+      {hasMore && onLoadMore !== undefined ? (
+        <Button variant="cancel" onClick={onLoadMore}>
+          More
+        </Button>
+      ) : null}
     </Stack>
   )
 }

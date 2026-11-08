@@ -1,4 +1,4 @@
-import type { X01Config } from '../types/x01'
+import type { X01Config } from '../types/x01.ts'
 
 export enum X01PresetId {
   OneSeventy = '170',

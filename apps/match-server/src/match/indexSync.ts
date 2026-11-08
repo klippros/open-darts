@@ -1,6 +1,5 @@
 import { isRecord } from '../json'
 import type { PublicMatchState } from './types'
-import { MatchEndingKind, MatchStatus, TERMINAL_STATUSES } from './types'
 
 export enum IndexPublishErrorCode {
   Conflict = 'conflict',
@@ -20,11 +19,6 @@ export class IndexPublishError extends Error {
 export const shouldSkipMatchIndexSync = (supabaseUrl: string): boolean =>
   supabaseUrl.length === 0 || supabaseUrl.includes('example.invalid')
 
-const isWaitingCancel = (state: PublicMatchState): boolean =>
-  state.status === MatchStatus.Cancelled &&
-  (state.endingKind === MatchEndingKind.CreatorCancel ||
-    state.endingKind === MatchEndingKind.LobbyTimeout)
-
 const toIso = (ms: number): string => new Date(ms).toISOString()
 
 const restHeaders = (serviceRoleKey: string, prefer: string): Headers => {
@@ -39,53 +33,31 @@ const restHeaders = (serviceRoleKey: string, prefer: string): Headers => {
 const restUrl = (supabaseUrl: string, path: string): string =>
   `${supabaseUrl.replace(/\/$/u, '')}/rest/v1/${path}`
 
-const readErrorMessage = async (response: Response): Promise<string> => {
+const readErrorPayload = async (
+  response: Response,
+): Promise<{ message: string; code: string | null }> => {
   const body: unknown = await response.json().catch(() => null)
 
-  if (
-    typeof body === 'object' &&
-    body !== null &&
-    'message' in body &&
-    typeof body.message === 'string'
-  ) {
-    return body.message
+  if (!isRecord(body)) {
+    return { message: `Index request failed with ${String(response.status)}`, code: null }
   }
 
-  return `Index request failed with ${String(response.status)}`
+  const message =
+    typeof body.message === 'string'
+      ? body.message
+      : typeof body.msg === 'string'
+        ? body.msg
+        : `Index request failed with ${String(response.status)}`
+  const code = typeof body.code === 'string' ? body.code : null
+
+  return { message, code }
 }
 
-const restFetch = async (
-  env: Env,
-  path: string,
-  init: { method: string; prefer: string; body?: string },
-): Promise<void> => {
-  const response = await fetch(restUrl(env.SUPABASE_URL, path), {
-    method: init.method,
-    headers: restHeaders(env.SUPABASE_SERVICE_ROLE_KEY, init.prefer),
-    body: init.body,
-  })
-
-  if (response.ok || response.status === 204) {
+export const publishMatchIndex = async (env: Env, state: PublicMatchState): Promise<void> => {
+  if (shouldSkipMatchIndexSync(env.SUPABASE_URL)) {
     return
   }
 
-  const message = await readErrorMessage(response)
-
-  if (response.status === 409) {
-    throw new IndexPublishError(IndexPublishErrorCode.Conflict, message)
-  }
-
-  throw new IndexPublishError(IndexPublishErrorCode.Unavailable, message)
-}
-
-const deleteIndexedMatch = async (env: Env, matchId: string): Promise<void> => {
-  await restFetch(env, `online_matches?id=eq.${matchId}`, {
-    method: 'DELETE',
-    prefer: 'return=minimal',
-  })
-}
-
-const upsertIndexedMatch = async (env: Env, state: PublicMatchState): Promise<void> => {
   let resultPayload: Record<string, unknown> | null = null
 
   if (state.resultPayloadJson !== null) {
@@ -96,98 +68,47 @@ const upsertIndexedMatch = async (env: Env, state: PublicMatchState): Promise<vo
     }
   }
 
-  await restFetch(env, 'online_matches', {
+  const response = await fetch(restUrl(env.SUPABASE_URL, 'rpc/publish_online_match_index'), {
     method: 'POST',
-    prefer: 'return=minimal,resolution=merge-duplicates',
+    headers: restHeaders(env.SUPABASE_SERVICE_ROLE_KEY, 'return=minimal'),
     body: JSON.stringify({
-      id: state.matchId,
-      invite_token: state.inviteToken,
-      creator_user_id: state.creatorUserId,
-      status: state.status,
-      play_mode: state.playMode,
-      mode: state.mode,
-      config: state.config,
-      legs_to_win: state.legsToWin,
-      starting_player_slot: state.startingPlayerSlot,
-      created_at: toIso(state.createdAt),
-      started_at: state.startedAt === null ? null : toIso(state.startedAt),
-      completed_at: state.completedAt === null ? null : toIso(state.completedAt),
-      async_started_at: state.asyncStartedAt === null ? null : toIso(state.asyncStartedAt),
-      ending_kind: state.endingKind,
-      winner_user_id: state.winnerUserId,
-      result_payload: resultPayload,
-    }),
-  })
-}
-
-const replaceIndexedPlayers = async (env: Env, state: PublicMatchState): Promise<void> => {
-  if (state.players.length === 0) {
-    await restFetch(env, `online_match_players?match_id=eq.${state.matchId}`, {
-      method: 'DELETE',
-      prefer: 'return=minimal',
-    })
-    return
-  }
-
-  const userIds = state.players.map((player) => player.userId).join(',')
-
-  // Drop members who left before upserting current seats so slot uniqueness stays valid.
-  await restFetch(
-    env,
-    `online_match_players?match_id=eq.${state.matchId}&user_id=not.in.(${userIds})`,
-    {
-      method: 'DELETE',
-      prefer: 'return=minimal',
-    },
-  )
-
-  await restFetch(env, 'online_match_players?on_conflict=match_id,user_id', {
-    method: 'POST',
-    prefer: 'return=minimal,resolution=merge-duplicates',
-    body: JSON.stringify(
-      state.players.map((player) => ({
-        match_id: state.matchId,
+      p_match_id: state.matchId,
+      p_invite_token: state.inviteToken,
+      p_creator_user_id: state.creatorUserId,
+      p_status: state.status,
+      p_play_mode: state.playMode,
+      p_mode: state.mode,
+      p_config: state.config,
+      p_legs_to_win: state.legsToWin,
+      p_starting_player_slot: state.startingPlayerSlot,
+      p_created_at: toIso(state.createdAt),
+      p_started_at: state.startedAt === null ? null : toIso(state.startedAt),
+      p_completed_at: state.completedAt === null ? null : toIso(state.completedAt),
+      p_async_started_at: state.asyncStartedAt === null ? null : toIso(state.asyncStartedAt),
+      p_ending_kind: state.endingKind,
+      p_winner_user_id: state.winnerUserId,
+      p_result_payload: resultPayload,
+      p_index_version: state.version,
+      p_players: state.players.map((player) => ({
         user_id: player.userId,
         slot: player.slot,
       })),
-    ),
-  })
-}
-
-const replaceOccupancy = async (env: Env, state: PublicMatchState): Promise<void> => {
-  await restFetch(env, `online_match_occupancy?match_id=eq.${state.matchId}`, {
-    method: 'DELETE',
-    prefer: 'return=minimal',
+    }),
   })
 
-  if (TERMINAL_STATUSES.has(state.status) || state.players.length === 0) {
+  if (response.ok || response.status === 204) {
     return
   }
 
-  // Plain insert so a user already occupied by another match still 409s.
-  await restFetch(env, 'online_match_occupancy', {
-    method: 'POST',
-    prefer: 'return=minimal',
-    body: JSON.stringify(
-      state.players.map((player) => ({
-        user_id: player.userId,
-        match_id: state.matchId,
-      })),
-    ),
-  })
-}
+  const error = await readErrorPayload(response)
 
-export const publishMatchIndex = async (env: Env, state: PublicMatchState): Promise<void> => {
-  if (shouldSkipMatchIndexSync(env.SUPABASE_URL)) {
-    return
+  if (
+    response.status === 409 ||
+    error.code === '23505' ||
+    error.message.includes('occupancy_conflict')
+  ) {
+    throw new IndexPublishError(IndexPublishErrorCode.Conflict, error.message)
   }
 
-  if (isWaitingCancel(state)) {
-    await deleteIndexedMatch(env, state.matchId)
-    return
-  }
-
-  await upsertIndexedMatch(env, state)
-  await replaceIndexedPlayers(env, state)
-  await replaceOccupancy(env, state)
+  throw new IndexPublishError(IndexPublishErrorCode.Unavailable, error.message)
 }

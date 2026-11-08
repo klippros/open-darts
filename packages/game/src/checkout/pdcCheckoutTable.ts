@@ -1,4 +1,4 @@
-import { checkoutDartFromLabel } from './checkoutDart'
+import { checkoutDartFromLabel } from './checkoutDart.ts'
 
 export const DOUBLE_OUT_BOGEY_SCORES = new Set([159, 162, 163, 165, 166, 168, 169])
 

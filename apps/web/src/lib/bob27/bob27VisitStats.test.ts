@@ -10,7 +10,7 @@ import {
   getBob27SessionDoublesHit,
   getBob27VisitHitCount,
   getBob27VisitHitRate,
-} from './bob27VisitStats'
+} from '@open-darts/analytics/bob27VisitStats'
 
 const visit = (overrides: Partial<Visit>): Visit => ({
   visitIndex: 0,

@@ -7,6 +7,8 @@ export interface AuthContextValue extends AuthState {
   signInWithEmail: (email: string, returnTo?: string) => Promise<string | null>
   signOut: () => Promise<string | null>
   clearSyncedSessions: () => Promise<string | null>
+  setDisplayName: (displayName: string) => void
+  setRequireMutualFollowForInvites: (requireMutualFollowForInvites: boolean) => void
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)

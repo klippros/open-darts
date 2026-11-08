@@ -1,5 +1,5 @@
 import { Box, Flex, Text } from '@chakra-ui/react'
-import type { NinetyNineDartsLiveScoreMetric } from '../../lib/ninetyNineDarts/ninetyNineVisitStats'
+import type { NinetyNineDartsLiveScoreMetric } from '@open-darts/analytics/ninetyNineVisitStats'
 
 export interface NinetyNineDartsScorePanelProps {
   metrics: NinetyNineDartsLiveScoreMetric[]

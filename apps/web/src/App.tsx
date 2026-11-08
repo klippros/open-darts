@@ -2,6 +2,7 @@ import { Box, Flex } from '@chakra-ui/react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { AppHeader } from './components/AppHeader/AppHeader'
 import { Footer } from './components/Footer'
+import { PendingOnlineMatchInvitesBanner } from './components/PendingOnlineMatchInvitesBanner/PendingOnlineMatchInvitesBanner'
 import { AuthProvider } from './hooks/AuthProvider'
 import { GameChromeProvider } from './hooks/GameChromeProvider'
 import { SettingsProvider } from './hooks/SettingsProvider'
@@ -36,6 +37,7 @@ export const App = () => {
                 className="hide-scrollbar"
               >
                 <Flex direction="column" w="full" minH="100%" h={isGameRoute ? '100%' : undefined}>
+                  {!isGameRoute ? <PendingOnlineMatchInvitesBanner /> : null}
                   <Box
                     flex="1"
                     minH={isGameRoute ? 0 : undefined}
